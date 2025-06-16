@@ -56,9 +56,6 @@ RUN mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cac
 # Copy Nginx Unit configuration
 COPY unit.json /docker-entrypoint.d/unit.json
 
-# Create a non-root user if needed
-USER unit
-
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

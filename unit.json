@@ -21,7 +21,9 @@
         "laravel": {
             "type": "php",
             "root": "/var/www/html/public/",
-            "script": "index.php"
+            "script": "index.php",
+            "user": "unit",
+            "group": "unit"
         }
     }
 }
