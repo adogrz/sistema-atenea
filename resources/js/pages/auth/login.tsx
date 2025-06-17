@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import LogoPjt from '@/components/icons/LogoPjt';
 
 type LoginForm = {
     email: string;
@@ -47,13 +48,8 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 <form className="p-6 md:p-8" onSubmit={submit}>
                                     <div className="flex flex-col gap-6">
                                         <div className="flex flex-col items-center text-center">
-                                            <img
-                                                src="/atenea-logo.avif"
-                                                alt="Logo"
-                                                className="mb-4 aspect-square size-30 object-contain md:size-25"
-                                                loading="lazy"
-                                            />
-                                            <h1 className="text-2xl font-bold">Inicia sesión en tu cuenta</h1>
+                                            <LogoPjt className="block aspect-square size-30 object-contain md:hidden" />
+                                            <h1 className="text-2xl font-bold text-pretty">Inicia sesión</h1>
                                         </div>
 
                                         <div className="grid gap-3">
@@ -105,7 +101,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                             <Label htmlFor="remember">Recordarme</Label>
                                         </div>
 
-                                        <Button type="submit" className="w-full" tabIndex={4} disabled={processing}>
+                                        <Button type="submit" className="w-full cursor-pointer" tabIndex={4} disabled={processing}>
                                             {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                             Iniciar sesión
                                         </Button>
@@ -121,7 +117,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                                 <div className="relative hidden bg-muted md:block">
                                     <img
-                                        src="/PJT.avif"
+                                        src="/logo-pjt-large.avif"
                                         alt="Image"
                                         className="absolute inset-0 h-full w-full object-cover object-top"
                                         loading="lazy"
