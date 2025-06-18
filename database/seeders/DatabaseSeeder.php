@@ -3,8 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash; // ✅ Importación necesaria
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +14,39 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $roles = [
+            'Director',
+            'Administrador',
+            'Administrador Académico',
+            'Administrador Académico de Sede',
+            'Coordinador de Área',
+            'Jefe de Psicología',
+            'Psicólogo',
+            'Doctor Jefe',
+            'Doctor',
+            'Mentor',
+            'Instructor',
+            'Calificador',
+            'Estudiante',
+            'Aspirante',
+        ];
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Crear los roles si no existen
+        foreach ($roles as $rol) {
+            Role::firstOrCreate(['name' => $rol]);
+        }
+
+        // Crear el usuario con rol de Administrador
+        $role = Role::firstOrCreate(['name' => 'Administrador']);
+
+        /*$user = User::firstOrCreate(
+            ['email' => 'admin@pruebas.com'],
+            [
+                'name' => 'Administrador de Pruebas',
+                'password' => Hash::make('password123'),
+            ]
+        );*/
+
+        $user->assignRole($role);
     }
 }

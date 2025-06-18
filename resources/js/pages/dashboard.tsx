@@ -2,6 +2,10 @@ import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
+import type { SharedData } from '@/types/SharedData';
+
+const { auth } = usePage<SharedData>().props;
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
