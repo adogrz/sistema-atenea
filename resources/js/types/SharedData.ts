@@ -1,14 +1,19 @@
-
 import { PageProps } from '@inertiajs/core';
 
-// resources/js/types/SharedData.ts
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  roles: string[];
+  permissions: string[]; // Direct permissions + role permissions
+}
+
 export interface SharedData extends PageProps {
   auth: {
-    user: {
-      id: number;
-      name: string;
-      email: string;
-      roles: string[]; // <- importante para condicionar vistas
-    } | null;
+    user: User | null;
+  };
+  config: {
+    app_name: string;
+    app_env: string;// Add other shared config values
   };
 }

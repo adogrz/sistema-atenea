@@ -14,39 +14,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $roles = [
-            'Director',
-            'Administrador',
-            'Administrador Académico',
-            'Administrador Académico de Sede',
-            'Coordinador de Área',
-            'Jefe de Psicología',
-            'Psicólogo',
-            'Doctor Jefe',
-            'Doctor',
-            'Mentor',
-            'Instructor',
-            'Calificador',
-            'Estudiante',
-            'Aspirante',
-        ];
-
-        // Crear los roles si no existen
-        foreach ($roles as $rol) {
-            Role::firstOrCreate(['name' => $rol]);
-        }
-
+        
         // Crear el usuario con rol de Administrador
-        $role = Role::firstOrCreate(['name' => 'Administrador']);
-
-        /*$user = User::firstOrCreate(
+        $user = User::firstOrCreate(
             ['email' => 'admin@pruebas.com'],
             [
                 'name' => 'Administrador de Pruebas',
                 'password' => Hash::make('password123'),
             ]
-        );*/
+        );
 
-        $user->assignRole($role);
+        $user->assignRole("Administrador");
     }
 }
