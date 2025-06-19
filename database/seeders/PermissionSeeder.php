@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
@@ -15,36 +14,54 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Reset permissions and roles
+        // Reset cached permissions and roles
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Creacion de permissos
-
-        $createUsers = Permission::created(['name' => 'create users']);
-
-        $roles = [
-            'Director',
-            'Administrador',
-            'Administrador Académico',
-            'Administrador Académico de Sede',
-            'Coordinador de Área',
-            'Jefe de Psicología',
-            'Psicólogo',
-            'Doctor Jefe',
-            'Doctor',
-            'Mentor',
-            'Instructor',
-            'Calificador',
-            'Estudiante',
-            'Aspirante',
+        // Creación de permisos
+        $permissions = [
+            'create users',
+            'edit users',
+            'delete users',
+            'view users',
+            // Agrega más permisos según necesites
         ];
 
-        // Crear los roles si no existen
-        foreach ($roles as $rol) {
-            Role::firstOrCreate(['name' => $rol]);
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
-        $role = Role::findById(1);
-        $role -> givePermissionTo($createUsers);
+        // Definición de roles con sus descripciones
+        $roles = [
+            'director' => 'Director',
+            'admin' => 'Administrador',
+            'admin_academic' => 'Administrador Académico',
+            'admin_academic_sede' => 'Administrador Académico de Sede',
+            'coordinator_area' => 'Coordinador de Área',
+            'jefe_psicologia' => 'Jefe de Psicología',
+            'psicologo' => 'Psicólogo',
+            'doctor_jefe' => 'Doctor Jefe',
+            'doctor' => 'Doctor',
+            'mentor' => 'Mentor',
+            'instructor' => 'Instructor',
+            'calificador' => 'Calificador',
+            'estudiante' => 'Estudiante',
+            'aspirante' => 'Aspirante',
+        ];
+
+        // Crear los roles con descripción
+        foreach ($roles as $key => $description) {
+            Role::firstOrCreate(
+                ['name' => $key],
+                ['description' => $description]
+            );
+        }
+
+        // Asignar permisos al rol de administrador
+        $admin = Role::findByName('admin');
+        $admin->givePermissionTo(Permission::all());
+
+        // Asignar permisos específicos a otros roles si es necesario
+        $director = Role::findByName('director');
+        $director->givePermissionTo(['create users', 'edit users', 'view users']);
     }
 }

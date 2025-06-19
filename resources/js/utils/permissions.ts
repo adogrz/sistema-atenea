@@ -1,4 +1,3 @@
-// resources/js/utils/permissions.ts
 import { SharedData } from '@/types/SharedData';
 
 export const hasRole = (page: SharedData, role: string): boolean => {
