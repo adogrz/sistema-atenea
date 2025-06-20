@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
+import LogoPjt from '@/components/icons/LogoPjt';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import LogoPjt from '@/components/icons/LogoPjt';
 
 type LoginForm = {
     email: string;
@@ -41,11 +41,11 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             <Head title="Iniciar sesión" />
 
             <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
-                <div className="w-full max-w-sm md:max-w-3xl">
-                    <div className="flex flex-col gap-6">
-                        <Card className="overflow-hidden p-0">
-                            <CardContent className="grid p-0 md:grid-cols-2">
-                                <form className="p-6 md:p-8" onSubmit={submit}>
+                <div className="w-full max-w-3xl">
+                    <div className="flex flex-col gap-0">
+                        <Card className="h-[90vh] p-0">
+                            <CardContent className="grid p-0 md:grid-cols-2 h-full">
+                                <form className="flex flex-col justify-center h-full p-6" onSubmit={submit}>
                                     <div className="flex flex-col gap-6">
                                         <div className="flex flex-col items-center text-center">
                                             <LogoPjt className="block aspect-square size-30 object-contain md:hidden" />
@@ -115,14 +115,14 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     </div>
                                 </form>
 
-                                <div className="relative hidden bg-muted md:block">
-                                    <img
-                                        src="/logo-pjt-large.avif"
-                                        alt="Image"
-                                        className="absolute inset-0 h-full w-full object-cover object-top"
-                                        loading="lazy"
-                                    />
-                                </div>
+                                  <div className="relative hidden bg-muted md:block h-full">
+                                        <img
+                                            src="/logo-pjt-large.avif"
+                                            alt="Image"
+                                            className="absolute inset-0 h-full w-full object-cover object-top"
+                                            loading="lazy"
+                                        /> 
+                                    </div>             
                             </CardContent>
                         </Card>
 

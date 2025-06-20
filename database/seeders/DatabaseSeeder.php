@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +13,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1. Primero los permisos y roles (Spatie)
+        $this->call(PermissionSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Crear el usuario con rol de Administrador
+        $user = User::firstOrCreate(
+            ['email' => 'admin@pruebas.com'],
+            [
+                'name' => 'Administrador de Pruebas',
+                'password' => Hash::make('password123'),
+            ]
+        );
+
+        $user->assignRole("admin");
     }
 }

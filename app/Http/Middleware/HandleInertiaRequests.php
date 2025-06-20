@@ -37,20 +37,22 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
-
-        return [
-            ...parent::share($request),
-            'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
+        return array_merge(parent::share($request), [
+            'appName' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'roles' => $request->user()->getRoleNames(), // ARRAY DE ROLES 
+                    'permissions' => $request->user()->getAllPermissions()->pluck('name'),
+                ] : null,
             ],
-            'ziggy' => fn (): array => [
+            'ziggy' => fn(): array => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-        ];
+        ]);
     }
 }
