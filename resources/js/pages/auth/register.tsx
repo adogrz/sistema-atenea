@@ -1,7 +1,6 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
-import { FormEventHandler } from 'react';
-
+import { ButtonHTMLAttributes, FormEventHandler } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
@@ -15,31 +14,27 @@ type RegisterForm = {
     email: string;
     password: string;
     password_confirmation: string;
+    role_name: string;
+    sede_name: string;
 };
 
-// TODO: Traerlo desde el controller
-const roles = [
-    { value: 'admin', label: 'Administrador' },
-    { value: 'user', label: 'Usuario' },
-    { value: 'editor', label: 'Editor' },
-    { value: 'viewer', label: 'Lector' },
-    { value: 'guest', label: 'Invitado' },
-];
-
-// TODO: Traerlo desde el controller
-const sedes = [
-    { value: 'central', label: 'Central' },
-    { value: 'occidental', label: 'Occidental' },
-    { value: 'oriental', label: 'Oriental' },
-];
-
 export default function Register() {
+    
+    const { roles, sedes } = usePage<{
+        roles: Array<{ value: string; label: string}>;
+        sedes: Array<{ value: string; label: string}>;
+    }>().props;
+
     const { data, setData, post, processing, errors, reset } = useForm<Required<RegisterForm>>({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        role_name: '',
+        sede_name:'',
     });
+
+    console.log(roles);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -171,21 +166,26 @@ export default function Register() {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="rol">Rol</Label>
-                        <Combobox
-                            options={roles}
-                            placeholder="Busca un rol..."
-                            noOptionsMessage="No se encontraron roles."
-                            defaultLabel="Selecciona un rol"
-                        />
-                        {/* <InputError message={errors.rol} /> */}
+                        <Label htmlFor="rol_name">Rol</Label>
+                            <Combobox
+                                options={roles}
+                                value={data.role_name}
+                                onValueChange={(val) => setData('role_name', val)}
+                                defaultLabel="Selecciona un rol"
+                                placeholder="Busca un rol..."
+                            />
+                        <InputError message={errors.role_name} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="sede">Sede</Label>
-                        <Select required>
-                            <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Seleccionar sede" />
+                        <Label htmlFor="sede_name">Sede</Label>
+                        <Select
+                            value={data.sede_name}
+                            onValueChange={(value) => setData('sede_name', value)}
+                            disabled={processing}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccione una sede" />
                             </SelectTrigger>
                             <SelectContent>
                                 {sedes.map((sede) => (
@@ -195,7 +195,7 @@ export default function Register() {
                                 ))}
                             </SelectContent>
                         </Select>
-                        {/* <InputError message={errors.sede} /> */}
+                        <InputError message={errors.sede_name} />
                     </div>
 
                     <Button type="submit" className="mt-2 w-full cursor-pointer" tabIndex={5} disabled={processing}>
