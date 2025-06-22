@@ -54,9 +54,9 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 {/* Sección de la imagen */}
                 <div className="relative hidden bg-muted lg:block">
                     <img
-                        src="/logo-pjt-large.avif"
+                        src="/pjt-logo.webp"
                         alt="Image"
-                        className="absolute inset-0 h-full w-full object-cover object-top dark:brightness-[0.8]"
+                        className="absolute inset-0 h-full w-full object-cover object-top"
                         loading="lazy"
                     />
                 </div>
