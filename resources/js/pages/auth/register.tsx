@@ -1,6 +1,3 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
-import { ButtonHTMLAttributes, FormEventHandler } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
@@ -8,6 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AuthLayout from '@/layouts/auth-layout';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { LoaderCircle } from 'lucide-react';
+import { FormEventHandler } from 'react';
 
 type RegisterForm = {
     name: string;
@@ -19,10 +19,9 @@ type RegisterForm = {
 };
 
 export default function Register() {
-    
     const { roles, sedes } = usePage<{
-        roles: Array<{ value: string; label: string}>;
-        sedes: Array<{ value: string; label: string}>;
+        roles: Array<{ value: string; label: string }>;
+        sedes: Array<{ value: string; label: string }>;
     }>().props;
 
     const { data, setData, post, processing, errors, reset } = useForm<Required<RegisterForm>>({
@@ -31,7 +30,7 @@ export default function Register() {
         password: '',
         password_confirmation: '',
         role_name: '',
-        sede_name:'',
+        sede_name: '',
     });
 
     console.log(roles);
@@ -167,23 +166,19 @@ export default function Register() {
 
                     <div className="grid gap-2">
                         <Label htmlFor="rol_name">Rol</Label>
-                            <Combobox
-                                options={roles}
-                                value={data.role_name}
-                                onValueChange={(val) => setData('role_name', val)}
-                                defaultLabel="Selecciona un rol"
-                                placeholder="Busca un rol..."
-                            />
+                        <Combobox
+                            options={roles}
+                            value={data.role_name}
+                            onValueChange={(val) => setData('role_name', val)}
+                            defaultLabel="Selecciona un rol"
+                            placeholder="Busca un rol..."
+                        />
                         <InputError message={errors.role_name} />
                     </div>
 
                     <div className="grid gap-2">
                         <Label htmlFor="sede_name">Sede</Label>
-                        <Select
-                            value={data.sede_name}
-                            onValueChange={(value) => setData('sede_name', value)}
-                            disabled={processing}
-                        >
+                        <Select value={data.sede_name} onValueChange={(value) => setData('sede_name', value)} disabled={processing}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Seleccione una sede" />
                             </SelectTrigger>
