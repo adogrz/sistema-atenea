@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
+use App\Models\User;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -12,14 +13,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+
     Route::get('/dashboard/usuarios', function () {
         return Inertia::render('dashboard_usuarios');
-    })->name('dashboard.usuarios');
+    })->name('dashboard_usuarios');
 
     Route::get('/dashboard/auditoria', function () {
         return Inertia::render('dashboard_auditoria');
-    })->name('dashboard.usuarios');
+    })->name('dashboard_auditorias');
 });
+
+Route::get('/dashboard/usuarios', function () {
+    $users = User::all();
+    return Inertia::render('dashboard_usuarios', [
+        'users' => $users,
+    ]);
+})->middleware(['auth', 'verified'])->name('dashboard.usuarios');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
