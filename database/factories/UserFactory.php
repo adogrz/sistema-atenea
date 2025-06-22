@@ -23,11 +23,16 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $roles = ['director', 'admin', 'admin_academic', 'admin_academic_sede', 'coordinator_area', 'jefe_psicologia', 'psicologo', 'doctor_jefe', 'doctor', 'mentor', 'instructor', 'calificador', 'estudiante', 'aspirante'];
+        $sedes = ['central', 'occidental', 'oriental'];
+
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'name' => $this->faker->name,
+            'email' => $this->faker->unique()->safeEmail,
+            'password' => Hash::make('password'), // Use a default password for all users
+            'role_name' => $this->faker->randomElement($roles),
+            'sede_name' => $this->faker->randomElement($sedes),
+            'status' => $this->faker->randomElement(['active', 'inactive']),
             'remember_token' => Str::random(10),
         ];
     }

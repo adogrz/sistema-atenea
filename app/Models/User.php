@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Models\Role;
 
 class User extends Authenticatable
 {
@@ -28,6 +29,7 @@ class User extends Authenticatable
         'password',
         'role_name',
         'sede_name',
+        'status',
     ];
 
     /**
@@ -51,5 +53,23 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Devuelve la descripcion del rol de usuario
+     * @return string
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'role_name', 'name');
+    }
+
+    /**
+     * Devuelve la descripcion de la sede del usuario
+     * @return string
+     */
+    public function sede()
+    {
+        return $this->belongsTo(Sede::class, 'sede_name', 'name');
     }
 }

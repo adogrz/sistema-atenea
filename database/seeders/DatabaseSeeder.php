@@ -24,11 +24,17 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Administrador de Pruebas',
                 'password' => Hash::make('password123'),
-                'role_name' => 1,
-                'sede_name' => 1,
+                'role_name' => 'admin',
+                'sede_name' => 'central',
+                'status' => 'active',
             ]
         );
 
         $user->assignRole("admin");
+
+        // Usuarios aleatorios con roles
+        User::factory(100)->create()->each(function ($user) {
+            $user->assignRole($user->role_name);
+        });
     }
 }

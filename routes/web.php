@@ -24,7 +24,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::get('/dashboard/usuarios', function () {
-    $users = User::all();
+    $users = User::with(['role', 'sede'])
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role_name' => $user->role->description ?? 'Sin rol',
+                'sede_name' => $user->sede->description ?? 'Sin sede',
+                'status' => $user->status,
+            ];
+        });
     return Inertia::render('dashboard_usuarios', [
         'users' => $users,
     ]);
