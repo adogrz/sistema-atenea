@@ -4,8 +4,10 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen, Eye, Folder, LayoutGrid, LockIcon, User } from 'lucide-react';
 import AppLogo from './app-logo';
+import { SharedData } from '@/types/SharedData';
+import { usePage } from '@inertiajs/react';
 
 const mainNavItems: NavItem[] = [
     {
@@ -29,6 +31,23 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage<SharedData>().props;
+    const roles = auth.user?.roles ?? [];
+     const mainNavItems: NavItem[] = [
+        // Eliminamos el objeto del Dashboard que estaba aquí
+        ...(roles.includes('admin')
+            ? [
+                  { title: 'Usuarios', href: '/dashboard/usuarios', icon: User},
+                  { title: 'Roles', href: '/dashboard/roles', icon: LockIcon },
+                  { title: 'Auditoria', href: '/dashboard/auditoria', icon: Eye },
+              ]
+            : []),
+        ...(roles.includes('Usuario')
+            ? [
+                 {title: 'Mi perfil', href: '/perfil', icon: User},
+              ]
+            : []),
+    ];
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>

@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Role;
+use App\Models\Sede;
 
 class RegisteredUserController extends Controller
 {
@@ -20,7 +22,26 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('auth/register');
+        $roles = Role::select('name', 'description')
+        ->get()
+        ->map(fn ($role) => [
+            'value' => $role->name,
+            'label' => $role->description,
+        ])
+        ->toArray();
+
+        $sedes = Sede::select('name', 'description')
+            ->get()
+            ->map(fn ($sede) => [
+                'value' => $sede->name,
+                'label' => $sede->description,
+            ])
+            ->toArray();
+
+        return Inertia::render('auth/register',[
+            'roles' => $roles,
+            'sedes' => $sedes,
+        ]);
     }
 
     /**
@@ -34,17 +55,23 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role_name' => 'required|exists:roles,name',
+            'sede_name' => 'required|exists:sedes,name',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role_name' => $request->role_name,
+            'sede_name' => $request->sede_name,
         ]);
+        
+        $user->assignRole($request->role_name);
 
         event(new Registered($user));
 
-        Auth::login($user);
+        //Auth::login($user);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
