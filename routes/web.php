@@ -6,6 +6,8 @@ use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Sede;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Activity;
 
 Route::get('/', function () {
     if (auth()->check()) {
