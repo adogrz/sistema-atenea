@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { SharedData, type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { BuildingIcon, MailIcon, ShieldIcon, UserIcon } from 'lucide-react';
 
@@ -26,21 +26,20 @@ export default function Home() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inicio" />
             <div className="container p-4">
-                <h1 className="mb-6 text-3xl font-bold">Bienvenido, {auth.user?.name || 'Usuario'}</h1>
-
                 <div className="mx-auto max-w-3xl">
                     <Card className="bg-card/100 shadow-lg">
                         <CardHeader className="rounded-t-lg border-b">
                             <CardTitle className="flex items-center gap-2 text-2xl">
                                 <UserIcon className="h-6 w-6" />
-                                Perfil de Usuario
+                                Bienvenido, {auth.user?.name || 'Usuario'}
                             </CardTitle>
-                            <CardDescription>Resumen de tu información personal</CardDescription>
+                            <CardDescription>Perfil de usuario</CardDescription>
                         </CardHeader>
                         <CardContent className="p-6">
                             <div className="space-y-4">
                                 <div className="grid grid-cols-[24px_1fr] items-center gap-4">
                                     <UserIcon className="h-5 w-5 text-primary" />
+
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Nombre</p>
                                         <p className="text-lg font-semibold">{auth.user?.name || 'No disponible'}</p>
