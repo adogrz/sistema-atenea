@@ -134,7 +134,7 @@ class UserController extends Controller
             activity('usuarios')
                 ->performedOn($user)
                 ->causedBy($request->user())
-                ->event('send-reset-link')
+                ->event('envio-recuperacion-contraseña')
                 ->log("Se envió enlace de recuperación de contraseña");
 
             return back()->with('success', 'Se envió el enlace de recuperación.');

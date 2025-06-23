@@ -34,6 +34,16 @@ class PasswordController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
+        activity('reinicio_password')
+                    ->performedOn($request->user())
+                    ->causedBy($request->user())
+                    ->withProperties([
+                        'event' => 'reinicio-contraseña',
+                        'ip' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                    ])
+                    ->event('Reinicio de contraseña')
+                    ->log('Contraseña reseteada por el usuario');
         return back();
     }
 }
