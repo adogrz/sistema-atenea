@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Sede;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -20,7 +21,7 @@ Route::get('/', function () {
 })->name('home');
 
 // Rutas para usuarios autenticados
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['check.status','auth', 'verified'])->group(function () {
     // Panel para usuarios normales
     Route::get('/home', function () {
         return Inertia::render('home', [
@@ -32,13 +33,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Rutas solo para administradores
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+Route::middleware(['check.status','auth', 'verified', 'role:admin'])->group(function () {
     // Dashboard admin
     Route::get('/dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
     Route::resource('users', UserController::class)->except(['create', 'edit']);
+
+    Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
+    ->name('users.send-reset-link');
 
     Route::get('/dashboard/usuarios', function () {
         $users = User::all();

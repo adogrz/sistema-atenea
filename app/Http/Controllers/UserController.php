@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
 use App\Models\User;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Password;
+
 
 class UserController extends Controller
 {
@@ -116,5 +118,25 @@ class UserController extends Controller
             ->log('Usuario restaurado');
 
         return back()->with('success', 'Usuario restaurado.');
+    }
+
+    /**
+     * Envía un enlace de recuperación de contraseña al usuario.
+     */
+    public function sendResetLink(Request $request, User $user)
+    {
+        $status = Password::sendResetLink(['email' => $user->email]);
+
+        if ($status === Password::RESET_LINK_SENT) {
+            activity('usuarios')
+                ->performedOn($user)
+                ->causedBy($request->user())
+                ->event('send-reset-link')
+                ->log("Se envió enlace de recuperación de contraseña");
+
+            return back()->with('success', 'Se envió el enlace de recuperación.');
+        } else {
+            return back()->withErrors(['email' => __($status)]);
+        }
     }
 }
