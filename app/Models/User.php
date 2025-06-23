@@ -43,9 +43,9 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * Returns the attributes that should be type cast for the model.
      *
-     * @return array<string, string>
+     * @return array<string, string> An array mapping attribute names to their cast types.
      */
     protected function casts(): array
     {
@@ -56,8 +56,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Devuelve la descripcion del rol de usuario
-     * @return string
+     * Defines the relationship to the Role model based on the user's role name.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function role()
     {
@@ -65,8 +66,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Devuelve la descripcion de la sede del usuario
-     * @return string
+     * Defines the relationship to the Sede model based on the user's sede_name attribute.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function sede()
     {
@@ -74,7 +76,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Send the password reset notification.
+     * Sends a password reset notification to the user with the provided token.
+     *
+     * @param string $token The password reset token to include in the notification.
      */
     public function sendPasswordResetNotification($token): void
     {

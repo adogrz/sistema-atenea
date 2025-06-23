@@ -44,6 +44,19 @@ interface EditUserModalProps {
   sedes: Sede[];
 }
 
+/**
+ * Renders a modal dialog for editing user details, including name, email, status, role, and sede.
+ *
+ * Displays a form pre-filled with the selected user's information and allows updating these fields. Shows validation errors if present. The "Guardar" button opens a confirmation dialog before saving changes. Returns `null` if no user is provided.
+ *
+ * @param open - Whether the modal is open
+ * @param onClose - Callback to close the modal
+ * @param onSave - Callback invoked with updated user data upon confirmation
+ * @param user - The user to edit, or `null` to hide the modal
+ * @param roles - List of available roles for selection
+ * @param sedes - List of available sedes for selection
+ * @returns The modal dialog component, or `null` if no user is provided
+ */
 export default function EditUserModal({
   open,
   onClose,

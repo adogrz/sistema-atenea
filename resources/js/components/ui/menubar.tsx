@@ -4,6 +4,11 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Renders a styled menubar container using Radix UI primitives.
+ *
+ * Accepts additional class names and props to customize appearance and behavior.
+ */
 function Menubar({
   className,
   ...props
@@ -20,24 +25,38 @@ function Menubar({
   )
 }
 
+/**
+ * Renders a menubar menu container, forwarding all props to the underlying Radix Menu primitive.
+ */
 function MenubarMenu({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Menu>) {
   return <MenubarPrimitive.Menu data-slot="menubar-menu" {...props} />
 }
 
+/**
+ * Renders a group of related menubar items within the menubar.
+ *
+ * Adds a data attribute for identification and forwards all props to the underlying group primitive.
+ */
 function MenubarGroup({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Group>) {
   return <MenubarPrimitive.Group data-slot="menubar-group" {...props} />
 }
 
+/**
+ * Renders menubar content in a React portal for proper layering and positioning.
+ */
 function MenubarPortal({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Portal>) {
   return <MenubarPrimitive.Portal data-slot="menubar-portal" {...props} />
 }
 
+/**
+ * Renders a styled radio group for use within a menubar, allowing selection of a single option from a set.
+ */
 function MenubarRadioGroup({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.RadioGroup>) {
@@ -46,6 +65,11 @@ function MenubarRadioGroup({
   )
 }
 
+/**
+ * Renders a styled menubar trigger button that opens or closes a menubar menu.
+ *
+ * Applies visual styles for focus and open states, and forwards all props to the underlying trigger primitive.
+ */
 function MenubarTrigger({
   className,
   ...props
@@ -62,6 +86,15 @@ function MenubarTrigger({
   )
 }
 
+/**
+ * Renders the menubar dropdown content in a portal with customizable alignment and offset.
+ *
+ * Displays the menu panel with animated transitions, positioning, and styling. The content is rendered in a portal to ensure proper overlay behavior.
+ *
+ * @param align - Menu alignment relative to the trigger. Defaults to "start".
+ * @param alignOffset - Offset for alignment positioning. Defaults to -4.
+ * @param sideOffset - Offset from the trigger side. Defaults to 8.
+ */
 function MenubarContent({
   className,
   align = "start",
@@ -86,6 +119,12 @@ function MenubarContent({
   )
 }
 
+/**
+ * Renders a styled menubar item with optional inset and variant styling.
+ *
+ * @param inset - If true, adds left padding to visually align the item as inset.
+ * @param variant - Controls the color scheme; "default" or "destructive".
+ */
 function MenubarItem({
   className,
   inset,
@@ -109,6 +148,11 @@ function MenubarItem({
   )
 }
 
+/**
+ * Renders a styled menubar checkbox item with an indicator icon when checked.
+ *
+ * Displays a checkmark icon when selected and applies visual styles for focus, disabled, and checked states.
+ */
 function MenubarCheckboxItem({
   className,
   children,
@@ -135,6 +179,11 @@ function MenubarCheckboxItem({
   )
 }
 
+/**
+ * Renders a styled menubar radio item with a circular selection indicator.
+ *
+ * Displays a selectable radio option within a menubar, showing a filled circle when selected. Supports disabled state and custom content.
+ */
 function MenubarRadioItem({
   className,
   children,
@@ -159,6 +208,11 @@ function MenubarRadioItem({
   )
 }
 
+/**
+ * Renders a styled menubar label, optionally indented for submenu alignment.
+ *
+ * @param inset - If true, applies additional left padding for visual alignment within submenus.
+ */
 function MenubarLabel({
   className,
   inset,
@@ -179,6 +233,9 @@ function MenubarLabel({
   )
 }
 
+/**
+ * Renders a horizontal separator line within a menubar for visual grouping of menu items.
+ */
 function MenubarSeparator({
   className,
   ...props
@@ -192,6 +249,11 @@ function MenubarSeparator({
   )
 }
 
+/**
+ * Renders a styled span for displaying keyboard shortcuts within a menubar item.
+ *
+ * Applies muted text color, right alignment, small font size, and wide letter spacing for visual distinction.
+ */
 function MenubarShortcut({
   className,
   ...props
@@ -208,12 +270,22 @@ function MenubarShortcut({
   )
 }
 
+/**
+ * Renders a submenu container within the menubar.
+ *
+ * Wraps the Radix Menubar Sub primitive and adds a data attribute for slot identification.
+ */
 function MenubarSub({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Sub>) {
   return <MenubarPrimitive.Sub data-slot="menubar-sub" {...props} />
 }
 
+/**
+ * Renders a styled submenu trigger within a menubar, displaying its children and a chevron icon.
+ *
+ * @param inset - If true, applies additional left padding for visual alignment.
+ */
 function MenubarSubTrigger({
   className,
   inset,
@@ -238,6 +310,11 @@ function MenubarSubTrigger({
   )
 }
 
+/**
+ * Renders the submenu content panel for a menubar, applying styles for animation, positioning, and appearance.
+ *
+ * Accepts additional class names and props to customize the submenu content.
+ */
 function MenubarSubContent({
   className,
   ...props

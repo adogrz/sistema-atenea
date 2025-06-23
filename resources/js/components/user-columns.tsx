@@ -20,6 +20,14 @@ export type User = {
 };
 
 
+/**
+ * Generates column definitions for a user table with selection, filtering, and status display.
+ *
+ * @param users - The list of user objects to extract unique roles and sedes for filtering.
+ * @param selectedUserId - The currently selected user's ID, or null if none is selected.
+ * @param setSelectedUserId - Callback to update the selected user ID when a row is selected.
+ * @returns An array of column definitions for rendering a user table, including selection radio buttons, user details, filterable role and sede columns, and a status badge.
+ */
 export function getUserColumns(
   users: User[],
   selectedUserId: number | null,

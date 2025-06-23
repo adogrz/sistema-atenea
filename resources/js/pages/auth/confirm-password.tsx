@@ -9,6 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 
+/**
+ * Renders a password confirmation form within an authentication layout.
+ *
+ * Displays a password input field and handles form submission to confirm the user's password before granting access to secure areas of the application. Shows validation errors and disables the submit button while processing.
+ */
 export default function ConfirmPassword() {
     const { data, setData, post, processing, errors, reset } = useForm<Required<{ password: string }>>({
         password: '',

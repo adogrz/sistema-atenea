@@ -26,6 +26,11 @@ interface LoginFormProps {
     onSubmit: FormEventHandler<HTMLFormElement>;
 }
 
+/**
+ * Renders a login form with fields for email, password, and a "remember me" option.
+ *
+ * Displays validation errors, disables inputs during processing, and conditionally shows a password reset link. The form is controlled via props for data, error messages, and submission handling.
+ */
 export function LoginForm({ data, setData, errors, processing, canResetPassword, onSubmit }: LoginFormProps) {
     return (
         <form className={cn('flex flex-col gap-6')} onSubmit={onSubmit}>

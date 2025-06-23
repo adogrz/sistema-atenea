@@ -3,6 +3,11 @@ import { cn } from '@/lib/utils';
 import { LucideIcon, Monitor, Moon, Sun } from 'lucide-react';
 import { HTMLAttributes } from 'react';
 
+/**
+ * Renders a tabbed UI component for toggling between light, dark, and system appearance modes.
+ *
+ * Displays three selectable options, each with an icon and Spanish label, allowing users to change the application's appearance setting.
+ */
 export default function AppearanceToggleTab({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
     const { appearance, updateAppearance } = useAppearance();
 

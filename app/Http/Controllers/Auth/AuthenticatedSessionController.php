@@ -26,7 +26,11 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Authenticates a user and logs their login activity, then redirects based on user role.
+     *
+     * After successful authentication and session regeneration, logs a "login" event with user, IP address, and user agent details. Redirects admins to the 'dashboard' route and other users to 'usuario.dashboard'.
+     *
+     * @return RedirectResponse Redirects the authenticated user to the appropriate dashboard based on their role.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
@@ -56,7 +60,9 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Destroy an authenticated session.
+     * Logs out the current user, invalidates the session, regenerates the CSRF token, and redirects to the login page.
+     *
+     * @return RedirectResponse Redirects the user to the login route after logout.
      */
     public function destroy(Request $request): RedirectResponse
     {

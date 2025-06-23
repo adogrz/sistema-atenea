@@ -1,6 +1,11 @@
 import { cn } from '@/lib/utils';
 import { SVGAttributes } from 'react';
 
+/**
+ * Renders the application's logo as a customizable SVG React component.
+ *
+ * Accepts standard SVG attributes and merges additional class names for flexible styling, including support for light and dark color modes.
+ */
 export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
     return (
         <svg

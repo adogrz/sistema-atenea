@@ -3,18 +3,33 @@ import * as PopoverPrimitive from "@radix-ui/react-popover"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Provides a styled popover root component, serving as the container for popover state and logic.
+ */
 function Popover({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }
 
+/**
+ * Renders a popover trigger element, forwarding all props and adding a data attribute for identification.
+ */
 function PopoverTrigger({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
 }
 
+/**
+ * Renders the popover content inside a portal with custom styling and animation.
+ *
+ * Combines default and custom class names, sets alignment and offset, and adds a data attribute for identification.
+ *
+ * @param className - Additional CSS classes to apply to the popover content
+ * @param align - Alignment of the popover relative to its trigger (default: "center")
+ * @param sideOffset - Offset distance from the trigger element (default: 4)
+ */
 function PopoverContent({
   className,
   align = "center",
@@ -37,6 +52,11 @@ function PopoverContent({
   )
 }
 
+/**
+ * Renders a popover anchor element, serving as a reference point for popover positioning.
+ *
+ * All props are forwarded to the underlying anchor component.
+ */
 function PopoverAnchor({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {

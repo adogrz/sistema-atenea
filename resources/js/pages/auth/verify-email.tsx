@@ -7,6 +7,13 @@ import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/layouts/auth-layout';
 
+/**
+ * Renders the email verification page, allowing users to resend a verification email or log out.
+ *
+ * Displays a confirmation message if a new verification link has been sent.
+ *
+ * @param status - Optional status string indicating if a verification link was recently sent
+ */
 export default function VerifyEmail({ status }: { status?: string }) {
     const { post, processing } = useForm({});
 

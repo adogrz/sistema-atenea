@@ -16,6 +16,14 @@ interface LoginProps {
     canResetPassword: boolean;
 }
 
+/**
+ * Renders the login page with a form and an optional status message.
+ *
+ * Displays a two-column layout with the login form on the left and a background image on the right for large screens. The form logic and state are managed via Inertia.js and passed to the `LoginForm` component. If a status message is provided, it is shown below the form.
+ *
+ * @param status - Optional status message to display below the login form
+ * @param canResetPassword - Indicates whether the password reset option should be available in the form
+ */
 export default function Login({ status, canResetPassword }: LoginProps) {
     const { data, setData, post, processing, errors, reset } = useForm<LoginFormData>({
         email: '',

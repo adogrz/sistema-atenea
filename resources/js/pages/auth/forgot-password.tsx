@@ -10,6 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 
+/**
+ * Renders a password reset request page where users can submit their email to receive a reset link.
+ *
+ * Displays a form for entering an email address, handles form submission, and shows status or validation messages as appropriate.
+ *
+ * @param status - Optional status message to display after a password reset request.
+ */
 export default function ForgotPassword({ status }: { status?: string }) {
     const { data, setData, post, processing, errors } = useForm<Required<{ email: string }>>({
         email: '',

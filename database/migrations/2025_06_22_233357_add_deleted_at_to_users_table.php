@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Adds soft delete support to the users table by introducing a deleted_at timestamp column.
      */
     public function up(): void
     {
@@ -17,7 +17,9 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Reverses the migration by modifying the users table.
+     *
+     * Currently, this method does not remove the soft deletes column or make any changes.
      */
     public function down(): void
     {

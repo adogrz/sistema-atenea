@@ -20,6 +20,11 @@ type ResetPasswordForm = {
     password_confirmation: string;
 };
 
+/**
+ * Renders a password reset form for users to set a new password using a provided token and email.
+ *
+ * Displays validation errors and disables the submit button while processing. After successful submission, the password fields are cleared.
+ */
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
     const { data, setData, post, processing, errors, reset } = useForm<Required<ResetPasswordForm>>({
         token: token,

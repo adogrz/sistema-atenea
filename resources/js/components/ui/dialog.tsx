@@ -30,6 +30,11 @@ function DialogClose({
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
 
+/**
+ * Renders a styled overlay behind the dialog, dimming the background and handling open/close animations.
+ *
+ * Forwards all props to the underlying Radix UI Dialog overlay component and merges additional styling and data attributes.
+ */
 function DialogOverlay({
   className,
   ...props
@@ -46,6 +51,13 @@ function DialogOverlay({
   )
 }
 
+/**
+ * Renders the modal dialog content centered on the screen, with optional close button and overlay.
+ *
+ * Includes a styled container for dialog content, an overlay backdrop, and an optional close button in the top-right corner. The close button is rendered only if `showCloseButton` is true.
+ *
+ * @param showCloseButton - If true, displays a close button inside the dialog (default: true)
+ */
 function DialogContent({
   className,
   children,

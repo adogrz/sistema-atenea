@@ -14,6 +14,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+/**
+ * Renders the appearance settings page with Spanish titles and descriptions.
+ *
+ * Displays a layout containing breadcrumbs, a heading, and tabs for managing appearance-related settings.
+ */
 export default function Appearance() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

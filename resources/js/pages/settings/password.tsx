@@ -18,6 +18,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+/**
+ * Renders the password update form for the user settings page.
+ *
+ * Provides UI and logic for changing the user's password, including form validation, error handling, and success feedback.
+ */
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);

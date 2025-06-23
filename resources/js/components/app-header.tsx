@@ -42,6 +42,13 @@ interface AppHeaderProps {
     breadcrumbs?: BreadcrumbItem[];
 }
 
+/**
+ * Renders the application header with responsive navigation, user menu, and optional breadcrumbs.
+ *
+ * Displays a mobile-friendly menu, desktop navigation links, external resource buttons, and a user avatar dropdown. If multiple breadcrumbs are provided, a breadcrumb trail is shown below the header.
+ *
+ * @param breadcrumbs - Optional array of breadcrumb items to display below the header when present
+ */
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;

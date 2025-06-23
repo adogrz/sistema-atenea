@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Password;
 class UserController extends Controller
 {
     /**
-     * Listado de usuarios.
+     * Retrieves all users with their roles and locations, and renders the user listing page.
+     *
+     * Returns an Inertia response with a collection of users, each including id, name, email, role description, location description, and status.
      */
     public function index()
     {
@@ -31,7 +33,11 @@ class UserController extends Controller
     }
 
     /**
-     * Actualiza un usuario existente.
+     * Updates the specified user's details, including name, email, status, role, and location.
+     *
+     * Validates the incoming request data, ensures the authenticated user is present, updates the user's attributes and role, and logs the update event with old and new values.
+     *
+     * @return \Illuminate\Http\RedirectResponse Redirects back with a success or error message.
      */
     public function update(Request $request, User $user)
     {
@@ -73,7 +79,11 @@ class UserController extends Controller
     }
 
     /**
-     * Elimina lógicamente (soft-delete) un usuario.
+     * Soft deletes a user unless the authenticated user is attempting to delete their own account or the user is already deleted.
+     *
+     * Prevents self-deletion and redundant deletion attempts. Logs the deletion event with relevant user attributes before performing the soft delete.
+     *
+     * @return \Illuminate\Http\RedirectResponse Redirects back with a success or error message.
      */
     public function destroy(Request $request, User $user)
     {
@@ -103,7 +113,10 @@ class UserController extends Controller
     }
 
     /**
-     * Restaura un usuario previamente eliminado.
+     * Restores a previously soft-deleted user by ID.
+     *
+     * @param int $id The ID of the user to restore.
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function restore(Request $request, $id)
     {
@@ -124,7 +137,9 @@ class UserController extends Controller
     }
 
     /**
-     * Envía un enlace de recuperación de contraseña al usuario.
+     * Sends a password reset link to the specified user's email address.
+     *
+     * If the reset link is sent successfully, logs the event and returns with a success message; otherwise, returns with validation errors.
      */
     public function sendResetLink(Request $request, User $user)
     {

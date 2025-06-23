@@ -22,9 +22,12 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Handle an incoming password reset link request.
+     * Processes a password reset link request by validating the email and sending a reset link if applicable.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * Validates the provided email address and attempts to send a password reset link to it. Always responds with a status message indicating that a reset link has been sent, regardless of whether the email exists in the system.
+     *
+     * @throws \Illuminate\Validation\ValidationException If the email is missing or invalid.
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request): RedirectResponse
     {

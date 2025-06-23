@@ -33,6 +33,18 @@ interface DataTableProps<TData, TValue> {
   getRowId?: (row: TData) => string | number;
 }
 
+/**
+ * Renders a searchable, filterable, and paginated data table with customizable columns and row selection.
+ *
+ * Supports global search, column visibility toggling, and row click handling. Displays a placeholder message when no results are found and provides pagination controls for navigating through data pages.
+ *
+ * @param columns - Array of column definitions describing how each column is rendered and behaves.
+ * @param data - Array of data objects to display in the table.
+ * @param selectedRowId - Optional ID of the currently selected row for highlighting.
+ * @param onRowClick - Optional callback invoked with the row's data when a row is clicked.
+ * @param getRowId - Optional function to extract a unique ID from a data item; defaults to using the `id` property.
+ * @returns A React element representing the interactive data table.
+ */
 export function DataTable<TData, TValue>({
   columns,
   data,

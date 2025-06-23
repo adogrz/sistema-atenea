@@ -22,6 +22,15 @@ type ProfileForm = {
     email: string;
 };
 
+/**
+ * Renders the user profile settings page, allowing users to update their name and email address.
+ *
+ * Displays form fields for name and email, handles form submission to update profile information, and shows email verification prompts if required.
+ *
+ * @param mustVerifyEmail - Whether the user must verify their email address
+ * @param status - Optional status message indicating the result of email verification actions
+ * @returns The profile settings React component
+ */
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
     const { auth } = usePage<SharedData>().props;
 

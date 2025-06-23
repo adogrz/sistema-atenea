@@ -2,6 +2,13 @@ import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, Sideba
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 
+/**
+ * Renders the main sidebar navigation menu with a list of navigation items.
+ *
+ * Displays each navigation item as a menu button, highlighting the item whose `href` matches the current page URL.
+ *
+ * @param items - The array of navigation items to display in the sidebar
+ */
 export function NavMain({ items = [] }: { items: NavItem[] }) {
     const page = usePage();
 

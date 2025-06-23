@@ -16,6 +16,14 @@ export type Log = {
   created_at: string;
 };
 
+/**
+ * Generates column definitions for a log data table with dynamic filtering options.
+ *
+ * The returned columns include filters for log type and event, using unique values extracted from the provided logs. Filter menus allow users to select or clear filters for these columns. The columns display log ID, user name (or "Desconocido" if missing), log type (or "General" if missing), event (or "Sin evento" if missing), description, and a formatted creation date.
+ *
+ * @param logs - The array of log entries to extract unique filter values and display data.
+ * @returns An array of column definitions for use with a React table component.
+ */
 export function getLogColumns(logs: Log[]): ColumnDef<Log>[] {
   const uniqueTypes = Array.from(
     new Set(logs.map((log) => log.log_name ?? "General"))

@@ -17,9 +17,11 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Generates a default set of attributes for a User model instance with randomized values.
      *
-     * @return array<string, mixed>
+     * Returns an array containing fake user data, including name, unique email, hashed password, randomly assigned role and location, status, a random remember token, and a null deleted_at field to simulate non-deleted users.
+     *
+     * @return array<string, mixed> The default attributes for a User model instance.
      */
     public function definition(): array
     {
@@ -39,7 +41,9 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Sets the factory state to indicate the user's email is unverified.
+     *
+     * @return static The factory instance with the `email_verified_at` attribute set to null.
      */
     public function unverified(): static
     {

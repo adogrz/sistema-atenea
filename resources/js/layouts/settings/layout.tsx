@@ -24,6 +24,13 @@ const sidebarNavItems: NavItem[] = [
     },
 ];
 
+/**
+ * Provides a client-side layout for user settings pages with a sidebar navigation and main content area.
+ *
+ * Renders a sidebar with navigation links and displays the provided child content in the main section. Only renders on the client side.
+ *
+ * @param children - The content to display in the main area of the settings layout
+ */
 export default function SettingsLayout({ children }: PropsWithChildren) {
     // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {

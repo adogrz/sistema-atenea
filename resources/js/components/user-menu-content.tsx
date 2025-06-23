@@ -9,6 +9,11 @@ interface UserMenuContentProps {
     user: User;
 }
 
+/**
+ * Renders the content of the user menu, displaying user information and navigation options for profile settings and logout.
+ *
+ * @param user - The user whose information and menu options are displayed
+ */
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
 

@@ -11,6 +11,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+/**
+ * Renders the user profile home page with personal details and role information.
+ *
+ * Displays the authenticated user's name, email, role, and location within a styled card layout. Fallback text is shown if any user information is unavailable.
+ */
 export default function Home() {
     const { auth } = usePage<SharedData>().props;
 

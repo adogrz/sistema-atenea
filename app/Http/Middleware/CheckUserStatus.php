@@ -10,9 +10,13 @@ use Symfony\Component\HttpFoundation\Response;
 class CheckUserStatus
 {
     /**
-     * Handle an incoming request.
+     * Intercepts the request to ensure the authenticated user has an 'active' status.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * If the user is authenticated but their status is not 'active', logs them out and redirects to the login page with an error message. Otherwise, allows the request to proceed.
+     *
+     * @param \Illuminate\Http\Request $request The incoming HTTP request.
+     * @param \Closure $next The next middleware or request handler.
+     * @return \Symfony\Component\HttpFoundation\Response The HTTP response.
      */
     public function handle(Request $request, Closure $next): Response
     {

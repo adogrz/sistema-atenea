@@ -1,5 +1,8 @@
 import AppLogoIcon from './app-logo-icon';
 
+/**
+ * Renders the application logo with an icon and the label "Sistema Atenea" in a styled horizontal layout.
+ */
 export default function AppLogo() {
     return (
         <div className="flex items-center gap-2">

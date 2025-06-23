@@ -33,6 +33,13 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+/**
+ * Renders the user management dashboard, providing an interface for administrators to view, add, edit, delete users, and send password reset links.
+ *
+ * The dashboard displays a data table of users and conditionally renders admin controls based on the authenticated user's role. It manages modal dialogs for editing user details, confirming deletions, and sending password reset links. User actions are integrated with backend routes via Inertia.js.
+ *
+ * @returns The dashboard component for user management.
+ */
 export default function Dashboard() {
     const { roles, sedes } = usePage<{
         roles: Array<{ id: number; name: string; description: string }>;

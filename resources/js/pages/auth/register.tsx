@@ -18,6 +18,13 @@ type RegisterForm = {
     sede_name: string;
 };
 
+/**
+ * Renders a user registration form with fields for name, email, password, role, and sede selection.
+ *
+ * The form uses Inertia.js for submission and displays validation errors for each field. Role selection is provided via a searchable combobox, and sede selection via a dropdown. Password fields are reset after successful submission.
+ *
+ * @returns The registration form component for user account creation.
+ */
 export default function Register() {
     const { roles, sedes } = usePage<{
         roles: Array<{ value: string; label: string }>;

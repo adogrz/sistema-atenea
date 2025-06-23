@@ -21,7 +21,12 @@ class PasswordController extends Controller
     }
 
     /**
-     * Update the user's password.
+     * Updates the authenticated user's password after validating the current password and new password requirements.
+     *
+     * Logs an activity event recording the password reset, including user, IP address, and user agent details.
+     *
+     * @param Request $request The HTTP request containing the current and new password data.
+     * @return RedirectResponse Redirects back to the previous page after updating the password.
      */
     public function update(Request $request): RedirectResponse
     {

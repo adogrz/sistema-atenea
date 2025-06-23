@@ -7,8 +7,11 @@ use Illuminate\Notifications\Messages\MailMessage;
 
 class ResetPasswordNotification extends BaseNotification
 {
-    /**
-     * Get the reset password notification mail message for the given URL.
+    /****
+     * Constructs the password reset email message using a custom subject and Markdown template.
+     *
+     * @param string $url The password reset URL to include in the email.
+     * @return \Illuminate\Notifications\Messages\MailMessage The configured mail message instance.
      */
     protected function buildMailMessage($url)
     {

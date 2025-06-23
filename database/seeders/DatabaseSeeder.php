@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Hash;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seeds the application's database with initial data, including institution branches, permissions, roles, an admin user, and 100 random users with assigned roles.
      */
     public function run(): void
     {

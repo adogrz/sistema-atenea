@@ -86,6 +86,11 @@ const userSeatChartConfig = {
   },
 } satisfies ChartConfig;
 
+/**
+ * Displays a stacked bar chart of enabled and disabled user counts.
+ *
+ * Renders a card containing a bar chart that visualizes the number of enabled and disabled users using distinct colors.
+ */
 export function ChartBarStacked() {
   return (
     <Card className="flex flex-col">
@@ -107,6 +112,11 @@ export function ChartBarStacked() {
   );
 }
 
+/**
+ * Renders an interactive pie chart displaying the distribution of users by role.
+ *
+ * Allows selection of a user role to highlight its corresponding slice in the chart and display the user count for that role in the center.
+ */
 export function ChartPieInteractive() {
   const id = 'pie-interactive';
   const [activeRole, setActiveRole] = React.useState(userRolChartData[0].current);
@@ -192,6 +202,11 @@ export function ChartPieInteractive() {
   );
 }
 
+/**
+ * Displays a pie chart showing the distribution of users by seat or location.
+ *
+ * Each slice of the chart represents a different seat, with labels indicating the seat name.
+ */
 export function ChartPieLabel() {
   return (
     <Card className="flex flex-col">
@@ -214,6 +229,11 @@ export function ChartPieLabel() {
   );
 }
 
+/**
+ * Renders the user audit dashboard page with a log data table.
+ *
+ * Displays navigation breadcrumbs, sets the page title, and presents a table of user audit logs. Chart components for user statistics are present but currently commented out.
+ */
 export default function Dashboard() {
   const { logs } = usePage<{ logs: any[] }>().props;
 

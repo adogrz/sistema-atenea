@@ -29,6 +29,19 @@ interface ComboboxProps {
   defaultLabel?: string
 }
 
+/**
+ * Renders a searchable dropdown combobox for selecting an option from a list.
+ *
+ * Displays the selected option's label or a default label if none is selected. Users can filter options via a search input, and selecting an option triggers the provided callback with the new value. The dropdown closes automatically upon selection.
+ *
+ * @param options - Array of selectable options, each with a value and label.
+ * @param value - The currently selected value.
+ * @param onValueChange - Callback invoked when the selection changes, receiving the new value.
+ * @param placeholder - Optional placeholder text for the search input.
+ * @param noOptionsMessage - Optional message shown when no options match the search.
+ * @param defaultLabel - Optional label shown when no value is selected.
+ * @returns The combobox component UI.
+ */
 export function Combobox({
   options,
   value,

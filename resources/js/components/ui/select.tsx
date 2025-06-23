@@ -22,6 +22,11 @@ function SelectValue({
   return <SelectPrimitive.Value data-slot="select-value" {...props} />
 }
 
+/**
+ * Renders a styled select trigger button with optional size and custom content.
+ *
+ * @param size - Controls the trigger's height; accepts "default" or "sm"
+ */
 function SelectTrigger({
   className,
   size = "default",
@@ -48,6 +53,11 @@ function SelectTrigger({
   )
 }
 
+/**
+ * Renders the dropdown content for the select component, including scroll buttons and viewport, with customizable positioning and styling.
+ *
+ * @param position - Determines the dropdown's positioning strategy; defaults to "popper".
+ */
 function SelectContent({
   className,
   children,
@@ -83,6 +93,9 @@ function SelectContent({
   )
 }
 
+/**
+ * Renders a styled label for a select component, applying muted foreground color, padding, and small text size.
+ */
 function SelectLabel({
   className,
   ...props

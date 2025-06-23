@@ -7,6 +7,11 @@ import { Link, usePage } from '@inertiajs/react';
 import { ClipboardListIcon, HouseIcon, User } from 'lucide-react';
 import AppLogo from './app-logo';
 
+/**
+ * Renders a sidebar navigation component with menu items tailored to the authenticated user's roles.
+ *
+ * The sidebar displays navigation links for all users and conditionally includes additional links for administrators and normal users based on their assigned roles.
+ */
 export function AppSidebar() {
     type EnhancedUser = {
         role_name?: string;

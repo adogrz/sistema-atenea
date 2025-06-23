@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Adds a 'status' ENUM column to the 'users' table with possible values 'active' and 'inactive', defaulting to 'active'.
      */
     public function up(): void
     {
@@ -17,7 +17,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Removes the 'status' column from the 'users' table, reversing the migration.
      */
     public function down(): void
     {

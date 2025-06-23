@@ -17,7 +17,11 @@ use App\Models\Sede;
 class RegisteredUserController extends Controller
 {
     /**
-     * Muestra el formulario de registro.
+     * Displays the user registration form with available roles and sedes.
+     *
+     * Retrieves all roles and sedes from the database, mapping each to an array with `value` and `label` keys, and passes them to the registration view.
+     *
+     * @return \Inertia\Response
      */
     public function create(): Response
     {
@@ -44,7 +48,12 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Registra un nuevo usuario.
+     * Handles registration of a new user with role and sede assignment.
+     *
+     * Validates the registration data, creates a new user with the specified role and sede, assigns the role, fires a registration event, and logs the activity. Redirects to the users dashboard after successful registration.
+     *
+     * @param Request $request The incoming registration request containing user details.
+     * @return RedirectResponse Redirects to the users dashboard upon successful registration.
      */
     public function store(Request $request): RedirectResponse
     {

@@ -9,7 +9,9 @@ use App\Models\Sede;
 class SedeSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seeds the database with initial Sede records if they do not already exist.
+     *
+     * Creates entries for 'central', 'occidental', and 'oriental' sedes with their respective descriptions.
      */
     public function run(): void
     {
