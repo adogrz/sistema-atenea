@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 
+
 class AuthenticatedSessionController extends Controller
 {
     /**
@@ -33,7 +34,25 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = \App\Models\User::where('email', $request->email)->first();
+
+        activity('acceso')
+            ->performedOn($user)
+            ->causedBy($user)
+            ->withProperties([
+                'event' => 'Iniciar sesión',
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->event('login')
+            ->log('Inició de sesión');
+
+        // Redirección basada en rol
+        if ($request->user()->hasRole('admin')) {
+            return redirect()->intended(route('dashboard', absolute: false));
+        } else {
+            return redirect()->intended(route('usuario.dashboard', absolute: false));
+        }
     }
 
     /**
@@ -46,6 +65,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login');
     }
 }
