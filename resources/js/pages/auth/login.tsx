@@ -2,21 +2,27 @@ import { LoginForm, type LoginFormData } from '@/components/login-form';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-// Interfaz para las props que recibe la página de Inertia.
+import LogoPjt from '@/components/icons/LogoPjt';
+import InputError from '@/components/input-error';
+import TextLink from '@/components/text-link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 interface LoginProps {
     status?: string;
     canResetPassword: boolean;
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
-    // El hook useForm se queda en el componente "inteligente" o contenedor.
     const { data, setData, post, processing, errors, reset } = useForm<LoginFormData>({
         email: '',
         password: '',
         remember: false,
     });
 
-    // La lógica de envío también pertenece a este componente.
     const submit: FormEventHandler<HTMLFormElement> = (e) => {
         e.preventDefault();
         post(route('login'), {
@@ -33,9 +39,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     {/* Contenedor del formulario */}
                     <div className="flex flex-1 items-center justify-center">
                         <div className="w-full max-w-xs">
-                            {/* Pasamos toda la lógica y el estado al componente de presentación
-                              a través de props.
-                            */}
+                            {/* Pasamos toda la lógica y el estado al componente de presentación a través de props. */}
                             <LoginForm
                                 data={data}
                                 setData={setData}
@@ -48,12 +52,21 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     </div>
 
                     {/* Mensaje de estado */}
-                    {status && <div className="text-center text-sm font-medium text-green-600">{status}</div>}
+                    {status && (
+                        <div className="text-center text-sm font-medium text-green-600">
+                            {status}
+                        </div>
+                    )}
                 </div>
 
                 {/* Sección de la imagen */}
                 <div className="relative hidden bg-muted lg:block">
-                    <img src="/pjt-logo.webp" alt="Image" className="absolute inset-0 h-full w-full object-cover object-top" loading="lazy" />
+                    <img
+                        src="/pjt-logo.webp"
+                        alt="Image"
+                        className="absolute inset-0 h-full w-full object-cover object-top"
+                        loading="lazy"
+                    />
                 </div>
             </div>
         </>
