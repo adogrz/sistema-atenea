@@ -1,27 +1,19 @@
-import { useState } from 'react';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import { Button } from '@/components/ui/button';
+import { DataTable } from '@/components/ui/data-table';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { getUserColumns } from '@/components/user-columns';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, usePage, router, Link } from '@inertiajs/react';
 import { SharedData } from '@/types/SharedData';
 import { hasRole } from '@/utils/permissions';
-import { Edit, Trash2, UserPlus, User, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { getUserColumns } from "@/components/user-columns";
-import { DataTable } from "@/components/ui/data-table";
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Edit, Trash2, User, UserPlus } from 'lucide-react';
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Panel de Usuarios',
-        href: '/dashboard',
+        href: '/dashboard/usuarios',
     },
 ];
 
@@ -52,10 +44,10 @@ export default function Dashboard() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Dashboard - ${userRole}`} />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {hasRole({ auth } as SharedData, 'admin') && (
                     <div className="admin-panel">
-                        <div className="flex items-center gap-2 p-2 bg-background rounded-lg border">
+                        <div className="flex items-center gap-2 rounded-lg border bg-background p-2">
                             <Button variant="ghost" className="flex items-center gap-2">
                                 <User className="h-4 w-4" />
                                 <span>Usuario</span>
@@ -95,10 +87,8 @@ export default function Dashboard() {
                                 <DialogHeader>
                                     <DialogTitle>¿Eliminar usuario?</DialogTitle>
                                 </DialogHeader>
-                                <p>
-                                    Esta acción no se puede deshacer. El usuario seleccionado será eliminado permanentemente del sistema.
-                                </p>
-                                <DialogFooter className="flex justify-end pt-4 gap-2">
+                                <p>Esta acción no se puede deshacer. El usuario seleccionado será eliminado permanentemente del sistema.</p>
+                                <DialogFooter className="flex justify-end gap-2 pt-4">
                                     <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
                                         Cancelar
                                     </Button>

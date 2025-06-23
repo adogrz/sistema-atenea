@@ -47,73 +47,21 @@ export default function Register() {
             <Head title="Registro de usuario" />
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Primer nombre</Label>
-                            <Input
-                                id="name"
-                                type="text"
-                                required
-                                autoFocus
-                                tabIndex={1}
-                                autoComplete="name"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
-                                disabled={processing}
-                                placeholder="Primer nombre"
-                            />
-                            <InputError message={errors.name} className="mt-2" />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="second_name">Segundo nombre</Label>
-                            <Input
-                                id="second_name"
-                                type="text"
-                                // required
-                                tabIndex={1}
-                                autoComplete="second-name"
-                                // value={data.second_name}
-                                // onChange={(e) => setData('second_name', e.target.value)}
-                                disabled={processing}
-                                placeholder="Segundo nombre"
-                            />
-                            {/* <InputError message={errors.second_name} className="mt-2" /> */}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="first_last_name">Primer apellido</Label>
-                            <Input
-                                id="first_last_name"
-                                type="text"
-                                // required
-                                tabIndex={1}
-                                autoComplete="family-name"
-                                // value={data.first_last_name}
-                                // onChange={(e) => setData('first_last_name', e.target.value)}
-                                disabled={processing}
-                                placeholder="Primer apellido"
-                            />
-                            {/* <InputError message={errors.first_last_name} className="mt-2" /> */}
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="second_last_name">Segundo apellido</Label>
-                            <Input
-                                id="second_last_name"
-                                type="text"
-                                // required
-                                tabIndex={1}
-                                autoComplete="family-name"
-                                // value={data.second_last_name}
-                                // onChange={(e) => setData('second_last_name', e.target.value)}
-                                disabled={processing}
-                                placeholder="Segundo apellido"
-                            />
-                            {/* <InputError message={errors.second_last_name} className="mt-2" /> */}
-                        </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="name">Nombre</Label>
+                        <Input
+                            id="name"
+                            type="text"
+                            required
+                            autoFocus
+                            tabIndex={1}
+                            autoComplete="name"
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            disabled={processing}
+                            placeholder="Nombre"
+                        />
+                        <InputError message={errors.name} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
@@ -179,7 +127,7 @@ export default function Register() {
                     <div className="grid gap-2">
                         <Label htmlFor="sede_name">Sede</Label>
                         <Select value={data.sede_name} onValueChange={(value) => setData('sede_name', value)} disabled={processing}>
-                            <SelectTrigger>
+                            <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Seleccione una sede" />
                             </SelectTrigger>
                             <SelectContent>

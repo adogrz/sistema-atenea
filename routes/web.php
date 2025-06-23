@@ -7,19 +7,29 @@ use App\Models\User;
 use App\Models\Sede;
 use Spatie\Permission\Models\Role;
 
-// Ruta pública accesible para todos
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    if (auth()->check()) {
+        if (auth()->user()->hasRole('admin')) {
+            return redirect()->route('dashboard');
+        } else {
+            return redirect()->route('usuario.dashboard');
+        }
+    }
+
+    return redirect()->route('login');
 })->name('home');
 
 // Rutas para usuarios autenticados
 Route::middleware(['auth', 'verified'])->group(function () {
     // Panel para usuarios normales
     Route::get('/home', function () {
-        return Inertia::render('home');
+        return Inertia::render('home', [
+            'auth' => [
+                'user' => Auth::user()->load('roles', 'sede', 'role')
+            ]
+        ]);
     })->name('usuario.dashboard');
 });
-
 
 // Rutas solo para administradores
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
@@ -64,12 +74,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
             'roles' => $roles,
             'sedes' => $sedes,
         ]);
-    })->name('dashboard_usuarios');
-
-    Route::get('/dashboard/auditoria', function () {
-        return Inertia::render('dashboard_auditoria');
-    })->name('dashboard_auditorias');
-
+    })->name('dashboard.usuarios');
 });
 
 require __DIR__ . '/settings.php';

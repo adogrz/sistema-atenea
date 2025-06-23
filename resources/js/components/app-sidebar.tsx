@@ -1,53 +1,52 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { BookOpen, Eye, Folder, LayoutGrid, LockIcon, User } from 'lucide-react';
-import AppLogo from './app-logo';
 import { SharedData } from '@/types/SharedData';
-import { usePage } from '@inertiajs/react';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
+import { Link, usePage } from '@inertiajs/react';
+import { ClipboardListIcon, HouseIcon, User } from 'lucide-react';
+import AppLogo from './app-logo';
 
 export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
-    const roles = auth.user?.roles ?? [];
-     const mainNavItems: NavItem[] = [
-        // Eliminamos el objeto del Dashboard que estaba aquí
-        ...(roles.includes('admin')
+
+    // Verificación más robusta del rol de administrador
+    const isAdmin =
+        auth.user?.role_name === 'admin' ||
+        (auth.user?.roles &&
+            Array.isArray(auth.user.roles) &&
+            (auth.user.roles.includes('admin') ||
+                auth.user.roles.some(
+                    (role) => (typeof role === 'string' && role === 'admin') || (typeof role === 'object' && role?.name === 'admin'),
+                )));
+
+    // Verificación más robusta para el rol de usuario normal
+    const isNormalUser =
+        auth.user?.role_name === 'Usuario' ||
+        (auth.user?.roles &&
+            Array.isArray(auth.user.roles) &&
+            (auth.user.roles.includes('Usuario') ||
+                auth.user.roles.some(
+                    (role) => (typeof role === 'string' && role === 'Usuario') || (typeof role === 'object' && role?.name === 'Usuario'),
+                )));
+
+    // Elementos comunes para todos los usuarios
+    const mainNavItems: NavItem[] = [
+        // Inicio se muestra para todos los usuarios
+        { title: 'Inicio', href: '/home', icon: HouseIcon },
+
+        // Elementos solo para administradores
+        ...(isAdmin
             ? [
-                  { title: 'Usuarios', href: '/dashboard/usuarios', icon: User},
-                  { title: 'Roles', href: '/dashboard/roles', icon: LockIcon },
-                  { title: 'Auditoria', href: '/dashboard/auditoria', icon: Eye },
+                  { title: 'Auditoria', href: '/dashboard', icon: ClipboardListIcon },
+                  { title: 'Usuarios', href: '/dashboard/usuarios', icon: User },
               ]
             : []),
-        ...(roles.includes('Usuario')
-            ? [
-                 {title: 'Mi perfil', href: '/perfil', icon: User},
-              ]
-            : []),
+
+        // Elementos solo para usuarios normales
+        ...(isNormalUser ? [{ title: 'Mi perfil', href: '/perfil', icon: User }] : []),
     ];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -67,7 +66,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
