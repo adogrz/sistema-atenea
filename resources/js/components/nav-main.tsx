@@ -4,13 +4,19 @@ import { Link, usePage } from '@inertiajs/react';
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
     const page = usePage();
+
+    // Función para determinar si un elemento está activo
+    const isItemActive = (itemHref: string) => {
+        return page.url === itemHref;
+    };
+
     return (
         <SidebarGroup className="px-2 py-0">
             <SidebarGroupLabel>Opciones</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={page.url.startsWith(item.href)} tooltip={{ children: item.title }}>
+                        <SidebarMenuButton asChild isActive={isItemActive(item.href)} tooltip={{ children: item.title }}>
                             <Link href={item.href} prefetch>
                                 {item.icon && <item.icon />}
                                 <span>{item.title}</span>

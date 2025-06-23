@@ -59,6 +59,7 @@ export default function EditUserModal({
   const [status, setStatus] = useState("activo");
   const [selectedRole, setSelectedRole] = useState("");
   const [selectedSede, setSelectedSede] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -73,104 +74,118 @@ export default function EditUserModal({
   if (!user) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-lg">Editar Usuario</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Editar Usuario</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-1 pb-4 border-b border-muted">
-          <p className="text-sm">
-            <span className="font-semibold">ID:</span> {user.id}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-          <div className="space-y-2">
-            <Label>Nombre</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
-            {errors?.name && <p className="text-sm text-red-500">{errors.name}</p>}
+          <div className="space-y-1 pb-4 border-b border-muted">
+            <p className="text-sm">
+              <span className="font-semibold">ID:</span> {user.id}
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label>Correo</Label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-            {errors?.email && <p className="text-sm text-red-500">{errors.email}</p>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+            <div className="space-y-2">
+              <Label>Nombre</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              {errors?.name && <p className="text-sm text-red-500">{errors.name}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Correo</Label>
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+              {errors?.email && <p className="text-sm text-red-500">{errors.email}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Estado</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Activo</SelectItem>
+                  <SelectItem value="inactive">Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors?.status && <p className="text-sm text-red-500">{errors.status}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Rol</Label>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar rol" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((rol) => (
+                    <SelectItem key={rol.name} value={rol.name}>
+                      <div className="px-1 py-1">
+                        <div className="font-medium">{rol.description}</div>
+                        <div className="text-xs text-muted-foreground">{rol.name}</div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors?.role_name && <p className="text-sm text-red-500">{errors.role_name}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Sede</Label>
+              <Select value={selectedSede} onValueChange={setSelectedSede}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar sede" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sedes.map((sede) => (
+                    <SelectItem key={sede.name} value={sede.name}>
+                      <div className="px-1 py-1">
+                        <div className="font-medium">{sede.description}</div>
+                        <div className="text-xs text-muted-foreground">{sede.name}</div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors?.sede_name && <p className="text-sm text-red-500">{errors.sede_name}</p>}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Estado</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Activo</SelectItem>
-                <SelectItem value="inactive">Inactivo</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors?.status && <p className="text-sm text-red-500">{errors.status}</p>}
-          </div>
+          <DialogFooter className="pt-6">
+            <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+            <Button
+              onClick={() => setShowConfirm(true)}
+              disabled={!name || !email || !selectedRole || !selectedSede || !status}
+            >
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-          <div className="space-y-2">
-            <Label>Rol</Label>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar rol" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map((rol) => (
-                  <SelectItem key={rol.name} value={rol.name}>
-                    <div className="px-1 py-1">
-                      <div className="font-medium">{rol.description}</div>
-                      <div className="text-xs text-muted-foreground">{rol.name}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors?.role_name && <p className="text-sm text-red-500">{errors.role_name}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Sede</Label>
-            <Select value={selectedSede} onValueChange={setSelectedSede}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar sede" />
-              </SelectTrigger>
-              <SelectContent>
-                {sedes.map((sede) => (
-                  <SelectItem key={sede.name} value={sede.name}>
-                    <div className="px-1 py-1">
-                      <div className="font-medium">{sede.description}</div>
-                      <div className="text-xs text-muted-foreground">{sede.name}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors?.sede_name && <p className="text-sm text-red-500">{errors.sede_name}</p>}
-          </div>
-        </div>
-
-        <DialogFooter className="pt-6">
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button
-            onClick={() =>
-              onSave({
-                name,
-                email,
-                status,
-                role_name: selectedRole,
-                sede_name: selectedSede,
-              })
-            }
-            disabled={!name || !email || !selectedRole || !selectedSede || !status}
-          >
-            Guardar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Confirmar cambios?</DialogTitle>
+          </DialogHeader>
+          <p>¿Estás seguro que deseas guardar los cambios realizados a este usuario?</p>
+          <DialogFooter className="pt-4">
+            <Button variant="secondary" onClick={() => setShowConfirm(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                onSave({ name, email, status, role_name: selectedRole, sede_name: selectedSede });
+                setShowConfirm(false);
+              }}
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

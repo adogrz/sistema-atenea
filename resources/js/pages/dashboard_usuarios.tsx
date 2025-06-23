@@ -4,7 +4,7 @@ import { SharedData } from '@/types/SharedData';
 import { hasRole } from '@/utils/permissions';
 import { Button } from '@/components/ui/button';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Edit, Trash2, User, UserPlus } from 'lucide-react';
+import { Edit, Trash2, User, UserPlus, MailCheck } from 'lucide-react';
 import { useState } from 'react';
 import {
     Dialog,
@@ -18,12 +18,12 @@ import { DataTable } from "@/components/ui/data-table";
 import EditUserModal from "@/components/edit-user-modal";
 
 interface User {
-  id: number;
-  name: string;
-  email: string;
-  role_name: string;
-  sede_name: string;
-  status: string;
+    id: number;
+    name: string;
+    email: string;
+    role_name: string;
+    sede_name: string;
+    status: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -44,6 +44,7 @@ export default function Dashboard() {
 
     const userRole = auth.user?.roles || 'Usuario';
 
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [userToEdit, setUserToEdit] = useState<User | null>(null);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
@@ -96,7 +97,6 @@ export default function Dashboard() {
         });
     };
 
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Dashboard - ${userRole}`} />
@@ -104,13 +104,24 @@ export default function Dashboard() {
                 {hasRole({ auth } as SharedData, 'admin') && (
                     <div className="admin-panel">
                         <div className="flex items-center gap-2 p-2 bg-background rounded-lg border">
+                            <Button
+                                variant="ghost"
+                                className="flex items-center gap-2"
+                                onClick={() => setShowResetConfirm(true)}
+                                disabled={!selectedUserId}
+                            >
+                                <MailCheck className="h-4 w-4" />
+                                <span>Enviar enlace de recuperación</span>
+                            </Button>
                             <Link href="/register">
                                 <Button variant="ghost" className="flex items-center gap-2">
                                     <UserPlus className="h-4 w-4" />
                                     <span>Agregar</span>
                                 </Button>
                             </Link>
-                            <Button onClick={handleEdit} disabled={!selectedUserId}>
+                            <Button
+                                variant="ghost"
+                                onClick={handleEdit} disabled={!selectedUserId}>
                                 <Edit className="w-4 h-4" /> Editar
                             </Button>
                             <Button
@@ -145,6 +156,28 @@ export default function Dashboard() {
                                     </Button>
                                     <Button variant="destructive" onClick={handleDelete}>
                                         Eliminar
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                        <Dialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>¿Enviar enlace de recuperación?</DialogTitle>
+                                </DialogHeader>
+                                <p>¿Estás seguro de que deseas enviar el enlace de recuperación de contraseña a este usuario?</p>
+                                <DialogFooter className="pt-4">
+                                    <Button variant="secondary" onClick={() => setShowResetConfirm(false)}>
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        onClick={() => {
+                                            router.post(route('users.send-reset-link', { user: selectedUserId }));
+                                            setShowResetConfirm(false);
+                                        }}
+                                    >
+                                        Enviar
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>

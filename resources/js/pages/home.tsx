@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { SharedData, type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { BuildingIcon, MailIcon, ShieldIcon, UserIcon } from 'lucide-react';
 
@@ -14,33 +14,35 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Home() {
     const { auth } = usePage<SharedData>().props;
 
-    // Obtenemos la descripción del rol consultando el modelo Role en lugar de user.roles
-    const userRoleDescription =
-        auth.user?.role?.description ||
-        (auth.user?.roles && Array.isArray(auth.user.roles) && auth.user.roles.length > 0 ? auth.user.roles[0]?.description : 'Sin rol asignado');
+    type Role = { description: string };
+    type Sede = { description: string };
 
-    // Obtenemos la sede directamente del modelo de relación
-    const sedeDescription = auth.user?.sede?.description || 'Sin sede asignada';
+    const userRoleDescription =
+        (auth.user?.role as Role | undefined)?.description ||
+        (auth.user?.roles && Array.isArray(auth.user.roles) && auth.user.roles.length > 0
+            ? (auth.user.roles[0] as Role).description
+            : 'Sin rol asignado');
+
+    const sedeDescription = (auth.user?.sede as Sede | undefined)?.description || 'Sin sede asignada';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inicio" />
             <div className="container p-4">
-                <h1 className="mb-6 text-3xl font-bold">Bienvenido, {auth.user?.name || 'Usuario'}</h1>
-
                 <div className="mx-auto max-w-3xl">
                     <Card className="bg-card/100 shadow-lg">
                         <CardHeader className="rounded-t-lg border-b">
                             <CardTitle className="flex items-center gap-2 text-2xl">
                                 <UserIcon className="h-6 w-6" />
-                                Perfil de Usuario
+                                Bienvenido, {auth.user?.name || 'Usuario'}
                             </CardTitle>
-                            <CardDescription>Resumen de tu información personal</CardDescription>
+                            <CardDescription>Perfil de usuario</CardDescription>
                         </CardHeader>
                         <CardContent className="p-6">
                             <div className="space-y-4">
                                 <div className="grid grid-cols-[24px_1fr] items-center gap-4">
                                     <UserIcon className="h-5 w-5 text-primary" />
+
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Nombre</p>
                                         <p className="text-lg font-semibold">{auth.user?.name || 'No disponible'}</p>
