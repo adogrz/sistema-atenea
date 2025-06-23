@@ -53,7 +53,7 @@ class UserController extends Controller
         $original = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
 
         // Actualiza rol y demás atributos
-        $user->assignRole($validated['role_name']);
+        $user->syncRoles([$validated['role_name']]);
         $user->update($validated);
 
         $changes = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
