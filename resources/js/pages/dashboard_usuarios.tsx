@@ -24,7 +24,6 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
 ];
-//Ya protegido
 
 export default function Dashboard() {
     const { users } = usePage<{ auth: any; users: any[] }>().props;
@@ -34,8 +33,8 @@ export default function Dashboard() {
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    const columns = getUserColumns(users);
-    
+    const columns = getUserColumns(users, selectedUserId, setSelectedUserId);
+
     const handleDelete = () => {
         if (selectedUserId) {
             router.delete(`/users/${selectedUserId}`, {
@@ -82,7 +81,13 @@ export default function Dashboard() {
                             </Button>
                         </div>
                         <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                            <DataTable columns={columns} data={users} />
+                            <DataTable
+                                columns={columns}
+                                data={users}
+                                selectedRowId={selectedUserId}
+                                onRowClick={(user) => setSelectedUserId(user.id)}
+                                getRowId={(user) => user.id}
+                            />
                         </div>
                         {/* Modal de Confirmación */}
                         <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>

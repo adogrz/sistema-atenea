@@ -29,11 +29,12 @@ class UserFactory extends Factory
         return [
             'name' => $this->faker->name,
             'email' => $this->faker->unique()->safeEmail,
-            'password' => Hash::make('password'), // Use a default password for all users
+            'password' => bcrypt('password'),
             'role_name' => $this->faker->randomElement($roles),
             'sede_name' => $this->faker->randomElement($sedes),
             'status' => $this->faker->randomElement(['active', 'inactive']),
             'remember_token' => Str::random(10),
+            'deleted_at' => null, //simular eliminados
         ];
     }
 

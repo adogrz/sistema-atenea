@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
                 'role_name' => 'admin',
                 'sede_name' => 'central',
                 'status' => 'active',
+                'deleted_at' => null,
             ]
         );
 

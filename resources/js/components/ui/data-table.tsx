@@ -28,11 +28,17 @@ import { Search } from "lucide-react";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  selectedRowId?: number | string | null;
+  onRowClick?: (row: TData) => void;
+  getRowId?: (row: TData) => string | number;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  selectedRowId,
+  onRowClick,
+  getRowId = (row: any) => row.id, // valor por defecto
 }: DataTableProps<TData, TValue>) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -87,7 +93,12 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  data-state={selectedRowId === getRowId(row.original) ? "selected" : undefined}
+                  onClick={() => onRowClick?.(row.original)}
+                  className="cursor-pointer hover:bg-muted"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
