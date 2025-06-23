@@ -6,6 +6,8 @@ use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Sede;
 use Spatie\Permission\Models\Role;
+use Spatie\Activitylog\Models\Activity;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -35,7 +37,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     // Dashboard admin
     Route::get('/dashboard', function () {
-        return Inertia::render('dashboard');
+        $logs = Activity::with('causer')->latest()->get();
+        return Inertia::render('dashboard', [
+            'logs' => $logs,
+        ]);
     })->name('dashboard');
 
     Route::resource('users', UserController::class)->except(['create', 'edit']);

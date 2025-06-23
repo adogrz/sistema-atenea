@@ -60,6 +60,7 @@ class UserController extends Controller
             ->performedOn($user)
             ->causedBy($userAuth)
             ->withProperties([
+                'event' => 'Actualizar',
                 'old' => $original,
                 'attributes' => $changes,
             ])
@@ -88,10 +89,11 @@ class UserController extends Controller
             ->performedOn($user)
             ->causedBy($userAuth)
             ->withProperties([
+                'event' => 'Eliminar',
                 'attributes' => $user->only(['name', 'email', 'role_name', 'sede_name']),
             ])
             ->event('deleted')
-            ->log('Usuario eliminado');
+            ->log('Eliminar Usuario');
 
         $user->delete();
 
@@ -110,6 +112,7 @@ class UserController extends Controller
             ->performedOn($user)
             ->causedBy($request->user())
             ->withProperties([
+                'event' => 'Restaurar',
                 'attributes' => $user->only(['name', 'email', 'role_name', 'sede_name']),
             ])
             ->event('restored')

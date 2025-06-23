@@ -73,6 +73,7 @@ class RegisteredUserController extends Controller
             ->performedOn($user)
             ->causedBy($request->user()) // puede ser null si no está autenticado
             ->withProperties([
+                'event' => 'Crear',
                 'attributes' => $user->only(['name', 'email', 'role_name', 'sede_name']),
             ])
             ->event('created')

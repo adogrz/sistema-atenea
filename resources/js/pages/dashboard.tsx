@@ -6,6 +6,9 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import * as React from 'react';
 import { Bar, BarChart, CartesianGrid, Label, Pie, PieChart, Sector } from 'recharts';
+import LogDataTable from "@/components/log-data-table";
+import { usePage } from "@inertiajs/react";
+
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -202,16 +205,22 @@ export function ChartPieLabel() {
 }
 
 export default function Dashboard() {
+
+    const { logs } = usePage<{ logs: any[] }>().props;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Dashboard`} />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="grid auto-rows-fr gap-4 md:grid-cols-3">
-                    <ChartBarStacked />
-                    <ChartPieInteractive />
-                    <ChartPieLabel />
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                    <div className="grid auto-rows-fr gap-4 md:grid-cols-3">
+                        {/* <ChartBarStacked />
+                        <ChartPieInteractive />
+                        <ChartPieLabel /> */}
+                    </div>
+                    <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4 border">
+                        <LogDataTable logs={logs} />
+                    </div>
                 </div>
-            </div>
         </AppLayout>
     );
 }

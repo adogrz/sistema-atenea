@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 
+
 class AuthenticatedSessionController extends Controller
 {
     /**
@@ -32,6 +33,19 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        $user = \App\Models\User::where('email', $request->email)->first();
+
+        activity('acceso')
+            ->performedOn($user)
+            ->causedBy($user)
+            ->withProperties([
+                'event' => 'Iniciar sesión',
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->event('login')
+            ->log('Inició de sesión');
 
         // Redirección basada en rol
         if ($request->user()->hasRole('admin')) {
