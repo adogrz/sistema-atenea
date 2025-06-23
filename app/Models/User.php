@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Models\Role;
+use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -70,5 +71,13 @@ class User extends Authenticatable
     public function sede()
     {
         return $this->belongsTo(Sede::class, 'sede_name', 'name');
+    }
+
+    /**
+     * Send the password reset notification.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }
