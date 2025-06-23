@@ -1,14 +1,30 @@
-import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-table';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { getUserColumns } from '@/components/user-columns';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { SharedData } from '@/types/SharedData';
 import { hasRole } from '@/utils/permissions';
+import { Button } from '@/components/ui/button';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Edit, Trash2, User, UserPlus } from 'lucide-react';
 import { useState } from 'react';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { getUserColumns } from "@/components/user-columns";
+import { DataTable } from "@/components/ui/data-table";
+import EditUserModal from "@/components/edit-user-modal";
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role_name: string;
+  sede_name: string;
+  status: string;
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -18,10 +34,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard() {
+    const { roles, sedes } = usePage<{
+        roles: Array<{ id: number; name: string; description: string }>;
+        sedes: Array<{ id: number; name: string; description: string }>;
+    }>().props;
+
     const { users } = usePage<{ auth: any; users: any[] }>().props;
     const { auth } = usePage<SharedData>().props;
+
     const userRole = auth.user?.roles || 'Usuario';
 
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [userToEdit, setUserToEdit] = useState<User | null>(null);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -41,26 +65,53 @@ export default function Dashboard() {
         }
     };
 
+    const handleEdit = () => {
+        const user = users.find((u) => u.id === selectedUserId);
+        if (user) {
+            setUserToEdit(user);
+            setShowEditModal(true);
+        }
+    };
+
+    const handleSaveEdit = (updates: {
+        name: string;
+        email: string;
+        status: string;
+        role_name: string;
+        sede_name: string;
+    }) => {
+        if (!userToEdit) return;
+
+        router.put(`/users/${userToEdit.id}`, updates, {
+            onSuccess: () => {
+                setShowEditModal(false);
+                setUserToEdit(null);
+            },
+            onError: (err) => {
+                console.error("Error al editar:", err);
+            },
+            onFinish: () => {
+                // optional: recargar datos si es necesario
+            },
+        });
+    };
+
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Dashboard - ${userRole}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {hasRole({ auth } as SharedData, 'admin') && (
                     <div className="admin-panel">
-                        <div className="flex items-center gap-2 rounded-lg border bg-background p-2">
-                            <Button variant="ghost" className="flex items-center gap-2">
-                                <User className="h-4 w-4" />
-                                <span>Usuario</span>
-                            </Button>
+                        <div className="flex items-center gap-2 p-2 bg-background rounded-lg border">
                             <Link href="/register">
                                 <Button variant="ghost" className="flex items-center gap-2">
                                     <UserPlus className="h-4 w-4" />
                                     <span>Agregar</span>
                                 </Button>
                             </Link>
-                            <Button variant="ghost" className="flex items-center gap-2">
-                                <Edit className="h-4 w-4" />
-                                <span>Editar</span>
+                            <Button onClick={handleEdit} disabled={!selectedUserId}>
+                                <Edit className="w-4 h-4" /> Editar
                             </Button>
                             <Button
                                 variant="ghost"
@@ -98,6 +149,14 @@ export default function Dashboard() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
+                        <EditUserModal
+                            open={showEditModal}
+                            onClose={() => setShowEditModal(false)}
+                            onSave={handleSaveEdit}
+                            user={userToEdit}
+                            roles={roles}
+                            sedes={sedes}
+                        />
                     </div>
                 )}
             </div>

@@ -10,7 +10,7 @@ use Inertia\Inertia;
 class UserController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Listado de usuarios.
      */
     public function index()
     {
@@ -21,109 +21,98 @@ class UserController extends Controller
                 'id' => $u->id,
                 'name' => $u->name,
                 'email' => $u->email,
-                'role' => $u->role->description ?? $u->role_name,
-                'sede' => $u->sede->description ?? $u->sede_name,
+                'role_name' => $u->role->description ?? $u->role_name,
+                'sede_name' => $u->sede->description ?? $u->sede_name,
                 'status' => $u->status,
             ])
         ]);
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
+     * Actualiza un usuario existente.
      */
     public function update(Request $request, User $user)
-    {   
+    {
+        // Verifica que el usuario autenticado sea válido
         $userAuth = $request->user();
 
         if (!$userAuth) {
             return back()->withErrors(['error' => 'Sesión caducada o no autenticado.']);
         }
 
-        $data = $request->validate([
-            'name' => 'required|string',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'status' => 'in:activo,inactivo',
+            'status' => 'required|in:active,inactive',
             'sede_name' => 'required|string|exists:sedes,name',
             'role_name' => 'required|string|exists:roles,name',
         ]);
 
-        $user->assignRole($request->role_name);
-        $user->update($data);
+        $original = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
 
-        activity()
+        // Actualiza rol y demás atributos
+        $user->assignRole($validated['role_name']);
+        $user->update($validated);
+
+        $changes = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
+
+        activity('usuarios')
             ->performedOn($user)
             ->causedBy($userAuth)
+            ->withProperties([
+                'old' => $original,
+                'attributes' => $changes,
+            ])
+            ->event('updated')
             ->log('Usuario actualizado');
 
         return back()->with('success', 'Usuario actualizado correctamente.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Elimina lógicamente (soft-delete) un usuario.
      */
     public function destroy(Request $request, User $user)
     {
         $userAuth = $request->user();
+
         if ($user->id === $userAuth->id) {
             return back()->withErrors(['error' => 'No puedes eliminar tu propia cuenta.']);
         }
 
-        activity()
+        if ($user->trashed()) {
+            return back()->withErrors(['error' => 'Este usuario ya está eliminado.']);
+        }
+
+        activity('usuarios')
             ->performedOn($user)
             ->causedBy($userAuth)
+            ->withProperties([
+                'attributes' => $user->only(['name', 'email', 'role_name', 'sede_name']),
+            ])
+            ->event('deleted')
             ->log('Usuario eliminado');
 
-        $user->delete(); // Soft delete
+        $user->delete();
 
         return back()->with('success', 'Usuario eliminado correctamente.');
     }
 
     /**
-     * Restore a soft-deleted user.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * Restaura un usuario previamente eliminado.
      */
     public function restore(Request $request, $id)
     {
         $user = User::onlyTrashed()->findOrFail($id);
         $user->restore();
 
-        activity()
+        activity('usuarios')
             ->performedOn($user)
             ->causedBy($request->user())
+            ->withProperties([
+                'attributes' => $user->only(['name', 'email', 'role_name', 'sede_name']),
+            ])
+            ->event('restored')
             ->log('Usuario restaurado');
 
         return back()->with('success', 'Usuario restaurado.');

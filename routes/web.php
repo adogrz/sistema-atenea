@@ -41,18 +41,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::resource('users', UserController::class)->except(['create', 'edit']);
 
     Route::get('/dashboard/usuarios', function () {
-        $users = User::with(['role', 'sede'])
-            ->get()
-            ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role_name' => $user->role->description ?? 'Sin rol',
-                    'sede_name' => $user->sede->description ?? 'Sin sede',
-                    'status' => $user->status,
-                ];
-            });
+        $users = User::all();
         $roles = Role::all()->map(function ($role) {
             return [
                 'id' => $role->id,
