@@ -14,13 +14,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Home() {
     const { auth } = usePage<SharedData>().props;
 
-    // Obtenemos la descripción del rol consultando el modelo Role en lugar de user.roles
-    const userRoleDescription =
-        auth.user?.role?.description ||
-        (auth.user?.roles && Array.isArray(auth.user.roles) && auth.user.roles.length > 0 ? auth.user.roles[0]?.description : 'Sin rol asignado');
+    type Role = { description: string };
+    type Sede = { description: string };
 
-    // Obtenemos la sede directamente del modelo de relación
-    const sedeDescription = auth.user?.sede?.description || 'Sin sede asignada';
+    const userRoleDescription =
+        (auth.user?.role as Role | undefined)?.description ||
+        (auth.user?.roles && Array.isArray(auth.user.roles) && auth.user.roles.length > 0
+            ? (auth.user.roles[0] as Role).description
+            : 'Sin rol asignado');
+
+    const sedeDescription = (auth.user?.sede as Sede | undefined)?.description || 'Sin sede asignada';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

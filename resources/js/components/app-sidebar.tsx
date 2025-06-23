@@ -8,25 +8,31 @@ import { ClipboardListIcon, HouseIcon, User } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
+    type EnhancedUser = {
+        role_name?: string;
+        roles?: Array<string | { name: string }>;
+    };
+
     const { auth } = usePage<SharedData>().props;
+
+    // Usar aserción de tipos para el usuario
+    const user = auth.user as EnhancedUser | undefined;
 
     // Verificación más robusta del rol de administrador
     const isAdmin =
-        auth.user?.role_name === 'admin' ||
-        (auth.user?.roles &&
-            Array.isArray(auth.user.roles) &&
-            (auth.user.roles.includes('admin') ||
-                auth.user.roles.some(
-                    (role) => (typeof role === 'string' && role === 'admin') || (typeof role === 'object' && role?.name === 'admin'),
-                )));
+        user?.role_name === 'admin' ||
+        (user?.roles &&
+            Array.isArray(user.roles) &&
+            (user.roles.includes('admin') ||
+                user.roles.some((role) => (typeof role === 'string' && role === 'admin') || (typeof role === 'object' && role?.name === 'admin'))));
 
     // Verificación más robusta para el rol de usuario normal
     const isNormalUser =
-        auth.user?.role_name === 'Usuario' ||
-        (auth.user?.roles &&
-            Array.isArray(auth.user.roles) &&
-            (auth.user.roles.includes('Usuario') ||
-                auth.user.roles.some(
+        user?.role_name === 'Usuario' ||
+        (user?.roles &&
+            Array.isArray(user.roles) &&
+            (user.roles.includes('Usuario') ||
+                user.roles.some(
                     (role) => (typeof role === 'string' && role === 'Usuario') || (typeof role === 'object' && role?.name === 'Usuario'),
                 )));
 
