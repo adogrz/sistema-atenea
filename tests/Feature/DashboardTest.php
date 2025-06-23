@@ -15,6 +15,7 @@ test('authenticated admin users can visit the dashboard', function () {
     $admin = User::factory()->create([
         'role_name' => 'admin',
         'email_verified_at' => now(),
+        'status' => 'active',
     ]);
     $admin->assignRole('admin');
 

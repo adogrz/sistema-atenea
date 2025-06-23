@@ -5,7 +5,9 @@ use App\Models\User;
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('profile page is displayed', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'status' => 'active',
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -15,7 +17,9 @@ test('profile page is displayed', function () {
 });
 
 test('profile information can be updated', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'status' => 'active',
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -36,7 +40,10 @@ test('profile information can be updated', function () {
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+        'status' => 'active',
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -53,7 +60,9 @@ test('email verification status is unchanged when the email address is unchanged
 });
 
 test('user can delete their account', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'status' => 'active',
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -66,11 +75,13 @@ test('user can delete their account', function () {
         ->assertRedirect('/');
 
     $this->assertGuest();
-    expect($user->fresh())->toBeNull();
+    expect($user->fresh()->deleted_at)->not->toBeNull();
 });
 
 test('correct password must be provided to delete account', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'status' => 'active',
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -83,5 +94,5 @@ test('correct password must be provided to delete account', function () {
         ->assertSessionHasErrors('password')
         ->assertRedirect('/settings/profile');
 
-    expect($user->fresh())->not->toBeNull();
+    expect($user->fresh()->deleted_at)->toBeNull();
 });
