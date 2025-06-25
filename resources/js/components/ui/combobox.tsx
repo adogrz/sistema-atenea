@@ -1,24 +1,13 @@
 // components/ui/combobox.tsx
-'use client'
+'use client';
 
-import * as React from 'react'
-import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react'
+import * as React from 'react';
+import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
 
-import { Button } from '@/components/ui/button'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from '@/components/ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface ComboboxProps {
   options: { value: string; label: string }[]
@@ -54,7 +43,7 @@ export function Combobox({
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
           <CommandInput placeholder={placeholder} className="h-9" />
           <CommandList>
