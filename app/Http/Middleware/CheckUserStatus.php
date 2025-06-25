@@ -18,8 +18,10 @@ class CheckUserStatus
     {
         if (Auth::check() && Auth::user()->status !== 'active') {
             Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
             return redirect()->route('login')->withErrors([
-                'email' => 'Tu cuenta está deshabilitada.',
+                'email' => __('auth.account_disabled'),
             ]);
         }
 
