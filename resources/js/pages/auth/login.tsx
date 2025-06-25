@@ -48,7 +48,12 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                 {/* Sección de la imagen */}
                 <div className="relative hidden bg-muted lg:block">
-                    <img src="/pjt-logo.webp" alt="Image" className="absolute inset-0 h-full w-full object-cover object-top" loading="lazy" />
+                    <img
+                        src="/pjt-logo.webp"
+                        alt="Logo de El Programa Jóvenes Talentos"
+                        className="absolute inset-0 h-full w-full object-cover object-top"
+                        loading="lazy"
+                    />
                 </div>
             </div>
         </>
