@@ -14,16 +14,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Home() {
     const { auth } = usePage<SharedData>().props;
 
-    type Role = { description: string };
-    type Sede = { description: string };
+    const getUserRoleDescription = (user: SharedData['auth']['user']) => {
+        return user?.role?.description || user?.roles?.[0]?.description || 'Sin rol asignado';
+    };
 
-    const userRoleDescription =
-        (auth.user?.role as Role | undefined)?.description ||
-        (auth.user?.roles && Array.isArray(auth.user.roles) && auth.user.roles.length > 0
-            ? (auth.user.roles[0] as Role).description
-            : 'Sin rol asignado');
+    const getSedeDescription = (user: SharedData['auth']['user']) => {
+        return user?.sede?.description || 'Sin sede asignada';
+    };
 
-    const sedeDescription = (auth.user?.sede as Sede | undefined)?.description || 'Sin sede asignada';
+    const userRoleDescription = getUserRoleDescription(auth.user);
+    const sedeDescription = getSedeDescription(auth.user);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

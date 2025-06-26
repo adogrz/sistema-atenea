@@ -34,7 +34,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $user = \App\Models\User::where('email', $request->email)->first();
+        $user = $request->user();
 
         activity('acceso')
             ->performedOn($user)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Sede;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -12,7 +13,6 @@ use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
-use App\Models\Sede;
 
 class RegisteredUserController extends Controller
 {
@@ -22,6 +22,7 @@ class RegisteredUserController extends Controller
     public function create(): Response
     {
         $roles = Role::select('name', 'description')
+            ->orderBy('description')
             ->get()
             ->map(fn ($role) => [
                 'value' => $role->name,
@@ -30,6 +31,7 @@ class RegisteredUserController extends Controller
             ->toArray();
 
         $sedes = Sede::select('name', 'description')
+            ->orderBy('description')
             ->get()
             ->map(fn ($sede) => [
                 'value' => $sede->name,

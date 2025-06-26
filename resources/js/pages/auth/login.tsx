@@ -2,15 +2,6 @@ import { LoginForm, type LoginFormData } from '@/components/login-form';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-import LogoPjt from '@/components/icons/LogoPjt';
-import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-
 interface LoginProps {
     status?: string;
     canResetPassword: boolean;
@@ -52,18 +43,14 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     </div>
 
                     {/* Mensaje de estado */}
-                    {status && (
-                        <div className="text-center text-sm font-medium text-green-600">
-                            {status}
-                        </div>
-                    )}
+                    {status && <div className="text-center text-sm font-medium text-green-600">{status}</div>}
                 </div>
 
                 {/* Sección de la imagen */}
                 <div className="relative hidden bg-muted lg:block">
                     <img
                         src="/pjt-logo.webp"
-                        alt="Image"
+                        alt="Logo de El Programa Jóvenes Talentos"
                         className="absolute inset-0 h-full w-full object-cover object-top"
                         loading="lazy"
                     />

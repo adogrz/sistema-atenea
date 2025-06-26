@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Sede extends Model
 {
-    
+
     use HasFactory;
 
     /**
