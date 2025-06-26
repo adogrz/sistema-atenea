@@ -3,11 +3,11 @@ import { getUserColumns, type User } from '@/components/user-columns';
 import { useState } from 'react';
 
 export default function UserDataTable({ users }: { users: User[] }) {
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
     if (!users || users.length === 0) {
         return <div className="py-4 text-center text-muted-foreground">No hay usuarios disponibles</div>;
     }
-
-    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
     return (
         <DataTable
