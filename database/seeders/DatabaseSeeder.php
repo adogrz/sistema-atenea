@@ -8,15 +8,15 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // Sedes de la institucion
-        $this->call(SedeSeeder::class);
-        //Permisos y roles (Spatie)
-        $this->call(PermissionSeeder::class);
+        $this->call([
+            //Permisos y roles (Spatie)
+            PermissionSeeder::class,
+            // Sedes de la institucion
+            SedeSeeder::class,
+            // ... Otros seeders necesarios
+        ]);
 
         // Crear el usuario con rol de Administrador
         $user = User::firstOrCreate(
@@ -34,8 +34,8 @@ class DatabaseSeeder extends Seeder
         $user->assignRole("admin");
 
         // Usuarios aleatorios con roles
-        User::factory(100)->create()->each(function ($user) {
-            $user->assignRole($user->role_name);
-        });
+//        User::factory(100)->create()->each(function ($user) {
+//            $user->assignRole($user->role_name);
+//        });
     }
 }
