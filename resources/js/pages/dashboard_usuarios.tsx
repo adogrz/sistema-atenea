@@ -16,6 +16,8 @@ import {
 import { getUserColumns } from "@/components/user-columns";
 import { DataTable } from "@/components/ui/data-table";
 import EditUserModal from "@/components/edit-user-modal";
+import { PieChart } from "@/components/ui/charts/pie";
+import { Description } from '@radix-ui/react-dialog';
 
 interface User {
     id: number;
@@ -39,19 +41,40 @@ export default function Dashboard() {
         sedes: Array<{ id: number; name: string; description: string }>;
     }>().props;
 
+    // Obtenemos los usuarios y la información de autenticación desde la página
     const { users } = usePage<{ auth: any; users: any[] }>().props;
     const { auth } = usePage<SharedData>().props;
-
     const userRole = auth.user?.roles || 'Usuario';
 
+    // Estados para manejar la selección de usuario y modales
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [userToEdit, setUserToEdit] = useState<User | null>(null);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+    // Obtenemos las columnas de la tabla de usuarios
     const columns = getUserColumns(users, selectedUserId, setSelectedUserId);
 
+    // Datos para los gráficos
+    const totalUsuarios = users.length;
+    const activos = users.filter(u => u.status === 'active').length;
+    const inactivos = users.filter(u => u.status === 'inactive').length;
+
+    const statusData = [
+        { id: "Activos", label: "Activos", value: activos },
+        { id: "Inactivos", label: "Inactivos", value: inactivos },
+    ];
+
+    const usuariosPorRol = Object.values(
+        users.reduce((acc, user) => {
+            acc[user.role_name] = acc[user.role_name] || { id: user.role_name, label: user.role_name, value: 0 };
+            acc[user.role_name].value += 1;
+            return acc;
+        }, {} as Record<string, { id: string; label: string; value: number; color?: string }>)
+    ) as Array<{ id: string; label: string; value: number; color?: string }>;
+
+    // Funciones para manejar las acciones de eliminar, editar y enviar enlace de recuperación
     const handleDelete = () => {
         if (selectedUserId) {
             router.delete(`/users/${selectedUserId}`, {
@@ -143,12 +166,43 @@ export default function Dashboard() {
                                 getRowId={(user) => user.id}
                             />
                         </div>
+                        <div className="flex flex-col gap-6 p-4">
+                            {/* Gráficos de usuarios */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                                {/* Total usuarios */}
+                                <div className="flex flex-col items-center justify-center bg-background rounded-lg border p-4">
+                                    <span className="text-2xl font-bold">{totalUsuarios}</span>
+                                    <span className="text-muted-foreground">Usuarios totales</span>
+                                </div>
+                                {/* Pie de activos/inactivos */}
+                                <div className="bg-background rounded-lg border p-4 flex flex-col items-center">
+                                    <span className="font-semibold mb-2">Activos vs Inactivos</span>
+                                    <div className="w-full h-48">
+                                        <PieChart
+                                            data={statusData}
+                                        />
+                                    </div>
+                                </div>
+                                {/* Pie de usuarios por rol */}
+                                <div className="bg-background rounded-lg border p-4 flex flex-col items-center">
+                                    <span className="font-semibold mb-2">Usuarios por rol</span>
+                                    <div className="w-full h-48">
+                                        <PieChart data={usuariosPorRol} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         {/* Modal de Confirmación */}
                         <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
                             <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle>¿Eliminar usuario?</DialogTitle>
                                 </DialogHeader>
+                                <Description className="mb-4">
+                                    <p className="mb-1">Id: {selectedUserId}</p>
+                                    <p className="mb-1">Nombre: {users.find(user => user.id === selectedUserId)?.name}</p>
+                                    <p className="mb-1">Email: {users.find(user => user.id === selectedUserId)?.email}</p>
+                                </Description>
                                 <p>Esta acción no se puede deshacer. El usuario seleccionado será eliminado permanentemente del sistema.</p>
                                 <DialogFooter className="flex justify-end gap-2 pt-4">
                                     <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
@@ -165,6 +219,9 @@ export default function Dashboard() {
                                 <DialogHeader>
                                     <DialogTitle>¿Enviar enlace de recuperación?</DialogTitle>
                                 </DialogHeader>
+                                <p className="mb-1">ID: {selectedUserId}</p>
+                                <p className="mb-1">Nombre: {users.find(user => user.id === selectedUserId)?.name}</p>
+                                <p className="mb-1">Email: {users.find(user => user.id === selectedUserId)?.email}</p>
                                 <p>¿Estás seguro de que deseas enviar el enlace de recuperación de contraseña a este usuario?</p>
                                 <DialogFooter className="pt-4">
                                     <Button variant="secondary" onClick={() => setShowResetConfirm(false)}>

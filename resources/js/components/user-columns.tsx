@@ -39,10 +39,6 @@ export function getUserColumns(users: User[], selectedUserId: number | null, set
             enableHiding: false,
         },
         {
-            accessorKey: 'id',
-            header: 'ID',
-        },
-        {
             accessorKey: 'name',
             header: 'Nombre',
         },
