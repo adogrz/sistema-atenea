@@ -35,6 +35,7 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        dump($request->all());
         // Verifica que el usuario autenticado sea válido
         $userAuth = $request->user();
 
@@ -47,7 +48,8 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'status' => 'required|in:active,inactive',
             'sede_name' => 'required|string|exists:sedes,name',
-            'role_name' => 'required|string|exists:roles,name',
+            'role_name' => 'required|array|min:1',
+            'role_name.*' => 'string|exists:roles,name',
         ]);
 
         $original = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
@@ -56,6 +58,7 @@ class UserController extends Controller
         $user->syncRoles([$validated['role_name']]);
         $user->update($validated);
 
+        // Actualiza los atributos adicionales
         $changes = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
 
         activity('usuarios')

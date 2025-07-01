@@ -121,8 +121,8 @@ export function PieChart({ data }: PieChartProps) {
         legends={[
           {
             itemTextColor: isDark ? "#fff" : "#333",
-            anchor: "bottom",
-            direction: "row",
+            anchor: "bottom-left",
+            direction: "column",
             justify: false,
             translateY: 24,
             itemWidth: 80,

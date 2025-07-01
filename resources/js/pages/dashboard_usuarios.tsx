@@ -3,7 +3,7 @@ import { type BreadcrumbItem } from '@/types';
 import { SharedData } from '@/types/SharedData';
 import { hasRole } from '@/utils/permissions';
 import { Button } from '@/components/ui/button';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Edit, Trash2, User, UserPlus, MailCheck } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -18,15 +18,22 @@ import { DataTable } from "@/components/ui/data-table";
 import EditUserModal from "@/components/edit-user-modal";
 import { PieChart } from "@/components/ui/charts/pie";
 import { Description } from '@radix-ui/react-dialog';
+import RegisterForm from "@/components/register-user-modal";
+
+// Definición de interfaces para los datos del usuario, roles y sedes
+interface Role { id: number; name: string; description: string; }
+interface Sede { id: number; name: string; description: string; }
 
 interface User {
     id: number;
     name: string;
     email: string;
-    role_name: string;
+    roles: Role[] | string;
+    role_name: string[];
     sede_name: string;
     status: string;
 }
+
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -44,16 +51,17 @@ export default function Dashboard() {
     // Obtenemos los usuarios y la información de autenticación desde la página
     const { users } = usePage<{ auth: any; users: any[] }>().props;
     const { auth } = usePage<SharedData>().props;
-    const userRole = auth.user?.roles || 'Usuario';
 
     // Estados para manejar la selección de usuario y modales
+    const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [userToEdit, setUserToEdit] = useState<User | null>(null);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     // Obtenemos las columnas de la tabla de usuarios
+    const userRole = auth.user?.roles || 'Usuario';
     const columns = getUserColumns(users, selectedUserId, setSelectedUserId);
 
     // Datos para los gráficos
@@ -66,10 +74,37 @@ export default function Dashboard() {
         { id: "Inactivos", label: "Inactivos", value: inactivos },
     ];
 
+    // Agrupamos los usuarios por rol
     const usuariosPorRol = Object.values(
         users.reduce((acc, user) => {
-            acc[user.role_name] = acc[user.role_name] || { id: user.role_name, label: user.role_name, value: 0 };
-            acc[user.role_name].value += 1;
+            // Normaliza a array de roles
+            let roles: string[] = [];
+            if (Array.isArray(user.role_name)) {
+                roles = user.role_name;
+            } else if (typeof user.role_name === "string") {
+                try {
+                    const parsed = JSON.parse(user.role_name);
+                    if (Array.isArray(parsed)) {
+                        roles = parsed;
+                    } else if (user.role_name.includes(",")) {
+                        roles = user.role_name.split(",").map((r: string) => r.trim());
+                    } else if (user.role_name) {
+                        roles = [user.role_name];
+                    }
+                } catch {
+                    if (user.role_name.includes(",")) {
+                        roles = user.role_name.split(",").map((r: string) => r.trim());
+                    } else if (user.role_name) {
+                        roles = [user.role_name];
+                    }
+                }
+            }
+
+            // Suma uno por cada rol
+            roles.forEach(role => {
+                acc[role] = acc[role] || { id: role, label: role, value: 0 };
+                acc[role].value += 1;
+            });
             return acc;
         }, {} as Record<string, { id: string; label: string; value: number; color?: string }>)
     ) as Array<{ id: string; label: string; value: number; color?: string }>;
@@ -97,29 +132,6 @@ export default function Dashboard() {
         }
     };
 
-    const handleSaveEdit = (updates: {
-        name: string;
-        email: string;
-        status: string;
-        role_name: string;
-        sede_name: string;
-    }) => {
-        if (!userToEdit) return;
-
-        router.put(`/users/${userToEdit.id}`, updates, {
-            onSuccess: () => {
-                setShowEditModal(false);
-                setUserToEdit(null);
-            },
-            onError: (err) => {
-                console.error("Error al editar:", err);
-            },
-            onFinish: () => {
-                // optional: recargar datos si es necesario
-            },
-        });
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Dashboard - ${userRole}`} />
@@ -136,12 +148,14 @@ export default function Dashboard() {
                                 <MailCheck className="h-4 w-4" />
                                 <span>Enviar enlace de recuperación</span>
                             </Button>
-                            <Link href="/register">
-                                <Button variant="ghost" className="flex items-center gap-2">
-                                    <UserPlus className="h-4 w-4" />
-                                    <span>Agregar</span>
-                                </Button>
-                            </Link>
+                            <Button
+                                variant="ghost"
+                                className="flex items-center gap-2"
+                                onClick={() => setShowRegisterModal(true)}
+                            >
+                                <UserPlus className="h-4 w-4" />
+                                <span>Agregar</span>
+                            </Button>
                             <Button
                                 variant="ghost"
                                 onClick={handleEdit} disabled={!selectedUserId}>
@@ -200,8 +214,8 @@ export default function Dashboard() {
                                 </DialogHeader>
                                 <Description className="mb-4">
                                     <p className="mb-1">Id: {selectedUserId}</p>
-                                    <p className="mb-1">Nombre: {users.find(user => user.id === selectedUserId)?.name}</p>
-                                    <p className="mb-1">Email: {users.find(user => user.id === selectedUserId)?.email}</p>
+                                    <p className="mb-1">Nombre: {userToEdit?.name}</p>
+                                    <p className="mb-1">Email: {userToEdit?.email}</p>
                                 </Description>
                                 <p>Esta acción no se puede deshacer. El usuario seleccionado será eliminado permanentemente del sistema.</p>
                                 <DialogFooter className="flex justify-end gap-2 pt-4">
@@ -220,8 +234,8 @@ export default function Dashboard() {
                                     <DialogTitle>¿Enviar enlace de recuperación?</DialogTitle>
                                 </DialogHeader>
                                 <p className="mb-1">ID: {selectedUserId}</p>
-                                <p className="mb-1">Nombre: {users.find(user => user.id === selectedUserId)?.name}</p>
-                                <p className="mb-1">Email: {users.find(user => user.id === selectedUserId)?.email}</p>
+                                <p className="mb-1">Nombre: {userToEdit?.name}</p>
+                                <p className="mb-1">Email: {userToEdit?.email}</p>
                                 <p>¿Estás seguro de que deseas enviar el enlace de recuperación de contraseña a este usuario?</p>
                                 <DialogFooter className="pt-4">
                                     <Button variant="secondary" onClick={() => setShowResetConfirm(false)}>
@@ -242,8 +256,37 @@ export default function Dashboard() {
                         <EditUserModal
                             open={showEditModal}
                             onClose={() => setShowEditModal(false)}
-                            onSave={handleSaveEdit}
+                            onSave={(data) => {
+                                if (userToEdit) {
+                                    router.put(`/users/${userToEdit.id}`, data, {
+                                        onSuccess: () => {
+                                            setShowEditModal(false);
+                                            setSelectedUserId(null);
+                                        },
+                                        onError: (errors) => {
+                                            console.error('Error al editar:', errors);
+                                        },
+                                    });
+                                }
+                            }}
                             user={userToEdit}
+                            roles={roles}
+                            sedes={sedes}
+                        />
+                        <RegisterForm
+                            open={showRegisterModal}
+                            onClose={() => setShowRegisterModal(false)}
+                            onRegister={(data) => {
+                                router.post(route('register'), data, {
+                                    onSuccess: () => {
+                                        setShowRegisterModal(false);
+                                        setSelectedUserId(null);
+                                    },
+                                    onError: (errors) => {
+                                        console.error('Error al registrar:', errors);
+                                    },
+                                });
+                            }}
                             roles={roles}
                             sedes={sedes}
                         />

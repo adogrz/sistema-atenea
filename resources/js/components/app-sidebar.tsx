@@ -4,7 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { type NavItem } from '@/types';
 import { SharedData } from '@/types/SharedData';
 import { Link, usePage } from '@inertiajs/react';
-import { ClipboardListIcon, HouseIcon, User } from 'lucide-react';
+import { CalendarClock, ChartPie, ClipboardListIcon, GraduationCap, HouseIcon, School, User, Users2 } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -25,6 +25,16 @@ export function AppSidebar() {
             Array.isArray(user.roles) &&
             (user.roles.includes('admin') ||
                 user.roles.some((role) => (typeof role === 'string' && role === 'admin') || (typeof role === 'object' && role?.name === 'admin'))));
+    
+    // Verificación más robusta para el rol de administrador académico
+    const isAdminAcademico =
+        user?.role_name === 'admin_academic' ||
+        (user?.roles &&
+            Array.isArray(user.roles) &&
+            (user.roles.includes('admin_academic') ||
+                user.roles.some(
+                    (role) => (typeof role === 'string' && role === 'admin_academic') || (typeof role === 'object' && role?.name === 'admin_academic'),
+                )));    
 
     // Verificación más robusta para el rol de usuario normal
     const isNormalUser =
@@ -48,9 +58,22 @@ export function AppSidebar() {
                   { title: 'Usuarios', href: '/dashboard/usuarios', icon: User },
               ]
             : []),
+        // Elementos para administrador academico
+        ...(isAdminAcademico
+            ? [
+                  { title: 'Calendario Académico', href: '/panel/calendario', icon: CalendarClock },
+                  { title: 'Datos Aspirantes', href: '/dashboard/sedes', icon: ChartPie },
+                  { title: 'Estudiantes', href: '/dashboard/sedes', icon: Users2 },
+                  { title: 'Academia Sabatina', href: '/dashboard/sedes', icon: School },
+                  { title: 'FDTC', href: '/dashboard/sedes', icon: GraduationCap },
+
+              ]
+            : []),
+            
 
         // Elementos solo para usuarios normales
         ...(isNormalUser ? [{ title: 'Mi perfil', href: '/perfil', icon: User }] : []),
+
     ];
 
     return (

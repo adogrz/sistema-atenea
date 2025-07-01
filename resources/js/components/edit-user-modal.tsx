@@ -16,15 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import { usePage } from "@inertiajs/react";
 
+// Definición de interfaces para los datos del usuario, roles y sedes
 interface Role { id: number; name: string; description: string; }
 interface Sede { id: number; name: string; description: string; }
+
 interface User {
   id: number;
   name: string;
   email: string;
-  role_name: string;
+  roles: Role[] | string;
+  role_name: string[];
   sede_name: string;
   status: string;
 }
@@ -36,7 +40,7 @@ interface EditUserModalProps {
     name: string;
     email: string;
     status: string;
-    role_name: string;
+    role_name: string[];
     sede_name: string;
   }) => void;
   user: User | null;
@@ -52,27 +56,52 @@ export default function EditUserModal({
   roles,
   sedes,
 }: EditUserModalProps) {
+  // Obtener errores de la página actual
   const { errors } = usePage().props;
-
+  // Estados locales para manejar los campos del formulario
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("activo");
-  const [selectedRole, setSelectedRole] = useState("");
   const [selectedSede, setSelectedSede] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
+  // Efecto para inicializar los campos del formulario cuando se abre el modal
+  // o cuando cambia el usuario seleccionado
+  // También limpia los errores al abrir el diálogo
   useEffect(() => {
     if (user) {
       setName(user.name);
       setEmail(user.email);
       setStatus(user.status);
-      setSelectedRole(user.role_name);
       setSelectedSede(user.sede_name);
+      setSelectedRoles(
+        Array.isArray(user.roles)
+          ? user.roles.map(role => role.name)
+          : user.roles
+            ? user.roles.split(",")
+            : []
+      );
+      // Limpiar errores al abrir el diálogo
+      if (errors) {
+        Object.keys(errors).forEach(key => {
+          if (errors[key]) {
+            delete errors[key]; // Limpiar errores específicos
+          }
+        });
+      }
     }
   }, [user]);
 
+  console.log("EditUserModal user:", user);
+
+  // Si no hay usuario, no renderizar el modal
   if (!user) return null;
 
+  const session = (usePage().props as any).auth?.user;
+  if (!session) {
+    return null; // No renderizar si no hay usuario autenticado
+  }
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -114,26 +143,7 @@ export default function EditUserModal({
               {errors?.status && <p className="text-sm text-red-500">{errors.status}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label>Rol</Label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccionar rol" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((rol) => (
-                    <SelectItem key={rol.name} value={rol.name}>
-                      <div className="px-1 py-1">
-                        <div className="font-medium">{rol.description}</div>
-                        <div className="text-xs text-muted-foreground">{rol.name}</div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors?.role_name && <p className="text-sm text-red-500">{errors.role_name}</p>}
-            </div>
-
+            
             <div className="space-y-2">
               <Label>Sede</Label>
               <Select value={selectedSede} onValueChange={setSelectedSede}>
@@ -145,7 +155,6 @@ export default function EditUserModal({
                     <SelectItem key={sede.name} value={sede.name}>
                       <div className="px-1 py-1">
                         <div className="font-medium">{sede.description}</div>
-                        <div className="text-xs text-muted-foreground">{sede.name}</div>
                       </div>
                     </SelectItem>
                   ))}
@@ -154,12 +163,35 @@ export default function EditUserModal({
               {errors?.sede_name && <p className="text-sm text-red-500">{errors.sede_name}</p>}
             </div>
           </div>
-
+            <div className="space-y-2">
+              <Label>Roles</Label>
+              <div className="flex flex-col gap-1 max-h-40 overflow-y-auto border rounded px-2 py-1">
+                {roles.map((rol) => (
+                  <label key={rol.name} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedRoles.includes(rol.name)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRoles([...selectedRoles, rol.name]);
+                        } else {
+                          setSelectedRoles(selectedRoles.filter((r) => r !== rol.name));
+                        }
+                      }}
+                    />
+                    <span>
+                      <span className="font-medium">{rol.description}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {errors?.role_name && <p className="text-sm text-red-500">{errors.role_name}</p>}
+            </div>
           <DialogFooter className="pt-6">
             <Button variant="secondary" onClick={onClose}>Cancelar</Button>
             <Button
               onClick={() => setShowConfirm(true)}
-              disabled={!name || !email || !selectedRole || !selectedSede || !status}
+              disabled={!name || !email || !selectedRoles || !selectedSede || !status}
             >
               Guardar
             </Button>
@@ -177,7 +209,13 @@ export default function EditUserModal({
             <Button variant="secondary" onClick={() => setShowConfirm(false)}>Cancelar</Button>
             <Button
               onClick={() => {
-                onSave({ name, email, status, role_name: selectedRole, sede_name: selectedSede });
+                onSave({
+                  name,
+                  email,
+                  status,
+                  role_name: selectedRoles,
+                  sede_name: selectedSede
+                });
                 setShowConfirm(false);
               }}
             >
