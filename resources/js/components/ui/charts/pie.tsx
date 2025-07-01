@@ -145,10 +145,10 @@ export function PieChart({ data }: PieChartProps) {
           ] : []
         }
       />
-      <div className="absolute bottom-6 right-6">
+      <div className="absolute top-1 right-1">
         <button
           onClick={() => setShowTable((v) => !v)}
-          className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-4 py-2 shadow flex items-center gap-2"
+          className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-1 py-1 shadow flex items-center gap-2"
           title="Mostrar resumen"
         >
           {/* Icono tabla */}

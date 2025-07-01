@@ -107,8 +107,8 @@ export function DataTable<TData, TValue>({
         />
       </div>
       {/* Tabla */}
-      <div className="rounded-md border w-full overflow-hidden flex flex-col">
-        <Table className="w-full">
+      <div className="rounded-md border w-full overflow-hidden flex flex-col max-h-[50vh]">
+        <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -184,10 +184,10 @@ export function DataTable<TData, TValue>({
           disabled={!table.getCanNextPage()}
         >
           Siguiente
-        </Button>
-      </div>
-      <div className="text-sm text-muted-foreground">
-        Total de filas: {table.getFilteredRowModel().rows.length}
+        </Button>  
+        <div className="text-sm text-muted-foreground py-2 px-2">
+          Total de filas: {table.getFilteredRowModel().rows.length}
+        </div>
       </div>
     </div>
   );
