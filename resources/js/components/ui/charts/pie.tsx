@@ -79,7 +79,7 @@ function SummaryTable({ data, onClose }: { data: PieChartProps["data"]; onClose:
 export function PieChart({ data }: PieChartProps) {
   const [showTable, setShowTable] = useState(false);
   const [showArcLinks, setShowArcLinks] = useState(false); // Nuevo estado
-
+  const [showLegend, setShowLegend] = useState(true); // Estado para mostrar/ocultar leyenda
   // Generar colores sincronizados para el gráfico y la leyenda
   const coloredData = data.map((d, i) => ({
     ...d,
@@ -96,7 +96,10 @@ export function PieChart({ data }: PieChartProps) {
         <input
           type="checkbox"
           checked={showArcLinks}
-          onChange={() => setShowArcLinks((v) => !v)}
+          onChange={() => {
+            setShowArcLinks((v) => !v)
+            setShowLegend((v) => !v) // Alternar leyenda al cambiar arc links
+          }}
           className="accent-blue-500"
         /> Enlaces
       </label>
@@ -118,25 +121,29 @@ export function PieChart({ data }: PieChartProps) {
         arcLinkLabelsThickness={2}
         arcLinkLabelsColor={{ from: "color" }}
         tooltip={props => <CustomTooltip {...props} data={coloredData} />}
-        legends={[
-          {
-            itemTextColor: isDark ? "#fff" : "#333",
-            anchor: "bottom-left",
-            direction: "column",
-            justify: false,
-            translateY: 24,
-            itemWidth: 80,
-            itemHeight: 18,
-            itemsSpacing: 4,
-            symbolSize: 14,
-            symbolShape: "circle",
-            data: coloredData.slice(0, 3).map((d) => ({
-              id: d.id,
-              label: d.label,
-              color: d.color,
-            })),
-          },
-        ]}
+        legends={
+          showLegend ?
+          [
+            {
+              
+              itemTextColor: isDark ? "#fff" : "#333",
+              anchor: "bottom-left",
+              direction: "column",
+              justify: false,
+              translateY: 24,
+              itemWidth: 80,
+              itemHeight: 18,
+              itemsSpacing: 4,
+              symbolSize: 14,
+              symbolShape: "circle",
+              data: coloredData.slice(0, 3).map((d) => ({
+                id: d.id,
+                label: d.label,
+                color: d.color,
+              })),
+            },
+          ] : []
+        }
       />
       <div className="absolute bottom-6 right-6">
         <button
