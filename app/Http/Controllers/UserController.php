@@ -35,14 +35,21 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        dump($request->all());
         // Verifica que el usuario autenticado sea válido
         $userAuth = $request->user();
-
+        
         if (!$userAuth) {
             return back()->withErrors(['error' => 'Sesión caducada o no autenticado.']);
         }
 
+        // Obtén los datos de la solicitud
+        $data = $request->all();
+        
+        // Asegúrate de que role_name es un array
+        if (isset($data['role_name']) && !is_array($data['role_name'])) {
+            $data['role_name'] = [$data['role_name']];
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
@@ -54,9 +61,14 @@ class UserController extends Controller
 
         $original = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
 
-        // Actualiza rol y demás atributos
-        $user->syncRoles([$validated['role_name']]);
-        $user->update($validated);
+        // Actualiza rol y demás atributos - CORREGIDO AQUÍ
+        $user->syncRoles($validated['role_name']);
+        $user->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'status' => $validated['status'],
+            'sede_name' => $validated['sede_name'],
+        ]);
 
         // Actualiza los atributos adicionales
         $changes = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
@@ -72,7 +84,7 @@ class UserController extends Controller
             ->event('updated')
             ->log('Usuario actualizado');
 
-        return back()->with('success', 'Usuario actualizado correctamente.');
+        return redirect()->back()->with('success', 'Usuario actualizado correctamente.');
     }
 
     /**

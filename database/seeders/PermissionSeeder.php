@@ -22,7 +22,7 @@ class PermissionSeeder extends Seeder
                 'user-view-profile', 'edit-profile', 'change-password'
             ],
             'usuarios' => [
-                'user-list', 'user-create', 'user-edit', 'user-delete', 'user-active', 'user-inactive',
+                'user-list', 'user-create', 'user-edit', 'user-delete', 'user-active', 'user-inactive', 'user-reset-password'
             ],
             'roles' => [
                 'role-list', 'role-create', 'role-edit', 'role-delete', 'role-assign'
