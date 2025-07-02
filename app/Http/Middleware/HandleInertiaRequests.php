@@ -40,19 +40,18 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             'appName' => config('app.name'),
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                    'roles' => $request->user()->getRoleNames(), // ARRAY DE ROLES 
-                    'permissions' => $request->user()->getAllPermissions()->pluck('name'),
-                ] : null,
+                // Cargar usuario con roles y TODOS sus permisos (directos + heredados)
+                'user' => fn() => $request->user()
+                    ? array_merge($request->user()->load('roles')->toArray(), [
+                        'permissions' => $request->user()->getAllPermissions()->toArray()
+                      ])
+                    : null,
             ],
             'ziggy' => fn(): array => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ]);
     }
 }
