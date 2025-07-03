@@ -46,6 +46,7 @@ interface EditUserModalProps {
   user: User | null;
   roles: Role[];
   sedes: Sede[];
+  errors?: Record<string, string>;
 }
 
 export default function EditUserModal({
@@ -55,9 +56,8 @@ export default function EditUserModal({
   user,
   roles,
   sedes,
+  errors = {},
 }: EditUserModalProps) {
-  // Obtener errores de la página actual
-  const { errors } = usePage().props;
   // Estados locales para manejar los campos del formulario
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -68,7 +68,6 @@ export default function EditUserModal({
 
   // Efecto para inicializar los campos del formulario cuando se abre el modal
   // o cuando cambia el usuario seleccionado
-  // También limpia los errores al abrir el diálogo
   useEffect(() => {
     if (user) {
       setName(user.name);
@@ -82,14 +81,6 @@ export default function EditUserModal({
             ? user.roles.split(",")
             : []
       );
-      // Limpiar errores al abrir el diálogo
-      if (errors) {
-        Object.keys(errors).forEach(key => {
-          if (errors[key]) {
-            delete errors[key]; // Limpiar errores específicos
-          }
-        });
-      }
     }
   }, [user]);
   

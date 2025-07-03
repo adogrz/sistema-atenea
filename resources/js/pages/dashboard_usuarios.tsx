@@ -67,6 +67,7 @@ export default function Dashboard() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     // Obtener el usuario seleccionado basado en selectedUserId
     const selectedUser = selectedUserId ? users.find((u) => u.id === selectedUserId) || null : null;
@@ -157,9 +158,11 @@ export default function Dashboard() {
                 onSuccess: () => {
                     setShowEditModal(false);
                     setSelectedUserId(null);
+                    setFormErrors({});
                 },
                 onError: (errors) => {
                     console.error('Error al editar:', errors);
+                    setFormErrors(errors);
                 },
             });
         }
@@ -296,11 +299,15 @@ export default function Dashboard() {
 
                     <EditUserModal
                         open={showEditModal}
-                        onClose={() => setShowEditModal(false)}
+                        onClose={() => {
+                            setShowEditModal(false);
+                            setFormErrors({});
+                        }}
                         onSave={handleEditUser}
                         user={selectedUser}
                         roles={roles}
                         sedes={sedes}
+                        errors={formErrors} // Pasar los errores al modal
                     />
 
                     <RegisterForm
