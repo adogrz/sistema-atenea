@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
@@ -40,12 +39,37 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             'appName' => config('app.name'),
             'auth' => [
-                // Cargar usuario con roles y TODOS sus permisos (directos + heredados)
-                'user' => fn() => $request->user()
-                    ? array_merge($request->user()->load('roles')->toArray(), [
-                        'permissions' => $request->user()->getAllPermissions()->toArray()
-                      ])
-                    : null,
+                'user' => function () use ($request) {
+                    if (!$request->user()) {
+                        return null;
+                    }
+
+                    // Cargar usuario con todas sus relaciones y permisos
+                    $user = $request->user()->load(['roles.permissions', 'sede', 'areas']);
+                    $userData = $user->toArray();
+                    $userData['permissions'] = $user->getAllPermissions()->pluck('name');
+
+                    // Asegurarse de que los pivotes se cargan correctamente
+                    $userData['roles'] = $user->roles->map(function ($role) {
+                        return [
+                            'id' => $role->id,
+                            'name' => $role->name,
+                            'description' => $role->description,
+                            'pivot' => $role->pivot,
+                        ];
+                    });
+
+                    $userData['areas'] = $user->areas->map(function ($area) {
+                        return [
+                            'id' => $area->id,
+                            'name' => $area->name,
+                            'description' => $area->description,
+                            'pivot' => $area->pivot,
+                        ];
+                    });
+
+                    return $userData;
+                },
             ],
             'ziggy' => fn(): array => [
                 ...(new Ziggy)->toArray(),
