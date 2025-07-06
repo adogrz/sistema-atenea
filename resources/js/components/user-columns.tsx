@@ -3,38 +3,32 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
 
+// Actualizar la interfaz User para reflejar la nueva estructura de datos
 export type User = {
     id: number;
     name: string;
     email: string;
-    role_name: string | string[];
+    roles: {
+        id: number;
+        name: string;
+        description: string;
+        pivot?: {
+            is_primary: boolean;
+            expires_at: string | null;
+        };
+    }[];
     sede_name: string;
+    sede_description?: string;
     status: string;
 };
 
 export function getUserColumns(users: User[], selectedUserId: number | null, setSelectedUserId: (id: number) => void): ColumnDef<User>[] {
-    // Obtener todos los roles únicos, aunque estén en arrays
-    const allRoles = users.flatMap(u =>
-        Array.isArray(u.role_name)
-            ? u.role_name
-            : typeof u.role_name === 'string'
-                ? (() => {
-                    try {
-                        const parsed = JSON.parse(u.role_name);
-                        if (Array.isArray(parsed)) return parsed;
-                        if (u.role_name.includes(',')) return u.role_name.split(',').map(r => r.trim());
-                        if (u.role_name) return [u.role_name];
-                        return [];
-                    } catch {
-                        if (u.role_name.includes(',')) return u.role_name.split(',').map(r => r.trim());
-                        if (u.role_name) return [u.role_name];
-                        return [];
-                    }
-                })()
-                : []
-    );
+    // Extraer todos los roles únicos para los filtros
+    const allRoles = users.flatMap((user) => user.roles.map((role) => role.description || role.name));
     const uniqueRoles = Array.from(new Set(allRoles));
-    const uniqueSedes = Array.from(new Set(users.map((u) => u.sede_name)));
+
+    // Extraer todas las sedes únicas para los filtros
+    const uniqueSedes = Array.from(new Set(users.map((user) => user.sede_description || user.sede_name).filter(Boolean)));
 
     return [
         {
@@ -67,7 +61,8 @@ export function getUserColumns(users: User[], selectedUserId: number | null, set
             header: 'Correo',
         },
         {
-            accessorKey: 'role_name',
+            // Columna de roles actualizada para usar la nueva estructura
+            id: 'roles',
             header: ({ column }) => (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -78,10 +73,7 @@ export function getUserColumns(users: User[], selectedUserId: number | null, set
                     <DropdownMenuContent align="start">
                         <DropdownMenuItem onClick={() => column.setFilterValue(undefined)}>Todos</DropdownMenuItem>
                         {uniqueRoles.map((role) => (
-                            <DropdownMenuItem
-                                key={role}
-                                onClick={() => column.setFilterValue(role)}
-                            >
+                            <DropdownMenuItem key={role} onClick={() => column.setFilterValue(role)}>
                                 {role}
                             </DropdownMenuItem>
                         ))}
@@ -89,72 +81,30 @@ export function getUserColumns(users: User[], selectedUserId: number | null, set
                 </DropdownMenu>
             ),
             cell: ({ row }) => {
-                const value = row.getValue('role_name');
-                let roles: string[] = [];
-                if (Array.isArray(value)) {
-                    roles = value;
-                } else if (typeof value === 'string') {
-                    try {
-                        const parsed = JSON.parse(value);
-                        if (Array.isArray(parsed)) {
-                            roles = parsed;
-                        } else if (value.includes(',')) {
-                            roles = value.split(',').map(r => r.trim());
-                        } else if (value) {
-                            roles = [value];
-                        }
-                    } catch {
-                        if (value.includes(',')) {
-                            roles = value.split(',').map(r => r.trim());
-                        } else if (value) {
-                            roles = [value];
-                        }
-                    }
-                }
+                const roles = row.original.roles || [];
                 return (
-                    <div className="flex flex-wrap gap-1 justify-center">
+                    <div className="flex flex-wrap justify-center gap-1">
                         {roles.map((role) => (
                             <span
-                                key={role}
-                                className={cn(
-                                    'inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium text-white bg-blue-500'
-                                )}
+                                key={role.id}
+                                className={cn('inline-flex items-center rounded-full bg-blue-500 px-3 py-0.5 text-xs font-medium text-white')}
                             >
-                                {role}
+                                {role.description || role.name}
                             </span>
                         ))}
                     </div>
                 );
             },
-            // Filtro personalizado para arrays de roles
-            filterFn: (row, columnId, filterValue) => {
-                const value = row.getValue(columnId);
-                let roles: string[] = [];
-                if (Array.isArray(value)) {
-                    roles = value;
-                } else if (typeof value === 'string') {
-                    try {
-                        const parsed = JSON.parse(value);
-                        if (Array.isArray(parsed)) {
-                            roles = parsed;
-                        } else if (value.includes(',')) {
-                            roles = value.split(',').map(r => r.trim());
-                        } else if (value) {
-                            roles = [value];
-                        }
-                    } catch {
-                        if (value.includes(',')) {
-                            roles = value.split(',').map(r => r.trim());
-                        } else if (value) {
-                            roles = [value];
-                        }
-                    }
-                }
-                return roles.includes(filterValue);
+            // Filtro personalizado para buscar por nombre o descripción del rol
+            filterFn: (row, id, filterValue) => {
+                const roles = row.original.roles || [];
+                return roles.some((role) => (role.description?.toLowerCase() || role.name.toLowerCase()).includes(filterValue.toLowerCase()));
             },
         },
         {
-            accessorKey: 'sede_name',
+            // Columna de sede actualizada para usar sede_description cuando está disponible
+            id: 'sede',
+            accessorFn: (row) => row.sede_description || row.sede_name,
             header: ({ column }) => (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -172,8 +122,11 @@ export function getUserColumns(users: User[], selectedUserId: number | null, set
                     </DropdownMenuContent>
                 </DropdownMenu>
             ),
-            cell: ({ row }) => row.getValue('sede_name'),
-            filterFn: 'equalsString',
+            cell: ({ row }) => row.original.sede_description || row.original.sede_name,
+            filterFn: (row, id, filterValue) => {
+                const sede = row.original.sede_description || row.original.sede_name;
+                return sede?.toLowerCase().includes(filterValue.toLowerCase());
+            },
         },
         {
             accessorKey: 'status',

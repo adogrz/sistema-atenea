@@ -1,80 +1,53 @@
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
-import { SharedData } from '@/types/SharedData';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarClock, ChartPie, ClipboardListIcon, GraduationCap, HouseIcon, School, User, Users2 } from 'lucide-react';
+import { ClipboardListIcon, HouseIcon, ShieldCheck, User } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
-    type EnhancedUser = {
-        role_name?: string;
-        roles?: Array<string | { name: string }>;
+    const { hasPermission } = usePermissions();
+    const { url } = usePage();
+
+    const isItemActive = (href: string) => {
+        if (href === '/' || href === '/home' || href === '/dashboard') {
+            return url === href;
+        }
+        return url.startsWith(href);
     };
 
-    const { auth } = usePage<SharedData>().props;
-
-    // Usar aserción de tipos para el usuario
-    const user = auth.user as EnhancedUser | undefined;
-
-    // Verificación más robusta del rol de administrador
-    const isAdmin =
-        user?.role_name === 'admin' ||
-        (user?.roles &&
-            Array.isArray(user.roles) &&
-            (user.roles.includes('admin') ||
-                user.roles.some((role) => (typeof role === 'string' && role === 'admin') || (typeof role === 'object' && role?.name === 'admin'))));
-    
-    // Verificación más robusta para el rol de administrador académico
-    const isAdminAcademico =
-        user?.role_name === 'admin_academic' ||
-        (user?.roles &&
-            Array.isArray(user.roles) &&
-            (user.roles.includes('admin_academic') ||
-                user.roles.some(
-                    (role) => (typeof role === 'string' && role === 'admin_academic') || (typeof role === 'object' && role?.name === 'admin_academic'),
-                )));    
-
-    // Verificación más robusta para el rol de usuario normal
-    const isNormalUser =
-        user?.role_name === 'Usuario' ||
-        (user?.roles &&
-            Array.isArray(user.roles) &&
-            (user.roles.includes('Usuario') ||
-                user.roles.some(
-                    (role) => (typeof role === 'string' && role === 'Usuario') || (typeof role === 'object' && role?.name === 'Usuario'),
-                )));
-
-    // Elementos comunes para todos los usuarios
-    const mainNavItems: NavItem[] = [
-        // Inicio se muestra para todos los usuarios
+    const navStructure: NavItem[] = [
         { title: 'Inicio', href: '/home', icon: HouseIcon },
-
-        // Elementos solo para administradores
-        ...(isAdmin
-            ? [
-                  { title: 'Auditoria', href: '/dashboard', icon: ClipboardListIcon },
-                  { title: 'Usuarios', href: '/dashboard/usuarios', icon: User },
-              ]
-            : []),
-        // Elementos para administrador academico
-        ...(isAdminAcademico
-            ? [
-                  { title: 'Calendario Académico', href: '/panel/calendario', icon: CalendarClock },
-                  { title: 'Datos Aspirantes', href: '/dashboard/sedes', icon: ChartPie },
-                  { title: 'Estudiantes', href: '/dashboard/sedes', icon: Users2 },
-                  { title: 'Academia Sabatina', href: '/dashboard/sedes', icon: School },
-                  { title: 'FDTC', href: '/dashboard/sedes', icon: GraduationCap },
-
-              ]
-            : []),
-            
-
-        // Elementos solo para usuarios normales
-        ...(isNormalUser ? [{ title: 'Mi perfil', href: '/perfil', icon: User }] : []),
-
+        {
+            title: 'Administración',
+            href: '#', // El href del grupo no se usa para navegación directa
+            icon: ShieldCheck,
+            items: [
+                ...(hasPermission('user-list') ? [{ title: 'Usuarios', href: '/dashboard/usuarios', icon: User }] : []),
+                ...(hasPermission('audit-view') ? [{ title: 'Auditoría', href: '/dashboard', icon: ClipboardListIcon }] : []),
+            ],
+        }
     ];
+
+    const mainNavItems = navStructure
+        .filter((item) => !item.items || item.items.length > 0)
+        .map((item) => {
+            const isGroup = !!item.items;
+            const groupIsOpen = isGroup ? item.items!.some((sub) => isItemActive(sub.href)) : false;
+
+            return {
+                ...item,
+                isActive: !isGroup && isItemActive(item.href),
+                isOpen: groupIsOpen,
+                href: isGroup ? item.items![0].href : item.href,
+                items: item.items?.map((subItem) => ({
+                    ...subItem,
+                    isActive: isItemActive(subItem.href),
+                })),
+            };
+        });
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -82,7 +55,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href="/" prefetch>
+                            <Link href="/" preserveState>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

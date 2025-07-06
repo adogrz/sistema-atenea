@@ -7,6 +7,7 @@ export interface Permission {
 }
 
 export interface Role {
+    pivot: any;
     id: number;
     name: string;
     description: string;
@@ -22,6 +23,7 @@ export interface User {
     updated_at: string;
     permissions?: Permission[];
     roles?: Role[];
+
     [key: string]: unknown; // This allows for additional properties...
 }
 
@@ -44,6 +46,8 @@ export interface NavItem {
     href: string;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    isOpen?: boolean;
+    items?: NavItem[];
 }
 
 export interface SharedData {
@@ -52,6 +56,7 @@ export interface SharedData {
     auth: Auth;
     ziggy: Config & { location: string };
     sidebarOpen: boolean;
+
     [key: string]: unknown;
 }
 
