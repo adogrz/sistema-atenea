@@ -23,6 +23,7 @@ export function usePermissions() {
         return hasSpecificPermission;
     };
 
+    // Función para verificar si el usuario tiene un rol específico
     const hasRole = (roleName: string): boolean => {
         if (!auth.user?.roles || !Array.isArray(auth.user.roles)) {
             return false;

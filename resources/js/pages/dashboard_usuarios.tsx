@@ -8,7 +8,6 @@ import { getUserColumns } from '@/components/user-columns';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { SharedData } from '@/types/SharedData';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Description } from '@radix-ui/react-dialog';
 import { Edit, MailCheck, Trash2, UserPlus } from 'lucide-react';
@@ -53,7 +52,6 @@ export default function Dashboard() {
         sedes: Array<Sede>;
         users: Array<User>;
     }>().props;
-    const { auth } = usePage<SharedData>().props;
 
     // Verificación de permisos
     const canCreateUser = hasPermission('user-create');
