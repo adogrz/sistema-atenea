@@ -48,8 +48,10 @@ class RoleAssignmentService
         }
 
         // Verificar restricción por sede
-        if ($editor->hasPermissionTo('user-view-own-sede') &&
-            $editor->sede_name !== $target->sede_name) {
+        if (
+            $editor->hasPermissionTo('user-view-own-sede') &&
+            $editor->sede_name !== $target->sede_name
+        ) {
             return false;
         }
 

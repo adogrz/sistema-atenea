@@ -2,71 +2,201 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Spatie\Activitylog\Models\Activity;
+use App\Models\Area;
 use App\Models\User;
-use Inertia\Inertia;
+use App\Services\RoleAssignmentService;
+use App\Services\UserVisibilityService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    /**
-     * Listado de usuarios.
-     */
-    public function index()
+    protected $visibilityService;
+    protected $roleAssignmentService;
+
+    public function __construct(
+        UserVisibilityService $visibilityService,
+        RoleAssignmentService $roleAssignmentService
+    )
     {
-        $users = User::with('role', 'sede')->get();
+        $this->visibilityService = $visibilityService;
+        $this->roleAssignmentService = $roleAssignmentService;
+    }
+
+    /**
+     * Listado de usuarios filtrado por visibilidad.
+     */
+    public function index(Request $request)
+    {
+        // Obtener solo los usuarios visibles para el usuario actual
+        $users = $this->visibilityService->getVisibleUsers($request->user());
 
         return Inertia::render('Usuarios/Index', [
             'users' => $users->map(fn($u) => [
                 'id' => $u->id,
                 'name' => $u->name,
                 'email' => $u->email,
-                'role_name' => $u->role->description ?? $u->role_name,
+                'role_name' => $u->getPrimaryRole() ? $u->getPrimaryRole()->description : null,
                 'sede_name' => $u->sede->description ?? $u->sede_name,
+                'area_name' => $u->primaryArea() ? $u->primaryArea()->description : null,
                 'status' => $u->status,
+                'roles' => $u->roles->map(fn($r) => [
+                    'id' => $r->id,
+                    'name' => $r->name,
+                    'description' => $r->description,
+                    'pivot' => [
+                        'is_primary' => $r->pivot->is_primary ?? false,
+                        'expires_at' => $r->pivot->expires_at
+                    ]
+                ]),
+                'areas' => $u->areas->map(fn($a) => [
+                    'id' => $a->id,
+                    'name' => $a->name,
+                    'description' => $a->description,
+                    'is_primary' => $a->pivot->is_primary ?? false,
+                ]),
             ])
         ]);
     }
 
     /**
-     * Actualiza un usuario existente.
+     * Actualiza un usuario existente con gestión de roles temporales y áreas.
      */
     public function update(Request $request, User $user)
     {
-        // Verifica que el usuario autenticado sea válido
+        // Verificaciones existentes
         $userAuth = $request->user();
-        
+
         if (!$userAuth) {
             return back()->withErrors(['error' => 'Sesión caducada o no autenticado.']);
         }
-        
+
+        // Verificar si puede editar este usuario
+        if (!$this->roleAssignmentService->canEditUser($userAuth, $user)) {
+            return back()->withErrors(['error' => 'No tienes permiso para editar este usuario.']);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'status' => 'required|in:active,inactive',
             'sede_name' => 'required|string|exists:sedes,name',
-            'role_name' => 'required|array|min:1',
-            'role_name.*' => 'string|exists:roles,name',
+            'roles' => 'required|array|min:1',
+            'roles.*.name' => 'required|string|exists:roles,name',
+            'roles.*.expires_at' => 'nullable|date',
+            'roles.*.is_primary' => 'boolean',
+            'areas' => 'nullable|array',
+            'areas.*.id' => 'exists:areas,id',
+            'areas.*.is_primary' => 'boolean',
         ]);
 
-        $original = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
+        // Verificar permisos para asignar roles
+        foreach ($validated['roles'] as $roleData) {
+            if (!$this->roleAssignmentService->canAssignRole($userAuth, $roleData['name'])) {
+                return back()->withErrors(['roles' => "No tienes permiso para asignar el rol: {$roleData['name']}"]);
+            }
+        }
 
-        // Actualiza rol y demás atributos - CORREGIDO AQUÍ
-        $user->syncRoles($validated['role_name']);
-        $user->update($validated);
+        // Verificar restricciones de sede
+        if (
+            $userAuth->hasPermissionTo('user-view-own-sede') &&
+            $userAuth->sede_name !== $validated['sede_name']
+        ) {
+            return back()->withErrors(['sede_name' => "No puedes asignar un usuario a una sede diferente a la tuya"]);
+        }
 
-        // Actualiza los atributos adicionales
-        $changes = $user->only(['name', 'email', 'status', 'sede_name', 'role_name']);
+        // Verificar restricciones de área
+        if ($userAuth->hasPermissionTo('user-view-own-area') && isset($validated['areas']) && !empty($validated['areas'])) {
+            $userAreaIds = $userAuth->areas->pluck('id')->toArray();
+            foreach ($validated['areas'] as $area) {
+                if (!in_array($area['id'], $userAreaIds)) {
+                    return back()->withErrors(['areas' => "No puedes asignar un área a la que no perteneces"]);
+                }
+            }
+        }
 
+        // Guardar datos originales para log
+        $original = $user->only(['name', 'email', 'status', 'sede_name']);
+        $originalRoles = $user->roles->map(fn($r) => [
+            'name' => $r->name,
+            'is_primary' => $r->pivot->is_primary ?? false,
+            'expires_at' => $r->pivot->expires_at
+        ])->toArray();
+
+        $originalAreas = $user->areas->map(fn($a) => [
+            'id' => $a->id,
+            'name' => $a->name,
+            'is_primary' => $a->pivot->is_primary ?? false,
+        ])->toArray();
+
+        // Actualizar roles con información de expiración
+        $user->syncRolesWithExpiration($validated['roles']);
+
+        // Actualizar áreas (si se proporcionaron)
+        $areasSync = [];
+        if (!empty($validated['areas'])) {
+            foreach ($validated['areas'] as $area) {
+                $areasSync[$area['id']] = ['is_primary' => $area['is_primary'] ?? false];
+            }
+
+            // Si es estudiante, asegurarse de que tenga asignada el área de matemáticas
+            if ($user->hasRole('estudiante')) {
+                $matematicasArea = Area::where('name', 'matematicas')->first();
+                if ($matematicasArea && !isset($areasSync[$matematicasArea->id])) {
+                    // Si no se seleccionó matemáticas, añadirla como no principal
+                    $areasSync[$matematicasArea->id] = ['is_primary' => false];
+                }
+            }
+        } elseif ($user->hasRole('estudiante')) {
+            // Si es estudiante y no se proporcionaron áreas, asignar matemáticas por defecto
+            $matematicasArea = Area::where('name', 'matematicas')->first();
+            if ($matematicasArea) {
+                $areasSync[$matematicasArea->id] = ['is_primary' => true];
+            }
+        }
+
+        // Sincronizar áreas (incluso si es un array vacío para roles que no necesitan áreas)
+        $user->areas()->sync($areasSync);
+
+        // Actualizar otros campos
+        $user->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'status' => $validated['status'],
+            'sede_name' => $validated['sede_name'],
+        ]);
+
+        // Cargar datos actualizados para el log
+        $user->load(['roles', 'areas']);
+
+        // Datos actualizados para log
+        $updatedRoles = $user->roles->map(fn($r) => [
+            'name' => $r->name,
+            'is_primary' => $r->pivot->is_primary ?? false,
+            'expires_at' => $r->pivot->expires_at
+        ])->toArray();
+
+        $updatedAreas = $user->areas->map(fn($a) => [
+            'id' => $a->id,
+            'name' => $a->name,
+            'is_primary' => $a->pivot->is_primary ?? false,
+        ])->toArray();
+
+        // Registro de actividad
         activity('usuarios')
             ->performedOn($user)
             ->causedBy($userAuth)
             ->withProperties([
                 'event' => 'Actualizar',
-                'old' => $original,
-                'attributes' => $changes,
+                'old' => array_merge($original, [
+                    'roles' => $originalRoles,
+                    'areas' => $originalAreas
+                ]),
+                'attributes' => array_merge($user->only(['name', 'email', 'status', 'sede_name']), [
+                    'roles' => $updatedRoles,
+                    'areas' => $updatedAreas
+                ]),
             ])
             ->event('updated')
             ->log('Usuario actualizado');

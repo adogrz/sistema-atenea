@@ -22,7 +22,24 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        $roles = ['director', 'admin', 'admin_academic', 'admin_academic_sede', 'coordinator_area', 'jefe_psicologia', 'psicologo', 'doctor_jefe', 'doctor', 'mentor', 'instructor', 'calificador', 'estudiante', 'aspirante'];
+        // Actualización de los nombres de roles para que coincidan con PermissionSeeder
+        $roles = [
+            'director',
+            'admin-ti', // Antes era 'admin'
+            'admin-academico', // Antes era 'admin_academic'
+            'admin-academico-sede', // Antes era 'admin_academic_sede'
+            'coordinador-area', // Antes era 'coordinator_area'
+            'jefe-psicologia', // Antes era 'jefe_psicologia'
+            'psicologo',
+            'doctor-jefe', // Antes era 'doctor_jefe'
+            'doctor',
+            'mentor',
+            'instructor',
+            'calificador',
+            'estudiante',
+            'aspirante'
+        ];
+
         $sedes = ['central', 'occidental', 'oriental'];
 
         return [
@@ -42,7 +59,7 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'email_verified_at' => null,
         ]);
     }

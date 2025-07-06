@@ -11,11 +11,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            //Permisos y roles (Spatie)
-            PermissionSeeder::class,
-            // Sedes de la institucion
             SedeSeeder::class,
-            // ... Otros seeders necesarios
+            AreaSeeder::class,
+            PermissionSeeder::class,
         ]);
 
         // Crear el usuario con rol de Administrador
@@ -24,18 +22,18 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Administrador de Pruebas',
                 'password' => Hash::make('password123'),
-                'role_name' => 'admin',
+                'role_name' => 'super-admin',
                 'sede_name' => 'central',
                 'status' => 'active',
                 'deleted_at' => null,
             ]
         );
 
-        $user->assignRole("admin");
+        $user->assignRole("super-admin");
 
         // Usuarios aleatorios con roles
-//        User::factory(100)->create()->each(function ($user) {
-//            $user->assignRole($user->role_name);
-//        });
+        User::factory(100)->create()->each(function ($user) {
+            $user->assignRole($user->role_name);
+        });
     }
 }

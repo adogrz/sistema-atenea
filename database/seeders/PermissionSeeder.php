@@ -18,44 +18,94 @@ class PermissionSeeder extends Seeder
     {
         $this->permissionGroups = [
             'basics' => [
-                'user-view-profile', 'edit-profile', 'change-password'
+                'user-view-profile',
+                'edit-profile',
+                'change-password'
             ],
             'users' => [
-                'user-list', 'user-create', 'user-edit', 'user-delete', 'user-active', 'user-inactive',
+                'user-list',
+                'user-create',
+                'user-edit',
+                'user-delete',
+                'user-active',
+                'user-inactive',
                 'user-reset-password'
             ],
             'users_visibility' => [
-                'user-view-all', 'user-view-own-sede', 'user-view-own-area', 'user-view-role-director',
-                'user-view-role-admin-ti', 'user-view-role-admin-academico', 'user-view-role-admin-academico-sede',
-                'user-view-role-coordinador-area', 'user-view-role-mentor', 'user-view-role-instructor',
-                'user-view-role-estudiante', 'user-view-role-aspirante', 'user-view-role-calificador',
-                'user-view-role-jefe-psicologia', 'user-view-role-psicologo', 'user-view-role-doctor-jefe',
+                'user-view-all',
+                'user-view-own-sede',
+                'user-view-own-area',
+                'user-view-role-director',
+                'user-view-role-admin-ti',
+                'user-view-role-admin-academico',
+                'user-view-role-admin-academico-sede',
+                'user-view-role-coordinador-area',
+                'user-view-role-mentor',
+                'user-view-role-instructor',
+                'user-view-role-estudiante',
+                'user-view-role-aspirante',
+                'user-view-role-calificador',
+                'user-view-role-jefe-psicologia',
+                'user-view-role-psicologo',
+                'user-view-role-doctor-jefe',
                 'user-view-role-doctor',
             ],
             'roles' => [
-                'role-list', 'role-create', 'role-edit', 'role-delete',
+                'role-list',
+                'role-create',
+                'role-edit',
+                'role-delete',
             ],
             'role_assignment' => [
-                'role-assign-director', 'role-unassign-director',
-                'role-assign-admin-ti', 'role-unassign-admin-ti',
-                'role-assign-admin-academico', 'role-unassign-admin-academico',
-                'role-assign-admin-academico-sede', 'role-unassign-admin-academico-sede',
-                'role-assign-coordinador-area', 'role-unassign-coordinador-area',
-                'role-assign-mentor', 'role-unassign-mentor',
-                'role-assign-instructor', 'role-unassign-instructor',
-                'role-assign-jefe-psicologia', 'role-unassign-jefe-psicologia',
-                'role-assign-psicologo', 'role-unassign-psicologo',
-                'role-assign-doctor-jefe', 'role-unassign-doctor-jefe',
-                'role-assign-doctor', 'role-unassign-doctor',
+                'role-assign-super-admin',
+                'role-unassign-super-admin',
+                'role-assign-director',
+                'role-unassign-director',
+                'role-assign-admin-ti',
+                'role-unassign-admin-ti',
+                'role-assign-admin-academico',
+                'role-unassign-admin-academico',
+                'role-assign-admin-academico-sede',
+                'role-unassign-admin-academico-sede',
+                'role-assign-coordinador-area',
+                'role-unassign-coordinador-area',
+                'role-assign-mentor',
+                'role-unassign-mentor',
+                'role-assign-instructor',
+                'role-unassign-instructor',
+                'role-assign-jefe-psicologia',
+                'role-unassign-jefe-psicologia',
+                'role-assign-psicologo',
+                'role-unassign-psicologo',
+                'role-assign-doctor-jefe',
+                'role-unassign-doctor-jefe',
+                'role-assign-doctor',
+                'role-unassign-doctor',
+                'role-assign-estudiante',
+                'role-unassign-estudiante',
+                'role-assign-aspirante',
+                'role-unassign-aspirante',
+                'role-assign-calificador',
+                'role-unassign-calificador',
             ],
             'sedes' => [
-                'sede-list', 'sede-create', 'sede-edit', 'sede-delete', 'sede-assign'
+                'sede-list',
+                'sede-create',
+                'sede-edit',
+                'sede-delete',
+                'sede-assign'
             ],
             'areas' => [
-                'area-list', 'area-create', 'area-edit', 'area-delete', 'area-assign'
+                'area-list',
+                'area-create',
+                'area-edit',
+                'area-delete',
+                'area-assign'
             ],
             'auditoria' => [
-                'audit-view', 'log-view', 'log-export',
+                'audit-view',
+                'log-view',
+                'log-export',
             ],
         ];
     }
@@ -101,10 +151,17 @@ class PermissionSeeder extends Seeder
     private function defineRolesWithPermissions(): array
     {
         return [
-            'super_admin' => [
+            'super-admin' => [
                 'description' => 'Super Administrador',
                 'groups' => [
-                    'basics', 'users', 'users_visibility', 'roles', 'role_assignment', 'sedes', 'areas', 'auditoria'
+                    'basics',
+                    'users',
+                    'users_visibility',
+                    'roles',
+                    'role_assignment',
+                    'sedes',
+                    'areas',
+                    'auditoria'
                 ],
                 'permissions' => [], // Los grupos ya le dan todo.
                 'exclude_permissions' => []
@@ -114,69 +171,101 @@ class PermissionSeeder extends Seeder
                 'groups' => ['basics', 'users', 'roles', 'sedes', 'areas'],
                 'permissions' => ['user-view-all'], // "Visualización total del sistema"
                 'can_assign_roles' => [
-                    'admin_ti', 'admin_academico', 'admin_academico_sede', 'coordinador_area',
-                    'mentor', 'instructor'
+                    'admin-ti',
+                    'admin-academico',
+                    'admin-academico-sede',
+                    'coordinador-area',
+                    'mentor',
+                    'instructor'
                 ],
                 'exclude_permissions' => [
-                    'user-delete', 'user-reset-password', // Tareas técnicas para Admin TI
+                    'user-delete',
+                    'user-reset-password', // Tareas técnicas para Admin TI
                     // Exclusión explícita de asignación de roles sensibles
-                    'role-assign-jefe-psicologia', 'role-unassign-jefe-psicologia',
-                    'role-assign-psicologo', 'role-unassign-psicologo',
-                    'role-assign-doctor-jefe', 'role-unassign-doctor-jefe',
-                    'role-assign-doctor', 'role-unassign-doctor',
+                    'role-assign-jefe-psicologia',
+                    'role-unassign-jefe-psicologia',
+                    'role-assign-psicologo',
+                    'role-unassign-psicologo',
+                    'role-assign-doctor-jefe',
+                    'role-unassign-doctor-jefe',
+                    'role-assign-doctor',
+                    'role-unassign-doctor',
                 ]
             ],
-            'admin_ti' => [
+            'admin-ti' => [
                 'description' => 'Administrador de TI/Informático',
                 'groups' => ['basics', 'users', 'roles', 'role_assignment', 'sedes', 'areas', 'auditoria'],
                 'permissions' => ['user-view-all'], // "Administración completa del módulo de seguridad y usuarios"
                 'can_assign_roles' => [
-                    'director', 'admin_academico', 'admin_academico_sede', 'coordinador_area', 'mentor',
-                    'instructor', 'estudiante', 'aspirante', 'calificador'
+                    'director',
+                    'admin-academico',
+                    'admin-academico-sede',
+                    'coordinador-area',
+                    'mentor',
+                    'instructor',
+                    'estudiante',
+                    'aspirante',
+                    'calificador'
                 ],
                 'exclude_permissions' => [
                     // Exclusión explícita de asignación de roles sensibles
-                    'role-assign-jefe-psicologia', 'role-unassign-jefe-psicologia',
-                    'role-assign-psicologo', 'role-unassign-psicologo',
-                    'role-assign-doctor-jefe', 'role-unassign-doctor-jefe',
-                    'role-assign-doctor', 'role-unassign-doctor',
+                    'role-assign-jefe-psicologia',
+                    'role-unassign-jefe-psicologia',
+                    'role-assign-psicologo',
+                    'role-unassign-psicologo',
+                    'role-assign-doctor-jefe',
+                    'role-unassign-doctor-jefe',
+                    'role-assign-doctor',
+                    'role-unassign-doctor',
                 ]
             ],
-            'admin_academico' => [
+            'admin-academico' => [
                 'description' => 'Administrador Académico',
                 'groups' => ['basics', 'users', 'roles', 'sedes', 'areas'],
                 'permissions' => ['user-view-all'], // Visibilidad global sobre la estructura académica
                 'can_assign_roles' => [
-                    'admin_academico_sede', 'coordinador_area', 'mentor', 'instructor'
+                    'admin-academico-sede',
+                    'coordinador-area',
+                    'mentor',
+                    'instructor'
                 ],
                 'exclude_permissions' => []
             ],
-            'admin_academico_sede' => [
+            'admin-academico-sede' => [
                 'description' => 'Administrador Académico de Sede',
                 'groups' => ['basics', 'users', 'roles'],
                 'permissions' => [
                     'user-view-own-sede', // "restringido a su sede específica"
-                    'user-view-role-coordinador-area', 'user-view-role-mentor',
-                    'user-view-role-instructor', 'user-view-role-estudiante', 'user-view-role-aspirante',
-                    'user-view-role-psicologo', 'user-view-role-doctor' // Puede ver quiénes son, pero no gestionar su data sensible
+                    'user-view-role-coordinador-area',
+                    'user-view-role-mentor',
+                    'user-view-role-instructor',
+                    'user-view-role-estudiante',
+                    'user-view-role-aspirante',
+                    'user-view-role-psicologo',
+                    'user-view-role-doctor' // Puede ver quiénes son, pero no gestionar su data sensible
                 ],
                 'can_assign_roles' => [
-                    'coordinador_area', 'mentor', 'instructor'
+                    'coordinador-area',
+                    'mentor',
+                    'instructor'
                 ],
                 'exclude_permissions' => ['user-view-all', 'user-view-own-area', 'user-delete', 'user-reset-password']
             ],
-            'coordinador_area' => [
+            'coordinador-area' => [
                 'description' => 'Coordinador de Área',
                 'groups' => ['basics', 'users'],
                 'permissions' => [
-                    'user-view-own-sede', 'user-view-own-area', // Restringido a su área
-                    'user-view-role-mentor', 'user-view-role-instructor', 'user-view-role-estudiante',
+                    'user-view-own-sede',
+                    'user-view-own-area', // Restringido a su área
+                    'user-view-role-mentor',
+                    'user-view-role-instructor',
+                    'user-view-role-estudiante',
                     'user-view-role-aspirante',
                 ],
                 'can_assign_roles' => ['mentor', 'instructor'],
                 'exclude_permissions' => ['user-view-all', 'user-create', 'user-edit', 'user-delete', 'user-reset-password']
             ],
-            'jefe_psicologia' => [
+            'jefe-psicologia' => [
                 'description' => 'Jefe de Psicología',
                 'groups' => ['basics', 'users'],
                 'permissions' => ['user-view-role-psicologo', 'user-view-role-estudiante'],
@@ -190,7 +279,7 @@ class PermissionSeeder extends Seeder
                 'can_assign_roles' => [],
                 'exclude_permissions' => []
             ],
-            'doctor_jefe' => [
+            'doctor-jefe' => [
                 'description' => 'Doctor Jefe',
                 'groups' => ['basics', 'users'],
                 'permissions' => ['user-view-role-doctor', 'user-view-role-estudiante'],
@@ -220,13 +309,22 @@ class PermissionSeeder extends Seeder
             ],
             // Roles sin permisos de gestión de usuarios
             'estudiante' => [
-                'description' => 'Estudiante', 'groups' => ['basics'], 'permissions' => [], 'exclude_permissions' => []
+                'description' => 'Estudiante',
+                'groups' => ['basics'],
+                'permissions' => [],
+                'exclude_permissions' => []
             ],
             'aspirante' => [
-                'description' => 'Aspirante', 'groups' => ['basics'], 'permissions' => [], 'exclude_permissions' => []
+                'description' => 'Aspirante',
+                'groups' => ['basics'],
+                'permissions' => [],
+                'exclude_permissions' => []
             ],
             'calificador' => [
-                'description' => 'Calificador', 'groups' => ['basics'], 'permissions' => [], 'exclude_permissions' => []
+                'description' => 'Calificador',
+                'groups' => ['basics'],
+                'permissions' => [],
+                'exclude_permissions' => []
             ],
         ];
     }
