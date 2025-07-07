@@ -56,7 +56,7 @@ const BREADCRUMBS: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard() {
+export default function DashboardUsers() {
     const { hasPermission } = usePermissions();
     const { roles, assignableRoles, sedes, areas, users } = usePage<{
         roles: Array<Role>;

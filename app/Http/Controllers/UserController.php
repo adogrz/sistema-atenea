@@ -7,6 +7,7 @@ use App\Models\Sede;
 use App\Models\User;
 use App\Services\RoleAssignmentService;
 use App\Services\UserVisibilityService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Inertia\Inertia;
@@ -14,6 +15,8 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    use AuthorizesRequests;
+
     protected $visibilityService;
     protected $roleAssignmentService;
 
@@ -31,6 +34,9 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        // La política se encarga de la autorización.
+        $this->authorize('viewAny', User::class);
+
         $userAuth = $request->user();
 
         $visibleUsers = $this->visibilityService->getVisibleUsers($userAuth);
@@ -38,7 +44,7 @@ class UserController extends Controller
         $allRoles = Role::all(['id', 'name', 'description']);
         $sedes = Sede::all(['id', 'name', 'description']);
         $areas = Area::all(['id', 'name', 'description']);
-        
+
         return Inertia::render('dashboard-users', [
             'roles' => $allRoles,
             'assignableRoles' => $assignableRoles,
@@ -78,18 +84,16 @@ class UserController extends Controller
      */
     public function create()
     {
-        $this->authorize('create', User::class); // Usar policy para verificar permiso
+        $this->authorize('create', User::class);
 
         $currentUser = auth()->user();
         $roleAssignmentService = app(RoleAssignmentService::class);
 
-        // Obtener roles que el usuario actual puede asignar
         $assignableRoles = collect($roleAssignmentService->getAssignableRoles($currentUser))->map(fn($role) => [
             'name' => $role->name,
             'description' => $role->description,
         ]);
 
-        // Obtener sedes, restringidas si es necesario
         $sedesQuery = Sede::query();
         if ($currentUser->hasPermissionTo('user-view-own-sede')) {
             $sedesQuery->where('name', $currentUser->sede_name);
@@ -103,16 +107,12 @@ class UserController extends Controller
     }
 
     /**
-     * Muestra el formulario de creación de usuario.
+     * Crea un nuevo usuario.
      */
     public function store(Request $request)
     {
-        $userAuth = $request->user();
-
-        // Verificar si el usuario autenticado puede crear usuarios
-        if (!$userAuth->hasPermissionTo('user-create')) {
-            return back()->withErrors(['error' => 'No tienes permiso para crear usuarios.']);
-        }
+        // La política se encarga de la autorización.
+        $this->authorize('create', User::class);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -124,9 +124,8 @@ class UserController extends Controller
             'roles.*.is_primary' => 'boolean',
         ]);
 
-        // Verificar si puede asignar el rol
         foreach ($validated['roles'] as $roleData) {
-            if (!$this->roleAssignmentService->canAssignRole($userAuth, $roleData['name'])) {
+            if (!$this->roleAssignmentService->canAssignRole($request->user(), $roleData['name'])) {
                 return back()->withErrors(['roles' => "No tienes permiso para asignar el rol: {$roleData['name']}"]);
             }
         }
@@ -139,12 +138,11 @@ class UserController extends Controller
             'status' => 'active',
         ]);
 
-        // Asignar roles
         $user->syncRolesWithExpiration($validated['roles']);
 
         activity('usuarios')
             ->performedOn($user)
-            ->causedBy($userAuth)
+            ->causedBy($request->user())
             ->withProperties([
                 'event' => 'Crear',
                 'attributes' => $user->only(['name', 'email', 'sede_name']),
@@ -153,7 +151,7 @@ class UserController extends Controller
             ->event('created')
             ->log('Usuario creado');
 
-        return redirect()->back()->with('success', 'Usuario creado correctamente.');
+        return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
     }
 
     /**
@@ -161,17 +159,8 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        // Verificaciones existentes
-        $userAuth = $request->user();
-
-        if (!$userAuth) {
-            return back()->withErrors(['error' => 'Sesión caducada o no autenticado.']);
-        }
-
-        // Verificar si puede editar este usuario
-        if (!$this->roleAssignmentService->canEditUser($userAuth, $user)) {
-            return back()->withErrors(['error' => 'No tienes permiso para editar este usuario.']);
-        }
+        // La política se encarga de la autorización.
+        $this->authorize('update', $user);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -189,22 +178,22 @@ class UserController extends Controller
 
         // Verificar permisos para asignar roles
         foreach ($validated['roles'] as $roleData) {
-            if (!$this->roleAssignmentService->canAssignRole($userAuth, $roleData['name'])) {
+            if (!$this->roleAssignmentService->canAssignRole($request->user(), $roleData['name'])) {
                 return back()->withErrors(['roles' => "No tienes permiso para asignar el rol: {$roleData['name']}"]);
             }
         }
 
         // Verificar restricciones de sede
         if (
-            $userAuth->hasPermissionTo('user-view-own-sede') &&
-            $userAuth->sede_name !== $validated['sede_name']
+            $request->user()->hasPermissionTo('user-view-own-sede') &&
+            $request->user()->sede_name !== $validated['sede_name']
         ) {
             return back()->withErrors(['sede_name' => "No puedes asignar un usuario a una sede diferente a la tuya"]);
         }
 
         // Verificar restricciones de área
-        if ($userAuth->hasPermissionTo('user-view-own-area') && isset($validated['areas']) && !empty($validated['areas'])) {
-            $userAreaIds = $userAuth->areas->pluck('id')->toArray();
+        if ($request->user()->hasPermissionTo('user-view-own-area') && isset($validated['areas']) && !empty($validated['areas'])) {
+            $userAreaIds = $request->user()->areas->pluck('id')->toArray();
             foreach ($validated['areas'] as $area) {
                 if (!in_array($area['id'], $userAreaIds)) {
                     return back()->withErrors(['areas' => "No puedes asignar un área a la que no perteneces"]);
@@ -282,7 +271,7 @@ class UserController extends Controller
         // Registro de actividad
         activity('usuarios')
             ->performedOn($user)
-            ->causedBy($userAuth)
+            ->causedBy($request->user())
             ->withProperties([
                 'event' => 'Actualizar',
                 'old' => array_merge($original, [
@@ -305,11 +294,8 @@ class UserController extends Controller
      */
     public function destroy(Request $request, User $user)
     {
-        $userAuth = $request->user();
-
-        if ($user->id === $userAuth->id) {
-            return back()->withErrors(['error' => 'No puedes eliminar tu propia cuenta.']);
-        }
+        // La política se encarga de la autorización.
+        $this->authorize('delete', $user);
 
         if ($user->trashed()) {
             return back()->withErrors(['error' => 'Este usuario ya está eliminado.']);
@@ -317,10 +303,10 @@ class UserController extends Controller
 
         activity('usuarios')
             ->performedOn($user)
-            ->causedBy($userAuth)
+            ->causedBy($request->user())
             ->withProperties([
                 'event' => 'Eliminar',
-                'attributes' => $user->only(['name', 'email', 'role_name', 'sede_name']),
+                'attributes' => $user->only(['name', 'email', 'sede_name']),
             ])
             ->event('deleted')
             ->log('Eliminar Usuario');
@@ -336,6 +322,10 @@ class UserController extends Controller
     public function restore(Request $request, $id)
     {
         $user = User::onlyTrashed()->findOrFail($id);
+
+        // La política se encarga de la autorización.
+        $this->authorize('restore', $user);
+
         $user->restore();
 
         activity('usuarios')
@@ -343,7 +333,7 @@ class UserController extends Controller
             ->causedBy($request->user())
             ->withProperties([
                 'event' => 'Restaurar',
-                'attributes' => $user->only(['name', 'email', 'role_name', 'sede_name']),
+                'attributes' => $user->only(['name', 'email', 'sede_name']),
             ])
             ->event('restored')
             ->log('Usuario restaurado');
@@ -356,6 +346,9 @@ class UserController extends Controller
      */
     public function sendResetLink(Request $request, User $user)
     {
+        // La política se encarga de la autorización.
+        $this->authorize('sendResetLink', $user);
+
         $status = Password::sendResetLink(['email' => $user->email]);
 
         if ($status === Password::RESET_LINK_SENT) {
