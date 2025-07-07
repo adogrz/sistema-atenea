@@ -50,7 +50,7 @@ trait HasTemporaryRoles
 
         // Si es rol primario, quitar primario de otros roles
         if ($isPrimary) {
-            $this->roles()->update(['is_primary' => false]);
+            $this->roles()->newPivotStatement()->update(['is_primary' => false]);
         }
 
         // Asignar el rol con expiración

@@ -13,11 +13,24 @@ import { Description } from '@radix-ui/react-dialog';
 import { Edit, MailCheck, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
-// Interfaces simplificadas y mejor definidas
+// Interfaces actualizadas para la nueva estructura de datos
 interface Role {
     id: number;
     name: string;
     description: string;
+    pivot?: {
+        is_primary: boolean;
+        expires_at: string | null;
+    };
+}
+
+interface Area {
+    id: number;
+    name: string;
+    description: string;
+    pivot?: {
+        is_primary: boolean;
+    };
 }
 
 interface Sede {
@@ -30,10 +43,11 @@ interface User {
     id: number;
     name: string;
     email: string;
-    roles: Role[] | string;
-    role_name: string[];
+    roles: Role[];
     sede_name: string;
+    sede_description?: string;
     status: string;
+    areas?: Area[];
 }
 
 // Constantes
@@ -47,9 +61,11 @@ const BREADCRUMBS: BreadcrumbItem[] = [
 export default function Dashboard() {
     // Hooks y datos de la página
     const { hasPermission } = usePermissions();
-    const { roles, sedes, users } = usePage<{
+    const { roles, assignableRoles, sedes, areas, users } = usePage<{
         roles: Array<Role>;
+        assignableRoles: Array<Role>;
         sedes: Array<Sede>;
+        areas: Array<Area>;
         users: Array<User>;
     }>().props;
 
@@ -83,45 +99,39 @@ export default function Dashboard() {
         { id: 'Inactivos', label: 'Inactivos', value: inactivos },
     ];
 
-    const normalizeRoles = (roleData: string[] | string): string[] => {
-        if (Array.isArray(roleData)) return roleData;
-
-        if (typeof roleData === 'string') {
-            try {
-                const parsed = JSON.parse(roleData);
-                if (Array.isArray(parsed)) return parsed;
-            } catch {
-                // Si falla el parsing como JSON, tratarlo como string
-            }
-
-            // Si es un string con comas, dividirlo
-            if (roleData.includes(',')) {
-                return roleData.split(',').map((r) => r.trim());
-            }
-
-            // Si es un string simple, devolver array con ese valor
-            return roleData ? [roleData] : [];
-        }
-
-        return [];
-    };
-
+    // Análisis de usuarios por rol utilizando la nueva estructura de roles
     const usuariosPorRol = Object.values(
         users.reduce(
             (acc, user) => {
-                const roles = normalizeRoles(user.role_name);
-
-                roles.forEach((role) => {
-                    if (!role) return;
-
-                    acc[role] = acc[role] || {
-                        id: role,
-                        label: role,
+                user.roles.forEach((role) => {
+                    const roleName = role.description || role.name;
+                    acc[roleName] = acc[roleName] || {
+                        id: roleName,
+                        label: roleName,
                         value: 0,
                     };
-                    acc[role].value += 1;
+                    acc[roleName].value += 1;
                 });
 
+                return acc;
+            },
+            {} as Record<string, { id: string; label: string; value: number; color?: string }>,
+        ),
+    );
+
+    // Análisis de usuarios por sede utilizando sede_description cuando está disponible
+    const usuariosPorSede = Object.values(
+        users.reduce(
+            (acc, user) => {
+                const sedeName = user.sede_description || user.sede_name;
+                if (sedeName) {
+                    acc[sedeName] = acc[sedeName] || {
+                        id: sedeName,
+                        label: sedeName,
+                        value: 0,
+                    };
+                    acc[sedeName].value += 1;
+                }
                 return acc;
             },
             {} as Record<string, { id: string; label: string; value: number; color?: string }>,
@@ -167,11 +177,12 @@ export default function Dashboard() {
     };
 
     const handleRegisterUser = (data: any) => {
-        router.post(route('register'), data, {
+        router.post(route('users.store'), data, {
             onSuccess: () => {
                 setShowRegisterModal(false);
             },
             onError: (errors) => {
+                setFormErrors(errors); // Mostrar errores en el modal
                 console.error('Error al registrar:', errors);
             },
         });
@@ -217,7 +228,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Tabla de usuarios */}
-                    <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
+                    <div className="relative min-h-[70vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
                         <DataTable
                             columns={columns}
                             data={users}
@@ -229,7 +240,7 @@ export default function Dashboard() {
 
                     {/* Dashboard de estadísticas */}
                     <div className="flex flex-col gap-6 p-4">
-                        <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3">
+                        <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-4">
                             {/* Total usuarios */}
                             <div className="flex flex-col items-center justify-center rounded-lg border bg-background p-4">
                                 <span className="text-2xl font-bold">{totalUsuarios}</span>
@@ -247,6 +258,13 @@ export default function Dashboard() {
                                 <span className="mb-2 font-semibold">Usuarios por rol</span>
                                 <div className="h-48 w-full">
                                     <PieChart data={usuariosPorRol} />
+                                </div>
+                            </div>
+                            {/* Pie de usuarios por sede */}
+                            <div className="flex flex-col items-center rounded-lg border bg-background p-4">
+                                <span className="mb-2 font-semibold">Usuarios por sede</span>
+                                <div className="h-48 w-full">
+                                    <PieChart data={usuariosPorSede} />
                                 </div>
                             </div>
                         </div>
@@ -304,16 +322,23 @@ export default function Dashboard() {
                         onSave={handleEditUser}
                         user={selectedUser}
                         roles={roles}
+                        assignableRoles={assignableRoles}
                         sedes={sedes}
-                        errors={formErrors} // Pasar los errores al modal
+                        areas={areas}
+                        errors={formErrors}
                     />
 
                     <RegisterForm
                         open={showRegisterModal}
-                        onClose={() => setShowRegisterModal(false)}
+                        onClose={() => {
+                            setShowRegisterModal(false);
+                            setFormErrors({}); // Limpiar errores al cerrar
+                        }}
                         onRegister={handleRegisterUser}
-                        roles={roles}
+                        roles={assignableRoles}
                         sedes={sedes}
+                        areas={areas}
+                        errors={formErrors} // Pasar errores al modal
                     />
                 </div>
             </div>

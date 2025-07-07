@@ -18,8 +18,7 @@ class UserController extends Controller
     public function __construct(
         UserVisibilityService $visibilityService,
         RoleAssignmentService $roleAssignmentService
-    )
-    {
+    ) {
         $this->visibilityService = $visibilityService;
         $this->roleAssignmentService = $roleAssignmentService;
     }
@@ -58,6 +57,60 @@ class UserController extends Controller
                 ]),
             ])
         ]);
+    }
+
+    /**
+     * Muestra el formulario de creación de usuario.
+     */
+    public function store(Request $request)
+    {
+        $userAuth = $request->user();
+
+        // Verificar si el usuario autenticado puede crear usuarios
+        if (!$userAuth->hasPermissionTo('user-create')) {
+            return back()->withErrors(['error' => 'No tienes permiso para crear usuarios.']);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|confirmed|min:8',
+            'sede_name' => 'required|string|exists:sedes,name',
+            'roles' => 'required|array|min:1',
+            'roles.*.name' => 'required|string|exists:roles,name',
+            'roles.*.is_primary' => 'boolean',
+        ]);
+
+        // Verificar si puede asignar el rol
+        foreach ($validated['roles'] as $roleData) {
+            if (!$this->roleAssignmentService->canAssignRole($userAuth, $roleData['name'])) {
+                return back()->withErrors(['roles' => "No tienes permiso para asignar el rol: {$roleData['name']}"]);
+            }
+        }
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => bcrypt($validated['password']),
+            'sede_name' => $validated['sede_name'],
+            'status' => 'active',
+        ]);
+
+        // Asignar roles
+        $user->syncRolesWithExpiration($validated['roles']);
+
+        activity('usuarios')
+            ->performedOn($user)
+            ->causedBy($userAuth)
+            ->withProperties([
+                'event' => 'Crear',
+                'attributes' => $user->only(['name', 'email', 'sede_name']),
+                'roles' => $validated['roles']
+            ])
+            ->event('created')
+            ->log('Usuario creado');
+
+        return redirect()->back()->with('success', 'Usuario creado correctamente.');
     }
 
     /**

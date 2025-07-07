@@ -2,38 +2,17 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
         $this->call([
+            PermissionSeeder::class,
             SedeSeeder::class,
             AreaSeeder::class,
-            PermissionSeeder::class,
+            UserSeeder::class,
         ]);
-
-        // Crear el usuario con rol de Administrador
-        $user = User::firstOrCreate(
-            ['email' => 'admin@pruebas.com'],
-            [
-                'name' => 'Administrador de Pruebas',
-                'password' => Hash::make('password123'),
-                'role_name' => 'super-admin',
-                'sede_name' => 'central',
-                'status' => 'active',
-                'deleted_at' => null,
-            ]
-        );
-
-        $user->assignRole("super-admin");
-
-        // Usuarios aleatorios con roles
-        User::factory(100)->create()->each(function ($user) {
-            $user->assignRole($user->role_name);
-        });
     }
 }

@@ -164,7 +164,10 @@ class PermissionSeeder extends Seeder
                     'auditoria'
                 ],
                 'permissions' => [], // Los grupos ya le dan todo.
-                'exclude_permissions' => []
+                'exclude_permissions' => [
+                    'user-view-own-sede',
+                    'user-view-own-area'
+                ]
             ],
             'director' => [
                 'description' => 'Director del programa',
