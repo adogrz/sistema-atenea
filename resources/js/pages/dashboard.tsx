@@ -20,7 +20,7 @@ export default function Dashboard() {
     };
 
     const getSedeDescription = (user: SharedData['auth']['user']) => {
-        return user?.sede?.description || 'Sin sede asignada';
+        return (user?.sede as { description?: string })?.description || 'Sin sede asignada';
     };
 
     const userRoleDescription = getUserRoleDescription(auth.user);
