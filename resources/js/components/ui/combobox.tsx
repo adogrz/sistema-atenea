@@ -1,29 +1,36 @@
+import { Check, ChevronsUpDown } from 'lucide-react';
 import * as React from 'react';
-import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-interface ComboboxProps {
-    options: { value: string; label: string }[];
-    value: string;
-    onValueChange: (value: string) => void;
-    placeholder?: string;
-    noOptionsMessage?: string;
-    defaultLabel?: string;
+interface ComboboxProps<T> {
+    items: T[];
+    value: string | number | null;
+    onChange: (value: string) => void; // El valor siempre será el 'name' o 'id' como string
+    valueKey: keyof T;
+    labelKey: keyof T;
+    placeholder: string;
+    searchPlaceholder: string;
+    disabled?: boolean;
 }
 
-export function Combobox({
-                             options,
-                             value,
-                             onValueChange,
-                             placeholder = 'Buscar...',
-                             noOptionsMessage = 'No se encontraron opciones.',
-                             defaultLabel = 'Selecciona una opción'
-                         }: ComboboxProps) {
+export function Combobox<T extends Record<string, any>>({
+    items,
+    value,
+    onChange,
+    valueKey,
+    labelKey,
+    placeholder,
+    searchPlaceholder,
+    disabled = false,
+}: ComboboxProps<T>) {
     const [open, setOpen] = React.useState(false);
+
+    // Encontrar el item seleccionado para mostrar su etiqueta
+    const selectedItem = items.find((item) => item[valueKey] === value);
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -32,36 +39,30 @@ export function Combobox({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between"
+                    className={cn('w-full justify-between', !value && 'text-muted-foreground')}
+                    disabled={disabled}
                 >
-                    {value
-                        ? options.find((option) => option.value === value)?.label
-                        : defaultLabel}
-                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    {selectedItem ? String(selectedItem[labelKey]) : placeholder}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                 <Command>
-                    <CommandInput placeholder={placeholder} className="h-9" />
+                    <CommandInput placeholder={searchPlaceholder} />
                     <CommandList>
-                        <CommandEmpty>{noOptionsMessage}</CommandEmpty>
+                        <CommandEmpty>No se encontraron resultados.</CommandEmpty>
                         <CommandGroup>
-                            {options.map((option) => (
+                            {items.map((item) => (
                                 <CommandItem
-                                    key={option.value}
-                                    value={option.value}
-                                    onSelect={(currentValue) => {
-                                        onValueChange(currentValue === value ? '' : currentValue);
+                                    key={item[valueKey]}
+                                    value={String(item[labelKey])} // Buscar por la etiqueta visible
+                                    onSelect={() => {
+                                        onChange(String(item[valueKey])); // Devolver el valor único
                                         setOpen(false);
                                     }}
                                 >
-                                    <CheckIcon
-                                        className={cn(
-                                            'mr-2 h-4 w-4',
-                                            value === option.value ? 'opacity-100' : 'opacity-0'
-                                        )}
-                                    />
-                                    {option.label}
+                                    <Check className={cn('mr-2 h-4 w-4', value === item[valueKey] ? 'opacity-100' : 'opacity-0')} />
+                                    {String(item[labelKey])}
                                 </CommandItem>
                             ))}
                         </CommandGroup>

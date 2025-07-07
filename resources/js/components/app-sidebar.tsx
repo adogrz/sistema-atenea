@@ -12,23 +12,31 @@ export function AppSidebar() {
     const { url } = usePage();
 
     const isItemActive = (href: string) => {
-        if (href === '/' || href === '/home' || href === '/dashboard') {
+        if (href === '/' || href === '/dashboard') {
             return url === href;
         }
         return url.startsWith(href);
     };
 
     const navStructure: NavItem[] = [
-        { title: 'Inicio', href: '/home', icon: HouseIcon },
+        { title: 'Inicio', href: '/dashboard', icon: HouseIcon },
         {
             title: 'Administración',
-            href: '#', // El href del grupo no se usa para navegación directa
+            href: '#',
             icon: ShieldCheck,
             items: [
-                ...(hasPermission('user-list') ? [{ title: 'Usuarios', href: '/dashboard/usuarios', icon: User }] : []),
-                ...(hasPermission('audit-view') ? [{ title: 'Auditoría', href: '/dashboard', icon: ClipboardListIcon }] : []),
+                ...(hasPermission('user-list') ? [{ title: 'Usuarios', href: '/dashboard/users', icon: User }] : []),
+                ...(hasPermission('audit-view')
+                    ? [
+                          {
+                              title: 'Auditoría',
+                              href: '/dashboard/audit',
+                              icon: ClipboardListIcon,
+                          },
+                      ]
+                    : []),
             ],
-        }
+        },
     ];
 
     const mainNavItems = navStructure

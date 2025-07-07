@@ -1,5 +1,4 @@
 import EditUserModal from '@/components/edit-user-modal';
-import RegisterForm from '@/components/register-user-modal';
 import { Button } from '@/components/ui/button';
 import { PieChart } from '@/components/ui/charts/pie';
 import { DataTable } from '@/components/ui/data-table';
@@ -8,12 +7,11 @@ import { getUserColumns } from '@/components/user-columns';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Description } from '@radix-ui/react-dialog';
 import { Edit, MailCheck, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
-// Interfaces actualizadas para la nueva estructura de datos
 interface Role {
     id: number;
     name: string;
@@ -53,13 +51,12 @@ interface User {
 // Constantes
 const BREADCRUMBS: BreadcrumbItem[] = [
     {
-        title: 'Panel de Usuarios',
-        href: '/dashboard/usuarios',
+        title: 'Usuarios',
+        href: '/dashboard/users',
     },
 ];
 
 export default function Dashboard() {
-    // Hooks y datos de la página
     const { hasPermission } = usePermissions();
     const { roles, assignableRoles, sedes, areas, users } = usePage<{
         roles: Array<Role>;
@@ -83,23 +80,16 @@ export default function Dashboard() {
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    // Obtener el usuario seleccionado basado en selectedUserId
     const selectedUser = selectedUserId ? users.find((u) => u.id === selectedUserId) || null : null;
-
-    // Columnas de la tabla
     const columns = getUserColumns(users, selectedUserId, setSelectedUserId);
-
-    // Estadísticas para los gráficos
     const totalUsuarios = users.length;
     const activos = users.filter((u) => u.status === 'active').length;
     const inactivos = totalUsuarios - activos;
-
     const statusData = [
         { id: 'Activos', label: 'Activos', value: activos },
         { id: 'Inactivos', label: 'Inactivos', value: inactivos },
     ];
 
-    // Análisis de usuarios por rol utilizando la nueva estructura de roles
     const usuariosPorRol = Object.values(
         users.reduce(
             (acc, user) => {
@@ -119,7 +109,6 @@ export default function Dashboard() {
         ),
     );
 
-    // Análisis de usuarios por sede utilizando sede_description cuando está disponible
     const usuariosPorSede = Object.values(
         users.reduce(
             (acc, user) => {
@@ -138,10 +127,9 @@ export default function Dashboard() {
         ),
     );
 
-    // Manejadores de eventos
     const handleDelete = () => {
         if (selectedUserId) {
-            router.delete(`/users/${selectedUserId}`, {
+            router.delete(`/dashboard/users/${selectedUserId}`, {
                 onSuccess: () => {
                     setShowDeleteModal(false);
                     setSelectedUserId(null);
@@ -162,7 +150,7 @@ export default function Dashboard() {
 
     const handleEditUser = (data: any) => {
         if (selectedUser) {
-            router.put(`/users/${selectedUser.id}`, data, {
+            router.put(`/dashboard/users/${selectedUser.id}`, data, {
                 onSuccess: () => {
                     setShowEditModal(false);
                     setSelectedUserId(null);
@@ -174,18 +162,6 @@ export default function Dashboard() {
                 },
             });
         }
-    };
-
-    const handleRegisterUser = (data: any) => {
-        router.post(route('users.store'), data, {
-            onSuccess: () => {
-                setShowRegisterModal(false);
-            },
-            onError: (errors) => {
-                setFormErrors(errors); // Mostrar errores en el modal
-                console.error('Error al registrar:', errors);
-            },
-        });
     };
 
     return (
@@ -204,14 +180,11 @@ export default function Dashboard() {
                             <MailCheck className="h-4 w-4" />
                             <span>Enviar enlace de recuperación</span>
                         </Button>
-                        <Button
-                            disabled={!canCreateUser}
-                            variant="ghost"
-                            className="flex items-center gap-2"
-                            onClick={() => setShowRegisterModal(true)}
-                        >
-                            <UserPlus className="h-4 w-4" />
-                            <span>Agregar</span>
+                        <Button disabled={!canCreateUser} variant="ghost" className="flex items-center gap-2" asChild>
+                            <Link href={route('users.create')}>
+                                <UserPlus className="h-4 w-4" />
+                                <span>Agregar</span>
+                            </Link>
                         </Button>
                         <Button variant="ghost" onClick={() => setShowEditModal(true)} disabled={!selectedUserId || !canEditUser}>
                             <Edit className="h-4 w-4" /> Editar
@@ -326,19 +299,6 @@ export default function Dashboard() {
                         sedes={sedes}
                         areas={areas}
                         errors={formErrors}
-                    />
-
-                    <RegisterForm
-                        open={showRegisterModal}
-                        onClose={() => {
-                            setShowRegisterModal(false);
-                            setFormErrors({}); // Limpiar errores al cerrar
-                        }}
-                        onRegister={handleRegisterUser}
-                        roles={assignableRoles}
-                        sedes={sedes}
-                        areas={areas}
-                        errors={formErrors} // Pasar errores al modal
                     />
                 </div>
             </div>

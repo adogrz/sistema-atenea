@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Area;
+use App\Models\Sede;
 use App\Models\User;
 use App\Services\RoleAssignmentService;
 use App\Services\UserVisibilityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -18,7 +20,8 @@ class UserController extends Controller
     public function __construct(
         UserVisibilityService $visibilityService,
         RoleAssignmentService $roleAssignmentService
-    ) {
+    )
+    {
         $this->visibilityService = $visibilityService;
         $this->roleAssignmentService = $roleAssignmentService;
     }
@@ -28,34 +31,74 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        // Obtener solo los usuarios visibles para el usuario actual
-        $users = $this->visibilityService->getVisibleUsers($request->user());
+        $userAuth = $request->user();
 
-        return Inertia::render('Usuarios/Index', [
-            'users' => $users->map(fn($u) => [
-                'id' => $u->id,
-                'name' => $u->name,
-                'email' => $u->email,
-                'role_name' => $u->getPrimaryRole() ? $u->getPrimaryRole()->description : null,
-                'sede_name' => $u->sede->description ?? $u->sede_name,
-                'area_name' => $u->primaryArea() ? $u->primaryArea()->description : null,
-                'status' => $u->status,
-                'roles' => $u->roles->map(fn($r) => [
-                    'id' => $r->id,
-                    'name' => $r->name,
-                    'description' => $r->description,
+        $visibleUsers = $this->visibilityService->getVisibleUsers($userAuth);
+        $assignableRoles = $this->roleAssignmentService->getAssignableRoles($userAuth);
+        $allRoles = Role::all(['id', 'name', 'description']);
+        $sedes = Sede::all(['id', 'name', 'description']);
+        $areas = Area::all(['id', 'name', 'description']);
+        
+        return Inertia::render('dashboard-users', [
+            'roles' => $allRoles,
+            'assignableRoles' => $assignableRoles,
+            'sedes' => $sedes,
+            'areas' => $areas,
+
+            'users' => $visibleUsers->map(fn($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'status' => $user->status,
+                'sede_name' => $user->sede_name,
+                'sede_description' => $user->sede->description ?? null,
+                'roles' => $user->roles->map(fn($role) => [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                    'description' => $role->description,
                     'pivot' => [
-                        'is_primary' => $r->pivot->is_primary ?? false,
-                        'expires_at' => $r->pivot->expires_at
-                    ]
+                        'is_primary' => $role->pivot->is_primary ?? false,
+                        'expires_at' => $role->pivot->expires_at,
+                    ],
                 ]),
-                'areas' => $u->areas->map(fn($a) => [
-                    'id' => $a->id,
-                    'name' => $a->name,
-                    'description' => $a->description,
-                    'is_primary' => $a->pivot->is_primary ?? false,
+                'areas' => $user->areas->map(fn($area) => [
+                    'id' => $area->id,
+                    'name' => $area->name,
+                    'description' => $area->description,
+                    'pivot' => [
+                        'is_primary' => $area->pivot->is_primary ?? false,
+                    ],
                 ]),
-            ])
+            ]),
+        ]);
+    }
+
+    /**
+     * Muestra el formulario para crear un nuevo usuario.
+     */
+    public function create()
+    {
+        $this->authorize('create', User::class); // Usar policy para verificar permiso
+
+        $currentUser = auth()->user();
+        $roleAssignmentService = app(RoleAssignmentService::class);
+
+        // Obtener roles que el usuario actual puede asignar
+        $assignableRoles = collect($roleAssignmentService->getAssignableRoles($currentUser))->map(fn($role) => [
+            'name' => $role->name,
+            'description' => $role->description,
+        ]);
+
+        // Obtener sedes, restringidas si es necesario
+        $sedesQuery = Sede::query();
+        if ($currentUser->hasPermissionTo('user-view-own-sede')) {
+            $sedesQuery->where('name', $currentUser->sede_name);
+        }
+        $sedes = $sedesQuery->get(['name', 'description']);
+
+        return Inertia::render('users/register', [
+            'assignableRoles' => $assignableRoles,
+            'sedes' => $sedes,
         ]);
     }
 
