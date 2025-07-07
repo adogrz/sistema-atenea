@@ -1,7 +1,7 @@
-import { Combobox } from '@/components/ui/combobox';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -16,6 +16,7 @@ interface SelectItem {
 }
 
 const BREADCRUMBS: BreadcrumbItem[] = [
+    { title: 'Inicio', href: '/dashboard' },
     { title: 'Usuarios', href: '/dashboard/users' },
     { title: 'Registrar Usuario', href: '/dashboard/users/register' },
 ];

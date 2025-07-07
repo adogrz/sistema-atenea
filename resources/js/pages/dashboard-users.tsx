@@ -50,10 +50,8 @@ interface User {
 
 // Constantes
 const BREADCRUMBS: BreadcrumbItem[] = [
-    {
-        title: 'Usuarios',
-        href: '/dashboard/users',
-    },
+    { title: 'Inicio', href: '/dashboard' },
+    { title: 'Usuarios', href: '/dashboard/users' },
 ];
 
 export default function DashboardUsers() {

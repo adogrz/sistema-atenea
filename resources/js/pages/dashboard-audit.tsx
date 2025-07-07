@@ -11,10 +11,8 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Auditoría de Usuarios',
-        href: '/dashboard/audit',
-    },
+    { title: 'Inicio', href: '/dashboard' },
+    { title: 'Auditoría', href: '/dashboard/audit' },
 ];
 
 const userStatusChartData = [{ current: 'Usuarios', enabled: 186, disabled: 100 }];
