@@ -13,8 +13,6 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 
-// Este componente ahora es puramente presentacional, sin lógica interna.
-// Renderiza los elementos basándose en las propiedades que recibe.
 export function NavMain({ items }: { items: NavItem[] }) {
     return (
         <SidebarGroup>
@@ -26,13 +24,10 @@ export function NavMain({ items }: { items: NavItem[] }) {
                         <Collapsible key={item.title} asChild defaultOpen={item.isOpen} className="group/collapsible">
                             <SidebarMenuItem>
                                 <CollapsibleTrigger asChild>
-                                    {/* El botón del grupo ahora es también un enlace */}
-                                    <SidebarMenuButton asChild tooltip={item.title} isActive={item.isActive}>
-                                        <Link href={item.href} preserveState preserveScroll>
-                                            {item.icon && <item.icon />}
-                                            <span>{item.title}</span>
-                                            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                                        </Link>
+                                    <SidebarMenuButton tooltip={item.title}>
+                                        {item.icon && <item.icon />}
+                                        <span>{item.title}</span>
+                                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                     </SidebarMenuButton>
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
@@ -41,7 +36,6 @@ export function NavMain({ items }: { items: NavItem[] }) {
                                             <SidebarMenuSubItem key={subItem.title}>
                                                 <SidebarMenuSubButton asChild isActive={subItem.isActive}>
                                                     <Link href={subItem.href} preserveState preserveScroll>
-                                                        {/* Añadimos el icono al sub-item */}
                                                         {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />}
                                                         <span>{subItem.title}</span>
                                                     </Link>

@@ -11,18 +11,17 @@ export function AppSidebar() {
     const { hasPermission } = usePermissions();
     const { url } = usePage();
 
-    const isItemActive = (href: string) => {
+    const isItemActive = (href: string | undefined) => {
         if (href === '/' || href === '/dashboard') {
             return url === href;
         }
-        return url.startsWith(href);
+        return url.startsWith(href as string);
     };
 
     const navStructure: NavItem[] = [
         { title: 'Inicio', href: '/dashboard', icon: HouseIcon },
         {
             title: 'Administración',
-            href: '#',
             icon: ShieldCheck,
             items: [
                 ...(hasPermission('user-list') ? [{ title: 'Usuarios', href: '/dashboard/users', icon: User }] : []),
@@ -49,7 +48,6 @@ export function AppSidebar() {
                 ...item,
                 isActive: !isGroup && isItemActive(item.href),
                 isOpen: groupIsOpen,
-                href: isGroup ? item.items![0].href : item.href,
                 items: item.items?.map((subItem) => ({
                     ...subItem,
                     isActive: isItemActive(subItem.href),
