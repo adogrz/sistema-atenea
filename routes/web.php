@@ -9,6 +9,10 @@ use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Models\Activity;
 
+Route::get('/formulario-admision', function () {
+    return Inertia::render('admission/admission-register');
+})->name('admission');
+
 Route::get('/', function () {
     if (auth()->check()) {
         if (auth()->user()->hasRole('admin')) {
