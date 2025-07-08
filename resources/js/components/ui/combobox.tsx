@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
 
@@ -54,18 +52,17 @@ export function Combobox<T extends Record<string, any>>({
         }
     }, [open, items]);
 
-    // Sort items alphabetically based on the labelKey
     const sortedItems = React.useMemo(() => {
         if (!items || items.length === 0) {
             return [];
         }
-        // Create a shallow copy to avoid mutating the original array
+
         return [...items].sort((a, b) => {
             const labelA = String(a[labelKey]).toLowerCase();
             const labelB = String(b[labelKey]).toLowerCase();
             return labelA.localeCompare(labelB);
         });
-    }, [items, labelKey]); // Re-sort only if items or labelKey change
+    }, [items, labelKey]);
 
     const selectedLabel = items.find((item) => item[valueKey] === value)?.[labelKey] as string | undefined;
 
@@ -89,12 +86,21 @@ export function Combobox<T extends Record<string, any>>({
             >
                 <Command>
                     <CommandInput placeholder={searchPlaceholder} className="h-9" />
-                    <CommandList className="max-h-[300px] overflow-y-auto overflow-x-hidden">
+                    <CommandList
+                        className={cn(
+                            "max-h-[300px] overflow-y-auto overflow-x-hidden",
+                            "[&::-webkit-scrollbar]:w-2",
+                            "[&::-webkit-scrollbar-track]:bg-transparent",
+                            "[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40",
+                            "[&::-webkit-scrollbar-thumb]:rounded-full",
+                            "[&::-webkit-scrollbar-thumb:hover]:bg-muted-foreground/60"
+                        )}
+                    >
                         <CommandEmpty>{emptyText}</CommandEmpty>
                         <CommandGroup>
-                            {sortedItems.map((item) => ( // Use sortedItems here
+                            {sortedItems.map((item) => (
                                 <CommandItem
-                                    key={String(item[valueKey])} // Assuming valueKey provides a unique and stable identifier
+                                    key={String(item[valueKey])}
                                     value={String(item[valueKey])}
                                     onSelect={(currentValue) => {
                                         onValueChange(currentValue === value ? "" : currentValue);
