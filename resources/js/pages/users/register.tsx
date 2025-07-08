@@ -1,6 +1,7 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,9 +25,10 @@ const BREADCRUMBS: BreadcrumbItem[] = [
 ];
 
 export default function RegisterUserPage() {
-    const { assignableRoles, sedes } = usePage<{
+    const { assignableRoles, sedes, areas } = usePage<{
         assignableRoles: SelectItem[];
         sedes: SelectItem[];
+        areas: SelectItem[];
     }>().props;
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -36,7 +38,13 @@ export default function RegisterUserPage() {
         password_confirmation: '',
         roles: [] as Array<{ name: string; is_primary: boolean; expires_at?: string }>,
         sede_name: '',
+        area_name: '',
     });
+
+    const requiresArea = () => {
+        const rolesRequiringArea = ['coordinador-area', 'mentor', 'instructor', 'calificador'];
+        return data.roles.some((role) => rolesRequiringArea.includes(role.name));
+    };
 
     const {
         selectedRole,
@@ -138,6 +146,24 @@ export default function RegisterUserPage() {
                                         </SelectContent>
                                     </Select>
                                     <InputError message={errors.sede_name} />
+                                </div>
+
+                                {/* Selección de área */}
+                                <div className="space-y-2">
+                                    <Label>Área académica</Label>
+                                    <Combobox<SelectItem>
+                                        items={areas}
+                                        placeholder="Seleccionar área"
+                                        searchPlaceholder="Buscar área..."
+                                        emptyText="Área no encontrada"
+                                        value={data.area_name}
+                                        onValueChange={(value) => setData('area_name', value)}
+                                        valueKey="name"
+                                        labelKey="description"
+                                        className="w-full"
+                                        disabled={!requiresArea()}
+                                    />
+                                    <InputError message={errors.area_name} />
                                 </div>
 
                                 {/* Componente de administración de roles */}

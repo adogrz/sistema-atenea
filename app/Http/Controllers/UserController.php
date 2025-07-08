@@ -23,8 +23,7 @@ class UserController extends Controller
     public function __construct(
         UserVisibilityService $visibilityService,
         RoleAssignmentService $roleAssignmentService
-    )
-    {
+    ) {
         $this->visibilityService = $visibilityService;
         $this->roleAssignmentService = $roleAssignmentService;
     }
@@ -100,9 +99,19 @@ class UserController extends Controller
         }
         $sedes = $sedesQuery->get(['name', 'description']);
 
+        // Obtener todas las áreas académicas
+        $areasQuery = Area::query();
+        if ($currentUser->hasPermissionTo('user-view-own-area')) {
+            // Si el usuario está restringido a sus propias áreas
+            $userAreaIds = $currentUser->areas->pluck('id');
+            $areasQuery->whereIn('id', $userAreaIds);
+        }
+        $areas = $areasQuery->get(['name', 'description']);
+
         return Inertia::render('users/register', [
             'assignableRoles' => $assignableRoles,
             'sedes' => $sedes,
+            'areas' => $areas, // Añadir áreas a los datos enviados a la vista
         ]);
     }
 
@@ -122,12 +131,28 @@ class UserController extends Controller
             'roles' => 'required|array|min:1',
             'roles.*.name' => 'required|string|exists:roles,name',
             'roles.*.is_primary' => 'boolean',
+            'area_name' => 'nullable|string|exists:areas,name', // Validar el área seleccionada
         ]);
 
+        // Verificar si los roles seleccionados requieren un área
+        $rolesRequiringArea = ['coordinador-area', 'mentor', 'instructor', 'calificador'];
+        $requiresArea = false;
+
         foreach ($validated['roles'] as $roleData) {
+            // Verificar permisos para asignar rol
             if (!$this->roleAssignmentService->canAssignRole($request->user(), $roleData['name'])) {
                 return back()->withErrors(['roles' => "No tienes permiso para asignar el rol: {$roleData['name']}"]);
             }
+
+            // Verificar si algún rol requiere área
+            if (in_array($roleData['name'], $rolesRequiringArea)) {
+                $requiresArea = true;
+            }
+        }
+
+        // Si requiere área pero no se seleccionó una
+        if ($requiresArea && empty($validated['area_name'])) {
+            return back()->withErrors(['area_name' => 'El área académica es requerida para los roles seleccionados.']);
         }
 
         $user = User::create([
@@ -140,13 +165,25 @@ class UserController extends Controller
 
         $user->syncRolesWithExpiration($validated['roles']);
 
+        // Asignar el área al usuario si se seleccionó una
+        if (!empty($validated['area_name'])) {
+            $area = Area::where('name', $validated['area_name'])->first();
+            if ($area) {
+                // Asignar como área principal si requiere área específicamente
+                $user->areas()->sync([
+                    $area->id => ['is_primary' => $requiresArea]
+                ]);
+            }
+        }
+
         activity('usuarios')
             ->performedOn($user)
             ->causedBy($request->user())
             ->withProperties([
                 'event' => 'Crear',
                 'attributes' => $user->only(['name', 'email', 'sede_name']),
-                'roles' => $validated['roles']
+                'roles' => $validated['roles'],
+                'areas' => $validated['area_name'] ? [$validated['area_name']] : []
             ])
             ->event('created')
             ->log('Usuario creado');

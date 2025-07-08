@@ -28,6 +28,7 @@ interface ComboboxProps<T> {
     emptyText?: string;
     className?: string;
     contentClassName?: string;
+    disabled?: boolean;
 }
 
 export function Combobox<T extends Record<string, any>>({
@@ -41,6 +42,7 @@ export function Combobox<T extends Record<string, any>>({
     emptyText = "No item found.",
     className,
     contentClassName,
+    disabled = false,
 }: ComboboxProps<T>) {
     const [open, setOpen] = React.useState(false)
     const [buttonWidth, setButtonWidth] = React.useState(0);
@@ -75,6 +77,7 @@ export function Combobox<T extends Record<string, any>>({
                     role="combobox"
                     aria-expanded={open}
                     className={cn("justify-between", className)}
+                    disabled={disabled}
                 >
                     {selectedLabel || placeholder}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
