@@ -51,7 +51,7 @@ interface User {
 // Constantes
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
-    { title: 'Usuarios', href: '/dashboard/users' },
+    { title: 'Usuarios', href: '/dashboard/users' }
 ];
 
 export default function DashboardUsers() {
@@ -71,7 +71,6 @@ export default function DashboardUsers() {
     const canResetUserPassword = hasPermission('user-reset-password');
 
     // Estados para manejo de UI
-    const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -85,7 +84,7 @@ export default function DashboardUsers() {
     const inactivos = totalUsuarios - activos;
     const statusData = [
         { id: 'Activos', label: 'Activos', value: activos },
-        { id: 'Inactivos', label: 'Inactivos', value: inactivos },
+        { id: 'Inactivos', label: 'Inactivos', value: inactivos }
     ];
 
     const usuariosPorRol = Object.values(
@@ -96,15 +95,15 @@ export default function DashboardUsers() {
                     acc[roleName] = acc[roleName] || {
                         id: roleName,
                         label: roleName,
-                        value: 0,
+                        value: 0
                     };
                     acc[roleName].value += 1;
                 });
 
                 return acc;
             },
-            {} as Record<string, { id: string; label: string; value: number; color?: string }>,
-        ),
+            {} as Record<string, { id: string; label: string; value: number; color?: string }>
+        )
     );
 
     const usuariosPorSede = Object.values(
@@ -115,14 +114,14 @@ export default function DashboardUsers() {
                     acc[sedeName] = acc[sedeName] || {
                         id: sedeName,
                         label: sedeName,
-                        value: 0,
+                        value: 0
                     };
                     acc[sedeName].value += 1;
                 }
                 return acc;
             },
-            {} as Record<string, { id: string; label: string; value: number; color?: string }>,
-        ),
+            {} as Record<string, { id: string; label: string; value: number; color?: string }>
+        )
     );
 
     const handleDelete = () => {
@@ -134,7 +133,7 @@ export default function DashboardUsers() {
                 },
                 onError: (errors) => {
                     console.error('Error al eliminar:', errors);
-                },
+                }
             });
         }
     };
@@ -157,7 +156,7 @@ export default function DashboardUsers() {
                 onError: (errors) => {
                     console.error('Error al editar:', errors);
                     setFormErrors(errors);
-                },
+                }
             });
         }
     };
@@ -184,7 +183,8 @@ export default function DashboardUsers() {
                                 <span>Agregar</span>
                             </Link>
                         </Button>
-                        <Button variant="ghost" onClick={() => setShowEditModal(true)} disabled={!selectedUserId || !canEditUser}>
+                        <Button variant="ghost" onClick={() => setShowEditModal(true)}
+                                disabled={!selectedUserId || !canEditUser}>
                             <Edit className="h-4 w-4" /> Editar
                         </Button>
                         <Button
@@ -199,7 +199,8 @@ export default function DashboardUsers() {
                     </div>
 
                     {/* Tabla de usuarios */}
-                    <div className="relative min-h-[70vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
+                    <div
+                        className="relative min-h-[70vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
                         <DataTable
                             columns={columns}
                             data={users}
@@ -213,7 +214,8 @@ export default function DashboardUsers() {
                     <div className="flex flex-col gap-6 p-4">
                         <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-4">
                             {/* Total usuarios */}
-                            <div className="flex flex-col items-center justify-center rounded-lg border bg-background p-4">
+                            <div
+                                className="flex flex-col items-center justify-center rounded-lg border bg-background p-4">
                                 <span className="text-2xl font-bold">{totalUsuarios}</span>
                                 <span className="text-muted-foreground">Usuarios totales</span>
                             </div>
@@ -252,7 +254,8 @@ export default function DashboardUsers() {
                                 <p className="mb-1">Nombre: {selectedUser?.name}</p>
                                 <p className="mb-1">Email: {selectedUser?.email}</p>
                             </Description>
-                            <p>Esta acción no se puede deshacer. El usuario seleccionado será eliminado permanentemente del sistema.</p>
+                            <p>Esta acción no se puede deshacer. El usuario seleccionado será eliminado permanentemente
+                                del sistema.</p>
                             <DialogFooter className="flex justify-end gap-2 pt-4">
                                 <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
                                     Cancelar
@@ -272,7 +275,8 @@ export default function DashboardUsers() {
                             <p className="mb-1">ID: {selectedUserId}</p>
                             <p className="mb-1">Nombre: {selectedUser?.name}</p>
                             <p className="mb-1">Email: {selectedUser?.email}</p>
-                            <p>¿Estás seguro de que deseas enviar el enlace de recuperación de contraseña a este usuario?</p>
+                            <p>¿Estás seguro de que deseas enviar el enlace de recuperación de contraseña a este
+                                usuario?</p>
                             <DialogFooter className="pt-4">
                                 <Button variant="secondary" onClick={() => setShowResetConfirm(false)}>
                                     Cancelar

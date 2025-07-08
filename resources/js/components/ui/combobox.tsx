@@ -1,68 +1,113 @@
-import { Check, ChevronsUpDown } from 'lucide-react';
-import * as React from 'react';
+"use client"
 
-import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import * as React from "react"
+import { Check, ChevronsUpDown } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface ComboboxProps<T> {
     items: T[];
-    value: string | number | null;
-    onChange: (value: string) => void; // El valor siempre será el 'name' o 'id' como string
+    value: string;
+    onValueChange: (value: string) => void;
     valueKey: keyof T;
     labelKey: keyof T;
-    placeholder: string;
-    searchPlaceholder: string;
-    disabled?: boolean;
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyText?: string;
+    className?: string;
+    contentClassName?: string;
 }
 
 export function Combobox<T extends Record<string, any>>({
     items,
     value,
-    onChange,
+    onValueChange,
     valueKey,
     labelKey,
-    placeholder,
-    searchPlaceholder,
-    disabled = false,
+    placeholder = "Select item...",
+    searchPlaceholder = "Search...",
+    emptyText = "No item found.",
+    className,
+    contentClassName,
 }: ComboboxProps<T>) {
-    const [open, setOpen] = React.useState(false);
+    const [open, setOpen] = React.useState(false)
+    const [buttonWidth, setButtonWidth] = React.useState(0);
+    const buttonRef = React.useRef<HTMLButtonElement>(null);
 
-    // Encontrar el item seleccionado para mostrar su etiqueta
-    const selectedItem = items.find((item) => item[valueKey] === value);
+    React.useEffect(() => {
+        if (buttonRef.current) {
+            setButtonWidth(buttonRef.current.offsetWidth);
+        }
+    }, [open, items]);
+
+    // Sort items alphabetically based on the labelKey
+    const sortedItems = React.useMemo(() => {
+        if (!items || items.length === 0) {
+            return [];
+        }
+        // Create a shallow copy to avoid mutating the original array
+        return [...items].sort((a, b) => {
+            const labelA = String(a[labelKey]).toLowerCase();
+            const labelB = String(b[labelKey]).toLowerCase();
+            return labelA.localeCompare(labelB);
+        });
+    }, [items, labelKey]); // Re-sort only if items or labelKey change
+
+    const selectedLabel = items.find((item) => item[valueKey] === value)?.[labelKey] as string | undefined;
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
+                    ref={buttonRef}
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className={cn('w-full justify-between', !value && 'text-muted-foreground')}
-                    disabled={disabled}
+                    className={cn("justify-between", className)}
                 >
-                    {selectedItem ? String(selectedItem[labelKey]) : placeholder}
+                    {selectedLabel || placeholder}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+            <PopoverContent
+                style={{ width: buttonWidth > 0 ? buttonWidth : undefined }}
+                className={cn("p-0", contentClassName)}
+            >
                 <Command>
-                    <CommandInput placeholder={searchPlaceholder} />
-                    <CommandList>
-                        <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+                    <CommandInput placeholder={searchPlaceholder} className="h-9" />
+                    <CommandList className="max-h-[300px] overflow-y-auto overflow-x-hidden">
+                        <CommandEmpty>{emptyText}</CommandEmpty>
                         <CommandGroup>
-                            {items.map((item) => (
+                            {sortedItems.map((item) => ( // Use sortedItems here
                                 <CommandItem
-                                    key={item[valueKey]}
-                                    value={String(item[labelKey])} // Buscar por la etiqueta visible
-                                    onSelect={() => {
-                                        onChange(String(item[valueKey])); // Devolver el valor único
+                                    key={String(item[valueKey])} // Assuming valueKey provides a unique and stable identifier
+                                    value={String(item[valueKey])}
+                                    onSelect={(currentValue) => {
+                                        onValueChange(currentValue === value ? "" : currentValue);
                                         setOpen(false);
                                     }}
                                 >
-                                    <Check className={cn('mr-2 h-4 w-4', value === item[valueKey] ? 'opacity-100' : 'opacity-0')} />
-                                    {String(item[labelKey])}
+                                    {item[labelKey] as string}
+                                    <Check
+                                        className={cn(
+                                            "ml-auto h-4 w-4",
+                                            value === item[valueKey] ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
                                 </CommandItem>
                             ))}
                         </CommandGroup>
@@ -70,5 +115,5 @@ export function Combobox<T extends Record<string, any>>({
                 </Command>
             </PopoverContent>
         </Popover>
-    );
+    )
 }

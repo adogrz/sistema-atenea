@@ -1,9 +1,11 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import RolesManager from '@/components/users/roles-manager';
+import useRolesManagement from '@/hooks/use-roles-management';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
@@ -32,9 +34,20 @@ export default function RegisterUserPage() {
         email: '',
         password: '',
         password_confirmation: '',
-        roles: [] as Array<{ name: string; is_primary: boolean }>,
+        roles: [] as Array<{ name: string; is_primary: boolean; expires_at?: string }>,
         sede_name: '',
     });
+
+    const {
+        selectedRole,
+        setSelectedRole,
+        primaryRoleIndex,
+        parseLocalDate,
+        handleAddRole,
+        handleRemoveRole,
+        handleSetPrimaryRole,
+        handleSetExpiryDate,
+    } = useRolesManagement(data.roles, (roles) => setData('roles', roles));
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -55,6 +68,7 @@ export default function RegisterUserPage() {
                     <CardContent>
                         <form onSubmit={submit} className="space-y-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                {/* Información básica del usuario */}
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Nombre</Label>
                                     <Input
@@ -66,6 +80,7 @@ export default function RegisterUserPage() {
                                     />
                                     <InputError message={errors.name} />
                                 </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Correo electrónico</Label>
                                     <Input
@@ -78,6 +93,7 @@ export default function RegisterUserPage() {
                                     />
                                     <InputError message={errors.email} />
                                 </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="password">Contraseña</Label>
                                     <Input
@@ -90,6 +106,7 @@ export default function RegisterUserPage() {
                                     />
                                     <InputError message={errors.password} />
                                 </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="password_confirmation">Confirmar contraseña</Label>
                                     <Input
@@ -102,47 +119,52 @@ export default function RegisterUserPage() {
                                     />
                                     <InputError message={errors.password_confirmation} />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label>Rol</Label>
-                                    <Combobox
-                                        items={assignableRoles}
-                                        value={data.roles[0]?.name || ''}
-                                        onChange={(roleName) =>
-                                            setData('roles', [
-                                                {
-                                                    name: roleName,
-                                                    is_primary: true,
-                                                },
-                                            ])
-                                        }
-                                        valueKey="name"
-                                        labelKey="description"
-                                        placeholder="Seleccionar rol"
-                                        searchPlaceholder="Buscar rol..."
-                                        disabled={processing}
-                                    />
-                                    <InputError message={errors.roles} />
-                                </div>
+
+                                {/* Selección de sede */}
                                 <div className="space-y-2">
                                     <Label>Sede</Label>
-                                    <Combobox
-                                        items={sedes}
-                                        value={data.sede_name}
-                                        onChange={(sedeName) => setData('sede_name', sedeName)}
-                                        valueKey="name"
-                                        labelKey="description"
-                                        placeholder="Seleccionar sede"
-                                        searchPlaceholder="Buscar sede..."
-                                        disabled={processing}
-                                    />
+                                    <Select value={data.sede_name} onValueChange={(value) => setData('sede_name', value)}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Seleccionar sede" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {sedes.map((sede) => (
+                                                    <SelectItem key={sede.name} value={sede.name}>
+                                                        {sede.description}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
                                     <InputError message={errors.sede_name} />
                                 </div>
+
+                                {/* Componente de administración de roles */}
+                                <div className="space-y-4 md:col-span-2">
+                                    <RolesManager
+                                        roles={data.roles}
+                                        availableRoles={assignableRoles}
+                                        selectedRole={selectedRole}
+                                        primaryRoleIndex={primaryRoleIndex}
+                                        errorMessage={errors.roles}
+                                        disabled={processing}
+                                        onSelectedRoleChange={setSelectedRole}
+                                        onAddRole={handleAddRole}
+                                        onRemoveRole={handleRemoveRole}
+                                        onSetPrimaryRole={handleSetPrimaryRole}
+                                        onSetExpiryDate={handleSetExpiryDate}
+                                        parseLocalDate={parseLocalDate}
+                                    />
+                                </div>
                             </div>
+
+                            {/* Botones de acción */}
                             <div className="flex justify-end gap-4 pt-4">
                                 <Button type="button" variant="outline" asChild>
                                     <Link href={route('users.index')}>Regresar</Link>
                                 </Button>
-                                <Button type="submit" disabled={processing}>
+                                <Button type="submit" disabled={processing || data.roles.length === 0}>
                                     {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                                     Crear cuenta
                                 </Button>
