@@ -14,9 +14,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Sedes de la institucion
-        $this->call(SedeSeeder::class);
-        //Permisos y roles (Spatie)
-        $this->call(PermissionSeeder::class);
+        $this->call([
+            SedeSeeder::class,
+            PermissionSeeder::class,
+            DepartamentosSeeder::class,
+            MunicipioSeeder::class,
+            DistritoSeeder::class,
+        ]);
 
         // Crear el usuario con rol de Administrador
         $user = User::firstOrCreate(
