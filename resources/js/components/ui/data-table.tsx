@@ -10,7 +10,7 @@ import {
   ColumnFiltersState,
   VisibilityState,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 import {
   Table,
@@ -33,6 +33,8 @@ interface DataTableProps<TData, TValue> {
   selectedRowId?: number | string | null;
   onRowClick?: (row: TData) => void;
   getRowId?: (row: TData) => string | number;
+  columnFilters: ColumnFiltersState;
+  setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
 };
 
 export function DataTable<TData, TValue>({
@@ -41,9 +43,10 @@ export function DataTable<TData, TValue>({
   selectedRowId,
   onRowClick,
   getRowId = (row: any) => row.id,
+  columnFilters,
+  setColumnFilters,
 }: DataTableProps<TData, TValue>) {
   const [globalFilter, setGlobalFilter] = useState("");
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [pageSize, setPageSize] = useState(10); // Nuevo estado para el tamaño de página
   const [pageIndex, setPageIndex] = useState(0); // Nuevo estado para el índice de página

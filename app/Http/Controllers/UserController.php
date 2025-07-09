@@ -23,7 +23,8 @@ class UserController extends Controller
     public function __construct(
         UserVisibilityService $visibilityService,
         RoleAssignmentService $roleAssignmentService
-    ) {
+    )
+    {
         $this->visibilityService = $visibilityService;
         $this->roleAssignmentService = $roleAssignmentService;
     }
@@ -36,45 +37,35 @@ class UserController extends Controller
         // La política se encarga de la autorización.
         $this->authorize('viewAny', User::class);
 
-        $userAuth = $request->user();
+        // Obtener usuarios visibles para el usuario autenticado
+        $users = $this->visibilityService->getVisibleUsers(auth()->user());
 
-        $visibleUsers = $this->visibilityService->getVisibleUsers($userAuth);
-        $assignableRoles = $this->roleAssignmentService->getAssignableRoles($userAuth);
-        $allRoles = Role::all(['id', 'name', 'description']);
-        $sedes = Sede::all(['id', 'name', 'description']);
-        $areas = Area::all(['id', 'name', 'description']);
+        // Cargar los roles con la información de la tabla pivote
+        $users->load(['getAllRolesWithExpired', 'sede', 'areas']);
+
+        // Mapear los resultados para que la relación 'getAllRolesWithExpired' se asigne a 'roles'
+        // y para añadir explícitamente la descripción de la sede.
+        $users->each(function ($user) {
+            $user->setRelation('roles', $user->getAllRolesWithExpired);
+            unset($user->getAllRolesWithExpired);
+
+            // Asegurarse de que la descripción de la sede esté disponible
+            if ($user->sede) {
+                $user->sede_description = $user->sede->description;
+            }
+        });
+
+        // Obtener roles, sedes y áreas para los filtros y modales
+        $assignableRoles = $this->roleAssignmentService->getAssignableRoles(auth()->user());
+        $sedes = Sede::all();
+        $areas = Area::all();
 
         return Inertia::render('dashboard-users', [
-            'roles' => $allRoles,
+            'users' => $users,
+            'roles' => Role::all(['id', 'name', 'description']),
             'assignableRoles' => $assignableRoles,
             'sedes' => $sedes,
             'areas' => $areas,
-
-            'users' => $visibleUsers->map(fn($user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'status' => $user->status,
-                'sede_name' => $user->sede_name,
-                'sede_description' => $user->sede->description ?? null,
-                'roles' => $user->roles->map(fn($role) => [
-                    'id' => $role->id,
-                    'name' => $role->name,
-                    'description' => $role->description,
-                    'pivot' => [
-                        'is_primary' => $role->pivot->is_primary ?? false,
-                        'expires_at' => $role->pivot->expires_at,
-                    ],
-                ]),
-                'areas' => $user->areas->map(fn($area) => [
-                    'id' => $area->id,
-                    'name' => $area->name,
-                    'description' => $area->description,
-                    'pivot' => [
-                        'is_primary' => $area->pivot->is_primary ?? false,
-                    ],
-                ]),
-            ]),
         ]);
     }
 
@@ -131,7 +122,8 @@ class UserController extends Controller
             'roles' => 'required|array|min:1',
             'roles.*.name' => 'required|string|exists:roles,name',
             'roles.*.is_primary' => 'boolean',
-            'area_name' => 'nullable|string|exists:areas,name', // Validar el área seleccionada
+            'roles.*.expires_at' => 'nullable|date', // <-- Añadir esta validación
+            'area_name' => 'nullable|string|exists:areas,name',
         ]);
 
         // Verificar si los roles seleccionados requieren un área
@@ -145,7 +137,7 @@ class UserController extends Controller
             }
 
             // Verificar si algún rol requiere área
-            if (in_array($roleData['name'], $rolesRequiringArea)) {
+            if (in_array($roleData['name'], $rolesRequiringArea, true)) {
                 $requiresArea = true;
             }
         }
@@ -163,13 +155,13 @@ class UserController extends Controller
             'status' => 'active',
         ]);
 
+        // Usar el método corregido para sincronizar roles
         $user->syncRolesWithExpiration($validated['roles']);
 
         // Asignar el área al usuario si se seleccionó una
         if (!empty($validated['area_name'])) {
             $area = Area::where('name', $validated['area_name'])->first();
             if ($area) {
-                // Asignar como área principal si requiere área específicamente
                 $user->areas()->sync([
                     $area->id => ['is_primary' => $requiresArea]
                 ]);
@@ -399,5 +391,54 @@ class UserController extends Controller
         } else {
             return back()->withErrors(['email' => __($status)]);
         }
+    }
+
+    /*
+    * Muestra información detallada de un usuario para depuración.
+    */
+    public function debug(User $user)
+    {
+        // La autorización se maneja con el middleware en la ruta.
+        // Opcionalmente, puedes añadir una política si es necesario.
+        // $this->authorize('view', $user);
+
+        // Cargar roles con datos de la tabla pivote (is_primary, expires_at)
+        $rolesConPivot = $user->getAllRolesWithExpired()->get()->map(function ($role) {
+            return [
+                'id' => $role->id,
+                'name' => $role->name,
+                'description' => $role->description,
+                'pivot' => [
+                    'is_primary' => (bool)$role->pivot->is_primary,
+                    'expires_at' => $role->pivot->expires_at,
+                ],
+            ];
+        });
+
+        // Cargar áreas con datos de la tabla pivote (is_primary)
+        $areasConPivot = $user->areas()->withPivot('is_primary')->get()->map(function ($area) {
+            return [
+                'id' => $area->id,
+                'name' => $area->name,
+                'description' => $area->description,
+                'pivot' => [
+                    'is_primary' => (bool)$area->pivot->is_primary,
+                ],
+            ];
+        });
+
+        $infoDepuracion = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'status' => $user->status,
+            'sede' => $user->sede,
+            'roles_info' => $rolesConPivot,
+            'areas_info' => $areasConPivot,
+            'permisos_directos' => $user->getDirectPermissions()->pluck('name'),
+            'permisos_via_roles' => $user->getPermissionsViaRoles()->pluck('name'),
+        ];
+
+        return response()->json($infoDepuracion, 200, [], JSON_PRETTY_PRINT);
     }
 }

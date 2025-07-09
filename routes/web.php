@@ -40,6 +40,11 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
         ->name('users.send-reset-link')
         ->middleware('permission:user-reset-password');
+
+    // Ruta para depurar un usuario específico
+    Route::get('/users/{user}/debug', [UserController::class, 'debug'])
+        ->name('users.debug')
+        ->middleware('permission:user-view-all');
 });
 
 require __DIR__ . '/settings.php';

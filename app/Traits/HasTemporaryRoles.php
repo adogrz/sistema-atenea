@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 trait HasTemporaryRoles
@@ -18,7 +19,7 @@ trait HasTemporaryRoles
             config('permission.table_names.model_has_roles'),
             config('permission.column_names.model_morph_key'),
             'role_id'
-        );
+        )->withPivot('is_primary', 'expires_at');
     }
 
     /**
@@ -33,55 +34,35 @@ trait HasTemporaryRoles
     }
 
     /**
-     * Asigna un rol temporal
-     */
-    public function assignTemporaryRole(string $roleName, ?Carbon $expiresAt = null, bool $isPrimary = false): self
-    {
-        $role = app(config('permission.models.role'))->findByName($roleName, $this->getDefaultGuardName());
-
-        // Si ya tiene el rol, actualizar el pivot
-        if ($this->hasRole($role)) {
-            $this->roles()->updateExistingPivot($role->id, [
-                'expires_at' => $expiresAt,
-                'is_primary' => $isPrimary,
-            ]);
-            return $this;
-        }
-
-        // Si es rol primario, quitar primario de otros roles
-        if ($isPrimary) {
-            $this->roles()->newPivotStatement()->update(['is_primary' => false]);
-        }
-
-        // Asignar el rol con expiración
-        $this->roles()->attach($role->id, [
-            'expires_at' => $expiresAt,
-            'is_primary' => $isPrimary,
-        ]);
-
-        $this->load('roles');
-
-        return $this;
-    }
-
-    /**
-     * Sincroniza roles preservando información temporal
+     * Sincroniza roles preservando información temporal y de rol primario.
+     * Este método es más eficiente y seguro que `detach` seguido de `attach` en un bucle.
      */
     public function syncRolesWithExpiration(array $roles): self
     {
-        // Desasignar todos los roles
-        $this->roles()->detach();
+        $rolesToSync = [];
+        $primaryRoleName = null;
 
-        // Reasignar con expiración
+        // Encontrar el rol primario definido en el input
         foreach ($roles as $role) {
-            $roleName = is_string($role) ? $role : $role['name'];
-            $expiresAt = !empty($role['expires_at'])
-                ? Carbon::parse($role['expires_at'])
-                : null;
-            $isPrimary = isset($role['is_primary']) && $role['is_primary'];
-
-            $this->assignTemporaryRole($roleName, $expiresAt, $isPrimary);
+            if (!empty($role['is_primary'])) {
+                $primaryRoleName = $role['name'];
+                break;
+            }
         }
+
+        // Preparar los datos para la sincronización
+        foreach ($roles as $role) {
+            $roleModel = Role::findByName($role['name'], $this->getDefaultGuardName());
+            if ($roleModel) {
+                $rolesToSync[$roleModel->id] = [
+                    'expires_at' => !empty($role['expires_at']) ? Carbon::parse($role['expires_at']) : null,
+                    'is_primary' => $roleModel->name === $primaryRoleName,
+                ];
+            }
+        }
+
+        $this->roles()->sync($rolesToSync);
+        $this->load('roles'); // Recargar la relación de roles
 
         return $this;
     }
@@ -101,7 +82,6 @@ trait HasTemporaryRoles
     {
         $now = Carbon::now();
 
-        // Obtener IDs de roles expirados
         $expiredRoleIds = $this->getAllRolesWithExpired()
             ->wherePivot('expires_at', '<=', $now)
             ->whereNotNull('expires_at')
@@ -109,7 +89,6 @@ trait HasTemporaryRoles
             ->toArray();
 
         if (!empty($expiredRoleIds)) {
-            // Eliminar roles expirados
             $this->roles()->detach($expiredRoleIds);
             $this->load('roles');
         }

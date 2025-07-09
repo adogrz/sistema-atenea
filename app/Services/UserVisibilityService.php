@@ -14,7 +14,8 @@ class UserVisibilityService
     {
         // Si tiene permiso para ver todos los usuarios
         if ($user->hasPermissionTo('user-view-all')) {
-            return User::with('roles', 'sede', 'areas')->get();
+            // No cargamos 'roles' aquí, se hará en el controlador
+            return User::with('sede', 'areas')->get();
         }
 
         // Iniciar consulta base
@@ -46,7 +47,8 @@ class UserVisibilityService
         // Incluir siempre al usuario actual en los resultados
         $query->orWhere('id', $user->id);
 
-        return $query->with('roles', 'sede', 'areas')->get();
+        // No cargamos 'roles' aquí, se hará en el controlador
+        return $query->with('sede', 'areas')->get();
     }
 
     /**
