@@ -3,7 +3,7 @@
 namespace App\Traits;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Spatie\Permission\Models\Role;
 
 trait HasTemporaryRoles
@@ -11,7 +11,7 @@ trait HasTemporaryRoles
     /**
      * Obtiene todos los roles incluyendo los expirados
      */
-    public function getAllRolesWithExpired()
+    public function getAllRolesWithExpired(): MorphToMany
     {
         return $this->morphToMany(
             config('permission.models.role'),
@@ -53,12 +53,10 @@ trait HasTemporaryRoles
         // Preparar los datos para la sincronización
         foreach ($roles as $role) {
             $roleModel = Role::findByName($role['name'], $this->getDefaultGuardName());
-            if ($roleModel) {
-                $rolesToSync[$roleModel->id] = [
-                    'expires_at' => !empty($role['expires_at']) ? Carbon::parse($role['expires_at']) : null,
-                    'is_primary' => $roleModel->name === $primaryRoleName,
-                ];
-            }
+            $rolesToSync[$roleModel->id] = [
+                'expires_at' => !empty($role['expires_at']) ? Carbon::parse($role['expires_at']) : null,
+                'is_primary' => $roleModel->name === $primaryRoleName,
+            ];
         }
 
         $this->roles()->sync($rolesToSync);

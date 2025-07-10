@@ -8,17 +8,20 @@ use App\Models\User;
 use App\Services\RoleAssignmentService;
 use App\Services\UserVisibilityService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Inertia\Inertia;
+use Inertia\Response;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
     use AuthorizesRequests;
 
-    protected $visibilityService;
-    protected $roleAssignmentService;
+    protected UserVisibilityService $visibilityService;
+    protected RoleAssignmentService $roleAssignmentService;
 
     public function __construct(
         UserVisibilityService $visibilityService,
@@ -32,7 +35,7 @@ class UserController extends Controller
     /**
      * Listado de usuarios filtrado por visibilidad.
      */
-    public function index(Request $request)
+    public function index(): Response
     {
         // La política se encarga de la autorización.
         $this->authorize('viewAny', User::class);
@@ -62,7 +65,7 @@ class UserController extends Controller
 
         return Inertia::render('dashboard-users', [
             'users' => $users,
-            'roles' => Role::all(['id', 'name', 'description']),
+            'roles' => Role::select('id', 'name', 'description')->get(),
             'assignableRoles' => $assignableRoles,
             'sedes' => $sedes,
             'areas' => $areas,
@@ -72,7 +75,7 @@ class UserController extends Controller
     /**
      * Muestra el formulario para crear un nuevo usuario.
      */
-    public function create()
+    public function create(): Response
     {
         $this->authorize('create', User::class);
 
@@ -80,19 +83,19 @@ class UserController extends Controller
         $roleAssignmentService = app(RoleAssignmentService::class);
 
         $assignableRoles = collect($roleAssignmentService->getAssignableRoles($currentUser))->map(fn($role) => [
-            'name' => $role->name,
-            'description' => $role->description,
+            'name' => $role['name'],
+            'description' => $role['description'],
         ]);
 
         $sedesQuery = Sede::query();
-        if ($currentUser->hasPermissionTo('user-view-own-sede')) {
+        if ($currentUser->hasPermissionTo('users:view-sede')) {
             $sedesQuery->where('name', $currentUser->sede_name);
         }
         $sedes = $sedesQuery->get(['name', 'description']);
 
         // Obtener todas las áreas académicas
         $areasQuery = Area::query();
-        if ($currentUser->hasPermissionTo('user-view-own-area')) {
+        if ($currentUser->hasPermissionTo('users:view-area')) {
             // Si el usuario está restringido a sus propias áreas
             $userAreaIds = $currentUser->areas->pluck('id');
             $areasQuery->whereIn('id', $userAreaIds);
@@ -109,7 +112,7 @@ class UserController extends Controller
     /**
      * Crea un nuevo usuario.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         // La política se encarga de la autorización.
         $this->authorize('create', User::class);
@@ -142,7 +145,7 @@ class UserController extends Controller
             }
         }
 
-        // Si requiere área pero no se seleccionó una
+        // Si requiere área, pero no se seleccionó una
         if ($requiresArea && empty($validated['area_name'])) {
             return back()->withErrors(['area_name' => 'El área académica es requerida para los roles seleccionados.']);
         }
@@ -160,7 +163,7 @@ class UserController extends Controller
 
         // Asignar el área al usuario si se seleccionó una
         if (!empty($validated['area_name'])) {
-            $area = Area::where('name', $validated['area_name'])->first();
+            $area = Area::query()->where('name', '=', $validated['area_name'])->first();
             if ($area) {
                 $user->areas()->sync([
                     $area->id => ['is_primary' => $requiresArea]
@@ -186,7 +189,7 @@ class UserController extends Controller
     /**
      * Actualiza un usuario existente con gestión de roles temporales y áreas.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): RedirectResponse
     {
         // La política se encarga de la autorización.
         $this->authorize('update', $user);
@@ -214,14 +217,15 @@ class UserController extends Controller
 
         // Verificar restricciones de sede
         if (
-            $request->user()->hasPermissionTo('user-view-own-sede') &&
-            $request->user()->sede_name !== $validated['sede_name']
+            $request->user()->sede_name !== $validated['sede_name'] &&
+            $request->user()->hasPermissionTo('users:view-sede')
         ) {
             return back()->withErrors(['sede_name' => "No puedes asignar un usuario a una sede diferente a la tuya"]);
         }
 
         // Verificar restricciones de área
-        if ($request->user()->hasPermissionTo('user-view-own-area') && isset($validated['areas']) && !empty($validated['areas'])) {
+        if (!empty($validated['areas'])
+            && $request->user()->hasPermissionTo('users:view-area')) {
             $userAreaIds = $request->user()->areas->pluck('id')->toArray();
             foreach ($validated['areas'] as $area) {
                 if (!in_array($area['id'], $userAreaIds)) {
@@ -256,7 +260,7 @@ class UserController extends Controller
 
             // Si es estudiante, asegurarse de que tenga asignada el área de matemáticas
             if ($user->hasRole('estudiante')) {
-                $matematicasArea = Area::where('name', 'matematicas')->first();
+                $matematicasArea = Area::where('name', '=', 'matematicas', 'and')->first();
                 if ($matematicasArea && !isset($areasSync[$matematicasArea->id])) {
                     // Si no se seleccionó matemáticas, añadirla como no principal
                     $areasSync[$matematicasArea->id] = ['is_primary' => false];
@@ -264,7 +268,7 @@ class UserController extends Controller
             }
         } elseif ($user->hasRole('estudiante')) {
             // Si es estudiante y no se proporcionaron áreas, asignar matemáticas por defecto
-            $matematicasArea = Area::where('name', 'matematicas')->first();
+            $matematicasArea = Area::where('name', '=', 'matematicas', 'and')->first();
             if ($matematicasArea) {
                 $areasSync[$matematicasArea->id] = ['is_primary' => true];
             }
@@ -321,7 +325,7 @@ class UserController extends Controller
     /**
      * Elimina lógicamente (soft-delete) un usuario.
      */
-    public function destroy(Request $request, User $user)
+    public function destroy(Request $request, User $user): RedirectResponse
     {
         // La política se encarga de la autorización.
         $this->authorize('delete', $user);
@@ -348,14 +352,14 @@ class UserController extends Controller
     /**
      * Restaura un usuario previamente eliminado.
      */
-    public function restore(Request $request, $id)
+    public function restore(Request $request, $id): RedirectResponse
     {
         $user = User::onlyTrashed()->findOrFail($id);
 
         // La política se encarga de la autorización.
         $this->authorize('restore', $user);
 
-        $user->restore();
+        User::withTrashed()->where('id', $id)->restore();
 
         activity('usuarios')
             ->performedOn($user)
@@ -373,7 +377,7 @@ class UserController extends Controller
     /**
      * Envía un enlace de recuperación de contraseña al usuario.
      */
-    public function sendResetLink(Request $request, User $user)
+    public function sendResetLink(Request $request, User $user): RedirectResponse
     {
         // La política se encarga de la autorización.
         $this->authorize('sendResetLink', $user);
@@ -388,15 +392,15 @@ class UserController extends Controller
                 ->log("Se envió enlace de recuperación de contraseña");
 
             return back()->with('success', 'Se envió el enlace de recuperación.');
-        } else {
-            return back()->withErrors(['email' => __($status)]);
         }
+
+        return back()->withErrors(['email' => __($status)]);
     }
 
     /*
     * Muestra información detallada de un usuario para depuración.
     */
-    public function debug(User $user)
+    public function debug(User $user): JsonResponse
     {
         // La autorización se maneja con el middleware en la ruta.
         // Opcionalmente, puedes añadir una política si es necesario.

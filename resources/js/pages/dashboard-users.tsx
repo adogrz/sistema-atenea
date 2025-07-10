@@ -7,7 +7,7 @@ import { getUserColumns } from '@/components/user-columns';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Description } from '@radix-ui/react-dialog';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { Edit, MailCheck, Trash2, UserPlus, X } from 'lucide-react';
@@ -66,10 +66,10 @@ export default function DashboardUsers() {
     }>().props;
 
     // Verificación de permisos
-    const canCreateUser = hasPermission('user-create');
-    const canEditUser = hasPermission('user-edit');
-    const canDeleteUser = hasPermission('user-delete');
-    const canResetUserPassword = hasPermission('user-reset-password');
+    const canCreateUser = hasPermission('users:create');
+    const canEditUser = hasPermission('users:edit');
+    const canDeleteUser = hasPermission('users:delete');
+    const canResetUserPassword = hasPermission('users:reset-password');
 
     // Estados para manejo de UI
     const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -199,11 +199,14 @@ export default function DashboardUsers() {
                             <MailCheck className="h-4 w-4" />
                             <span>Enviar enlace de recuperación</span>
                         </Button>
-                        <Button disabled={!canCreateUser} variant="ghost" className="flex items-center gap-2" asChild>
-                            <Link href={route('users.create')}>
-                                <UserPlus className="h-4 w-4" />
-                                <span>Agregar</span>
-                            </Link>
+                        <Button
+                            variant="ghost"
+                            className="flex items-center gap-2"
+                            disabled={!canCreateUser}
+                            onClick={() => canCreateUser && router.visit('/dashboard/users/create')}
+                        >
+                            <UserPlus className="h-4 w-4" />
+                            <span>Agregar</span>
                         </Button>
                         <Button variant="ghost" onClick={() => setShowEditModal(true)} disabled={!selectedUserId || !canEditUser}>
                             <Edit className="h-4 w-4" /> Editar

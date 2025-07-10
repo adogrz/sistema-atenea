@@ -15,7 +15,7 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('user-list');
+        return $user->hasPermissionTo('users:list');
     }
 
     /**
@@ -23,7 +23,7 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('user-create');
+        return $user->hasPermissionTo('users:create');
     }
 
     /**
@@ -36,9 +36,9 @@ class UserPolicy
             return false;
         }
 
-        // Reutilizamos la lógica compleja que ya tenías en tu servicio.
+        // Reutilizamos la lógica compleja de nuestro servicio.
         $roleAssignmentService = app(RoleAssignmentService::class);
-        return $user->hasPermissionTo('user-edit') && $roleAssignmentService->canEditUser($user, $model);
+        return $user->hasPermissionTo('users:edit') && $roleAssignmentService->canEditUser($user, $model);
     }
 
     /**
@@ -51,13 +51,13 @@ class UserPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('user-delete');
+        return $user->hasPermissionTo('users:delete');
     }
 
     /**
      * Determina si el usuario puede restaurar un usuario eliminado.
      */
-    public function restore(User $user, User $model): bool
+    public function restore(User $user): bool
     {
         return $user->hasPermissionTo('user-restore');
     }
@@ -65,8 +65,8 @@ class UserPolicy
     /**
      * Determina si el usuario puede enviar un enlace de reseteo de contraseña.
      */
-    public function sendResetLink(User $user, User $model): bool
+    public function sendResetLink(User $user): bool
     {
-        return $user->hasPermissionTo('user-reset-password');
+        return $user->hasPermissionTo('users:reset-password');
     }
 }

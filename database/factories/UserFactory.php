@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -22,24 +23,6 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        // Actualización de los nombres de roles para que coincidan con PermissionSeeder
-        $roles = [
-            'director',
-            'admin-ti', // Antes era 'admin'
-            'admin-academico', // Antes era 'admin_academic'
-            'admin-academico-sede', // Antes era 'admin_academic_sede'
-            'coordinador-area', // Antes era 'coordinator_area'
-            'jefe-psicologia', // Antes era 'jefe_psicologia'
-            'psicologo',
-            'doctor-jefe', // Antes era 'doctor_jefe'
-            'doctor',
-            'mentor',
-            'instructor',
-            'calificador',
-            'estudiante',
-            'aspirante'
-        ];
-
         $sedes = ['central', 'occidental', 'oriental'];
 
         return [
@@ -49,7 +32,7 @@ class UserFactory extends Factory
             'sede_name' => $this->faker->randomElement($sedes),
             'status' => $this->faker->randomElement(['active', 'inactive']),
             'remember_token' => Str::random(10),
-            'deleted_at' => null, //simular eliminados
+            'deleted_at' => null,
         ];
     }
 

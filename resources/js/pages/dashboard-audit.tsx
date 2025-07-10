@@ -205,11 +205,11 @@ export default function Dashboard() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
+            <Head title="Auditoría" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                {hasPermission('audit-view') && (
+                {hasPermission('audit:view') && (
                     <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl border p-4">
-                        <h2 className="text-2xl font-bold">Logs de Actividad</h2>
+                        <h2 className="text-2xl font-bold">Registro de actividad</h2>
                         <LogDataTable logs={logs} />
                     </div>
                 )}

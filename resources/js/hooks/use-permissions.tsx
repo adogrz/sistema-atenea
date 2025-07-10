@@ -99,14 +99,14 @@ export function usePermissions() {
      * Verifica si el usuario está restringido a su sede
      */
     const isRestrictedToSede = () => {
-        return hasPermission('user-view-own-sede');
+        return hasPermission('users:view-sede');
     };
 
     /**
      * Verifica si el usuario está restringido a sus áreas
      */
     const isRestrictedToArea = () => {
-        return hasPermission('user-view-own-area');
+        return hasPermission('users:view-area');
     };
 
     /**

@@ -24,8 +24,8 @@ export function AppSidebar() {
             title: 'Administración',
             icon: ShieldCheck,
             items: [
-                ...(hasPermission('user-list') ? [{ title: 'Usuarios', href: '/dashboard/users', icon: User }] : []),
-                ...(hasPermission('audit-view')
+                ...(hasPermission('users:list') ? [{ title: 'Usuarios', href: '/dashboard/users', icon: User }] : []),
+                ...(hasPermission('audit:view')
                     ? [
                           {
                               title: 'Auditoría',

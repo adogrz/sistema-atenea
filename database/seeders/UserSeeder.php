@@ -12,16 +12,6 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Crear el usuario Super Administrador
-        $superAdmin = User::create([
-            'name' => 'Super Administrador',
-            'email' => 'superadmin@atenea.com',
-            'password' => bcrypt('superadmin'),
-            'sede_name' => 'central',
-            'status' => 'active',
-        ]);
-        $superAdmin->assignRole('super-admin');
-
         // Crear el usuario Administrador de Pruebas
         $adminPruebas = User::create([
             'name' => 'Admin Test',
@@ -30,15 +20,10 @@ class UserSeeder extends Seeder
             'sede_name' => 'central',
             'status' => 'active',
         ]);
-        $adminPruebas->assignRole('admin-ti');
 
-        // Roles que se pueden asignar aleatoriamente a los usuarios de prueba
-        $roles = ['estudiante', 'instructor', 'mentor', 'calificador', 'psicologo', 'doctor', 'admin-academico-sede', 'coordinador-area'];
-
-        // Usuarios aleatorios con roles
-        User::factory(100)->create()->each(function ($user) use ($roles) {
-            // Asignar un rol aleatorio de la lista
-            $user->assignRole(fake()->randomElement($roles));
-        });
+        // Asignar el rol 'admin-ti' como primario y sin expiración
+        $adminPruebas->syncRolesWithExpiration([
+            ['name' => 'admin-ti', 'is_primary' => true, 'expires_at' => null],
+        ]);
     }
 }
