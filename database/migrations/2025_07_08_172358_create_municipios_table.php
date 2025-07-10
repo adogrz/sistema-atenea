@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id('id'); // Equivalente a IDMUNICIPIO
             $table->unsignedBigInteger('id_departamento'); // Clave foránea
             $table->string('nombre_municipio');
-            $table->timestamps();
-
             // Clave foránea hacia departamentos
             $table->foreign('id_departamento')->references('id')->on('departamentos')->onDelete('cascade');
         });

@@ -1,17 +1,21 @@
-import FormularioAdmision from "@/components/admission//admission-form"
+import FormularioAdmision from "@/components/admission/admission-form"
+import { Head } from "@inertiajs/react"
 
-export default function NuevaSolicitudPage() {
+export default function AdmissionRegister() {
   return (
-    <div className="container py-8 md:py-12">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Solicitud de Admisión</h1>
-          <p className="mt-2 text-muted-foreground">
-            Completa este formulario para iniciar tu postulación al Programa Jóvenes Talento
-          </p>
+    <>
+      <Head title="Formulario de Admisión" />
+        <div className="grid w-full y-full p-8 ">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Postulación Jóvenes Talento
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Completa este formulario para iniciar tu postulación al Programa Jóvenes Talento.
+            </p>
+          </div>
+          <FormularioAdmision />
         </div>
-        <FormularioAdmision />
-      </div>
-    </div>
+    </>
   )
 }

@@ -12,13 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('responsables', function (Blueprint $table) {
-            $table->id();
-            $table->foreign('id_estudiante')->references('id')->on('estudiantes')->onDelete('cascade');
+            $table->string('dui', 9)->primary();
+            $table->foreign('codigo_estudiante')->references('codigo')->on('estudiantes')->onDelete('cascade');
             $table->timestamps();
-            $table->string('nombre_responsable');
-            $table->string('email_responsable')->unique()->nullable();
+            $table->string('nombres_responsable');
+            $table->string('apellidos_responsable');
+            $table->string('email_responsable')->nullable();
             $table->string('telefono_responsable');
-            $table->enum('relacion', ['Madre', 'Padre' , 'Abuelo', 'Tio', 'Tutor legal'])->default('Madre');
+            $table->string('telefono_opcional');
+            $table->enum('tipo_parentesco', ['Madre', 'Padre' , 'Abuelo', 'Tio', 'Tutor legal'])->default('Madre');
+            $table->softDeletes();
         });
     }
 

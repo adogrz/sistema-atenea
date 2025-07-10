@@ -28,6 +28,130 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
       <CardContent className="space-y-6">
         <FormField
           control={form.control}
+          name="primer_nombre"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <FormLabel>Primer nombre</FormLabel>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-5 w-5">
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="sr-only">Ayuda</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Ingresa el primer nombre del aspirante
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <FormControl>
+                <Input placeholder="Ej. Juan" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="segundo_nombre"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <FormLabel>Segundo nombre</FormLabel>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-5 w-5">
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="sr-only">Ayuda</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Ingresa el segundo nombre del aspirante
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <FormControl>
+                <Input placeholder="Ej. Antonio" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="primer_apellido"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <FormLabel>Primer apellido</FormLabel>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-5 w-5">
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="sr-only">Ayuda</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Ingresa el primer apellido del aspirante
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <FormControl>
+                <Input placeholder="Ej. Pérez" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="segundo_apellido"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <FormLabel>Segundo apellido</FormLabel>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-5 w-5">
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="sr-only">Ayuda</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Ingresa el segundo apellido del aspirante
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <FormControl>
+                <Input placeholder="Ej. González" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="nombreCompleto"
           render={({ field }) => (
             <FormItem>
@@ -56,6 +180,36 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
             </FormItem>
           )}
         />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         <FormField
           control={form.control}
@@ -114,10 +268,10 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
 
         <FormField
           control={form.control}
-          name="sexo"
+          name="genero"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Sexo</FormLabel>
+              <FormLabel>Género</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -125,7 +279,7 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="M">Masculino</SelectItem>
+                  <SelectItem value="Masculino">Masculino</SelectItem>
                   <SelectItem value="F">Femenino</SelectItem>
                 </SelectContent>
               </Select>

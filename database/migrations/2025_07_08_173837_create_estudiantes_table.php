@@ -12,20 +12,26 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('estudiantes', function (Blueprint $table) {
-            $table->id();
+            $table->string('codigo')->primary();
             $table->timestamps();
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users');
             $table->string('primer_nombre');
             $table->string('segundo_nombre');
             $table->string('primer_apellido');
             $table->string('segundo_apellido');
             $table->string('genero');
             $table->date('fecha_nacimiento');
-            $table->foreign('centro_educativo')->references('id')->on('sedes_educativas');
-            $table->string('nie');
+            $table->string('centro_educativo');
+            $table->foreign('centro_educativo')->references('codigo')->on('centros_educativos');
+            $table->string('nie')->unique();
             $table->string('telefono');
+            $table->string('telefono_casa');
             $table->string('email')->unique();
             $table->string('direccion');
             $table->string('distrito');
+            $table->foreign('distrito')->references('id')->on('distritos');
+            $table->softDeletes();
         });
     }
 

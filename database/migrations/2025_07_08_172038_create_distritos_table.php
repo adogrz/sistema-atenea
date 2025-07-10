@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id('id'); // Equivalente a IDDISTRITO
             $table->unsignedBigInteger('id_municipio'); // Clave foránea
             $table->string('nombre_distrito');
-            $table->timestamps();
-
             // Relación con municipios
             $table->foreign('id_municipio')
                   ->references('id')

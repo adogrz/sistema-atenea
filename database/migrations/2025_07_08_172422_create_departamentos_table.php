@@ -13,9 +13,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('departamentos', function (Blueprint $table) {
-            $table->id(); // Campo entero autoincremental
+            $table->id('id'); // Campo entero autoincremental
             $table->string('nombre_departamento');
-            $table->timestamps();
         });
     }
 
