@@ -152,68 +152,7 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
 
         <FormField
           control={form.control}
-          name="nombreCompleto"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Nombre completo</FormLabel>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-5 w-5">
-                        <HelpCircle className="h-4 w-4" />
-                        <span className="sr-only">Ayuda</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        Ingresa tu nombre completo tal como aparece en tu documento de identidad
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <FormControl>
-                <Input placeholder="Ej. Juan Antonio Pérez González" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        <FormField
-          control={form.control}
-          name="fechaNacimiento"
+          name="fecha_nacimiento"
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <div className="flex items-center justify-between">
@@ -254,7 +193,7 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
                       }
                     }}
                     initialFocus
-                    locale={es}
+                    locale={'es'}
                     minDate={new Date(new Date().setFullYear(new Date().getFullYear() - 25))}
                     maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 10))}
                   />
@@ -268,19 +207,19 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
 
         <FormField
           control={form.control}
-          name="genero"
+          name="sexo"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Género</FormLabel>
+              <FormLabel>Selecciona el sexo correspondiente al aspirante</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona tu sexo" />
+                    <SelectValue placeholder="Selecciona una opción" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Masculino">Masculino</SelectItem>
-                  <SelectItem value="F">Femenino</SelectItem>
+                  <SelectItem value="H">Hombre</SelectItem>
+                  <SelectItem value="M">Mujer</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -290,7 +229,7 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
 
         <FormField
           control={form.control}
-          name="correoElectronico"
+          name="correo_electronico"
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between">
@@ -320,7 +259,7 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
 
         <FormField
           control={form.control}
-          name="telefonoContacto"
+          name="telefono"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Teléfono de contacto</FormLabel>
@@ -332,6 +271,22 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="telefono_casa"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Teléfono de casa - Opcional</FormLabel>
+              <FormControl>
+                <Input type="tel" placeholder="Ej. 12345678" {...field} />
+              </FormControl>
+              <FormDescription>Ingresa un número de teléfono de casa donde podamos contactarte</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
       </CardContent>
     </Card>
   )

@@ -20,13 +20,13 @@ return new class extends Migration
             $table->string('segundo_nombre');
             $table->string('primer_apellido');
             $table->string('segundo_apellido');
-            $table->string('genero');
+            $table->enum('sexo', ['H', 'M']);
             $table->date('fecha_nacimiento');
             $table->string('centro_educativo');
             $table->foreign('centro_educativo')->references('codigo')->on('centros_educativos');
             $table->string('nie')->unique();
-            $table->string('telefono');
-            $table->string('telefono_casa');
+            $table->string('telefono_estudiante');
+            $table->string('telefono_casa')->nullable();
             $table->string('email')->unique();
             $table->string('direccion');
             $table->string('distrito');

@@ -22,86 +22,94 @@ export default function Educacion({ form }: EducacionProps) {
         <CardDescription>Información sobre tu formación académica actual</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <FormField
-          control={form.control}
-          name="centroEducativo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Centro educativo actual</FormLabel>
-              <FormControl>
-                <Input placeholder="Ej. Instituto Nacional José Simeón Cañas" {...field} />
-              </FormControl>
-              <FormDescription>Nombre completo de la institución donde estudias actualmente</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
-        <FormField
-          control={form.control}
-          name="nivelEstudios"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nivel de estudios</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona tu nivel de estudios" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Básica">Educación Básica</SelectItem>
-                  <SelectItem value="Media">Educación Media</SelectItem>
-                  <SelectItem value="Técnico">Educación Técnica</SelectItem>
-                  <SelectItem value="Otro">Otro</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <Input placeholder="Código del centro educativo" {...register("codigo")} onChange={handleCodigoChange} />
+        <Input placeholder="Nombre del centro educativo" {...register("nombre")} />
+        <Input placeholder="Departamento" {...register("departamento")} />
+        <Input placeholder="Distrito" {...register("distrito")} />
+        <Select {...register("sector")}>
+          <SelectTrigger>
+            <SelectValue placeholder="Sector" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="PÚBLICO">PÚBLICO</SelectItem>
+            <SelectItem value="PRIVADO">PRIVADO</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select {...register("zona")}>
+          <SelectTrigger>
+            <SelectValue placeholder="Zona" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Rural">Rural</SelectItem>
+            <SelectItem value="Urbana">Urbana</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select {...register("internacional")}>
+          <SelectTrigger>
+            <SelectValue placeholder="Internacional" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="SI">SI</SelectItem>
+            <SelectItem value="NO">NO</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button type="submit">Buscar</Button>
+      <div className="mt-6">
+        {resultados.length > 0 ? (
+          <ul>
+            {resultados.map((centro) => (
+              <li key={centro.codigo}>
+                {centro.nombre} - {centro.departamento}, {centro.distrito} ({centro.sector}, {centro.zona}, {centro.internacional})
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No se encontraron resultados</p>
+        )}
+      </div>
 
-        <FormField
-          control={form.control}
-          name="promedioAcademico"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Promedio académico</FormLabel>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-5 w-5">
-                        <HelpCircle className="h-4 w-4" />
-                        <span className="sr-only">Ayuda</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">Ingresa tu promedio en escala de 0 a 10, con hasta dos decimales</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+      <FormField
+        control={form.control}
+        name="centro_educativo"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Centro educativo actual</FormLabel>
+            <FormControl>
+              <Input placeholder="Ej. Instituto Nacional José Simeón Cañas" {...field} />
+            </FormControl>
+            <FormDescription>Nombre de la institución donde estudias actualmente</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="nivel_estudio"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Nivel de estudios</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <Input
-                  type="number"
-                  placeholder="Ej. 8.75"
-                  step="0.01"
-                  min="0"
-                  max="10"
-                  {...field}
-                  onChange={(e) => {
-                    const value = Number.parseFloat(e.target.value)
-                    field.onChange(isNaN(value) ? 0 : value)
-                  }}
-                />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona tu nivel de estudios" />
+                </SelectTrigger>
               </FormControl>
-              <FormDescription>Promedio general del último año académico (escala 0-10)</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </CardContent>
-    </Card>
+              <SelectContent>
+                <SelectItem value="cuarto_grado">Otro</SelectItem>
+                <SelectItem value="quinto_grado">Otro</SelectItem>
+                <SelectItem value="sexto_grado">Otro</SelectItem>
+                <SelectItem value="septimo_grado">Otro</SelectItem>
+                <SelectItem value="octavo_grado">Otro</SelectItem>
+                <SelectItem value="noveno_grado">Otro</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </CardContent>
+    </Card >
   )
 }
