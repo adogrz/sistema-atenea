@@ -36,7 +36,14 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
 
     // Rutas para gestión de usuarios
     Route::prefix('dashboard')->group(function () {
-        Route::resource('users', UserController::class)->except(['show']);
+        Route::resource('users', UserController::class)->except(['show'])->middleware([
+            'index' => 'permission:users:list',
+            'create' => 'permission:users:create',
+            'store' => 'permission:users:create',
+            'edit' => 'permission:users:edit',
+            'update' => 'permission:users:edit',
+            'destroy' => 'permission:users:delete',
+        ]);
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
