@@ -27,10 +27,6 @@ export function getLogColumns(logs: Log[]): ColumnDef<Log>[] {
 
   return [
     {
-      accessorKey: "id",
-      header: "ID",
-    },
-    {
       accessorKey: "causer.name",
       header: "Usuario", // Simple texto, sin dropdown
       cell: ({ row }) => row.original.causer?.name ?? "Desconocido",

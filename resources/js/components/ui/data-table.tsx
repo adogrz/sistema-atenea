@@ -10,7 +10,7 @@ import {
   ColumnFiltersState,
   VisibilityState,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 import {
   Table,
@@ -24,25 +24,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+// Definición de las propiedades del componente DataTable
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   selectedRowId?: number | string | null;
   onRowClick?: (row: TData) => void;
   getRowId?: (row: TData) => string | number;
-}
+  columnFilters: ColumnFiltersState;
+  setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
+};
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   selectedRowId,
   onRowClick,
-  getRowId = (row: any) => row.id, // valor por defecto
+  getRowId = (row: any) => row.id,
+  columnFilters,
+  setColumnFilters,
 }: DataTableProps<TData, TValue>) {
   const [globalFilter, setGlobalFilter] = useState("");
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [pageSize, setPageSize] = useState(10); // Nuevo estado para el tamaño de página
+  const [pageIndex, setPageIndex] = useState(0); // Nuevo estado para el índice de página
 
   const table = useReactTable({
     data,
@@ -51,6 +58,7 @@ export function DataTable<TData, TValue>({
       globalFilter,
       columnFilters,
       columnVisibility,
+      pagination: { pageIndex, pageSize }, // Controla ambos estados
     },
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
@@ -58,7 +66,35 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    onPaginationChange: (updater) => {
+      // Maneja el cambio de paginación correctamente
+      if (typeof updater === "function") {
+        setPageIndex((prevPageIndex) => {
+          const result = updater({ pageIndex: prevPageIndex, pageSize });
+          return result.pageIndex ?? prevPageIndex;
+        });
+        setPageSize((prevPageSize) => {
+          const result = updater({ pageIndex, pageSize: prevPageSize });
+          return result.pageSize ?? prevPageSize;
+        });
+      } else if (typeof updater === "object") {
+        if (typeof updater.pageIndex === "number") setPageIndex(updater.pageIndex);
+        if (typeof updater.pageSize === "number") setPageSize(updater.pageSize);
+      }
+    },
+    initialState: {
+      pagination: { pageIndex, pageSize },
+    },
   });
+
+  // Cuando el usuario cambia el tamaño de página
+  const handlePageSizeChange = (value: string) => {
+    const size = Number(value);
+    setPageSize(size);
+    setPageIndex(0); // Reinicia a la primera página al cambiar el tamaño
+    table.setPageSize(size);
+    table.setPageIndex(0);
+  };
 
   return (
     <div className="space-y-4 m-3">
@@ -74,7 +110,7 @@ export function DataTable<TData, TValue>({
         />
       </div>
       {/* Tabla */}
-      <div className="rounded-md border">
+      <div className="rounded-md border w-full overflow-hidden flex flex-col max-h-[50vh]">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -89,7 +125,6 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
@@ -116,9 +151,23 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-
       {/* Paginación */}
-      <div className="flex items-center justify-between space-x-2 py-2">
+      <div className="flex items-center justify-between space-x-2 py-2 bottom-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm">Filas por página:</span>
+          <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+            <SelectTrigger className="w-auto h-auto">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Button
           variant="outline"
           size="sm"
@@ -138,7 +187,10 @@ export function DataTable<TData, TValue>({
           disabled={!table.getCanNextPage()}
         >
           Siguiente
-        </Button>
+        </Button>  
+        <div className="text-sm text-muted-foreground py-2 px-2">
+          Total de filas: {table.getFilteredRowModel().rows.length}
+        </div>
       </div>
     </div>
   );

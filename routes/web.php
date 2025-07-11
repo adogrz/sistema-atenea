@@ -1,77 +1,59 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
-use Inertia\Inertia;
 use App\Models\User;
-use App\Models\Sede;
-use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use Spatie\Activitylog\Models\Activity;
 
-Route::get('/', function () {
+Route::get('/', static function () {
+    // Si el usuario está autenticado, siempre redirigir al dashboard principal.
     if (auth()->check()) {
-        if (auth()->user()->hasRole('admin')) {
-            return redirect()->route('dashboard');
-        } else {
-            return redirect()->route('usuario.dashboard');
-        }
+        return redirect()->route('dashboard');
     }
 
+    // Si no, redirigir al login.
     return redirect()->route('login');
 })->name('home');
 
 // Rutas para usuarios autenticados
-Route::middleware(['check.status','auth', 'verified'])->group(function () {
-    // Panel para usuarios normales
-    Route::get('/home', function () {
-        return Inertia::render('home', [
-            'auth' => [
-                'user' => Auth::user()->load('roles', 'sede', 'role')
-            ]
-        ]);
-    })->name('usuario.dashboard');
-});
-
-// Rutas solo para administradores
-Route::middleware(['check.status','auth', 'verified', 'role:admin'])->group(function () {
-    // Dashboard admin
-    Route::get('/dashboard', function () {
-        $logs = Activity::with('causer')->latest()->get();
-        return Inertia::render('dashboard', [
-            'logs' => $logs,
-        ]);
+Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
+    // Dashboard principal
+    Route::get('/dashboard', static function () {
+        return Inertia::render('dashboard');
     })->name('dashboard');
 
-    Route::resource('users', UserController::class)->except(['create', 'edit']);
+    Route::get('/dashboard/audit', static function () {
+        // Solo usuarios con permiso pueden ver esto.
+        if (!auth()->user()->hasPermissionTo('audit:view')) {
+            abort(403);
+        }
+        $logs = Activity::with('causer')->latest()->get();
+        return Inertia::render('dashboard-audit', [
+            'logs' => $logs,
+        ]);
+    })->name('dashboard.audit')->middleware('permission:audit:view');
+
+    // Rutas para gestión de usuarios
+    Route::prefix('dashboard')->group(function () {
+        Route::resource('users', UserController::class)->except(['show'])->middleware([
+            'index' => 'permission:users:list',
+            'create' => 'permission:users:create',
+            'store' => 'permission:users:create',
+            'edit' => 'permission:users:edit',
+            'update' => 'permission:users:edit',
+            'destroy' => 'permission:users:delete',
+        ]);
+    });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
-    ->name('users.send-reset-link');
+        ->name('users.send-reset-link')
+        ->middleware('permission:users:reset-password');
 
-    Route::get('/dashboard/usuarios', function () {
-        $users = User::all();
-        $roles = Role::all()->map(function ($role) {
-            return [
-                'id' => $role->id,
-                'name' => $role->name,
-                'description' => $role->description,
-            ];
-        });
-
-        $sedes = Sede::all()->map(function ($sede) {
-            return [
-                'id' => $sede->id,
-                'name' => $sede->name,
-                'description' => $sede->description,
-            ];
-        });
-
-        return Inertia::render('dashboard_usuarios', [
-            'users' => $users,
-            'roles' => $roles,
-            'sedes' => $sedes,
-        ]);
-    })->name('dashboard.usuarios');
+    // Ruta para depurar un usuario específico
+    Route::get('/users/{user}/debug', [UserController::class, 'debug'])
+        ->name('users.debug')
+        ->middleware('permission:users:view-all');
 });
 
 require __DIR__ . '/settings.php';
