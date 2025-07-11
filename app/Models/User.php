@@ -16,7 +16,9 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles, HasTemporaryRoles, SoftDeletes;
+    use HasFactory, Notifiable, HasRoles, HasTemporaryRoles, SoftDeletes {
+        HasTemporaryRoles::roles insteadof HasRoles;
+    }
 
     protected $with = ['roles', 'permissions', 'areas'];
     /**

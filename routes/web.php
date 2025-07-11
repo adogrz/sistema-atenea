@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\UserController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Spatie\Activitylog\Models\Activity;
@@ -35,7 +36,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
 
     // Rutas para gestión de usuarios
     Route::prefix('dashboard')->group(function () {
-        Route::resource('users', UserController::class)->except(['edit', 'show']);
+        Route::resource('users', UserController::class)->except(['show']);
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])

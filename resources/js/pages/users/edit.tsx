@@ -1,65 +1,74 @@
-import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { PasswordInput } from '@/components/ui/password-input';
 import UserForm from '@/components/users/user-form';
-import { usePasswordGenerator } from '@/hooks/use-password-generator';
 import useRolesManagement from '@/hooks/use-roles-management';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type SelectItem } from '@/types';
+import { type BreadcrumbItem, type SelectItem, type User } from '@/types';
 import { doesRoleRequireArea } from '@/utils/user-form-helpers';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, AlertTriangle, Check, LoaderCircle, Wand2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Check, LoaderCircle } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
     { title: 'Usuarios', href: '/dashboard/users' },
-    { title: 'Registrar Usuario', href: '/dashboard/users/register' },
+    { title: 'Editar Usuario', href: '#' },
 ];
 
-export default function RegisterUserPage() {
-    const { assignableRoles, sedes, areas } = usePage<{
+export default function EditUserPage() {
+    const { user, assignableRoles, sedes, areas } = usePage<{
+        user: User & {
+            roles: Array<{
+                name: string;
+                pivot?: { is_primary: boolean | number; expires_at?: string | null };
+            }>;
+            areas?: Array<{ name: string; description: string }>;
+        };
         assignableRoles: SelectItem[];
         sedes: SelectItem[];
         areas: SelectItem[];
     }>().props;
 
+    const transformedRoles =
+        user.roles?.map((role) => ({
+            name: role.name,
+            is_primary: !!role.pivot?.is_primary,
+            expires_at: role.pivot?.expires_at || undefined,
+        })) || [];
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     const form = useForm({
-        name: '',
-        email: '',
+        name: user.name,
+        email: user.email,
+        roles: transformedRoles,
+        sede_name: user.sede_name,
+        area_name: user.areas && user.areas.length > 0 ? user.areas[0].name : '',
         password: '',
         password_confirmation: '',
-        roles: [] as Array<{ name: string; is_primary: boolean; expires_at?: string }>,
-        sede_name: '',
-        area_name: '',
     });
-    const { data, setData, post, processing, errors, reset } = form;
+    const { data, setData, put, processing } = form;
 
-    const { generateSecurePassword, isGenerating } = usePasswordGenerator();
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     const [previousRequiresArea, setPreviousRequiresArea] = useState(false);
 
-    const requiresArea = () => doesRoleRequireArea(data.roles as Array<{ name: string; is_primary: boolean; expires_at?: string }>);
+    const requiresArea = () =>
+        doesRoleRequireArea(
+            data.roles as Array<{
+                name: string;
+                is_primary: boolean;
+                expires_at?: string;
+            }>,
+        );
 
     useEffect(() => {
         const newErrors: Record<string, string> = {};
         const email = data.email as string;
-        const password = data.password as string;
-        const passwordConfirmation = data.password_confirmation as string;
-
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             newErrors.email = 'Por favor ingresa un email válido';
         }
-        if (password && password.length < 8) {
-            newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
-        }
-        if (passwordConfirmation && password !== passwordConfirmation) {
-            newErrors.password_confirmation = 'Las contraseñas no coinciden';
-        }
         setValidationErrors(newErrors);
-    }, [data.email, data.password, data.password_confirmation]);
+    }, [data.email]);
 
     useEffect(() => {
         const currentRoles = data.roles as Array<{ name: string; is_primary: boolean; expires_at?: string }>;
@@ -71,12 +80,6 @@ export default function RegisterUserPage() {
             }
         }
     }, [data.roles, previousRequiresArea, setData]);
-
-    const handleGeneratePassword = () => {
-        const password = generateSecurePassword();
-        setData('password', password);
-        setData('password_confirmation', password);
-    };
 
     const {
         selectedRole,
@@ -101,9 +104,8 @@ export default function RegisterUserPage() {
             expires_at: role.is_primary ? null : role.expires_at,
         }));
 
-        post(route('users.store'), {
+        put(route('users.update', user.id), {
             data: { ...data, roles: rolesToSubmit },
-            onSuccess: () => reset(),
         });
     };
 
@@ -112,8 +114,7 @@ export default function RegisterUserPage() {
         return (
             data.name &&
             data.email &&
-            data.password &&
-            data.password_confirmation &&
+            roles &&
             roles.length > 0 &&
             data.sede_name &&
             (!requiresArea() || data.area_name) &&
@@ -152,15 +153,9 @@ export default function RegisterUserPage() {
             }
             case 'roles':
                 return {
-                    isValid: roles.length > 0,
-                    value: roles.length > 0 ? `${roles.length} asignado(s)` : 'Sin asignar',
-                    isEmpty: roles.length === 0,
-                };
-            case 'password':
-                return {
-                    isValid: !!data.password && !!data.password_confirmation && !validationErrors.password && !validationErrors.password_confirmation,
-                    value: data.password ? 'Configurada' : 'Sin configurar',
-                    isEmpty: !data.password || !data.password_confirmation,
+                    isValid: roles && roles.length > 0,
+                    value: roles && roles.length > 0 ? `${roles.length} asignado(s)` : 'Sin asignar',
+                    isEmpty: !roles || roles.length === 0,
                 };
             default:
                 return { isValid: false, value: '', isEmpty: true };
@@ -186,13 +181,13 @@ export default function RegisterUserPage() {
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
-            <Head title="Registrar Usuario" />
+            <Head title="Editar Usuario" />
             <div className="flex h-full flex-1 flex-col gap-6 p-4">
                 <div className="mx-auto w-full max-w-4xl">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-2xl">Crear una cuenta nueva</CardTitle>
-                            <CardDescription>Ingresa los datos para registrar un nuevo usuario en el sistema.</CardDescription>
+                            <CardTitle className="text-2xl">Editar usuario</CardTitle>
+                            <CardDescription>Actualiza los datos del usuario en el sistema.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={submit} className="space-y-8">
@@ -214,66 +209,6 @@ export default function RegisterUserPage() {
                                     requiresArea={requiresArea}
                                 />
 
-                                {/* Sección: Seguridad */}
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between border-b pb-4">
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-foreground">Seguridad</h3>
-                                            <p className="text-sm text-muted-foreground">Configuración de contraseña</p>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleGeneratePassword}
-                                            disabled={processing || isGenerating}
-                                            className="text-xs"
-                                        >
-                                            <Wand2 className="mr-1 h-3 w-3" />
-                                            {isGenerating ? 'Generando...' : 'Generar contraseña'}
-                                        </Button>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="password">Contraseña</Label>
-                                            <PasswordInput
-                                                id="password"
-                                                value={data.password}
-                                                onChange={(e) => setData('password', e.target.value)}
-                                                disabled={processing}
-                                                placeholder="••••••••"
-                                                autoComplete="new-password"
-                                                required
-                                                aria-invalid={!!(errors.password || validationErrors.password)}
-                                                aria-describedby={errors.password || validationErrors.password ? 'password-error' : undefined}
-                                            />
-                                            <InputError message={errors.password || validationErrors.password} id="password-error" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="password_confirmation">Confirmar contraseña</Label>
-                                            <PasswordInput
-                                                id="password_confirmation"
-                                                value={data.password_confirmation}
-                                                onChange={(e) => setData('password_confirmation', e.target.value)}
-                                                disabled={processing}
-                                                placeholder="••••••••"
-                                                autoComplete="new-password"
-                                                required
-                                                aria-invalid={!!(errors.password_confirmation || validationErrors.password_confirmation)}
-                                                aria-describedby={
-                                                    errors.password_confirmation || validationErrors.password_confirmation
-                                                        ? 'password-confirm-error'
-                                                        : undefined
-                                                }
-                                            />
-                                            <InputError
-                                                message={errors.password_confirmation || validationErrors.password_confirmation}
-                                                id="password-confirm-error"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
                                 {/* Resumen del formulario */}
                                 <div className="rounded-lg border bg-card p-4">
                                     <h4 className="mb-3 flex items-center gap-2 font-medium text-foreground">
@@ -283,7 +218,6 @@ export default function RegisterUserPage() {
                                     <div className="space-y-2">
                                         <SummaryItem label="Nombre" field="name" />
                                         <SummaryItem label="Email" field="email" />
-                                        <SummaryItem label="Contraseña" field="password" />
                                         <SummaryItem label="Sede" field="sede" />
                                         <SummaryItem label="Área" field="area" />
                                         <SummaryItem label="Roles" field="roles" />
@@ -292,7 +226,7 @@ export default function RegisterUserPage() {
                                         <div className="mt-3 rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-950/30">
                                             <p className="flex items-center gap-2 text-sm text-orange-700 dark:text-orange-300">
                                                 <AlertTriangle className="h-4 w-4" />
-                                                Completa todos los campos requeridos para habilitar el registro
+                                                Completa todos los campos requeridos para habilitar la actualización
                                             </p>
                                         </div>
                                     )}
@@ -305,7 +239,7 @@ export default function RegisterUserPage() {
                                     </Button>
                                     <Button type="submit" disabled={processing || !isFormValid()} className="min-w-[140px]">
                                         {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                                        Crear cuenta
+                                        Actualizar cuenta
                                     </Button>
                                 </div>
                             </form>

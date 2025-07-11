@@ -26,8 +26,7 @@ class UserController extends Controller
     public function __construct(
         UserVisibilityService $visibilityService,
         RoleAssignmentService $roleAssignmentService
-    )
-    {
+    ) {
         $this->visibilityService = $visibilityService;
         $this->roleAssignmentService = $roleAssignmentService;
     }
@@ -73,13 +72,45 @@ class UserController extends Controller
     }
 
     /**
-     * Muestra el formulario para crear un nuevo usuario.
+     * Muestra el formulario para editar un usuario existente.
+     */
+    public function edit(User $user): Response
+    {
+        $this->authorize('update', $user);
+
+        // Cargar la relación getAllRolesWithExpired que incluye los datos pivot
+        $user->load('getAllRolesWithExpired');
+
+        // Asignar la relación cargada a la propiedad 'roles' para que el frontend la reciba como espera
+        // Esto es crucial porque el frontend espera 'user.roles' con is_primary
+        $user->setRelation('roles', $user->getAllRolesWithExpired);
+
+        $currentUser = auth()->user();
+        $commonData = $this->getCommonUserData($currentUser);
+
+        return Inertia::render('users/edit', array_merge([
+            'user' => $user,
+        ], $commonData));
+    }
+
+    /**
+     * Crea un nuevo usuario.
      */
     public function create(): Response
     {
         $this->authorize('create', User::class);
 
         $currentUser = auth()->user();
+        $roleAssignmentService = app(RoleAssignmentService::class);
+
+        return Inertia::render('users/register', $this->getCommonUserData($currentUser));
+    }
+
+    /**
+     * Obtiene datos comunes para la creación y edición de usuarios.
+     */
+    private function getCommonUserData(User $currentUser): array
+    {
         $roleAssignmentService = app(RoleAssignmentService::class);
 
         $assignableRoles = collect($roleAssignmentService->getAssignableRoles($currentUser))->map(fn($role) => [
@@ -93,20 +124,18 @@ class UserController extends Controller
         }
         $sedes = $sedesQuery->get(['name', 'description']);
 
-        // Obtener todas las áreas académicas
         $areasQuery = Area::query();
         if ($currentUser->hasPermissionTo('users:view-area')) {
-            // Si el usuario está restringido a sus propias áreas
             $userAreaIds = $currentUser->areas->pluck('id');
             $areasQuery->whereIn('id', $userAreaIds);
         }
         $areas = $areasQuery->get(['name', 'description']);
 
-        return Inertia::render('users/register', [
+        return [
             'assignableRoles' => $assignableRoles,
             'sedes' => $sedes,
-            'areas' => $areas, // Añadir áreas a los datos enviados a la vista
-        ]);
+            'areas' => $areas,
+        ];
     }
 
     /**
@@ -197,45 +226,53 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'status' => 'required|in:active,inactive',
             'sede_name' => 'required|string|exists:sedes,name',
             'roles' => 'required|array|min:1',
             'roles.*.name' => 'required|string|exists:roles,name',
             'roles.*.expires_at' => 'nullable|date',
             'roles.*.is_primary' => 'boolean',
-            'areas' => 'nullable|array',
-            'areas.*.id' => 'exists:areas,id',
-            'areas.*.is_primary' => 'boolean',
+            'area_name' => 'nullable|string|exists:areas,name',
         ]);
 
-        // Verificar permisos para asignar roles
+        // Verificar si los roles seleccionados requieren un área
+        $rolesRequiringArea = ['coordinador-area', 'mentor', 'instructor', 'calificador'];
+        $requiresArea = false;
+
         foreach ($validated['roles'] as $roleData) {
+            // Verificar permisos para asignar rol
             if (!$this->roleAssignmentService->canAssignRole($request->user(), $roleData['name'])) {
                 return back()->withErrors(['roles' => "No tienes permiso para asignar el rol: {$roleData['name']}"]);
             }
+
+            // Verificar si algún rol requiere área
+            if (in_array($roleData['name'], $rolesRequiringArea, true)) {
+                $requiresArea = true;
+            }
+        }
+
+        // Si requiere área pero no se seleccionó una
+        if ($requiresArea && empty($validated['area_name'])) {
+            return back()->withErrors(['area_name' => 'El área académica es requerida para los roles seleccionados.']);
         }
 
         // Verificar restricciones de sede
         if (
-            $request->user()->sede_name !== $validated['sede_name'] &&
-            $request->user()->hasPermissionTo('users:view-sede')
+            $request->user()->hasPermissionTo('users:view-sede') &&
+            $request->user()->sede_name !== $validated['sede_name']
         ) {
             return back()->withErrors(['sede_name' => "No puedes asignar un usuario a una sede diferente a la tuya"]);
         }
 
         // Verificar restricciones de área
-        if (!empty($validated['areas'])
-            && $request->user()->hasPermissionTo('users:view-area')) {
-            $userAreaIds = $request->user()->areas->pluck('id')->toArray();
-            foreach ($validated['areas'] as $area) {
-                if (!in_array($area['id'], $userAreaIds)) {
-                    return back()->withErrors(['areas' => "No puedes asignar un área a la que no perteneces"]);
-                }
+        if (!empty($validated['area_name']) && $request->user()->hasPermissionTo('users:view-area')) {
+            $userAreaNames = $request->user()->areas->pluck('name')->toArray();
+            if (!in_array($validated['area_name'], $userAreaNames)) {
+                return back()->withErrors(['area_name' => "No puedes asignar un área a la que no perteneces"]);
             }
         }
 
         // Guardar datos originales para log
-        $original = $user->only(['name', 'email', 'status', 'sede_name']);
+        $original = $user->only(['name', 'email', 'sede_name']);
         $originalRoles = $user->roles->map(fn($r) => [
             'name' => $r->name,
             'is_primary' => $r->pivot->is_primary ?? false,
@@ -251,37 +288,24 @@ class UserController extends Controller
         // Actualizar roles con información de expiración
         $user->syncRolesWithExpiration($validated['roles']);
 
-        // Actualizar áreas (si se proporcionaron)
-        $areasSync = [];
-        if (!empty($validated['areas'])) {
-            foreach ($validated['areas'] as $area) {
-                $areasSync[$area['id']] = ['is_primary' => $area['is_primary'] ?? false];
+        // Actualizar área si se proporcionó
+        if (!empty($validated['area_name'])) {
+            $area = Area::where('name', $validated['area_name'])->first();
+            if ($area) {
+                // Asignar como área principal si requiere área específicamente
+                $user->areas()->sync([
+                    $area->id => ['is_primary' => $requiresArea]
+                ]);
             }
-
-            // Si es estudiante, asegurarse de que tenga asignada el área de matemáticas
-            if ($user->hasRole('estudiante')) {
-                $matematicasArea = Area::where('name', '=', 'matematicas', 'and')->first();
-                if ($matematicasArea && !isset($areasSync[$matematicasArea->id])) {
-                    // Si no se seleccionó matemáticas, añadirla como no principal
-                    $areasSync[$matematicasArea->id] = ['is_primary' => false];
-                }
-            }
-        } elseif ($user->hasRole('estudiante')) {
-            // Si es estudiante y no se proporcionaron áreas, asignar matemáticas por defecto
-            $matematicasArea = Area::where('name', '=', 'matematicas', 'and')->first();
-            if ($matematicasArea) {
-                $areasSync[$matematicasArea->id] = ['is_primary' => true];
-            }
+        } else {
+            // Si no se requiere área, desvincular todas las áreas
+            $user->areas()->sync([]);
         }
 
-        // Sincronizar áreas (incluso si es un array vacío para roles que no necesitan áreas)
-        $user->areas()->sync($areasSync);
-
-        // Actualizar otros campos
+        // Actualizar otros campos (mantener el status actual)
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'status' => $validated['status'],
             'sede_name' => $validated['sede_name'],
         ]);
 
@@ -311,7 +335,7 @@ class UserController extends Controller
                     'roles' => $originalRoles,
                     'areas' => $originalAreas
                 ]),
-                'attributes' => array_merge($user->only(['name', 'email', 'status', 'sede_name']), [
+                'attributes' => array_merge($user->only(['name', 'email', 'sede_name']), [
                     'roles' => $updatedRoles,
                     'areas' => $updatedAreas
                 ]),
@@ -319,7 +343,7 @@ class UserController extends Controller
             ->event('updated')
             ->log('Usuario actualizado');
 
-        return redirect()->back()->with('success', 'Usuario actualizado correctamente.');
+        return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente.');
     }
 
     /**

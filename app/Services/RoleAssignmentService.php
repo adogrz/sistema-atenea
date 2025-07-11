@@ -144,10 +144,19 @@ class RoleAssignmentService
             return false;
         }
 
+        // Obtener los roles del editor y del objetivo
+        $editorRoles = $editor->roles->pluck('name')->toArray();
+        $targetRoles = $target->roles->pluck('name')->toArray();
+
+        // Si el editor y el objetivo comparten algún rol, no se permite la edición
+        if (!empty(array_intersect($editorRoles, $targetRoles))) {
+            return false;
+        }
+
         // Admin TI no puede editar usuarios del área médica o psicológica
         if ($editor->hasRole('admin-ti')) {
             $targetRoles = $target->roles->pluck('name')->toArray();
-            $restrictedRoles = ['psicologo', 'jefe-psicologia', 'doctor', 'doctor-jefe'];
+            $restrictedRoles = ['psicologo', 'jefe-psicologia', 'doctor', 'jefe-medicina'];
 
             if (array_intersect($targetRoles, $restrictedRoles)) {
                 return false;
@@ -164,7 +173,7 @@ class RoleAssignmentService
             }
 
             // No puede gestionar usuarios del área médica o psicológica
-            $medicalRoles = ['psicologo', 'jefe-psicologia', 'doctor', 'doctor-jefe'];
+            $medicalRoles = ['psicologo', 'jefe-psicologia', 'doctor', 'jefe-medicina'];
             if (array_intersect($targetRoles, $medicalRoles)) {
                 return false;
             }

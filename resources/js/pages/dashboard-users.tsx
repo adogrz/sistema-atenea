@@ -1,4 +1,3 @@
-import EditUserModal from '@/components/edit-user-modal';
 import { Button } from '@/components/ui/button';
 import { PieChart } from '@/components/ui/charts/pie';
 import { DataTable } from '@/components/ui/data-table';
@@ -11,7 +10,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { Description } from '@radix-ui/react-dialog';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { Edit, MailCheck, Trash2, UserPlus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface Role {
     id: number;
@@ -30,12 +29,6 @@ interface Area {
     pivot?: {
         is_primary: boolean;
     };
-}
-
-interface Sede {
-    id: number;
-    name: string;
-    description: string;
 }
 
 interface User {
@@ -57,13 +50,13 @@ const BREADCRUMBS: BreadcrumbItem[] = [
 
 export default function DashboardUsers() {
     const { hasPermission } = usePermissions();
-    const { roles, assignableRoles, sedes, areas, users } = usePage<{
-        roles: Array<Role>;
+    const { assignableRoles, users, auth } = usePage<{
         assignableRoles: Array<Role>;
-        sedes: Array<Sede>;
-        areas: Array<Area>;
         users: Array<User>;
+        auth: { user: User };
     }>().props;
+
+    const authUser = auth.user;
 
     // Verificación de permisos
     const canCreateUser = hasPermission('users:create');
@@ -74,15 +67,68 @@ export default function DashboardUsers() {
     // Estados para manejo de UI
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
     const [selectedSedes, setSelectedSedes] = useState<string[]>([]);
     const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const selectedUser = selectedUserId ? users.find((u) => u.id === selectedUserId) || null : null;
+
+    const isEditDisabled = useMemo(() => {
+        if (!selectedUserId || !canEditUser) {
+            return true;
+        }
+
+        if (!selectedUser || !authUser) {
+            return true;
+        }
+
+        const authUserAssignableRoleNames = assignableRoles.map((r) => r.name);
+
+        if (selectedUser.id === authUser.id) {
+            return true;
+        }
+
+        const authUserRoleNames = authUser.roles.map((r) => r.name);
+        const selectedUserRoleNames = selectedUser.roles.map((r) => r.name);
+        if (selectedUserRoleNames.some((roleName) => authUserRoleNames.includes(roleName))) {
+            return true;
+        }
+
+        if (authUserRoleNames.includes('admin-ti')) {
+            const restrictedRoles = ['psicologo', 'jefe-psicologia', 'doctor', 'doctor-jefe'];
+            if (selectedUserRoleNames.some((roleName) => restrictedRoles.includes(roleName))) {
+                return true;
+            }
+        }
+
+        if (authUserRoleNames.includes('admin-academico')) {
+            const restrictedRoles = ['director', 'admin-ti', 'psicologo', 'jefe-psicologia', 'doctor', 'doctor-jefe'];
+            if (selectedUserRoleNames.some((roleName) => restrictedRoles.includes(roleName))) {
+                return true;
+            }
+        }
+
+        if (authUserRoleNames.includes('coordinador-area')) {
+            const allowedRoles = ['mentor', 'instructor', 'calificador'];
+            if (!selectedUserRoleNames.some((roleName) => allowedRoles.includes(roleName))) {
+                return true;
+            }
+        }
+
+        if (authUserRoleNames.includes('admin-academico-sede')) {
+            const higherRoles = ['director', 'admin-ti', 'admin-academico'];
+            if (selectedUserRoleNames.some((roleName) => higherRoles.includes(roleName))) {
+                return true;
+            }
+        }
+
+        const canAuthUserAssignAnyOfSelectedUserRoles = selectedUserRoleNames.some((roleName) => authUserAssignableRoleNames.includes(roleName));
+
+        return !canAuthUserAssignAnyOfSelectedUserRoles;
+    }, [selectedUserId, canEditUser, selectedUser, authUser, assignableRoles]);
+
     const columns = getUserColumns(
         users,
         selectedUserId,
@@ -160,22 +206,6 @@ export default function DashboardUsers() {
         }
     };
 
-    const handleEditUser = (data: { name: string; email: string; status: string; role_name: string[]; sede_name: string }) => {
-        if (selectedUser) {
-            router.put(`/dashboard/users/${selectedUser.id}`, data, {
-                onSuccess: () => {
-                    setShowEditModal(false);
-                    setSelectedUserId(null);
-                    setFormErrors({});
-                },
-                onError: (errors) => {
-                    console.error('Error al editar:', errors);
-                    setFormErrors(errors);
-                },
-            });
-        }
-    };
-
     const handleClearAllFilters = () => {
         setSelectedRoles([]);
         setSelectedSedes([]);
@@ -208,7 +238,7 @@ export default function DashboardUsers() {
                             <UserPlus className="h-4 w-4" />
                             <span>Agregar</span>
                         </Button>
-                        <Button variant="ghost" onClick={() => setShowEditModal(true)} disabled={!selectedUserId || !canEditUser}>
+                        <Button variant="ghost" onClick={() => router.visit(`/dashboard/users/${selectedUserId}/edit`)} disabled={isEditDisabled}>
                             <Edit className="h-4 w-4" /> Editar
                         </Button>
                         <Button
@@ -313,21 +343,6 @@ export default function DashboardUsers() {
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-
-                    <EditUserModal
-                        open={showEditModal}
-                        onClose={() => {
-                            setShowEditModal(false);
-                            setFormErrors({});
-                        }}
-                        onSave={handleEditUser}
-                        user={selectedUser}
-                        roles={roles}
-                        assignableRoles={assignableRoles}
-                        sedes={sedes}
-                        areas={areas}
-                        errors={formErrors}
-                    />
                 </div>
             </div>
         </AppLayout>

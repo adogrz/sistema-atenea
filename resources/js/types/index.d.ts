@@ -6,8 +6,13 @@ export interface Permission {
     name: string;
 }
 
+export interface RolePivot {
+    is_primary: boolean;
+    expires_at: string | null;
+}
+
 export interface Role {
-    pivot: any;
+    pivot?: RolePivot;
     id: number;
     name: string;
     description: string;
@@ -24,7 +29,7 @@ export interface User {
     permissions?: Permission[];
     roles?: Role[];
 
-    [key: string]: unknown; // This allows for additional properties...
+    [key: string]: unknown;
 }
 
 export interface Auth {
@@ -43,6 +48,11 @@ export interface NavItem {
     isActive?: boolean;
     isOpen?: boolean;
     items?: NavItem[];
+}
+
+export interface SelectItem {
+    name: string;
+    description: string;
 }
 
 export interface SharedData {

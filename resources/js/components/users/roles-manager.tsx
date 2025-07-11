@@ -91,7 +91,7 @@ export default function RolesManager({
                                             <Label htmlFor={`role-${index}`} className="font-medium">
                                                 {getRoleDescription(role.name)}
                                             </Label>
-                                            {role.is_primary && (
+                                            {index === primaryRoleIndex && (
                                                 <Badge variant="secondary" className="bg-blue-500 text-white dark:bg-blue-600">
                                                     <BadgeCheckIcon />
                                                     Principal
@@ -101,7 +101,7 @@ export default function RolesManager({
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {!role.is_primary && (
+                                    {!(index === primaryRoleIndex) && (
                                         <DatePicker
                                             value={role.expires_at ? parseLocalDate(role.expires_at) : undefined}
                                             onChange={(date) => onSetExpiryDate(index, date)}
