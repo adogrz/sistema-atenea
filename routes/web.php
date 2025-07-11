@@ -5,12 +5,42 @@ use App\Http\Controllers\UserController;
 use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Sede;
+use App\Models\Departamento;
+use App\Models\Municipio;
+use App\Models\Distrito;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Models\Activity;
+use Illuminate\Support\Collection;
 
 Route::get('/formulario-admision', function () {
-    return Inertia::render('admission/admission-register');
+    $departamentos = Departamento::select('id', 'nombre_departamento')->get()
+        ->map(fn($d) => [
+            'id' => (string) $d->id,
+            'nombre_departamento' => $d->nombre_departamento,
+        ]);
+
+    $municipios = Municipio::select('id', 'nombre_municipio', 'id_departamento')->get();
+    $municipiosPorDepartamento = $municipios->groupBy('id_departamento')->map(function (Collection $items) {
+        return $items->map(fn($m) => [
+            'id' => (string) $m->id,
+            'nombre_municipio' => $m->nombre_municipio,
+        ]);
+    });
+
+    $distritos = Distrito::select('id', 'nombre_distrito', 'id_municipio')->get();
+    $distritosPorMunicipio = $distritos->groupBy('id_municipio')->map(function (Collection $items) {
+        return $items->map(fn($d) => [
+            'id' => (string) $d->id,
+            'nombre_distrito' => $d->nombre_distrito,
+        ]);
+    });
+
+    return Inertia::render('admission/admission-register', [
+        'departamentos' => $departamentos,
+        'municipiosPorDepartamento' => $municipiosPorDepartamento,
+        'distritosPorMunicipio' => $distritosPorMunicipio,
+    ]);
 })->name('admission');
 
 Route::get('/', function () {

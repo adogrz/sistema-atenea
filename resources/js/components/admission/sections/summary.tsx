@@ -1,15 +1,13 @@
 "use client"
 
-import type { UseFormReturn } from "react-hook-form"
+import { useFormContext } from "react-hook-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
-interface ResumenSolicitudProps {
-  form: UseFormReturn<any>
-}
-
-export default function ResumenSolicitud({ form }: ResumenSolicitudProps) {
+export default function ResumenSolicitud() {
+  
+  const form = useFormContext();
   const values = form.getValues()
 
   // Mapeo de IDs a nombres para mostrar en el resumen

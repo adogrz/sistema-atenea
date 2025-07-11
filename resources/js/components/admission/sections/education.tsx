@@ -1,8 +1,7 @@
 "use client"
 
-import type { UseFormReturn } from "react-hook-form"
+import { useFormContext } from "react-hook-form"
 import { HelpCircle } from "lucide-react"
-
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -10,11 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 
-interface EducacionProps {
-  form: UseFormReturn<any>
-}
+export default function Educacion() {
+  const form = useFormContext();
 
-export default function Educacion({ form }: EducacionProps) {
   return (
     <Card>
       <CardHeader>

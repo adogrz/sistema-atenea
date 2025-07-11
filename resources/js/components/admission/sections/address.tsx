@@ -1,135 +1,108 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import type { UseFormReturn } from "react-hook-form"
-
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
+import { useFormContext } from "react-hook-form";
+import { useEffect, useState } from "react";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import type { Departamento, Municipio, Distrito } from "@/types/address";
 
 interface DireccionProps {
-  form: UseFormReturn<any>
+  departamentos: Departamento[];
+  municipiosPorDepartamento: Record<string, Municipio[]>;
+  distritosPorMunicipio: Record<string, Distrito[]>;
 }
 
-// Datos simulados para los selects en cascada
-const paises = [
-  { id: "sv", nombre: "El Salvador" },
-  { id: "gt", nombre: "Guatemala" },
-  { id: "hn", nombre: "Honduras" },
-]
+export default function Direccion({
+  departamentos,
+  municipiosPorDepartamento,
+  distritosPorMunicipio,
+}: DireccionProps) {
 
-const departamentosPorPais: Record<string, Array<{ id: string; nombre: string }>> = {
-  sv: [
-    { id: "ss", nombre: "San Salvador" },
-    { id: "sa", nombre: "Santa Ana" },
-    { id: "sm", nombre: "San Miguel" },
-  ],
-  gt: [
-    { id: "gt", nombre: "Guatemala" },
-    { id: "qz", nombre: "Quetzaltenango" },
-  ],
-  hn: [
-    { id: "tg", nombre: "Tegucigalpa" },
-    { id: "sp", nombre: "San Pedro Sula" },
-  ],
-}
+  const form = useFormContext();
+  const [municipios, setMunicipios] = useState<Municipio[]>([]);
+  const [distritos, setDistritos] = useState<Distrito[]>([]);
 
-const municipiosPorDepartamento: Record<string, Array<{ id: string; nombre: string }>> = {
-  ss: [
-    { id: "ss", nombre: "San Salvador" },
-    { id: "mj", nombre: "Mejicanos" },
-    { id: "ap", nombre: "Apopa" },
-  ],
-  sa: [
-    { id: "sa", nombre: "Santa Ana" },
-    { id: "ch", nombre: "Chalchuapa" },
-  ],
-  sm: [
-    { id: "sm", nombre: "San Miguel" },
-    { id: "ci", nombre: "Ciudad Barrios" },
-  ],
-  gt: [
-    { id: "gc", nombre: "Guatemala City" },
-    { id: "mx", nombre: "Mixco" },
-  ],
-  qz: [
-    { id: "qz", nombre: "Quetzaltenango" },
-    { id: "sl", nombre: "Salcajá" },
-  ],
-  tg: [
-    { id: "tg", nombre: "Tegucigalpa" },
-    { id: "cm", nombre: "Comayagüela" },
-  ],
-  sp: [
-    { id: "sp", nombre: "San Pedro Sula" },
-    { id: "ch", nombre: "Choloma" },
-  ],
-}
+  const departamentoSeleccionado = form.watch("departamento");
+  const municipioSeleccionado = form.watch("municipio");
 
-export default function Direccion({ form }: DireccionProps) {
-  const [departamentos, setDepartamentos] = useState<Array<{ id: string; nombre: string }>>([])
-  const [municipios, setMunicipios] = useState<Array<{ id: string; nombre: string }>>([])
-
-  const paisSeleccionado = form.watch("pais")
-  const departamentoSeleccionado = form.watch("departamento")
-
-  // Actualizar departamentos cuando cambia el país
-  useEffect(() => {
-    if (paisSeleccionado) {
-      setDepartamentos(departamentosPorPais[paisSeleccionado] || [])
-      form.setValue("departamento", "")
-      form.setValue("municipio", "")
-    }
-  }, [paisSeleccionado, form])
-
-  // Actualizar municipios cuando cambia el departamento
   useEffect(() => {
     if (departamentoSeleccionado) {
-      setMunicipios(municipiosPorDepartamento[departamentoSeleccionado] || [])
-      form.setValue("municipio", "")
+      const listaMunicipios = municipiosPorDepartamento[departamentoSeleccionado] || [];
+      setMunicipios(listaMunicipios);
+      form.setValue("municipio", "");
+      form.setValue("distrito", "");
+      setDistritos([]);
     }
-  }, [departamentoSeleccionado, form])
+  }, [departamentoSeleccionado]);
+
+  useEffect(() => {
+    if (municipioSeleccionado) {
+      const listaDistritos = distritosPorMunicipio[municipioSeleccionado] || [];
+      setDistritos(listaDistritos);
+      form.setValue("distrito", "");
+    }
+  }, [municipioSeleccionado]);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Dirección</CardTitle>
-        <CardDescription>Ingresa los datos de tu lugar de residencia actual</CardDescription>
+        <CardDescription>
+          Ingresa los datos de tu lugar de residencia actual
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Teléfono casa */}
         <FormField
           control={form.control}
-          name="pais"
+          name="telefono_casa"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>País</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un país" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {paises.map((pais) => (
-                    <SelectItem key={pais.id} value={pais.id}>
-                      {pais.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel>Teléfono de casa - Opcional</FormLabel>
+              <FormControl>
+                <Input type="tel" placeholder="Ej. 12345678" {...field} />
+              </FormControl>
+              <FormDescription>
+                Ingresa un número de teléfono de casa donde podamos contactarte
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        {/* Departamento */}
         <FormField
           control={form.control}
           name="departamento"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Departamento</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value} disabled={!paisSeleccionado}>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un departamento" />
@@ -138,7 +111,7 @@ export default function Direccion({ form }: DireccionProps) {
                 <SelectContent>
                   {departamentos.map((departamento) => (
                     <SelectItem key={departamento.id} value={departamento.id}>
-                      {departamento.nombre}
+                      {departamento.nombre_departamento}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -148,13 +121,18 @@ export default function Direccion({ form }: DireccionProps) {
           )}
         />
 
+        {/* Municipio */}
         <FormField
           control={form.control}
           name="municipio"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Municipio</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value} disabled={!departamentoSeleccionado}>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value}
+                disabled={!departamentoSeleccionado}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un municipio" />
@@ -163,7 +141,7 @@ export default function Direccion({ form }: DireccionProps) {
                 <SelectContent>
                   {municipios.map((municipio) => (
                     <SelectItem key={municipio.id} value={municipio.id}>
-                      {municipio.nombre}
+                      {municipio.nombre_municipio}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -173,6 +151,37 @@ export default function Direccion({ form }: DireccionProps) {
           )}
         />
 
+        {/* Distrito */}
+        <FormField
+          control={form.control}
+          name="distrito"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Distrito</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value}
+                disabled={!municipioSeleccionado}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un distrito" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {distritos.map((distrito) => (
+                    <SelectItem key={distrito.id} value={distrito.id}>
+                      {distrito.nombre_distrito}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Dirección detallada */}
         <FormField
           control={form.control}
           name="direccionDetallada"
@@ -186,12 +195,14 @@ export default function Direccion({ form }: DireccionProps) {
                   {...field}
                 />
               </FormControl>
-              <FormDescription>Incluye referencias que faciliten la ubicación de tu domicilio</FormDescription>
+              <FormDescription>
+                Incluye referencias que faciliten la ubicación de tu domicilio
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
       </CardContent>
     </Card>
-  )
+  );
 }

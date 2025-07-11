@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('responsables', function (Blueprint $table) {
             $table->string('dui', 9)->primary();
+            $table->string('codigo_estudiante');
             $table->foreign('codigo_estudiante')->references('codigo')->on('estudiantes')->onDelete('cascade');
             $table->timestamps();
             $table->string('nombres_responsable');

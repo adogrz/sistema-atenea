@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { FormProvider, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2, Save, Send, AlertCircle, CheckCircle2 } from "lucide-react"
@@ -14,14 +14,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 
 import DatosPersonales from "./sections/personal-data"
+import DatosResponsable from "./sections/responsible"
 import Direccion from "./sections/address"
 import Educacion from "./sections/education"
-import SeleccionOlimpiadas from "../olympics"
 import Documentacion from "./sections/documentation"
 import Consentimientos from "./sections/terms-conditions"
 import ResumenSolicitud from "./sections/summary"
 import BarraProgreso from "./progress-bar"
 import Captcha from "./captcha"
+import { usePage } from "@inertiajs/react"
+import { Departamento, Municipio, Distrito } from "@/types/address"
 
 // Esquema de validación completo para todo el formulario
 const formSchema = z.object({
@@ -67,6 +69,7 @@ const formSchema = z.object({
   pais: z.string().min(1, "Debes seleccionar un país"),
   departamento: z.string().min(1, "Debes seleccionar un departamento"),
   municipio: z.string().min(1, "Debes seleccionar un municipio"),
+  distrito: z.string().min(1, "Debes seleccionar un distrito"),
   direccionDetallada: z.string().min(5, "La dirección debe tener al menos 5 caracteres"),
 
   // Educación
@@ -118,6 +121,16 @@ export default function FormularioAdmision() {
   const [captchaVerified, setCaptchaVerified] = useState(false)
   const { toast } = useToast()
 
+  const {
+    departamentos,
+    municipiosPorDepartamento,
+    distritosPorMunicipio,
+  } = usePage<{
+    departamentos: Departamento[];
+    municipiosPorDepartamento: Record<string, Municipio[]>;
+    distritosPorMunicipio: Record<string, Distrito[]>;
+  }>().props;
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -128,6 +141,7 @@ export default function FormularioAdmision() {
       pais: "",
       departamento: "",
       municipio: "",
+      distrito: "",
       direccionDetallada: "",
       centroEducativo: "",
       nivelEstudios: undefined,
@@ -162,9 +176,9 @@ export default function FormularioAdmision() {
 
   const tabs = [
     { id: "datos-personales", label: "Datos Personales" },
+    { id: "datos-responsables", label: "Datos de los Responsables" },
     { id: "direccion", label: "Dirección" },
     { id: "educacion", label: "Educación" },
-    { id: "olimpiadas", label: "Olimpiadas" },
     { id: "documentacion", label: "Documentación" },
     { id: "consentimientos", label: "Consentimientos" },
     { id: "resumen", label: "Resumen" },
@@ -290,7 +304,7 @@ export default function FormularioAdmision() {
   }
 
   return (
-    <Form {...form}>
+    <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {totalErrores > 0 && (
           <Alert variant="destructive">
@@ -320,37 +334,46 @@ export default function FormularioAdmision() {
           </TabsList>
 
           <TabsContent value="datos-personales">
-            <DatosPersonales form={form} />
+            <DatosPersonales />
+          </TabsContent>
+
+          <TabsContent value="datos-responsables">
+            <DatosResponsable />
           </TabsContent>
 
           <TabsContent value="direccion">
-            <Direccion form={form} />
+            <Direccion
+              departamentos={departamentos}
+              municipiosPorDepartamento={municipiosPorDepartamento}
+              distritosPorMunicipio={distritosPorMunicipio}
+            />
           </TabsContent>
 
           <TabsContent value="educacion">
-            <Educacion form={form} />
-          </TabsContent>
-
-          <TabsContent value="olimpiadas">
-            <SeleccionOlimpiadas form={form} />
+            <Educacion />
           </TabsContent>
 
           <TabsContent value="documentacion">
-            <Documentacion form={form} />
+            {/* <Documentacion />  */}
           </TabsContent>
 
           <TabsContent value="consentimientos">
-            <Consentimientos form={form} />
+            {/* <Consentimientos /> */}
           </TabsContent>
 
           <TabsContent value="resumen">
-            <ResumenSolicitud form={form} />
+            <ResumenSolicitud />
             <Captcha onVerify={() => setCaptchaVerified(true)} />
           </TabsContent>
         </Tabs>
 
         <div className="flex justify-between pt-4">
-          <Button type="button" variant="outline" onClick={handlePrevious} disabled={activeTab === "datos-personales"}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={activeTab === "datos-personales"}
+          >
             Anterior
           </Button>
 
@@ -391,6 +414,6 @@ export default function FormularioAdmision() {
           </div>
         </div>
       </form>
-    </Form>
+    </FormProvider>
   )
 }

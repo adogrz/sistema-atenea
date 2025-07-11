@@ -15,9 +15,9 @@ class DatabaseSeeder extends Seeder
     {
         // Sedes de la institucion
         $this->call([
-            SedeSeeder::class,
             PermissionSeeder::class,
-            DepartamentosSeeder::class,
+            SedeSeeder::class,
+            DepartamentoSeeder::class,
             MunicipioSeeder::class,
             DistritoSeeder::class,
         ]);

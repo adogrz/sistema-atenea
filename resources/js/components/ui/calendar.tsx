@@ -3,6 +3,7 @@
 import React from "react";
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { Locale }  from "date-fns/locale"
 
 interface CalendarProps {
   mode?: "single" | "range";
@@ -16,7 +17,7 @@ interface CalendarProps {
   datePickerClassName?: string;
   label?: string;
   labelClassName?: string;
-  locale?: string; // Soporte para idioma
+  locale?: string | Locale; // Soporte para idioma
   region?: string; // Soporte para región
   showPreview?: boolean;
   dateFormat?: string; // Formato de fecha
@@ -50,7 +51,7 @@ const Calendar: React.FC<CalendarProps> = ({
     if (locale) {
       import(`date-fns/locale/${locale}/index.js`)
         .then((mod) => {
-          registerLocale(locale, mod.default);
+          registerLocale(locale.toString(), mod.default);
         })
         .catch(() => {});
     }

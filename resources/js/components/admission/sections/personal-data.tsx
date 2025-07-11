@@ -1,10 +1,9 @@
 "use client"
 
-import type { UseFormReturn } from "react-hook-form"
+import { useFormContext } from "react-hook-form";
 import { CalendarIcon, HelpCircle } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -14,11 +13,9 @@ import { Button } from "@/components/ui/button"
 import Calendar from "@/components/ui/calendar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-interface DatosPersonalesProps {
-  form: UseFormReturn<any>
-}
+export default function DatosPersonales() {
+  const form = useFormContext();
 
-export default function DatosPersonales({ form }: DatosPersonalesProps) {
   return (
     <Card>
       <CardHeader>
@@ -26,129 +23,139 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
         <CardDescription>Ingresa tus datos personales para iniciar tu solicitud de admisión</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <FormField
-          control={form.control}
-          name="primer_nombre"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Primer nombre</FormLabel>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-5 w-5">
-                        <HelpCircle className="h-4 w-4" />
-                        <span className="sr-only">Ayuda</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        Ingresa el primer nombre del aspirante
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <FormControl>
-                <Input placeholder="Ej. Juan" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
-        <FormField
-          control={form.control}
-          name="segundo_nombre"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Segundo nombre</FormLabel>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-5 w-5">
-                        <HelpCircle className="h-4 w-4" />
-                        <span className="sr-only">Ayuda</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        Ingresa el segundo nombre del aspirante
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <FormControl>
-                <Input placeholder="Ej. Antonio" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
 
-        <FormField
-          control={form.control}
-          name="primer_apellido"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Primer apellido</FormLabel>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-5 w-5">
-                        <HelpCircle className="h-4 w-4" />
-                        <span className="sr-only">Ayuda</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        Ingresa el primer apellido del aspirante
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <FormControl>
-                <Input placeholder="Ej. Pérez" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          {/* Nombres */}
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="primer_nombre"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Primer nombre</FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-5 w-5">
+                            <HelpCircle className="h-4 w-4" />
+                            <span className="sr-only">Ayuda</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Ingresa el primer nombre del aspirante
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <FormControl>
+                    <Input placeholder="Ej. Juan" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="segundo_apellido"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Segundo apellido</FormLabel>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-5 w-5">
-                        <HelpCircle className="h-4 w-4" />
-                        <span className="sr-only">Ayuda</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        Ingresa el segundo apellido del aspirante
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <FormControl>
-                <Input placeholder="Ej. González" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="segundo_nombre"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Segundo nombre</FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-5 w-5">
+                            <HelpCircle className="h-4 w-4" />
+                            <span className="sr-only">Ayuda</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Ingresa el segundo nombre del aspirante
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <FormControl>
+                    <Input placeholder="Ej. Antonio" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Apellidos */}
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="primer_apellido"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Primer apellido</FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-5 w-5">
+                            <HelpCircle className="h-4 w-4" />
+                            <span className="sr-only">Ayuda</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Ingresa el primer apellido del aspirante
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <FormControl>
+                    <Input placeholder="Ej. Pérez" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="segundo_apellido"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Segundo apellido</FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-5 w-5">
+                            <HelpCircle className="h-4 w-4" />
+                            <span className="sr-only">Ayuda</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Ingresa el segundo apellido del aspirante
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <FormControl>
+                    <Input placeholder="Ej. González" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
 
         <FormField
           control={form.control}
@@ -193,7 +200,7 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
                       }
                     }}
                     initialFocus
-                    locale={'es'}
+                    locale={es}
                     minDate={new Date(new Date().setFullYear(new Date().getFullYear() - 25))}
                     maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 10))}
                   />
@@ -210,7 +217,7 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
           name="sexo"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Selecciona el sexo correspondiente al aspirante</FormLabel>
+              <FormLabel>Sexo</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -271,22 +278,6 @@ export default function DatosPersonales({ form }: DatosPersonalesProps) {
             </FormItem>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name="telefono_casa"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Teléfono de casa - Opcional</FormLabel>
-              <FormControl>
-                <Input type="tel" placeholder="Ej. 12345678" {...field} />
-              </FormControl>
-              <FormDescription>Ingresa un número de teléfono de casa donde podamos contactarte</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
       </CardContent>
     </Card>
   )
