@@ -39,42 +39,65 @@ export default function Direccion({
   municipiosPorDepartamento,
   distritosPorMunicipio,
 }: DireccionProps) {
-
   const form = useFormContext();
+
   const [municipios, setMunicipios] = useState<Municipio[]>([]);
   const [distritos, setDistritos] = useState<Distrito[]>([]);
 
   const departamentoSeleccionado = form.watch("departamento");
   const municipioSeleccionado = form.watch("municipio");
+  const distritoSeleccionado = form.watch("distrito");
 
+  // Restaurar datos cuando se monta el componente
   useEffect(() => {
-    if (departamentoSeleccionado) {
-      const listaMunicipios = municipiosPorDepartamento[departamentoSeleccionado] || [];
+    const departamentoActual = form.getValues("departamento");
+    const municipioActual = form.getValues("municipio");
+
+    if (departamentoActual) {
+      const listaMunicipios = municipiosPorDepartamento[departamentoActual] || [];
       setMunicipios(listaMunicipios);
-      form.setValue("municipio", "");
-      form.setValue("distrito", "");
+    }
+
+    if (municipioActual) {
+      const listaDistritos = distritosPorMunicipio[municipioActual] || [];
+      setDistritos(listaDistritos);
+    }
+  }, []);
+
+  // Actualizar municipios al cambiar departamento
+  useEffect(() => {
+    const departamentoActual = form.getValues("departamento");
+    if (departamentoActual) {
+      setMunicipios(municipiosPorDepartamento[departamentoActual] || []);
+    } else {
+      setMunicipios([]);
+    }
+  }, [form, municipiosPorDepartamento]);
+
+  // Actualizar distritos al cambiar municipio
+  useEffect(() => {
+    const municipioActual = form.getValues("municipio");
+    if (municipioActual) {
+      setDistritos(distritosPorMunicipio[municipioActual] || []);
+    } else {
       setDistritos([]);
     }
-  }, [departamentoSeleccionado]);
-
-  useEffect(() => {
-    if (municipioSeleccionado) {
-      const listaDistritos = distritosPorMunicipio[municipioSeleccionado] || [];
-      setDistritos(listaDistritos);
-      form.setValue("distrito", "");
-    }
-  }, [municipioSeleccionado]);
+  }, [form, distritosPorMunicipio]);
+  
+  // Extraer los nombres para mostrar el resumen
+  const nombreDepartamento = departamentos.find(d => d.id === departamentoSeleccionado)?.nombre_departamento;
+  const nombreMunicipio = municipios.find(m => m.id === municipioSeleccionado)?.nombre_municipio;
+  const nombreDistrito = distritos.find(d => d.id === distritoSeleccionado)?.nombre_distrito;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Dirección</CardTitle>
-        <CardDescription>
-          Ingresa los datos de tu lugar de residencia actual
-        </CardDescription>
+        <CardDescription>Ingresa los datos de tu lugar de residencia actual</CardDescription>
       </CardHeader>
+
       <CardContent className="space-y-6">
-        {/* Teléfono casa */}
+        {/* Teléfono de casa */}
         <FormField
           control={form.control}
           name="telefono_casa"
@@ -99,10 +122,7 @@ export default function Direccion({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Departamento</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-              >
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un departamento" />
@@ -181,10 +201,18 @@ export default function Direccion({
           )}
         />
 
+        {/* Resumen visual de selección */}
+        {(nombreDepartamento || nombreMunicipio || nombreDistrito) && (
+          <p className="text-sm text-muted-foreground">
+            <strong>Seleccionado:</strong>{" "}
+            {nombreDepartamento ?? "—"} → {nombreMunicipio ?? "—"} → {nombreDistrito ?? "—"}
+          </p>
+        )}
+
         {/* Dirección detallada */}
         <FormField
           control={form.control}
-          name="direccionDetallada"
+          name="direccion"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Dirección detallada</FormLabel>
