@@ -13,9 +13,6 @@ class DatabaseSeeder extends Seeder
             SedeSeeder::class,
             AreaSeeder::class,
             UserSeeder::class,
-            DepartamentoSeeder::class,
-            MunicipioSeeder::class,
-            DistritoSeeder::class,
         ]);
     }
 }
