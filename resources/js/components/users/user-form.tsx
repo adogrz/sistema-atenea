@@ -4,11 +4,12 @@ import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch'; // Importar Switch
 import RolesManager from '@/components/users/roles-manager';
 import { type SelectItem as SelectItemType } from '@/types';
 import { doesRoleRequireArea } from '@/utils/user-form-helpers';
 import { useForm } from '@inertiajs/react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
 
 type UserFormData = {
     name: string;
@@ -18,6 +19,7 @@ type UserFormData = {
     area_name: string;
     password: string;
     password_confirmation: string;
+    status: string;
 };
 
 interface UserFormProps {
@@ -35,6 +37,8 @@ interface UserFormProps {
     handleSetExpiryDate: (index: number, date: Date | null) => void;
     parseLocalDate: (dateString: string) => Date;
     requiresArea?: () => boolean;
+    userStatus: string;
+    isEditMode?: boolean;
 }
 
 export default function UserForm({
@@ -52,6 +56,7 @@ export default function UserForm({
     handleSetExpiryDate,
     parseLocalDate,
     requiresArea,
+    isEditMode,
 }: UserFormProps) {
     const { data, setData, errors } = form;
 
@@ -99,6 +104,32 @@ export default function UserForm({
                         />
                         <InputError message={errors.email} id="email-error" />
                     </div>
+
+                    {isEditMode && (
+                        <div className="space-y-6">
+                            <div className="border-b pb-4">
+                                <h3 className="text-lg font-semibold text-foreground">Estado de la cuenta</h3>
+                                <div className="mt-2 flex items-center space-x-2">
+                                    <Switch
+                                        id="user-status"
+                                        checked={data.status === 'active'}
+                                        onCheckedChange={(checked) => setData('status', checked ? 'active' : 'inactive')}
+                                        disabled={processing}
+                                    />
+                                    <Label htmlFor="user-status">Cuenta {data.status === 'active' ? 'activa' : 'inactiva'}</Label>
+                                </div>
+                                <InputError message={errors.status} id="status-error" />
+                                <div
+                                    className={`transition-all duration-300 overflow-hidden ${data.status === 'inactive' ? 'max-h-[24px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 translate-y-1'}`}
+                                >
+                                    <p className="mt-1 flex items-center gap-2 text-sm text-yellow-600 dark:text-yellow-400">
+                                    <AlertTriangle className="h-4 w-4" />
+                                    Esta cuenta está deshabilitada. El usuario no podrá iniciar sesión.
+                                </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

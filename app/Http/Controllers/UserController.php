@@ -227,6 +227,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'sede_name' => 'required|string|exists:sedes,name',
+            'status' => 'required|string|in:active,inactive', // Añadido para validar el estado
             'roles' => 'required|array|min:1',
             'roles.*.name' => 'required|string|exists:roles,name',
             'roles.*.expires_at' => 'nullable|date',
@@ -307,6 +308,7 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'sede_name' => $validated['sede_name'],
+            'status' => $validated['status'], // Añadido para actualizar el estado
         ]);
 
         // Cargar datos actualizados para el log

@@ -212,6 +212,7 @@ export default function RegisterUserPage() {
                                     handleSetExpiryDate={handleSetExpiryDate}
                                     parseLocalDate={parseLocalDate}
                                     requiresArea={requiresArea}
+                                    isEditMode={false}
                                 />
 
                                 {/* Sección: Seguridad */}

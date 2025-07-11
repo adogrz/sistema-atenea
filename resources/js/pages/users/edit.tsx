@@ -46,6 +46,7 @@ export default function EditUserPage() {
         area_name: user.areas && user.areas.length > 0 ? user.areas[0].name : '',
         password: '',
         password_confirmation: '',
+        status: user.status,
     });
     const { data, setData, put, processing } = form;
 
@@ -207,6 +208,8 @@ export default function EditUserPage() {
                                     handleSetExpiryDate={handleSetExpiryDate}
                                     parseLocalDate={parseLocalDate}
                                     requiresArea={requiresArea}
+                                    userStatus={user.status}
+                                    isEditMode={true}
                                 />
 
                                 {/* Resumen del formulario */}
