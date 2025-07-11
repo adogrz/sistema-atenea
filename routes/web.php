@@ -1,13 +1,11 @@
 <?php
 
 use App\Http\Controllers\UserController;
-use App\Models\User;
-use App\Models\Sede;
 use App\Models\Departamento;
 use App\Models\Municipio;
 use App\Models\Distrito;
-use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Route;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Collection;
 
