@@ -2,7 +2,6 @@
 
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import {
-  FormField,
   FormItem,
   FormLabel,
   FormControl,
@@ -22,37 +21,53 @@ import { useState } from "react";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 
+type ImportResponse = {
+  mensaje?: string;
+  importados?: number;
+  errores?: string[];
+};
+
 export default function ImportarCentrosPage() {
   const form = useForm();
   const [estado, setEstado] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [mensaje, setMensaje] = useState("");
+  const [mensajes, setMensajes] = useState<string[]>([]);
   const [cantidad, setCantidad] = useState<number | null>(null);
 
   const onSubmit = async (data: any) => {
     const archivo = data.archivo_excel?.[0];
     if (!archivo) {
-      setMensaje("Debes seleccionar un archivo");
+      setMensajes(["Debes seleccionar un archivo"]);
       setEstado("error");
       return;
     }
 
     setEstado("loading");
+
     const formData = new FormData();
     formData.append("archivo_excel", archivo);
 
     try {
-      const response = await axios.post("/centros", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const response = await axios.post<ImportResponse>("/centros", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
+      
+      console.log(response.data);
+
       setEstado("success");
-      setMensaje(response.data.mensaje || "¡Importación exitosa!");
+      setMensajes([response.data.mensaje || "¡Importación exitosa!"]);
       setCantidad(response.data.importados || null);
     } catch (error: any) {
       setEstado("error");
-      setMensaje("Hubo un error al importar");
+
+      const erroresBackend = error?.response?.data?.errores;
+
+      if (Array.isArray(erroresBackend)) {
+        setMensajes(erroresBackend);
+      }
+      else {
+        setMensajes(["Hubo un error al importar"]);
+      }
     }
   };
 
@@ -107,7 +122,7 @@ export default function ImportarCentrosPage() {
 
             {estado !== "idle" && (
               <div
-                className={`text-sm mt-2 ${
+                className={`text-sm mt-2 space-y-2 ${
                   estado === "success"
                     ? "text-green-600"
                     : estado === "error"
@@ -115,7 +130,10 @@ export default function ImportarCentrosPage() {
                     : "text-muted-foreground"
                 }`}
               >
-                {mensaje}
+                {mensajes.map((msg, i) => (
+                  <div key={i}>{msg}</div>
+                ))}
+
                 {estado === "success" && cantidad !== null && (
                   <div>Registros importados: {cantidad}</div>
                 )}
