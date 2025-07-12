@@ -26,7 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import type { Departamento, Municipio, Distrito } from "@/types/address";
+import type { Departamento, Municipio, Distrito } from "@/types/admission/address";
 
 interface DireccionProps {
   departamentos: Departamento[];

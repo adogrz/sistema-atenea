@@ -1,4 +1,4 @@
-// Departamento.ts
+// Tipo de datos para el formulario de admisión
 export interface Departamento {
   id: string;
   nombre_departamento: string;

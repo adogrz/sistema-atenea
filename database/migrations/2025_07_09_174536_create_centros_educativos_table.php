@@ -19,7 +19,7 @@ return new class extends Migration
             $table->enum('sector', ['PÚBLICO', 'PRIVADO'])->default('PÚBLICO');
             $table->enum('zona', ['Rural', 'Urbana'])->default('Urbana');
             $table->string('direccion');
-            $table->enum('internacional', ['SI','NO'])->default('NO');
+            $table->enum('internacional', ['SI', 'NO'])->default('NO');
             $table->timestamps();
         });
     }

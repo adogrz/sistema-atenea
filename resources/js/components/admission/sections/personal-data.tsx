@@ -23,7 +23,22 @@ export default function DatosPersonales() {
         <CardDescription>Ingresa tus datos personales para iniciar tu solicitud de admisión</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <FormField
+          control={form.control}
+          name="archivo_excel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Archivo Excel</FormLabel>
+              <FormControl>
+                <Input type="file" accept=".xls,.xlsx" onChange={(e) => field.onChange(e.target.files?.[0])} />
+              </FormControl>
+              <FormDescription>Debe contener columnas como código, nombre, departamento, etc.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
+        <Button type="submit">Importar</Button>
         <div className="grid grid-cols-2 gap-4">
 
           {/* Nombres */}

@@ -23,7 +23,8 @@ import ResumenSolicitud from "./sections/summary"
 import BarraProgreso from "./progress-bar"
 import Captcha from "./captcha"
 import { usePage } from "@inertiajs/react"
-import { Departamento, Municipio, Distrito } from "@/types/address"
+import { Departamento, Municipio, Distrito } from "@/types/admission/address"
+import { CentroEducativo } from "@/types/admission/education"
 
 // Esquema de validación completo para todo el formulario
 const formSchema = z.object({
@@ -125,10 +126,12 @@ export default function FormularioAdmision() {
     departamentos,
     municipiosPorDepartamento,
     distritosPorMunicipio,
+    centrosEducativos,
   } = usePage<{
     departamentos: Departamento[];
     municipiosPorDepartamento: Record<string, Municipio[]>;
     distritosPorMunicipio: Record<string, Distrito[]>;
+    centrosEducativos: CentroEducativo[];
   }>().props;
 
   const form = useForm<FormValues>({
@@ -350,7 +353,7 @@ export default function FormularioAdmision() {
           </TabsContent>
 
           <TabsContent value="educacion">
-            <Educacion />
+            <Educacion centros_educativos={centrosEducativos}/>
           </TabsContent>
 
           <TabsContent value="documentacion">
