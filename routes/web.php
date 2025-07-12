@@ -36,14 +36,13 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
 
     // Rutas para gestión de usuarios
     Route::prefix('dashboard')->group(function () {
-        Route::resource('users', UserController::class)->except(['show'])->middleware([
-            'index' => 'permission:users:list',
-            'create' => 'permission:users:create',
-            'store' => 'permission:users:create',
-            'edit' => 'permission:users:edit',
-            'update' => 'permission:users:edit',
-            'destroy' => 'permission:users:delete',
-        ]);
+        Route::get('users', [UserController::class, 'index'])->name('users.index')->middleware('permission:users:list');
+        Route::get('users/create', [UserController::class, 'create'])->name('users.create')->middleware('permission:users:create');
+        Route::post('users', [UserController::class, 'store'])->name('users.store')->middleware('permission:users:create');
+        Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('permission:users:edit');
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
+        Route::patch('users/{user}', [UserController::class, 'update'])->middleware('permission:users:edit');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users:delete');
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
