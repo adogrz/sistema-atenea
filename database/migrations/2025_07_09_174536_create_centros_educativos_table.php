@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('zona', ['Rural', 'Urbana'])->default('Urbana');
             $table->string('direccion');
             $table->enum('internacional', ['SI', 'NO'])->default('NO');
+            $table->timestamps();
         });
     }
 

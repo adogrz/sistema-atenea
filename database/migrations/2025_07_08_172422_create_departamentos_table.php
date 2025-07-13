@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('departamentos', function (Blueprint $table) {
             $table->id('id'); // Campo entero autoincremental
             $table->string('nombre_departamento');
+            $table->timestamps();
         });
     }
 

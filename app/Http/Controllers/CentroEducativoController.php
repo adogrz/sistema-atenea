@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use \App\Services\CentroEducativoImportService;
+use Illuminate\Http\JsonResponse;
 
 class CentroEducativoController extends Controller
 {
@@ -13,7 +14,7 @@ class CentroEducativoController extends Controller
      */
     public function create()
     {
-        return Inertia::render('import-form');
+        return Inertia::render('import-form', ['resultados' => 'NO DATA']);
     }
 
     /*
@@ -59,18 +60,18 @@ class CentroEducativoController extends Controller
     /**
      * Procesa el archivo Excel y guarda los centros educativos
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
+        // Limite de tiempo para procesar los registros: Json
+        set_time_limit(300); //5 minutos -> Implementar dispatch
+
         $request->validate([
             'archivo_excel' => 'required|file|mimes:xls,xlsx|max:2048',
         ]);
 
         $path = $request->file('archivo_excel')->getPathname();
-
         $resultado = app(CentroEducativoImportService::class)->import($path);
 
-        return back()->with([
-            'resultado' => $resultado,
-        ]);
+        return response()->json($resultado->toArray());
     }
 }

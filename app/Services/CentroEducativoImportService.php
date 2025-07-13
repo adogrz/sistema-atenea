@@ -6,13 +6,14 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Transformers\CentroEducativoTransformer;
 use App\Validators\CentroEducativoValidator;
 use App\Models\CentroEducativo;
+use App\DataObjects\CentroEducativoImportResult;
 
 class CentroEducativoImportService
 {
     /* 
      * Función encargada de importar los datos del archivo Excel
      */
-    public function import(string $path): array
+    public function import(string $path): CentroEducativoImportResult
     {
         $spreadsheet = IOFactory::load($path);
         $rows = $spreadsheet->getActiveSheet()->toArray();
@@ -20,58 +21,53 @@ class CentroEducativoImportService
         $transformer = new CentroEducativoTransformer();
         $validator = new CentroEducativoValidator();
 
-        $header = $rows[0];
-        $columnIndexes = $transformer->mapHeaders($header);
-
         $requeridos = ['codigo', 'nombre', 'departamento', 'distrito', 'sector', 'zona', 'direccion', 'internacional'];
-        $faltantes = [];
+        $columnIndexes = [];
+        $startRow = 0;
 
-        foreach ($requeridos as $campo) {
-            if (!array_key_exists($campo, $columnIndexes)) {
-                $faltantes[] = $campo;
+        //Buscar fila válida de encabezados
+        foreach ($rows as $i => $row) {
+            $columnIndexes = $transformer->mapHeaders($row);
+            if (!empty($columnIndexes)) {
+                $startRow = $i + 1; // inicia después del encabezado
+                break;
             }
         }
+
+        $faltantes = array_diff($requeridos, array_keys($columnIndexes));
+
+        if (!empty($faltantes)) {
+            return new CentroEducativoImportResult(0, [
+                'Encabezados faltantes: ' . implode(', ', $faltantes),
+            ]);
+        }
+
         $importados = 0;
         $errores = [];
 
-        if (!empty($faltantes)) {
-            return [
-                'importados' => 0,
-                'errores' => [
-                    'El archivo no contiene los siguientes encabezados requeridos:',
-                    implode(', ', $faltantes),
-                ],
-            ];
-        }
+        for ($i = $startRow; $i < count($rows); $i++) {
+            $row = $rows[$i];
 
-        foreach ($rows as $i => $row) {
-            if ($i === 0) continue;
-
-            // Verificar si la fila está completamente vacía
             if (empty(array_filter($row, fn($value) => trim($value) !== ''))) {
-                continue; // Saltar fila vacía
-            }
-
-            $data = $transformer->transformRow($row, $columnIndexes);
-
-            $errors = $validator->validate($data);
-            if ($errors) {
-                $errores[] = "Fila $i: " . implode(', ', $errors);
                 continue;
             }
 
-            CentroEducativo::updateOrCreate(
-                ['codigo' => $data['codigo']],
-                $data
-            );
+            $data = $transformer->transformRow($row, $columnIndexes);
+            $errors = $validator->validate($data);
 
+            if ($errors) {
+                $errores[] = "Fila " . ($i + 1) . ": " . implode(', ', $errors);
+                continue;
+            }
+
+            CentroEducativo::updateOrCreate(['codigo' => $data['codigo']], $data);
             $importados++;
         }
 
         if ($importados === 0 && empty($errores)) {
-            $errores[] = 'El archivo no contiene datos válidos para importar.';
+            $errores[] = 'No se encontraron datos válidos para importar.';
         }
 
-        return compact('importados', 'errores');
+        return new CentroEducativoImportResult($importados, $errores);
     }
 }

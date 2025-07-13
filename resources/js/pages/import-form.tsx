@@ -35,39 +35,52 @@ export default function ImportarCentrosPage() {
 
   const onSubmit = async (data: any) => {
     const archivo = data.archivo_excel?.[0];
+
     if (!archivo) {
-      setMensajes(["Debes seleccionar un archivo"]);
       setEstado("error");
+      setMensajes(["Debes seleccionar un archivo"]);
       return;
     }
 
-    setEstado("loading");
-
-    const formData = new FormData();
-    formData.append("archivo_excel", archivo);
-
     try {
-      const response = await axios.post<ImportResponse>("/centros", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      setEstado("loading");
+
+      const formData = new FormData();
+      formData.append("archivo_excel", archivo);
+
+      const response = await axios.post("/centros", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Accept": "application/json",
+        },
       });
 
-      
-      console.log(response.data);
+      const resultado = response.data;
 
-      setEstado("success");
-      setMensajes([response.data.mensaje || "¡Importación exitosa!"]);
-      setCantidad(response.data.importados || null);
+      const mensajes = [];
+
+      // Si hay errores aunque el estado sea 200
+      if (Array.isArray(resultado.errores) && resultado.errores.length > 0) {
+        mensajes.push(...resultado.errores);
+        setEstado("error");
+      } else {
+        mensajes.push(resultado.mensaje || "¡Importación exitosa!");
+        setEstado("success");
+      }
+
+      setMensajes(mensajes);
+      setCantidad(resultado.importados ?? null);
     } catch (error: any) {
+      console.error("Error al importar:", error);
       setEstado("error");
 
-      const erroresBackend = error?.response?.data?.errores;
+      const errores = error?.response?.data?.errores;
 
-      if (Array.isArray(erroresBackend)) {
-        setMensajes(erroresBackend);
-      }
-      else {
-        setMensajes(["Hubo un error al importar"]);
-      }
+      setMensajes(
+        Array.isArray(errores)
+          ? errores
+          : [error?.message ?? "Hubo un error al importar el archivo."]
+      );
     }
   };
 
@@ -122,13 +135,12 @@ export default function ImportarCentrosPage() {
 
             {estado !== "idle" && (
               <div
-                className={`text-sm mt-2 space-y-2 ${
-                  estado === "success"
-                    ? "text-green-600"
-                    : estado === "error"
+                className={`text-sm mt-2 space-y-2 ${estado === "success"
+                  ? "text-green-600"
+                  : estado === "error"
                     ? "text-red-600"
                     : "text-muted-foreground"
-                }`}
+                  }`}
               >
                 {mensajes.map((msg, i) => (
                   <div key={i}>{msg}</div>

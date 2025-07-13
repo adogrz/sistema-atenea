@@ -33,8 +33,6 @@ class CentroEducativoTransformer
 
         'departamento' => [
             'DEPARTAMENTO',
-            'DPTO',
-            'Dpto.',
             'Depto',
             'Departamento CE',
             'Ubicación Dpto.',
@@ -43,7 +41,6 @@ class CentroEducativoTransformer
 
         'distrito' => [
             'MUNICIPIO',
-            'MUNIC',
             'Municipio CE',
             'Municipio de Ubicación',
             'Distrito',
@@ -96,8 +93,13 @@ class CentroEducativoTransformer
     {
         $indexes = [];
 
+        foreach ($header as $i => $col) {
+            logger("Col $i: '{$col}' → Normalizado: '{$this->normalize($col)}'");
+        }
+
         foreach ($this->map as $field => $aliases) {
             foreach ($header as $i => $columnName) {
+
                 $normalized = $this->normalize($columnName);
 
                 foreach ($aliases as $alias) {
