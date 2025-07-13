@@ -14,6 +14,60 @@ import {
     ChartTooltipContent,
 } from "@/components/ui/chart"
 
+interface CustomizedCategoryLabelProps {
+    x?: string | number;
+    y?: string | number;
+    width?: string | number;
+    height?: string | number;
+    value?: string | number;
+    offset?: number;
+    fill?: string;
+}
+
+const CustomizedCategoryLabel = (props: CustomizedCategoryLabelProps) => {
+    const { x, y, width, height, value, offset, fill } = props;
+
+    const xNum = typeof x === 'string' ? parseFloat(x) : x || 0;
+    const yNum = typeof y === 'string' ? parseFloat(y) : y || 0;
+    const widthNum = typeof width === 'string' ? parseFloat(width) : width || 0;
+    const heightNum = typeof height === 'string' ? parseFloat(height) : height || 0;
+
+    if (value === undefined) {
+        return null;
+    }
+
+    const valueStr = String(value);
+
+    const charWidth = 7;
+    const availableWidth = widthNum - (offset || 0) - 8;
+
+    // Si la barra es demasiado estrecha no mostramos la etiqueta
+    if (availableWidth < 20) { 
+        return null;
+    }
+
+    const maxChars = Math.floor(availableWidth / charWidth);
+
+    let label = valueStr;
+    if (valueStr.length > maxChars) {
+        label = `${valueStr.substring(0, maxChars)}...`;
+    }
+
+    return (
+        <text
+            x={xNum + (offset || 0)}
+            y={yNum + heightNum / 2}
+            dy={4}
+            fontSize={12}
+            fill={fill}
+            textAnchor="start"
+        >
+            {label}
+        </text>
+    );
+};
+
+
 interface ChartDataItem {
     category: string
     value: number
@@ -31,7 +85,6 @@ interface BarChartCustomLabelProps {
     valueLabelColor?: string
     footerText?: string
     className?: string
-    height?: number
     barRadius?: number
 }
 
@@ -47,7 +100,6 @@ export function BarChartCustomLabel({
     valueLabelColor = "var(--foreground)",
     footerText,
     className = "",
-    height = 350,
     barRadius = 4,
 }: BarChartCustomLabelProps) {
     const chartConfig: ChartConfig = {
@@ -61,13 +113,13 @@ export function BarChartCustomLabel({
     }
 
     return (
-        <Card className={`flex flex-col ${className}`}>
+        <Card className={`flex flex-1 flex-col ${className}`}>
             <CardHeader>
                 <CardTitle>{title}</CardTitle>
                 {description && <CardDescription>{description}</CardDescription>}
             </CardHeader>
-            <CardContent className="flex-1">
-                <ChartContainer config={chartConfig} className={`h-[${height}px]`}>
+            <CardContent className="flex-1 pb-0">
+                <ChartContainer config={chartConfig} className="h-full w-full">
                     <BarChart
                         accessibilityLayer
                         data={data}
@@ -105,9 +157,7 @@ export function BarChartCustomLabel({
                                     dataKey="category"
                                     position="insideLeft"
                                     offset={8}
-                                    className="fill-[--color-label]"
-                                    fontSize={12}
-                                    style={{ fill: categoryLabelColor }}
+                                    content={(props) => <CustomizedCategoryLabel {...props} fill={categoryLabelColor} />}
                                 />
                             )}
                             {showValueLabels && (
@@ -125,9 +175,9 @@ export function BarChartCustomLabel({
                 </ChartContainer>
             </CardContent>
             {(footerText) && (
-                <CardFooter className="flex-col items-start gap-2 text-sm">
+                <CardFooter className="flex-col gap-2 text-sm">
                     {footerText && (
-                        <div className="text-muted-foreground leading-none">
+                        <div className="flex items-center gap-2 leading-none font-medium">
                             {footerText}
                         </div>
                     )}

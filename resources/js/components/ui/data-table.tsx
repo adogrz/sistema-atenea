@@ -42,7 +42,7 @@ export function DataTable<TData, TValue>({
   data,
   selectedRowId,
   onRowClick,
-  getRowId = (row: any) => row.id,
+  getRowId = (row: TData) => (row as { id: string | number }).id,
   columnFilters,
   setColumnFilters,
 }: DataTableProps<TData, TValue>) {

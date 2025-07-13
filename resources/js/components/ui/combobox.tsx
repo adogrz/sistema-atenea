@@ -31,7 +31,7 @@ interface ComboboxProps<T> {
     disabled?: boolean;
 }
 
-export function Combobox<T extends Record<string, any>>({
+export function Combobox<T extends Record<string, unknown>>({
     items,
     value,
     onValueChange,

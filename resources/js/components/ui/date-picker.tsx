@@ -28,7 +28,7 @@ interface DatePickerProps {
   /** Formato de fecha personalizado */
   dateFormat?: (date: Date) => string
   /** Configuración adicional del calendario */
-  calendarProps?: any
+  calendarProps?: Record<string, unknown>
 }
 
 export function DatePicker({

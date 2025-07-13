@@ -149,7 +149,7 @@ export function DonutChart({
             {(footerText) && (
                 <CardFooter className="flex-col gap-2 text-sm">
                     {footerText && (
-                        <div className="text-muted-foreground leading-none">
+                        <div className="flex items-center gap-2 leading-none font-medium">
                             {footerText}
                         </div>
                     )}
