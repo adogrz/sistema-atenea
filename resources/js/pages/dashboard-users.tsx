@@ -74,6 +74,7 @@ export default function DashboardUsers() {
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
     const [selectedSedes, setSelectedSedes] = useState<string[]>([]);
     const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+    const [selectedStatus, setSelectedStatus] = useState<string[]>([]); // Nuevo estado para el filtro de estado
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const selectedUser = selectedUserId ? users.find((u) => u.id === selectedUserId) || null : null;
@@ -132,16 +133,22 @@ export default function DashboardUsers() {
         return !canAuthUserAssignAnyOfSelectedUserRoles;
     }, [selectedUserId, canEditUser, selectedUser, authUser, assignableRoles]);
 
-    const columns = getUserColumns(
-        users,
-        selectedUserId,
-        setSelectedUserId,
-        selectedRoles,
-        setSelectedRoles,
-        selectedSedes,
-        setSelectedSedes,
-        selectedAreas,
-        setSelectedAreas,
+    const columns = useMemo(
+        () =>
+            getUserColumns(
+                users,
+                selectedUserId,
+                setSelectedUserId,
+                selectedRoles,
+                setSelectedRoles,
+                selectedSedes,
+                setSelectedSedes,
+                selectedAreas,
+                setSelectedAreas,
+                selectedStatus, // Pasar el nuevo estado
+                setSelectedStatus, // Pasar el nuevo setter
+            ),
+        [users, selectedUserId, selectedRoles, selectedSedes, selectedAreas, selectedStatus], // Añadir selectedStatus a las dependencias
     );
     const totalUsuarios = users.length;
     const activos = users.filter((u) => u.status === 'active').length;
@@ -211,6 +218,7 @@ export default function DashboardUsers() {
         setSelectedRoles([]);
         setSelectedSedes([]);
         setSelectedAreas([]);
+        setSelectedStatus([]); // Limpiar el nuevo filtro de estado
         setColumnFilters([]);
     };
 
@@ -220,9 +228,10 @@ export default function DashboardUsers() {
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="admin-panel">
                     {/* Barra de herramientas */}
-                    <div className="mb-2 flex items-center gap-2 rounded-lg border bg-background p-2">
+                    <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-background p-2">
                         <Button
                             variant="ghost"
+                            size="sm"
                             className="flex items-center gap-2"
                             onClick={() => setShowResetConfirm(true)}
                             disabled={!selectedUserId || !canResetUserPassword}
@@ -232,6 +241,7 @@ export default function DashboardUsers() {
                         </Button>
                         <Button
                             variant="ghost"
+                            size="sm"
                             className="flex items-center gap-2"
                             disabled={!canCreateUser}
                             onClick={() => canCreateUser && router.visit('/dashboard/users/create')}
@@ -239,11 +249,18 @@ export default function DashboardUsers() {
                             <UserPlus className="h-4 w-4" />
                             <span>Agregar</span>
                         </Button>
-                        <Button variant="ghost" onClick={() => router.visit(`/dashboard/users/${selectedUserId}/edit`)} disabled={isEditDisabled}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.visit(`/dashboard/users/${selectedUserId}/edit`)}
+                            disabled={isEditDisabled}
+                            className="flex items-center gap-2"
+                        >
                             <Edit className="h-4 w-4" /> Editar
                         </Button>
                         <Button
                             variant="ghost"
+                            size="sm"
                             className="flex items-center gap-2 text-red-600 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
                             onClick={() => setShowDeleteModal(true)}
                             disabled={!selectedUserId || !canDeleteUser}
@@ -251,14 +268,19 @@ export default function DashboardUsers() {
                             <Trash2 className="h-4 w-4" />
                             <span>Eliminar</span>
                         </Button>
-                        <Button variant="ghost" className="flex items-center gap-2" onClick={handleClearAllFilters}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center gap-2"
+                            onClick={handleClearAllFilters}
+                        >
                             <X className="h-4 w-4" />
                             <span>Limpiar Filtros</span>
                         </Button>
                     </div>
 
                     {/* Tabla de usuarios */}
-                    <div className="relative min-h-[70vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
+                    <div>
                         <DataTable
                             columns={columns}
                             data={users}
@@ -270,17 +292,18 @@ export default function DashboardUsers() {
                         />
                     </div>
 
-                    <div className="mt-3">
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    {/* Gráficos */}
+                    <div className="mt-5">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div className="col-span-1 flex h-full flex-col">
                                 <DonutChart
                                     data={statusData}
                                     title="Estado de Usuarios"
-                                    description="Activos vs. Inactivos"
+                                    description="Usuarios activos e inactivos"
                                     centerLabel="Total"
                                     colors={['hsl(144.07 100% 39%)', 'hsl(356.95 96% 57.99%)']}
                                     footerText="Distribución de usuarios"
-                                    innerRadius={45}
+                                    innerRadius={55}
                                     strokeWidth={5}
                                     className="h-full flex-1"
                                 />
