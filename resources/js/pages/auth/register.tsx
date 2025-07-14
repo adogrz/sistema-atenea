@@ -33,8 +33,6 @@ export default function Register() {
         sede_name: '',
     });
 
-    console.log(roles);
-
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('register'), {

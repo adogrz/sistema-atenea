@@ -36,6 +36,6 @@ class PasswordResetLinkController extends Controller
             $request->only('email')
         );
 
-        return back()->with('status', __('Un enlace de reinicio de contraseña ha sido enviado a su correo electrónico.'));
+        return back()->with('status', __('auth.reset_password_link_sent'));
     }
 }

@@ -40,7 +40,11 @@
 
         @routes
         @viteReactRefresh
-        @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
+        @if(app()->environment('testing'))
+            @vite(['resources/js/app.tsx'])
+        @else
+            @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
+        @endif
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

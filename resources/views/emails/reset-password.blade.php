@@ -1,14 +1,18 @@
 @component('mail::message')
-# Hola
+# {{ __('mail.reset_password_greeting') }}
 
-Recibiste este correo porque solicitaste restablecer tu contraseña en **{{ config('app.name') }}**.
+{{ __('mail.reset_password_intro', ['app' => config('app.name')]) }}
 
 @component('mail::button', ['url' => $url])
-Restablecer contraseña
+{{ __('mail.reset_password_action') }}
 @endcomponent
 
-Si no solicitaste este correo, puedes ignorarlo.
+{{ __('mail.reset_password_footer') }}
 
-Saludos,<br>
+---
+
+{{ __('mail.reset_password_extra') }}
+
+{{ __('mail.reset_password_regards') }},<br>
 {{ config('app.name') }}
 @endcomponent
