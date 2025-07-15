@@ -11,10 +11,12 @@ use App\Models\Sede;
 use App\Models\Departamento;
 use App\Models\Municipio;
 use App\Models\Distrito;
+use App\Models\CentroEducativo;
 use Spatie\Permission\Models\Role;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
+use App\Http\Controllers\AdmisionController;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -35,9 +37,10 @@ Route::middleware(['web'])->group(function () {
 
     // Ruta POST que procesa el archivo Excel
     Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store');
-    
+
     // Página que contiene el formulario de admisión
     Route::get('/formulario-admision', function () {
+
         $departamentos = Departamento::select('id', 'nombre_departamento')->get()
             ->map(fn($d) => [
                 'id' => (string) $d->id,
@@ -64,8 +67,12 @@ Route::middleware(['web'])->group(function () {
             'departamentos' => $departamentos,
             'municipiosPorDepartamento' => $municipiosPorDepartamento,
             'distritosPorMunicipio' => $distritosPorMunicipio,
+            'centrosEducativos' => CentroEducativo::all(),
         ]);
     })->name('admission');
+
+    // Ruta POST que procesa el formulario de admision
+    Route::post('/admision', [AdmisionController::class, 'store'])->name('admission.store');
 });
 
 // Rutas para usuarios autenticados

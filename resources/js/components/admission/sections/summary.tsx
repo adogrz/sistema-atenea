@@ -1,213 +1,140 @@
-"use client"
+"use client";
 
-import { useFormContext } from "react-hook-form"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { useFormContext } from "react-hook-form";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function ResumenSolicitud() {
-  
   const form = useFormContext();
-  const values = form.getValues()
+  const values = form.watch();
 
-  // Mapeo de IDs a nombres para mostrar en el resumen
-  const olimpiadasMap: Record<string, string> = {
-    onm: "Olimpiada Nacional de Matemáticas (ONM)",
-    osf: "Olimpiada Salvadoreña de Física (OSF)",
-    obi: "Olimpiada de Biología (OBI)",
-    oiq: "Olimpiada de Química (OIQ)",
-    oci: "Olimpiada de Ciencias de la Computación (OCI)",
-  }
-
-  const paisesMap: Record<string, string> = {
-    sv: "El Salvador",
-    gt: "Guatemala",
-    hn: "Honduras",
-  }
-
-  const departamentosMap: Record<string, string> = {
-    ss: "San Salvador",
-    sa: "Santa Ana",
-    sm: "San Miguel",
-    gt: "Guatemala",
-    qz: "Quetzaltenango",
-    tg: "Tegucigalpa",
-    sp: "San Pedro Sula",
-  }
-
-  const municipiosMap: Record<string, string> = {
-    ss: "San Salvador",
-    mj: "Mejicanos",
-    ap: "Apopa",
-    sa: "Santa Ana",
-    ch: "Chalchuapa",
-    sm: "San Miguel",
-    ci: "Ciudad Barrios",
-    gc: "Guatemala City",
-    mx: "Mixco",
-    qz: "Quetzaltenango",
-    sl: "Salcajá",
-    tg: "Tegucigalpa",
-    cm: "Comayagüela",
-    sp: "San Pedro Sula",
-  }
-
-  const generoMap: Record<string, string> = {
-    M: "Masculino",
-    F: "Femenino",
+  const sexoMap: Record<string, string> = {
+    H: "Hombre",
+    M: "Mujer",
     O: "Otro",
-  }
+  };
+
+  const nivelesEducativos = [
+    { value: "cuarto_grado", label: "Cuarto grado", tooltip: "Generalmente cursado a los 9 años, fortalece lectura y cálculo básico" },
+    { value: "quinto_grado", label: "Quinto grado", tooltip: "Se refuerzan habilidades de escritura y pensamiento lógico" },
+    { value: "sexto_grado", label: "Sexto grado", tooltip: "Grado final antes de secundaria, con enfoque en ciencias y matemáticas" },
+    { value: "septimo_grado", label: "Séptimo grado", tooltip: "Inicio de secundaria, se introducen nuevas asignaturas académicas" },
+    { value: "octavo_grado", label: "Octavo grado", tooltip: "Fortalecimiento en historia, biología y escritura formal" },
+    { value: "noveno_grado", label: "Noveno grado", tooltip: "Último año de secundaria básica, importante para transición al bachillerato" },
+  ];
+
+  const nivel = nivelesEducativos.find(n => n.value === values.nivel_educativo);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Resumen de tu Solicitud</CardTitle>
-        <CardDescription>Revisa todos los datos antes de enviar tu solicitud</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Datos Personales */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Datos Personales</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="font-medium">Nombre completo:</span>
-              <p className="text-muted-foreground">{values.nombreCompleto || "No especificado"}</p>
-            </div>
-            <div>
-              <span className="font-medium">Fecha de nacimiento:</span>
-              <p className="text-muted-foreground">
-                {values.fechaNacimiento ? values.fechaNacimiento.toLocaleDateString() : "No especificada"}
-              </p>
-            </div>
-            <div>
-              <span className="font-medium">Género:</span>
-              <p className="text-muted-foreground">{generoMap[values.genero] || "No especificado"}</p>
-            </div>
-            <div>
-              <span className="font-medium">Correo electrónico:</span>
-              <p className="text-muted-foreground">{values.correoElectronico || "No especificado"}</p>
-            </div>
-            <div>
-              <span className="font-medium">Teléfono:</span>
-              <p className="text-muted-foreground">{values.telefonoContacto || "No especificado"}</p>
-            </div>
-          </div>
-        </div>
+    <TooltipProvider>
+      <Card>
+        <CardHeader>
+          <CardTitle>Resumen de tu Solicitud</CardTitle>
+          <CardDescription>Revisa los datos ingresados cuidadosamente antes de enviarlos</CardDescription>
+        </CardHeader>
 
-        <Separator />
+        <CardContent className="space-y-6 text-sm">
 
-        {/* Dirección */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Dirección</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="font-medium">País:</span>
-              <p className="text-muted-foreground">{paisesMap[values.pais] || "No especificado"}</p>
-            </div>
-            <div>
-              <span className="font-medium">Departamento:</span>
-              <p className="text-muted-foreground">{departamentosMap[values.departamento] || "No especificado"}</p>
-            </div>
-            <div>
-              <span className="font-medium">Municipio:</span>
-              <p className="text-muted-foreground">{municipiosMap[values.municipio] || "No especificado"}</p>
-            </div>
-            <div className="md:col-span-2">
-              <span className="font-medium">Dirección detallada:</span>
-              <p className="text-muted-foreground">{values.direccionDetallada || "No especificada"}</p>
-            </div>
-          </div>
-        </div>
+          {/* Datos personales */}
+          <section>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h3 className="font-semibold text-base mb-3">Datos personales</h3>
+              </TooltipTrigger>
+              <TooltipContent>Información básica del estudiante como nombre, contacto y NIE</TooltipContent>
+            </Tooltip>
 
-        <Separator />
-
-        {/* Educación */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Educación</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="font-medium">Centro educativo:</span>
-              <p className="text-muted-foreground">{values.centroEducativo || "No especificado"}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><strong>Nombre completo:</strong> {`${values.primer_nombre} ${values.segundo_nombre} ${values.primer_apellido} ${values.segundo_apellido}`.trim() || "No especificado"}</div>
+              <div><strong>Sexo:</strong> {sexoMap[values.sexo] || "No especificado"}</div>
+              <div><strong>Fecha de nacimiento:</strong> {values.fecha_nacimiento || "No especificada"}</div>
+              <div><strong>NIE:</strong> {values.nie || "No especificado"}</div>
+              <div><strong>Teléfono:</strong> {values.telefono_estudiante || "No especificado"}</div>
+              <div><strong>Email:</strong> {values.email || "No especificado"}</div>
             </div>
-            <div>
-              <span className="font-medium">Nivel de estudios:</span>
-              <p className="text-muted-foreground">{values.nivelEstudios || "No especificado"}</p>
-            </div>
-            <div>
-              <span className="font-medium">Promedio académico:</span>
-              <p className="text-muted-foreground">{values.promedioAcademico || "No especificado"}</p>
-            </div>
-          </div>
-        </div>
+          </section>
 
-        <Separator />
+          <Separator />
 
-        {/* Olimpiadas */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Olimpiadas Seleccionadas</h3>
-          <div className="flex flex-wrap gap-2">
-            {values.olimpiadas && values.olimpiadas.length > 0 ? (
-              values.olimpiadas.map((olimpiadaId: string) => (
-                <Badge key={olimpiadaId} variant="secondary">
-                  {olimpiadasMap[olimpiadaId] || olimpiadaId}
-                </Badge>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-sm">No se han seleccionado olimpiadas</p>
-            )}
-          </div>
-        </div>
+          {/* Dirección */}
+          <section>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h3 className="font-semibold text-base mb-3">Dirección</h3>
+              </TooltipTrigger>
+              <TooltipContent>Ubicación de tu residencia actual y contacto secundario</TooltipContent>
+            </Tooltip>
 
-        <Separator />
-
-        {/* Documentación */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Documentación</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="font-medium">Cédula/Pasaporte:</span>
-              <p className="text-muted-foreground">
-                {values.cedulaPasaporte
-                  ? `${values.cedulaPasaporte.name} (${(values.cedulaPasaporte.size / 1024 / 1024).toFixed(2)} MB)`
-                  : "No subido"}
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><strong>Departamento:</strong> {values.departamento || "No especificado"}</div>
+              <div><strong>Municipio:</strong> {values.municipio || "No especificado"}</div>
+              <div><strong>Distrito:</strong> {values.distrito || "No especificado"}</div>
+              <div><strong>Teléfono de casa:</strong> {values.telefono_casa ?? "No especificado"}</div>
+              <div className="md:col-span-2"><strong>Dirección detallada:</strong> {values.direccion || "No especificada"}</div>
             </div>
-            <div>
-              <span className="font-medium">Foto reciente:</span>
-              <p className="text-muted-foreground">
-                {values.fotoReciente
-                  ? `${values.fotoReciente.name} (${(values.fotoReciente.size / 1024 / 1024).toFixed(2)} MB)`
-                  : "No subida"}
-              </p>
-            </div>
-          </div>
-        </div>
+          </section>
 
-        <Separator />
+          <Separator />
 
-        {/* Consentimientos */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Consentimientos</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-4 h-4 rounded border-2 flex items-center justify-center ${values.aceptoTerminos ? "bg-primary border-primary" : "border-muted-foreground"}`}
-              >
-                {values.aceptoTerminos && <span className="text-white text-xs">✓</span>}
-              </div>
-              <span>Términos y condiciones aceptados</span>
+          {/* Educación */}
+          <section>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h3 className="font-semibold text-base mb-3">Educación</h3>
+              </TooltipTrigger>
+              <TooltipContent>Datos sobre tu centro de estudio y nivel académico actual</TooltipContent>
+            </Tooltip>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><strong>Código del centro:</strong> {values.codigo || "No especificado"}</div>
+              <div><strong>Centro educativo:</strong> {values.centro_educativo || "No especificado"}</div>
+              <div><strong>Sector:</strong> {values.sector || "No especificado"}</div>
+              <div><strong>Zona:</strong> {values.zona || "No especificada"}</div>
+              <div><strong>¿Internacional?:</strong> {values.internacional || "No especificado"}</div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div><strong>Nivel educativo:</strong> {nivel?.label || values.nivel_educativo || "No especificado"}</div>
+                </TooltipTrigger>
+                <TooltipContent>{nivel?.tooltip || "Nivel académico actual"}</TooltipContent>
+              </Tooltip>
             </div>
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-4 h-4 rounded border-2 flex items-center justify-center ${values.autorizoMoodle ? "bg-primary border-primary" : "border-muted-foreground"}`}
-              >
-                {values.autorizoMoodle && <span className="text-white text-xs">✓</span>}
-              </div>
-              <span>Autorización para uso de datos en Moodle</span>
+          </section>
+
+          <Separator />
+
+          {/* Responsable */}
+          <section>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h3 className="font-semibold text-base mb-3">Responsable</h3>
+              </TooltipTrigger>
+              <TooltipContent>Persona encargada legalmente del estudiante</TooltipContent>
+            </Tooltip>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><strong>DUI:</strong> {values.dui || "No especificado"}</div>
+              <div><strong>Nombres:</strong> {values.nombres_responsable || "No especificado"}</div>
+              <div><strong>Apellidos:</strong> {values.apellidos_responsable || "No especificado"}</div>
+              <div><strong>Email:</strong> {values.email_responsable ?? "No especificado"}</div>
+              <div><strong>Teléfono principal:</strong> {values.telefono_responsable || "No especificado"}</div>
+              <div><strong>Teléfono opcional:</strong> {values.telefono_opcional || "No especificado"}</div>
+              <div><strong>Parentesco:</strong> {values.tipo_parentesco || "No especificado"}</div>
             </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
+          </section>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
+  );
 }

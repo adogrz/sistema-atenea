@@ -23,22 +23,7 @@ export default function DatosPersonales() {
         <CardDescription>Ingresa tus datos personales para iniciar tu solicitud de admisión</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <FormField
-          control={form.control}
-          name="archivo_excel"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Archivo Excel</FormLabel>
-              <FormControl>
-                <Input type="file" accept=".xls,.xlsx" onChange={(e) => field.onChange(e.target.files?.[0])} />
-              </FormControl>
-              <FormDescription>Debe contener columnas como código, nombre, departamento, etc.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
-        <Button type="submit">Importar</Button>
         <div className="grid grid-cols-2 gap-4">
 
           {/* Nombres */}
@@ -211,7 +196,7 @@ export default function DatosPersonales() {
                     selected={field.value}
                     onSelect={(date) => {
                       if (date) {
-                        field.onChange(date)
+                        field.onChange(date.toLocaleDateString('es-ES'))
                       }
                     }}
                     initialFocus
@@ -251,7 +236,7 @@ export default function DatosPersonales() {
 
         <FormField
           control={form.control}
-          name="correo_electronico"
+          name="email"
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between">
@@ -281,7 +266,7 @@ export default function DatosPersonales() {
 
         <FormField
           control={form.control}
-          name="telefono"
+          name="telefono_estudiante"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Teléfono de contacto</FormLabel>

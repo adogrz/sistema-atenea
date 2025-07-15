@@ -31,6 +31,7 @@ return new class extends Migration
             $table->string('direccion');
             $table->string('distrito');
             $table->foreign('distrito')->references('id')->on('distritos');
+            $table->string('nivel_educativo');
             $table->softDeletes();
         });
     }

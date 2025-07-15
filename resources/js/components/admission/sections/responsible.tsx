@@ -165,7 +165,7 @@ export default function DatosResponsables() {
         {/* Correo electrónico */}
         <FormField
           control={form.control}
-          name="correo_electronico"
+          name="email_responsable"
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between">
@@ -194,11 +194,28 @@ export default function DatosResponsables() {
             </FormItem>
           )}
         />
-
         {/* Teléfono */}
         <FormField
           control={form.control}
           name="telefono_responsable"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Teléfono de principal de contacto</FormLabel>
+              <FormControl>
+                <Input type="tel" placeholder="Ej. 12345678" {...field} />
+              </FormControl>
+              <FormDescription>
+                Ingresa un número de teléfono con el cual podamos contactarte
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Teléfono */}
+        <FormField
+          control={form.control}
+          name="telefono_opcional"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Teléfono de contacto</FormLabel>
@@ -212,7 +229,7 @@ export default function DatosResponsables() {
             </FormItem>
           )}
         />
-      </CardContent>
-    </Card>
+      </CardContent >
+    </Card >
   );
 }

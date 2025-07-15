@@ -4,10 +4,10 @@ import { useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import axios from "axios";
 import { Loader2, Save, Send, AlertCircle, CheckCircle2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Form } from "@/components/ui/form"
 import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -17,92 +17,114 @@ import DatosPersonales from "./sections/personal-data"
 import DatosResponsable from "./sections/responsible"
 import Direccion from "./sections/address"
 import Educacion from "./sections/education"
-import Documentacion from "./sections/documentation"
-import Consentimientos from "./sections/terms-conditions"
 import ResumenSolicitud from "./sections/summary"
 import BarraProgreso from "./progress-bar"
 import Captcha from "./captcha"
 import { usePage } from "@inertiajs/react"
 import { Departamento, Municipio, Distrito } from "@/types/admission/address"
 import { CentroEducativo } from "@/types/admission/education"
+import { on } from "node:stream"
 
 // Esquema de validación completo para todo el formulario
-const formSchema = z.object({
-  // Datos Personales
-  nombreCompleto: z
-    .string()
-    .min(3, "El nombre debe tener al menos 3 caracteres")
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, "Solo se permiten letras y espacios"),
-  fechaNacimiento: z
-    .date()
-    .refine(
-      (date) => {
-        const hoy = new Date()
-        const edad = hoy.getFullYear() - date.getFullYear()
-        const m = hoy.getMonth() - date.getMonth()
-        const ajusteEdad = m < 0 || (m === 0 && hoy.getDate() < date.getDate()) ? -1 : 0
-        const edadFinal = edad + ajusteEdad
-        return edadFinal >= 10
-      },
-      { message: "Debes tener al menos 10 años" },
-    )
-    .refine(
-      (date) => {
-        const hoy = new Date()
-        const edad = hoy.getFullYear() - date.getFullYear()
-        const m = hoy.getMonth() - date.getMonth()
-        const ajusteEdad = m < 0 || (m === 0 && hoy.getDate() < date.getDate()) ? -1 : 0
-        const edadFinal = edad + ajusteEdad
-        return edadFinal <= 25
-      },
-      { message: "Debes tener máximo 25 años" },
-    ),
-  genero: z.enum(["M", "F", "O"], {
-    required_error: "Debes seleccionar un género",
+export const formSchema = z.object({
+  // Datos del estudiante
+  codigo: z.string().min(1).regex(/^\d{5,10}$/, {
+    message: "Código debe ser numérico entre 5 y 10 dígitos",
   }),
-  correoElectronico: z.string().email("Correo electrónico inválido"),
-  telefonoContacto: z
-    .string()
-    .min(8, "El teléfono debe tener al menos 8 dígitos")
-    .regex(/^\d+$/, "Solo se permiten números"),
+  primer_nombre: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
+    message: "Nombre no válido",
+  }),
+  segundo_nombre: z.string().max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]*$/, {
+    message: "Segundo nombre no válido",
+  }).optional(),
+  primer_apellido: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
+    message: "Apellido no válido",
+  }),
+  segundo_apellido: z.string().max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]*$/, {
+    message: "Segundo apellido no válido",
+  }).optional(),
+  sexo: z.enum(["H", "M"]),
+  fecha_nacimiento: z.string().refine((val) => {
+    const parsed = Date.parse(val);
+    return !isNaN(parsed) && new Date(parsed) < new Date();
+  }, { message: "Fecha inválida o en el futuro" }),
+  nie: z.string().regex(/^\d{7,10}$/, {
+    message: "NIE debe ser numérico entre 7 y 10 dígitos",
+  }),
+  telefono_estudiante: z.string().regex(/^[267]\d{7}$/, {
+    message: "Teléfono estudiante inválido (debe comenzar con 2, 6 o 7)",
+  }),
+  telefono_casa: z.string().regex(/^[267]\d{7}$/).nullable().optional(),
+  email: z.string().email(),
+  direccion: z.string().min(5).max(255),
+  distrito: z.string().regex(/^\d+$/, {
+    message: "ID de distrito debe ser numérico",
+  }),
 
   // Dirección
-  pais: z.string().min(1, "Debes seleccionar un país"),
-  departamento: z.string().min(1, "Debes seleccionar un departamento"),
-  municipio: z.string().min(1, "Debes seleccionar un municipio"),
-  distrito: z.string().min(1, "Debes seleccionar un distrito"),
-  direccionDetallada: z.string().min(5, "La dirección debe tener al menos 5 caracteres"),
-
-  // Educación
-  centroEducativo: z.string().min(3, "El nombre del centro educativo debe tener al menos 3 caracteres"),
-  nivelEstudios: z.enum(["Básica", "Media", "Técnico", "Otro"], {
-    required_error: "Debes seleccionar un nivel de estudios",
+  departamento: z.string().min(1, {
+    message: "Debes seleccionar un departamento",
   }),
-  promedioAcademico: z
-    .number()
-    .min(0, "El promedio debe ser mayor o igual a 0")
-    .max(10, "El promedio debe ser menor o igual a 10")
-    .multipleOf(0.01, "El promedio debe tener máximo 2 decimales"),
 
-  // Selección de Olimpiadas
-  olimpiadas: z.array(z.string()).min(1, "Debes seleccionar al menos una olimpiada"),
+  municipio: z.string().min(1, {
+    message: "Debes seleccionar un municipio",
+  }),
 
-  // Documentación
-  cedulaPasaporte: z
-    .instanceof(File)
-    .refine((file) => file.size <= 2 * 1024 * 1024, "El archivo debe ser menor a 2MB")
-    .refine(
-      (file) => ["application/pdf", "image/jpeg", "image/jpg"].includes(file.type),
-      "Solo se permiten archivos PDF o JPG",
-    ),
-  fotoReciente: z
-    .instanceof(File)
-    .refine((file) => file.size <= 1 * 1024 * 1024, "El archivo debe ser menor a 1MB")
-    .refine(
-      (file) => ["image/jpeg", "image/jpg", "image/png"].includes(file.type),
-      "Solo se permiten archivos JPG o PNG",
-    ),
+  // Datos del responsable
+  dui: z.string().regex(/^\d{8}-\d$/, {
+    message: "DUI debe tener formato ########-#",
+  }),
+  nombres_responsable: z.string().min(1).max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
+    message: "Nombre del responsable no válido",
+  }),
+  apellidos_responsable: z.string().min(1).max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
+    message: "Apellido del responsable no válido",
+  }),
+  email_responsable: z.string().email().nullable().optional(),
+  telefono_responsable: z.string().regex(/^[267]\d{7}$/, {
+    message: "Teléfono del responsable inválido",
+  }),
+  telefono_opcional: z.string().regex(/^[267]\d{7}$/, {
+    message: "Teléfono opcional inválido",
+  }),
+  tipo_parentesco: z.enum(["Madre", "Padre", "Abuelo", "Tio", "Tutor legal"]),
 
+  // Nombre del centro educativo (valida texto con acentos y símbolos comunes)
+  centro_educativo: z.string()
+    .min(5, { message: "El nombre debe tener al menos 5 caracteres" })
+    .max(100)
+    .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9"'\s\-\.]+$/, {
+      message: "Formato de nombre inválido",
+    }),
+
+  // Sector educativo (PÚBLICO o PRIVADO)
+  sector: z.enum(["PÚBLICO", "PRIVADO"], {
+    required_error: "Selecciona el sector",
+  }),
+
+  // Zona geográfica (Rural o Urbana)
+  zona: z.enum(["Rural", "Urbana"], {
+    required_error: "Selecciona la zona",
+  }),
+
+  // Internacional (SI o NO)
+  internacional: z.enum(["SI", "NO"], {
+    required_error: "Selecciona si el centro es internacional",
+  }),
+
+  // Nivel de estudios (valores de primaria)
+  nivel_educativo: z.enum([
+    "cuarto_grado",
+    "quinto_grado",
+    "sexto_grado",
+    "septimo_grado",
+    "octavo_grado",
+    "noveno_grado",
+  ], {
+    required_error: "Selecciona tu nivel de estudios",
+  }),
+
+  /*
   // Consentimientos
   aceptoTerminos: z.literal(true, {
     errorMap: () => ({ message: "Debes aceptar los términos y condiciones" }),
@@ -110,7 +132,9 @@ const formSchema = z.object({
   autorizoMoodle: z.literal(true, {
     errorMap: () => ({ message: "Debes autorizar el uso de datos para Moodle" }),
   }),
-})
+  */
+});
+
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -134,46 +158,86 @@ export default function FormularioAdmision() {
     centrosEducativos: CentroEducativo[];
   }>().props;
 
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nombreCompleto: "",
-      genero: undefined,
-      correoElectronico: "",
-      telefonoContacto: "",
-      pais: "",
+      // Datos personales
+      primer_nombre: "",
+      segundo_nombre: "",
+      primer_apellido: "",
+      segundo_apellido: "",
+      sexo: undefined,
+      fecha_nacimiento: "",
+      nie: "",
+      telefono_estudiante: "",
+      email: "",
+
+      // Dirección
+      telefono_casa: "",
+      direccion: "",
+      distrito: "",
       departamento: "",
       municipio: "",
-      distrito: "",
-      direccionDetallada: "",
-      centroEducativo: "",
-      nivelEstudios: undefined,
-      promedioAcademico: 0,
-      olimpiadas: [],
-      aceptoTerminos: undefined,
-      autorizoMoodle: undefined,
+
+      // Educación
+      codigo: "",
+      centro_educativo: "",
+      sector: 'PÚBLICO',
+      zona: 'Rural',
+      internacional: 'NO',
+      nivel_educativo: undefined,      // Se define vacío para forzar selección
+
+      // Responsable
+      dui: "",
+      nombres_responsable: "",
+      apellidos_responsable: "",
+      email_responsable: "",
+      telefono_responsable: "",
+      telefono_opcional: "",
+      tipo_parentesco: undefined,
     },
-    mode: "onBlur",
-  })
+    mode: 'onBlur',
+  });
 
   const { formState } = form
   const { errors } = formState
 
   // Calcular el número de errores por sección
   const erroresPorSeccion = {
-    "datos-personales": Object.keys(errors).filter((key) =>
-      ["nombreCompleto", "fechaNacimiento", "genero", "correoElectronico", "telefonoContacto"].includes(key),
+    datosPersonales: Object.keys(errors).filter((key) =>
+      [
+        "primer_nombre",
+        "segundo_nombre",
+        "primer_apellido",
+        "segundo_apellido",
+        "sexo",
+        "fecha_nacimiento",
+        "nie",
+        "telefono_estudiante",
+        "email",
+      ].includes(key)
     ).length,
+
     direccion: Object.keys(errors).filter((key) =>
-      ["pais", "departamento", "municipio", "direccionDetallada"].includes(key),
+      ["telefono_casa", "direccion", "distrito", "departamento", "municipio"].includes(key)
     ).length,
+
     educacion: Object.keys(errors).filter((key) =>
-      ["centroEducativo", "nivelEstudios", "promedioAcademico"].includes(key),
+      ["codigo", "centro_educativo", "sector", "zona", "internacional", "nivel_educativo"].includes(key)
     ).length,
-    olimpiadas: Object.keys(errors).filter((key) => ["olimpiadas"].includes(key)).length,
-    documentacion: Object.keys(errors).filter((key) => ["cedulaPasaporte", "fotoReciente"].includes(key)).length,
-    consentimientos: Object.keys(errors).filter((key) => ["aceptoTerminos", "autorizoMoodle"].includes(key)).length,
-  }
+
+    responsable: Object.keys(errors).filter((key) =>
+      [
+        "dui",
+        "nombres_responsable",
+        "apellidos_responsable",
+        "email_responsable",
+        "telefono_responsable",
+        "telefono_opcional",
+        "tipo_parentesco",
+      ].includes(key)
+    ).length,
+  };
 
   const totalErrores = Object.values(erroresPorSeccion).reduce((a, b) => a + b, 0)
 
@@ -182,8 +246,6 @@ export default function FormularioAdmision() {
     { id: "datos-responsables", label: "Datos de los Responsables" },
     { id: "direccion", label: "Dirección" },
     { id: "educacion", label: "Educación" },
-    { id: "documentacion", label: "Documentación" },
-    { id: "consentimientos", label: "Consentimientos" },
     { id: "resumen", label: "Resumen" },
   ]
 
@@ -206,33 +268,38 @@ export default function FormularioAdmision() {
     }
   }
 
+
   const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true)
-
+    setIsSubmitting(true);
     try {
-      // Simulación de envío al servidor
-      console.log("Datos del formulario:", data)
+      const response = await axios.post("/admision", {
+        ...data,
+      }, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
 
-      // Simular una petición al servidor
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      setFormStatus("success")
       toast({
         title: "Solicitud enviada",
-        description: "Tu solicitud ha sido recibida correctamente. Te hemos enviado un correo de confirmación.",
-      })
+        description: "Tu postulación ha sido registrada correctamente.",
+      });
+
+      setFormStatus("success");
     } catch (error) {
-      console.error("Error al enviar el formulario:", error)
-      setFormStatus("error")
+      console.error("Error al enviar:", error);
       toast({
         variant: "destructive",
         title: "Error al enviar",
-        description: "Ocurrió un problema al enviar tu solicitud. Por favor inténtalo de nuevo más tarde.",
-      })
+        description: "No se pudo procesar tu solicitud. Intenta nuevamente.",
+      });
+
+      setFormStatus("error");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
+
 
   const handleSaveDraft = async () => {
     setIsSaving(true)
@@ -353,15 +420,7 @@ export default function FormularioAdmision() {
           </TabsContent>
 
           <TabsContent value="educacion">
-            <Educacion centros_educativos={centrosEducativos}/>
-          </TabsContent>
-
-          <TabsContent value="documentacion">
-            {/* <Documentacion />  */}
-          </TabsContent>
-
-          <TabsContent value="consentimientos">
-            {/* <Consentimientos /> */}
+            <Educacion centros_educativos={centrosEducativos} />
           </TabsContent>
 
           <TabsContent value="resumen">
@@ -396,7 +455,10 @@ export default function FormularioAdmision() {
             </Button>
 
             {activeTab === "resumen" ? (
-              <Button type="submit" disabled={isSubmitting || !captchaVerified || totalErrores > 0}>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !captchaVerified || totalErrores > 0}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -414,9 +476,27 @@ export default function FormularioAdmision() {
                 Siguiente
               </Button>
             )}
+
+            <Button
+              type="button"
+              onClick={() => {
+                form.handleSubmit(onSubmit, (errors) => {
+                  console.log("🔍 Errores detectados:", errors);
+                  toast({
+                    variant: "destructive",
+                    title: "Errores en formulario",
+                    description: "Revisa los campos marcados antes de enviar.",
+                  });
+                })();
+              }}
+            >
+              Test Submit
+            </Button>
+
+
           </div>
         </div>
       </form>
-    </FormProvider>
+    </FormProvider >
   )
 }
