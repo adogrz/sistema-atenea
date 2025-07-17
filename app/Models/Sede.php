@@ -25,6 +25,6 @@ class Sede extends Model
      *
      * @var string
      */
-    protected $table = 'sedes';
+    protected $table = 'sedes'; // Opcional si sigues convenciones de Laravel
 
 }
