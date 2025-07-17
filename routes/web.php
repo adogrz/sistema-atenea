@@ -2,31 +2,25 @@
 
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Collection;
 
-use App\Models\User;
-use App\Models\Sede;
 use App\Models\Departamento;
 use App\Models\Municipio;
 use App\Models\Distrito;
 use App\Models\CentroEducativo;
-use Spatie\Permission\Models\Role;
+use Spatie\Activitylog\Models\Activity;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
 
-Route::get('/', function () {
+Route::get('/', static function () {
+    // Si el usuario está autenticado, siempre redirigir al dashboard principal.
     if (auth()->check()) {
-        if (auth()->user()->hasRole('admin')) {
-            return redirect()->route('dashboard');
-        } else {
-            return redirect()->route('usuario.dashboard');
-        }
+        return redirect()->route('dashboard');
     }
 
+    // Si no, redirigir al login.
     return redirect()->route('login');
 })->name('home');
 
@@ -74,21 +68,6 @@ Route::middleware(['web'])->group(function () {
     // Ruta POST que procesa el formulario de admision
     Route::post('/admision', [AdmisionController::class, 'store'])->name('admission.store');
 });
-use App\Http\Controllers\UserController;
-use App\Models\User;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Spatie\Activitylog\Models\Activity;
-
-Route::get('/', static function () {
-    // Si el usuario está autenticado, siempre redirigir al dashboard principal.
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-
-    // Si no, redirigir al login.
-    return redirect()->route('login');
-})->name('home');
 
 // Rutas para usuarios autenticados
 Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
