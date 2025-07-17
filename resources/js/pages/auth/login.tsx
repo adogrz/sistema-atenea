@@ -30,6 +30,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     {/* Contenedor del formulario */}
                     <div className="flex flex-1 items-center justify-center">
                         <div className="w-full max-w-xs">
+                            {/* Pasamos toda la lógica y el estado al componente de presentación a través de props. */}
                             <LoginForm
                                 data={data}
                                 setData={setData}
@@ -50,7 +51,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     <img
                         src="/pjt-logo.webp"
                         alt="Logo de El Programa Jóvenes Talentos"
-                        className="absolute inset-0 h-full w-full object-cover object-top dark:brightness-60"
+                        className="absolute inset-0 h-full w-full object-cover object-top"
                         loading="lazy"
                     />
                 </div>

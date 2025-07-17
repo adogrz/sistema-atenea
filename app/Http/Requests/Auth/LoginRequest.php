@@ -49,17 +49,6 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        $user = Auth::user();
-
-        if ($user && $user->status === 'inactive') {
-            Auth::logout(); // Desloguear al usuario inactivo
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => __('auth.account_disabled'),
-            ]);
-        }
-
         RateLimiter::clear($this->throttleKey());
     }
 

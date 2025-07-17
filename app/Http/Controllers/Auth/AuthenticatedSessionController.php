@@ -47,7 +47,12 @@ class AuthenticatedSessionController extends Controller
             ->event('login')
             ->log('Inició de sesión');
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redirección basada en rol
+        if ($request->user()->hasRole('admin')) {
+            return redirect()->intended(route('dashboard', absolute: false));
+        } else {
+            return redirect()->intended(route('usuario.dashboard', absolute: false));
+        }
     }
 
     /**

@@ -9,12 +9,14 @@ import { cn } from '@/lib/utils';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
+// Exportamos el tipo de datos del formulario para que el componente padre lo pueda usar.
 export type LoginFormData = {
     email: string;
     password: string;
     remember: boolean;
 };
 
+// Definimos la interfaz para todas las props que este componente espera recibir.
 interface LoginFormProps {
     data: LoginFormData;
     setData: (key: keyof LoginFormData, value: string | boolean) => void;
