@@ -1,10 +1,20 @@
 <?php
 
-use App\Http\Controllers\UserController;
-use App\Models\User;
-use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Route;
 use Spatie\Activitylog\Models\Activity;
+use Illuminate\Support\Collection;
+
+use App\Models\Departamento;
+use App\Models\Municipio;
+use App\Models\Distrito;
+use App\Models\CentroEducativo;
+
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\CentroEducativoController;
+use App\Http\Controllers\AdmisionController;
+
+
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -53,6 +63,51 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     Route::get('/users/{user}/debug', [UserController::class, 'debug'])
         ->name('users.debug')
         ->middleware('permission:users:view-all');
+});
+
+Route::middleware(['web'])->group(function () {
+
+    // Página que contiene el formulario de carga
+    Route::get('/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create');
+
+    // Ruta POST que procesa el archivo Excel
+    Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store');
+
+    // Página que contiene el formulario de admisión
+    Route::get('/formulario-admision', function () {
+
+        $departamentos = Departamento::select('id', 'nombre_departamento')->get()
+            ->map(fn($d) => [
+                'id' => (string) $d->id,
+                'nombre_departamento' => $d->nombre_departamento,
+            ]);
+
+        $municipios = Municipio::select('id', 'nombre_municipio', 'id_departamento')->get();
+        $municipiosPorDepartamento = $municipios->groupBy('id_departamento')->map(function (Collection $items) {
+            return $items->map(fn($m) => [
+                'id' => (string) $m->id,
+                'nombre_municipio' => $m->nombre_municipio,
+            ]);
+        });
+
+        $distritos = Distrito::select('id', 'nombre_distrito', 'id_municipio')->get();
+        $distritosPorMunicipio = $distritos->groupBy('id_municipio')->map(function (Collection $items) {
+            return $items->map(fn($d) => [
+                'id' => (string) $d->id,
+                'nombre_distrito' => $d->nombre_distrito,
+            ]);
+        });
+
+        return Inertia::render('admission/admission-register', [
+            'departamentos' => $departamentos,
+            'municipiosPorDepartamento' => $municipiosPorDepartamento,
+            'distritosPorMunicipio' => $distritosPorMunicipio,
+            'centrosEducativos' => CentroEducativo::all(),
+        ]);
+    })->name('admission');
+
+    // Ruta POST que procesa el formulario de admision
+    Route::post('/admision', [AdmisionController::class, 'store'])->name('admission.store');
 });
 
 require __DIR__ . '/settings.php';
