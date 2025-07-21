@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             SedeSeeder::class,
             AreaSeeder::class,
-            UserSeeder::class,
+            EssentialUserSeeder::class,
         ]);
     }
 }
