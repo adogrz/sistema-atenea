@@ -22,9 +22,13 @@ class EssentialUserSeeder extends Seeder
                 'name' => 'Admin TI',
                 'password' => Hash::make('password123'),
                 'email_verified_at' => now(),
+                'sede_name' => 'central',
+                'status' => 'active',
             ]
         );
-        $adminTI->assignRole('admin-ti');
+        $adminTI->syncRolesWithExpiration([
+            ['name' => 'admin-ti', 'is_primary' => true, 'expires_at' => null],
+        ]);
 
         // 2. Usuario Jefe de Psicología
         $jefePsicologia = User::updateOrCreate(
@@ -33,9 +37,13 @@ class EssentialUserSeeder extends Seeder
                 'name' => 'Jefe de Psicología',
                 'password' => Hash::make('password123'),
                 'email_verified_at' => now(),
+                'sede_name' => 'central',
+                'status' => 'active',
             ]
         );
-        $jefePsicologia->assignRole('jefe-psicologia');
+        $jefePsicologia->syncRolesWithExpiration([
+            ['name' => 'jefe-psicologia', 'is_primary' => true, 'expires_at' => null],
+        ]);
 
         // 3. Usuario Jefe de Medicina
         $jefeMedicina = User::updateOrCreate(
@@ -44,8 +52,12 @@ class EssentialUserSeeder extends Seeder
                 'name' => 'Jefe de Medicina',
                 'password' => Hash::make('password123'),
                 'email_verified_at' => now(),
+                'sede_name' => 'central',
+                'status' => 'active',
             ]
         );
-        $jefeMedicina->assignRole('jefe-medicina');
+        $jefeMedicina->syncRolesWithExpiration([
+            ['name' => 'jefe-medicina', 'is_primary' => true, 'expires_at' => null],
+        ]);
     }
 }
