@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { PieChart } from '@/components/ui/charts/pie';
+import { BarChartLabel } from '@/components/ui/charts/chart-bar-label';
+import { BarChartCustomLabel } from '@/components/ui/charts/chart-bar-label-custom';
+import { DonutChart } from '@/components/ui/charts/chart-pie-donut-text';
 import { DataTable } from '@/components/ui/data-table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getUserColumns } from '@/components/user-columns';
@@ -59,6 +61,7 @@ export default function DashboardUsers() {
     const authUser = auth.user;
 
     // Verificación de permisos
+    const canViewAllUsers = hasPermission('users:view-all');
     const canCreateUser = hasPermission('users:create');
     const canEditUser = hasPermission('users:edit');
     const canDeleteUser = hasPermission('users:delete');
@@ -71,6 +74,7 @@ export default function DashboardUsers() {
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
     const [selectedSedes, setSelectedSedes] = useState<string[]>([]);
     const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+    const [selectedStatus, setSelectedStatus] = useState<string[]>([]); // Nuevo estado para el filtro de estado
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const selectedUser = selectedUserId ? users.find((u) => u.id === selectedUserId) || null : null;
@@ -129,23 +133,29 @@ export default function DashboardUsers() {
         return !canAuthUserAssignAnyOfSelectedUserRoles;
     }, [selectedUserId, canEditUser, selectedUser, authUser, assignableRoles]);
 
-    const columns = getUserColumns(
-        users,
-        selectedUserId,
-        setSelectedUserId,
-        selectedRoles,
-        setSelectedRoles,
-        selectedSedes,
-        setSelectedSedes,
-        selectedAreas,
-        setSelectedAreas,
+    const columns = useMemo(
+        () =>
+            getUserColumns(
+                users,
+                selectedUserId,
+                setSelectedUserId,
+                selectedRoles,
+                setSelectedRoles,
+                selectedSedes,
+                setSelectedSedes,
+                selectedAreas,
+                setSelectedAreas,
+                selectedStatus, // Pasar el nuevo estado
+                setSelectedStatus, // Pasar el nuevo setter
+            ),
+        [users, selectedUserId, selectedRoles, selectedSedes, selectedAreas, selectedStatus], // Añadir selectedStatus a las dependencias
     );
     const totalUsuarios = users.length;
     const activos = users.filter((u) => u.status === 'active').length;
     const inactivos = totalUsuarios - activos;
     const statusData = [
-        { id: 'Activos', label: 'Activos', value: activos },
-        { id: 'Inactivos', label: 'Inactivos', value: inactivos },
+        { name: 'Activos', value: activos },
+        { name: 'Inactivos', value: inactivos },
     ];
 
     const usuariosPorRol = Object.values(
@@ -154,8 +164,7 @@ export default function DashboardUsers() {
                 user.roles.forEach((role) => {
                     const roleName = role.description || role.name;
                     acc[roleName] = acc[roleName] || {
-                        id: roleName,
-                        label: roleName,
+                        category: roleName,
                         value: 0,
                     };
                     acc[roleName].value += 1;
@@ -163,7 +172,7 @@ export default function DashboardUsers() {
 
                 return acc;
             },
-            {} as Record<string, { id: string; label: string; value: number; color?: string }>,
+            {} as Record<string, { category: string; value: number }>,
         ),
     );
 
@@ -173,15 +182,14 @@ export default function DashboardUsers() {
                 const sedeName = user.sede_description || user.sede_name;
                 if (sedeName) {
                     acc[sedeName] = acc[sedeName] || {
-                        id: sedeName,
-                        label: sedeName,
+                        category: sedeName,
                         value: 0,
                     };
                     acc[sedeName].value += 1;
                 }
                 return acc;
             },
-            {} as Record<string, { id: string; label: string; value: number; color?: string }>,
+            {} as Record<string, { category: string; value: number }>,
         ),
     );
 
@@ -210,6 +218,7 @@ export default function DashboardUsers() {
         setSelectedRoles([]);
         setSelectedSedes([]);
         setSelectedAreas([]);
+        setSelectedStatus([]); // Limpiar el nuevo filtro de estado
         setColumnFilters([]);
     };
 
@@ -219,9 +228,10 @@ export default function DashboardUsers() {
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="admin-panel">
                     {/* Barra de herramientas */}
-                    <div className="mb-2 flex items-center gap-2 rounded-lg border bg-background p-2">
+                    <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-background p-2">
                         <Button
                             variant="ghost"
+                            size="sm"
                             className="flex items-center gap-2"
                             onClick={() => setShowResetConfirm(true)}
                             disabled={!selectedUserId || !canResetUserPassword}
@@ -231,6 +241,7 @@ export default function DashboardUsers() {
                         </Button>
                         <Button
                             variant="ghost"
+                            size="sm"
                             className="flex items-center gap-2"
                             disabled={!canCreateUser}
                             onClick={() => canCreateUser && router.visit('/dashboard/users/create')}
@@ -238,11 +249,18 @@ export default function DashboardUsers() {
                             <UserPlus className="h-4 w-4" />
                             <span>Agregar</span>
                         </Button>
-                        <Button variant="ghost" onClick={() => router.visit(`/dashboard/users/${selectedUserId}/edit`)} disabled={isEditDisabled}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.visit(`/dashboard/users/${selectedUserId}/edit`)}
+                            disabled={isEditDisabled}
+                            className="flex items-center gap-2"
+                        >
                             <Edit className="h-4 w-4" /> Editar
                         </Button>
                         <Button
                             variant="ghost"
+                            size="sm"
                             className="flex items-center gap-2 text-red-600 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
                             onClick={() => setShowDeleteModal(true)}
                             disabled={!selectedUserId || !canDeleteUser}
@@ -250,14 +268,19 @@ export default function DashboardUsers() {
                             <Trash2 className="h-4 w-4" />
                             <span>Eliminar</span>
                         </Button>
-                        <Button variant="ghost" className="flex items-center gap-2" onClick={handleClearAllFilters}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center gap-2"
+                            onClick={handleClearAllFilters}
+                        >
                             <X className="h-4 w-4" />
                             <span>Limpiar Filtros</span>
                         </Button>
                     </div>
 
                     {/* Tabla de usuarios */}
-                    <div className="relative min-h-[70vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
+                    <div>
                         <DataTable
                             columns={columns}
                             data={users}
@@ -269,35 +292,54 @@ export default function DashboardUsers() {
                         />
                     </div>
 
-                    {/* Dashboard de estadísticas */}
-                    <div className="flex flex-col gap-6 p-4">
-                        <div className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-4">
-                            {/* Total usuarios */}
-                            <div className="flex flex-col items-center justify-center rounded-lg border bg-background p-4">
-                                <span className="text-2xl font-bold">{totalUsuarios}</span>
-                                <span className="text-muted-foreground">Usuarios totales</span>
+                    {/* Gráficos */}
+                    <div className="mt-5">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div className="col-span-1 flex h-full flex-col">
+                                <DonutChart
+                                    data={statusData}
+                                    title="Estado de Usuarios"
+                                    description="Usuarios activos e inactivos"
+                                    centerLabel="Total"
+                                    colors={['hsl(144.07 100% 39%)', 'hsl(356.95 96% 57.99%)']}
+                                    footerText="Distribución de usuarios"
+                                    innerRadius={55}
+                                    strokeWidth={5}
+                                    className="h-full flex-1"
+                                />
                             </div>
-                            {/* Pie de activos/inactivos */}
-                            <div className="flex flex-col items-center rounded-lg border bg-background p-4">
-                                <span className="mb-2 font-semibold">Activos vs Inactivos</span>
-                                <div className="h-48 w-full">
-                                    <PieChart data={statusData} />
+                            <div
+                                className={`col-span-1 flex h-full flex-col ${
+                                    canViewAllUsers && usuariosPorSede.length > 0 ? 'md:col-span-1' : 'md:col-span-2'
+                                }`}
+                            >
+                                <BarChartCustomLabel
+                                    data={usuariosPorRol}
+                                    title="Usuarios por Rol"
+                                    description="Distribución por roles"
+                                    dataLabel="Cantidad"
+                                    barColor="hsl(240.98 100% 69%)"
+                                    categoryLabelColor="white"
+                                    footerText="Total de usuarios en cada rol"
+                                    className="h-full flex-1"
+                                />
+                            </div>
+                            {canViewAllUsers && usuariosPorSede.length > 0 && (
+                                <div className="col-span-1 flex h-full flex-col">
+                                    <BarChartLabel
+                                        data={usuariosPorSede}
+                                        title="Usuarios por Sede"
+                                        description="Distribución por sedes"
+                                        dataLabel="Usuarios"
+                                        footerText="Total de usuarios en cada sede"
+                                        barColor="hsl(216.26 100% 57.99%)"
+                                        labelPosition="inside"
+                                        labelColor="white"
+                                        categoryLabelTruncate={0}
+                                        className="h-full flex-1"
+                                    />
                                 </div>
-                            </div>
-                            {/* Pie de usuarios por rol */}
-                            <div className="flex flex-col items-center rounded-lg border bg-background p-4">
-                                <span className="mb-2 font-semibold">Usuarios por rol</span>
-                                <div className="h-48 w-full">
-                                    <PieChart data={usuariosPorRol} />
-                                </div>
-                            </div>
-                            {/* Pie de usuarios por sede */}
-                            <div className="flex flex-col items-center rounded-lg border bg-background p-4">
-                                <span className="mb-2 font-semibold">Usuarios por sede</span>
-                                <div className="h-48 w-full">
-                                    <PieChart data={usuariosPorSede} />
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 

@@ -1,11 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { MultiSelectColumnFilter } from "@/components/ui/multi-select-column-filter";
+import { Dispatch, SetStateAction } from "react";
 
 export type Log = {
   id: number;
@@ -16,81 +12,124 @@ export type Log = {
   created_at: string;
 };
 
-export function getLogColumns(logs: Log[]): ColumnDef<Log>[] {
+export function getLogColumns(
+  logs: Log[],
+  selectedTypes: string[],
+  setSelectedTypes: Dispatch<SetStateAction<string[]>>,
+  selectedEvents: string[],
+  setSelectedEvents: Dispatch<SetStateAction<string[]>>
+): ColumnDef<Log>[] {
   const uniqueTypes = Array.from(
     new Set(logs.map((log) => log.log_name ?? "General"))
   ).filter((type) => typeof type === "string" && type.trim() !== "");
-  
+
   const uniqueEvents = Array.from(
     new Set(logs.map((log) => log.properties?.event ?? "Sin evento"))
   ).filter((event) => typeof event === "string" && event.trim() !== "");
 
   return [
     {
-      accessorKey: "causer.name",
-      header: "Usuario", // Simple texto, sin dropdown
-      cell: ({ row }) => row.original.causer?.name ?? "Desconocido",
+      id: "id_column", // Columna dummy para alinear
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="#" enableDropdown={false} enableSorting={false} />
+      ),
+      cell: ({ row }) => row.original.id,
+      size: 60, // Ancho fijo similar a la columna de selección de usuarios
+      enableSorting: false,
+      enableHiding: false,
+      meta: { title: "#" },
     },
     {
+      accessorKey: "causer.name",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Usuario" />
+      ),
+      cell: ({ row }) => row.original.causer?.name ?? "Desconocido",
+      filterFn: (row, id, value) => {
+        return (row.original.causer?.name ?? "Desconocido").toLowerCase().includes(String(value).toLowerCase());
+      },
+      meta: { title: "Usuario" },
+    },
+    {
+      id: "log_name",
       accessorKey: "log_name",
       header: ({ column }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="text-xs">
-              {column.getFilterValue()
-                ? `Tipo: ${column.getFilterValue()}`
-                : "Filtrar por tipo"}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => column.setFilterValue(undefined)}>
-              Todos
-            </DropdownMenuItem>
-            {uniqueTypes.map((type) => (
-              <DropdownMenuItem key={type} onClick={() => column.setFilterValue(type)}>
-                {type}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <DataTableColumnHeader
+          column={column}
+          title="Tipo"
+          filterComponent={
+            <MultiSelectColumnFilter
+              column={column}
+              selectedValues={selectedTypes}
+              setSelectedValues={setSelectedTypes}
+              options={uniqueTypes}
+              placeholder="Filtrar por tipo..."
+            />
+          }
+          onClearFilter={() => {
+            setSelectedTypes([]);
+            column.setFilterValue(undefined);
+          }}
+        />
       ),
       cell: ({ row }) => row.original.log_name ?? "General",
-      filterFn: "equalsString",
+      filterFn: (row, id, filterValue) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const logName = row.original.log_name ?? "General";
+        return filterValue.includes(logName);
+      },
+      meta: { title: "Tipo" },
     },
     {
+      id: "event",
       accessorKey: "properties.event",
       header: ({ column }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="text-xs">
-              {column.getFilterValue()
-                ? `Evento: ${column.getFilterValue()}`
-                : "Filtrar por evento"}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => column.setFilterValue(undefined)}>
-              Todos
-            </DropdownMenuItem>
-            {uniqueEvents.map((event) => (
-              <DropdownMenuItem key={event} onClick={() => column.setFilterValue(event)}>
-                {event}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <DataTableColumnHeader
+          column={column}
+          title="Evento"
+          filterComponent={
+            <MultiSelectColumnFilter
+              column={column}
+              selectedValues={selectedEvents}
+              setSelectedValues={setSelectedEvents}
+              options={uniqueEvents}
+              placeholder="Filtrar por evento..."
+            />
+          }
+          onClearFilter={() => {
+            setSelectedEvents([]);
+            column.setFilterValue(undefined);
+          }}
+        />
       ),
       cell: ({ row }) => row.original.properties?.event ?? "Sin evento",
-      filterFn: "equalsString",
+      filterFn: (row, id, filterValue) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const event = row.original.properties?.event ?? "Sin evento";
+        return filterValue.includes(event);
+      },
+      meta: { title: "Evento" },
     },
     {
       accessorKey: "description",
-      header: "Descripción",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Descripción" />
+      ),
+      filterFn: (row, id, value) => {
+        return row.original.description.toLowerCase().includes(String(value).toLowerCase());
+      },
+      meta: { title: "Descripción" },
     },
     {
       accessorKey: "created_at",
-      header: "Fecha",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Fecha" />
+      ),
       cell: ({ row }) => new Date(row.original.created_at).toLocaleString(),
+      filterFn: (row, id, value) => {
+        return new Date(row.original.created_at).toLocaleString().toLowerCase().includes(String(value).toLowerCase());
+      },
+      meta: { title: "Fecha" },
     },
   ];
 }

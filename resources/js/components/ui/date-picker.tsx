@@ -1,69 +1,53 @@
-import * as React from "react"
-import { ChevronDownIcon } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Label } from "@/components/ui/label"
+import * as React from "react";
+import { ChevronDownIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
+import { PropsBase } from "react-day-picker";
+import { es } from "date-fns/locale";
 
-interface DatePickerProps {
-  /** Texto del label */
-  label?: string
-  /** Texto del placeholder cuando no hay fecha seleccionada */
-  placeholder?: string
-  /** Fecha seleccionada inicial */
-  value?: Date
-  /** Función callback cuando se selecciona una fecha */
-  onChange?: (date: Date | undefined) => void
-  /** ID del input para asociar con el label */
-  id?: string
-  /** Ancho del botón (clase CSS) */
-  width?: string
-  /** Desactivar el componente o función para deshabilitar fechas específicas */
-  disabled?: boolean | ((date: Date) => boolean)
-  /** Formato de fecha personalizado */
-  dateFormat?: (date: Date) => string
-  /** Configuración adicional del calendario */
-  calendarProps?: any
+export interface DatePickerProps {
+  value?: Date;
+  onChange?: (date?: Date) => void;
+  label?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  disableDates?: (date: Date) => boolean;
+  className?: string;
+  buttonClassName?: string;
+  align?: "start" | "center" | "end";
+  captionLayout?: PropsBase["captionLayout"];
+  format?: (date: Date) => string;
+  icon?: React.ReactNode;
+  locale?: Locale;
 }
 
 export function DatePicker({
-  label,
-  placeholder = "Seleccionar fecha",
   value,
   onChange,
-  id,
-  width = "w-48",
+  label,
+  placeholder = "Select date",
   disabled = false,
-  dateFormat = (date: Date) => date.toLocaleDateString(),
-  calendarProps = {},
+  disableDates,
+  className = "",
+  buttonClassName = "",
+  align = "start",
+  captionLayout = "dropdown",
+  format = (date) => date.toLocaleDateString('es-ES'),
+  icon = <ChevronDownIcon />,
+  locale = es, // Establecer español como predeterminado
 }: DatePickerProps) {
-  const [open, setOpen] = React.useState(false)
-  const [date, setDate] = React.useState<Date | undefined>(value)
-
-  // Sincronizar estado interno con prop value
-  React.useEffect(() => {
-    setDate(value)
-  }, [value])
-
-  const handleSelectDate = (selectedDate: Date | undefined) => {
-    setDate(selectedDate)
-    onChange?.(selectedDate)
-    setOpen(false)
-  }
-
-  // Separar disabled boolean de la función de validación
-  const isComponentDisabled = typeof disabled === 'boolean' ? disabled : false
-  const dateValidator = typeof disabled === 'function' ? disabled : undefined
+  const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={`flex flex-col gap-3 ${className}`}>
       {label && (
-        <Label htmlFor={id} className="px-1">
+        <Label htmlFor="date-picker" className="px-1">
           {label}
         </Label>
       )}
@@ -71,27 +55,28 @@ export function DatePicker({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            id={id}
-            disabled={isComponentDisabled}
-            className={`${width} justify-between font-normal ${
-              isComponentDisabled ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            id="date-picker"
+            disabled={disabled}
+            className={`w-48 justify-between font-normal ${buttonClassName}`}
           >
-            {date ? dateFormat(date) : placeholder}
-            <ChevronDownIcon />
+            {value ? format(value) : placeholder}
+            {icon}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+        <PopoverContent className="w-auto p-0" align={align}>
           <Calendar
             mode="single"
-            selected={date}
-            captionLayout="dropdown"
-            onSelect={handleSelectDate}
-            disabled={dateValidator}
-            {...calendarProps}
+            selected={value}
+            onSelect={(date) => {
+              onChange?.(date);
+              setOpen(false);
+            }}
+            disabled={disableDates}
+            captionLayout={captionLayout}
+            locale={locale}
           />
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }

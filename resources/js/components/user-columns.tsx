@@ -1,17 +1,9 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-    MultiSelector,
-    MultiSelectorContent,
-    MultiSelectorInput,
-    MultiSelectorItem,
-    MultiSelectorList,
-    MultiSelectorTrigger,
-} from '@/components/ui/multi-select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { MultiSelectColumnFilter } from '@/components/ui/multi-select-column-filter';
 import { cn } from '@/lib/utils';
-import { Column, ColumnDef } from '@tanstack/react-table';
-import { BadgeCheckIcon, Clock, FilterIcon, GraduationCap, Mail, MapPin, Shield, User, Users, X } from 'lucide-react';
+import { ColumnDef } from '@tanstack/react-table';
+import { BadgeCheckIcon, Clock } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 export type User = {
@@ -52,6 +44,8 @@ export function getUserColumns(
     setSelectedSedes: Dispatch<SetStateAction<string[]>>,
     selectedAreas: string[],
     setSelectedAreas: Dispatch<SetStateAction<string[]>>,
+    selectedStatus: string[],
+    setSelectedStatus: Dispatch<SetStateAction<string[]>>,
 ): ColumnDef<User>[] {
     // Extraer todos los roles únicos para los filtros
     const allRoles = users.flatMap((user) => user.roles.map((role) => role.description || role.name));
@@ -63,6 +57,18 @@ export function getUserColumns(
     // Extraer todas las áreas únicas para los filtros
     const allAreas = users.flatMap((user) => user.areas?.map((area) => area.description || area.name) || []);
     const uniqueAreas = Array.from(new Set(allAreas));
+
+    // Mapa de traducción para el estado
+    const statusMap: Record<string, string> = {
+        active: 'Activo',
+        inactive: 'Inactivo',
+        Activo: 'active',
+        Inactivo: 'inactive',
+    };
+
+    // Extraer estados únicos y traducirlos para las opciones del filtro
+    const uniqueStatusDb = Array.from(new Set(users.map((user) => user.status)));
+    const uniqueStatusOptions = uniqueStatusDb.map((s) => statusMap[s] || s); // Traducir para mostrar en el filtro
 
     // Roles que requieren área
     const rolesRequiringArea = ['coordinador-area', 'mentor', 'instructor', 'calificador'];
@@ -79,95 +85,16 @@ export function getUserColumns(
 
         // Roles secundarios
         return (
-            <Badge className="bg-gray-500 text-white">
+            <Badge className="bg-gray-600 text-white dark:bg-gray-300 dark:text-gray-800">
                 {hasExpiry && <Clock className="mr-1 size-4" />}
                 {role.description || role.name}
             </Badge>
         );
     };
 
-    const RoleFilterComponent = ({ column, selectedRoles, setSelectedRoles }: { column: Column<User, unknown>, selectedRoles: string[], setSelectedRoles: Dispatch<SetStateAction<string[]>> }) => {
-        const handleRoleChange = (values: string[]) => {
-            setSelectedRoles(values);
-            column.setFilterValue(values.length > 0 ? values : undefined);
-        };
-
-        return (
-            <MultiSelector values={selectedRoles} onValuesChange={handleRoleChange} className="w-full">
-                <MultiSelectorTrigger>
-                    <MultiSelectorInput placeholder="Filtrar roles..." />
-                </MultiSelectorTrigger>
-                <MultiSelectorContent>
-                    <MultiSelectorList>
-                        {uniqueRoles.map((role) => (
-                            <MultiSelectorItem key={role} value={role}>
-                                {role}
-                            </MultiSelectorItem>
-                        ))}
-                    </MultiSelectorList>
-                </MultiSelectorContent>
-            </MultiSelector>
-        );
-    };
-
-    const SedeFilterComponent = ({ column, selectedSedes, setSelectedSedes }: { column: Column<User, unknown>, selectedSedes: string[], setSelectedSedes: Dispatch<SetStateAction<string[]>> }) => {
-
-        const handleSedeChange = (values: string[]) => {
-            setSelectedSedes(values);
-            column.setFilterValue(values.length > 0 ? values : undefined);
-        };
-
-        return (
-            <MultiSelector values={selectedSedes} onValuesChange={handleSedeChange} className="w-full">
-                <MultiSelectorTrigger>
-                    <MultiSelectorInput placeholder="Filtrar sedes..." />
-                </MultiSelectorTrigger>
-                <MultiSelectorContent>
-                    <MultiSelectorList>
-                        {uniqueSedes.map((sede) => (
-                            <MultiSelectorItem key={sede} value={sede}>
-                                {sede}
-                            </MultiSelectorItem>
-                        ))}
-                    </MultiSelectorList>
-                </MultiSelectorContent>
-            </MultiSelector>
-        );
-    };
-
-    const AreaFilterComponent = ({ column, selectedAreas, setSelectedAreas }: { column: Column<User, unknown>, selectedAreas: string[], setSelectedAreas: Dispatch<SetStateAction<string[]>> }) => {
-
-        const handleAreaChange = (values: string[]) => {
-            setSelectedAreas(values);
-            column.setFilterValue(values.length > 0 ? values : undefined);
-        };
-
-        return (
-            <MultiSelector values={selectedAreas} onValuesChange={handleAreaChange} className="w-full">
-                <MultiSelectorTrigger>
-                    <MultiSelectorInput placeholder="Filtrar áreas..." />
-                </MultiSelectorTrigger>
-                <MultiSelectorContent>
-                    <MultiSelectorList>
-                        {uniqueAreas.map((area) => (
-                            <MultiSelectorItem key={area} value={area}>
-                                {area}
-                            </MultiSelectorItem>
-                        ))}
-                    </MultiSelectorList>
-                </MultiSelectorContent>
-            </MultiSelector>
-        );
-    };
-
     return [
         {
             id: 'radio_select',
-            header: () => (
-                <div className="flex items-center justify-center">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                </div>
-            ),
             cell: ({ row }) => {
                 const user = row.original;
                 return (
@@ -186,57 +113,45 @@ export function getUserColumns(
             enableSorting: false,
             enableHiding: false,
             size: 60,
+            meta: { title: 'Seleccionar' },
         },
         {
             accessorKey: 'name',
-            header: () => (
-                <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <span>Nombre</span>
-                </div>
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre" enableSorting={false} />,
             cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
+            meta: { title: 'Nombre' },
         },
         {
             accessorKey: 'email',
-            header: () => (
-                <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    <span>Correo</span>
-                </div>
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Correo" enableSorting={false} />,
             cell: ({ row }) => <div className="text-sm text-muted-foreground">{row.getValue('email')}</div>,
+            meta: { title: 'Correo' },
         },
         {
             id: 'roles',
             header: ({ column }) => (
-                <div className="flex items-center gap-2">
-                    <Shield className="size-4" />
-                    <span>Roles</span>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                                <FilterIcon className="h-4 w-4" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-64 p-2">
-                            <RoleFilterComponent column={column} selectedRoles={selectedRoles} setSelectedRoles={setSelectedRoles} />
-                            <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => {
-                                setSelectedRoles([]);
-                                column.setFilterValue(undefined);
-                            }}>
-                                <X className="mr-2 h-4 w-4" />
-                                Limpiar Filtro
-                            </Button>
-                        </PopoverContent>
-                    </Popover>
-                </div>
+                <DataTableColumnHeader
+                    column={column}
+                    title="Roles"
+                    filterComponent={
+                        <MultiSelectColumnFilter
+                            column={column}
+                            selectedValues={selectedRoles}
+                            setSelectedValues={setSelectedRoles}
+                            options={uniqueRoles}
+                            placeholder="Filtrar roles..."
+                        />
+                    }
+                    onClearFilter={() => {
+                        setSelectedRoles([]);
+                        column.setFilterValue(undefined);
+                    }}
+                />
             ),
             cell: ({ row }) => {
                 const roles = row.original.roles || [];
                 const primaryRole = roles.find((r) => r.pivot?.is_primary);
                 const secondaryRoles = roles.filter((r) => !r.pivot?.is_primary);
-
                 return (
                     <div className="flex flex-wrap gap-1">
                         {primaryRole && <RoleBadge role={primaryRole} isPrimary={true} hasExpiry={!!primaryRole.pivot?.expires_at} />}
@@ -260,32 +175,30 @@ export function getUserColumns(
                 const roles = row.original.roles || [];
                 return roles.some((role) => filterValue.includes(role.description || role.name));
             },
+            meta: { title: 'Roles' },
         },
         {
             id: 'sede',
             accessorFn: (row) => row.sede_description || row.sede_name,
             header: ({ column }) => (
-                <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>Sede</span>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                                <FilterIcon className="h-4 w-4" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-64 p-2">
-                            <SedeFilterComponent column={column} selectedSedes={selectedSedes} setSelectedSedes={setSelectedSedes} />
-                             <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => {
-                                setSelectedSedes([]);
-                                column.setFilterValue(undefined);
-                            }}>
-                                <X className="mr-2 h-4 w-4" />
-                                Limpiar Filtro
-                            </Button>
-                        </PopoverContent>
-                    </Popover>
-                </div>
+                <DataTableColumnHeader
+                    column={column}
+                    title="Sede"
+                    enableSorting={false}
+                    filterComponent={
+                        <MultiSelectColumnFilter
+                            column={column}
+                            selectedValues={selectedSedes}
+                            setSelectedValues={setSelectedSedes}
+                            options={uniqueSedes}
+                            placeholder="Filtrar sedes..."
+                        />
+                    }
+                    onClearFilter={() => {
+                        setSelectedSedes([]);
+                        column.setFilterValue(undefined);
+                    }}
+                />
             ),
             cell: ({ row }) => <div className="text-sm">{row.original.sede_description || row.original.sede_name}</div>,
             filterFn: (row, id, filterValue) => {
@@ -293,31 +206,29 @@ export function getUserColumns(
                 const sede = row.original.sede_description || row.original.sede_name;
                 return filterValue.includes(sede);
             },
+            meta: { title: 'Sede' },
         },
         {
             id: 'areas',
             header: ({ column }) => (
-                <div className="flex items-center gap-2">
-                    <GraduationCap className="size-4" />
-                    <span>Áreas</span>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                                <FilterIcon className="h-4 w-4" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-64 p-2">
-                            <AreaFilterComponent column={column} selectedAreas={selectedAreas} setSelectedAreas={setSelectedAreas} />
-                             <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => {
-                                setSelectedAreas([]);
-                                column.setFilterValue(undefined);
-                            }}>
-                                <X className="mr-2 h-4 w-4" />
-                                Limpiar Filtro
-                            </Button>
-                        </PopoverContent>
-                    </Popover>
-                </div>
+                <DataTableColumnHeader
+                    column={column}
+                    title="Áreas"
+                    enableSorting={false}
+                    filterComponent={
+                        <MultiSelectColumnFilter
+                            column={column}
+                            selectedValues={selectedAreas}
+                            setSelectedValues={setSelectedAreas}
+                            options={uniqueAreas}
+                            placeholder="Filtrar áreas..."
+                        />
+                    }
+                    onClearFilter={() => {
+                        setSelectedAreas([]);
+                        column.setFilterValue(undefined);
+                    }}
+                />
             ),
             cell: ({ row }) => {
                 const user = row.original;
@@ -336,7 +247,7 @@ export function getUserColumns(
                 return (
                     <div className="flex flex-wrap gap-1">
                         {primaryArea && (
-                            <Badge variant="secondary" className="bg-blue-500 text-white dark:bg-blue-600">
+                            <Badge variant="secondary" className="bg-indigo-500 text-white dark:bg-indigo-600">
                                 {primaryArea.description || primaryArea.name}
                             </Badge>
                         )}
@@ -348,14 +259,29 @@ export function getUserColumns(
                 const areas = row.original.areas || [];
                 return areas.some((area) => filterValue.includes(area.description || area.name));
             },
+            meta: { title: 'Áreas' },
         },
         {
             accessorKey: 'status',
-            header: () => (
-                <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full border-2 border-current" />
-                    <span>Estado</span>
-                </div>
+            header: ({ column }) => (
+                <DataTableColumnHeader
+                    column={column}
+                    title="Estado"
+                    enableSorting={false}
+                    filterComponent={
+                        <MultiSelectColumnFilter
+                            column={column}
+                            selectedValues={selectedStatus}
+                            setSelectedValues={setSelectedStatus}
+                            options={uniqueStatusOptions}
+                            placeholder="Filtrar estado..."
+                        />
+                    }
+                    onClearFilter={() => {
+                        setSelectedStatus([]);
+                        column.setFilterValue(undefined);
+                    }}
+                />
             ),
             cell: ({ row }) => {
                 const status = row.getValue('status') as string;
@@ -367,9 +293,7 @@ export function getUserColumns(
                             variant={isActive ? 'default' : 'secondary'}
                             className={cn(
                                 'text-xs',
-                                isActive
-                                    ? 'bg-green-500 text-white hover:bg-green-600 dark:bg-green-600'
-                                    : 'bg-red-500 text-white hover:bg-red-600 dark:bg-red-600',
+                                isActive ? 'bg-green-500 text-white dark:bg-green-600' : 'bg-red-500 text-white dark:bg-red-600',
                             )}
                         >
                             {isActive ? 'Activo' : 'Inactivo'}
@@ -377,6 +301,14 @@ export function getUserColumns(
                     </div>
                 );
             },
+            filterFn: (row, id, filterValue) => {
+                if (!filterValue || filterValue.length === 0) return true;
+                const originalStatus = row.original.status; // 'active' or 'inactive'
+                // Traducir los valores del filtro (ej. ['Activo']) de vuelta a los valores originales (ej. ['active'])
+                const translatedFilterValues = (filterValue as string[]).map((fv) => statusMap[fv] || fv);
+                return translatedFilterValues.includes(originalStatus);
+            },
+            meta: { title: 'Estado' },
         },
     ];
 }
