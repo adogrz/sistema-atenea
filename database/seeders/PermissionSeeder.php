@@ -59,6 +59,13 @@ class PermissionSeeder extends Seeder
                 'audit:view',
                 'logs:view',
                 'logs:export',
+            ],
+            'events' => [
+            'events:view',
+            'events:create',
+            'events:edit',
+            'events:delete',
+            'events:export',
             ]
         ];
     }
@@ -117,7 +124,7 @@ class PermissionSeeder extends Seeder
             ],
             'admin-academico' => [
                 'description' => 'Administrador Académico',
-                'groups' => ['general', 'users', 'sedes', 'areas'],
+                'groups' => ['general', 'users', 'sedes', 'areas', 'events'],
                 'permissions' => ['users:view-all', 'roles:list', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -127,7 +134,8 @@ class PermissionSeeder extends Seeder
                 'groups' => ['general'],
                 'permissions' => [
                     'users:view-sede', 'users:list',
-                    'roles:list', 'sedes:list', 'areas:list'
+                    'roles:list', 'sedes:list', 'areas:list',
+                    'events:view', 'events:create', 'events:edit'
                 ],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -137,7 +145,8 @@ class PermissionSeeder extends Seeder
                 'groups' => ['general'],
                 'permissions' => [
                     'users:view-sede', 'users:view-area', 'users:list',
-                    'users:create', 'users:edit', 'roles:assign'
+                    'users:create', 'users:edit', 'roles:assign',
+                    'events:view', 'events:create', 'events:edit'
                 ],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -186,7 +195,7 @@ class PermissionSeeder extends Seeder
             'instructor' => [
                 'description' => 'Instructor',
                 'groups' => ['general'],
-                'permissions' => ['users:view-sede', 'users:view-area', 'users:list'],
+                'permissions' => ['users:view-sede', 'users:view-area', 'users:list', 'events:view'],
                 'inherits' => [],
                 'exclude_permissions' => []
             ],

@@ -4,7 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { ClipboardListIcon, HouseIcon, ShieldCheck, User } from 'lucide-react';
+import { ClipboardListIcon, HouseIcon, ShieldCheck, User, Calendar, Clock, BookOpen, GraduationCap, LayoutDashboard, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -34,6 +34,19 @@ export function AppSidebar() {
                           },
                       ]
                     : []),
+            ],
+        },
+        {
+            title: 'Académico',
+            icon: Calendar,
+            items: [
+                ...(hasPermission('events:view') ? [{ title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard }] : []),
+                ...(hasPermission('events:view') ? [{ title: 'Calendario', href: '/dashboard/calendario', icon: Calendar }] : []),
+                ...(hasPermission('events:view') ? [{ title: 'Datos Aspirantes', href: '/dashboard/academico/aspirantes', icon: Clock }] : []),
+                ...(hasPermission('events:view') ? [{ title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users }] : []),
+                ...(hasPermission('events:view') ? [{ title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen }] : []),
+                ...(hasPermission('events:view') ? [{ title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap }] : []),
+                
             ],
         },
     ];
