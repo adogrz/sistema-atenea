@@ -12,7 +12,8 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { Description } from '@radix-ui/react-dialog';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { Edit, MailCheck, Trash2, UserPlus, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Role {
     id: number;
@@ -44,6 +45,11 @@ interface User {
     areas?: Area[];
 }
 
+interface FlashMessages {
+    success?: string;
+    error?: string;
+}
+
 // Constantes
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
@@ -52,11 +58,21 @@ const BREADCRUMBS: BreadcrumbItem[] = [
 
 export default function DashboardUsers() {
     const { hasPermission } = usePermissions();
-    const { assignableRoles, users, auth } = usePage<{
+    const { assignableRoles, users, auth, flash } = usePage<{
         assignableRoles: Array<Role>;
         users: Array<User>;
         auth: { user: User };
+        flash: FlashMessages;
     }>().props;
+
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
 
     const authUser = auth.user;
 
@@ -268,12 +284,7 @@ export default function DashboardUsers() {
                             <Trash2 className="h-4 w-4" />
                             <span>Eliminar</span>
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2"
-                            onClick={handleClearAllFilters}
-                        >
+                        <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleClearAllFilters}>
                             <X className="h-4 w-4" />
                             <span>Limpiar Filtros</span>
                         </Button>

@@ -216,7 +216,7 @@ class UserController extends Controller
     }
 
     /**
-     * Actualiza un usuario existente con gestión de roles temporales y áreas.
+     * Actualiza un usuario.
      */
     public function update(Request $request, User $user): RedirectResponse
     {

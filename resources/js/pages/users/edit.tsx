@@ -8,6 +8,7 @@ import { doesRoleRequireArea } from '@/utils/user-form-helpers';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { AlertCircle, AlertTriangle, Check, LoaderCircle } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
@@ -107,6 +108,11 @@ export default function EditUserPage() {
 
         put(route('users.update', user.id), {
             data: { ...data, roles: rolesToSubmit },
+            onError: () => {
+                toast.error('Hubo un error al editar el usuario', {
+                    description: 'Por favor, revisa los campos del formulario e inténtalo de nuevo.',
+                });
+            },
         });
     };
 

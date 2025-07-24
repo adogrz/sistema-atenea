@@ -12,6 +12,7 @@ import { doesRoleRequireArea } from '@/utils/user-form-helpers';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { AlertCircle, AlertTriangle, Check, LoaderCircle, Wand2 } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
@@ -103,7 +104,11 @@ export default function RegisterUserPage() {
 
         post(route('users.store'), {
             data: { ...data, roles: rolesToSubmit },
-            onSuccess: () => reset(),
+            onError: () => {
+                toast.error('Hubo un error al crear el usuario', {
+                    description: 'Por favor, revisa los campos del formulario e inténtalo de nuevo.',
+                });
+            },
         });
     };
 
