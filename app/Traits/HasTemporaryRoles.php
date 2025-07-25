@@ -89,20 +89,27 @@ trait HasTemporaryRoles
     }
 
     /**
+     * Obtiene los roles expirados del usuario
+     */
+    public function getExpiredRoles()
+    {
+        $now = Carbon::now();
+        return $this->getAllRolesWithExpired()
+            ->wherePivotNotNull('expires_at')
+            ->wherePivot('expires_at', '<=', $now)
+            ->wherePivot('is_primary', '!=', true)
+            ->get();
+    }
+
+    /**
      * Limpia roles expirados
      */
     public function clearExpiredRoles(): void
     {
-        $now = Carbon::now();
+        $expiredRoles = $this->getExpiredRoles();
 
-        $expiredRoleIds = $this->getAllRolesWithExpired()
-            ->wherePivot('expires_at', '<=', $now)
-            ->whereNotNull('expires_at')
-            ->pluck('id')
-            ->toArray();
-
-        if (!empty($expiredRoleIds)) {
-            $this->roles()->detach($expiredRoleIds);
+        if ($expiredRoles->isNotEmpty()) {
+            $this->roles()->detach($expiredRoles->pluck('id')->toArray());
             $this->load('roles');
         }
     }
