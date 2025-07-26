@@ -317,7 +317,12 @@ export default function EditUserPage() {
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={handleDeleteUser}>Sí, eliminar usuario</AlertDialogAction>
+                                                    <AlertDialogAction
+                                                        onClick={handleDeleteUser}
+                                                        className="bg-destructive text-white hover:bg-destructive/90"
+                                                    >
+                                                        Sí, eliminar usuario
+                                                    </AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>

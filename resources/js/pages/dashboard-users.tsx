@@ -1,3 +1,14 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { BarChartLabel } from '@/components/ui/charts/chart-bar-label';
 import { BarChartCustomLabel } from '@/components/ui/charts/chart-bar-label-custom';
@@ -9,7 +20,6 @@ import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Description } from '@radix-ui/react-dialog';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { Edit, MailCheck, Trash2, UserPlus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -274,16 +284,33 @@ export default function DashboardUsers() {
                         >
                             <Edit className="size-4" /> Editar
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2 text-red-600 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
-                            onClick={() => setShowDeleteModal(true)}
-                            disabled={!selectedUserId || !canDeleteUser}
-                        >
-                            <Trash2 className="size-4" />
-                            <span>Eliminar</span>
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="flex items-center gap-2 text-red-600 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
+                                    disabled={!selectedUserId || !canDeleteUser}
+                                >
+                                    <Trash2 className="size-4" />
+                                    <span>Eliminar</span>
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Estás seguro de que quieres eliminar a este usuario?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Esta acción es permanente y no se puede deshacer. Se eliminarán todos los datos asociados a este usuario.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white hover:bg-destructive/90">
+                                        Sí, eliminar usuario
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                         <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleClearAllFilters}>
                             <X className="size-4" />
                             <span>Limpiar Filtros</span>
@@ -355,27 +382,25 @@ export default function DashboardUsers() {
                     </div>
 
                     {/* Modales */}
-                    <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>¿Eliminar usuario?</DialogTitle>
-                            </DialogHeader>
-                            <Description className="mb-4">
-                                <p className="mb-1">Id: {selectedUserId}</p>
-                                <p className="mb-1">Nombre: {selectedUser?.name}</p>
-                                <p className="mb-1">Email: {selectedUser?.email}</p>
-                            </Description>
-                            <p>Esta acción no se puede deshacer. El usuario seleccionado será eliminado permanentemente del sistema.</p>
-                            <DialogFooter className="flex justify-end gap-2 pt-4">
-                                <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                                    Cancelar
-                                </Button>
-                                <Button variant="destructive" onClick={handleDelete}>
-                                    Eliminar
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>¿Estás seguro de que quieres eliminar a este usuario?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Esta acción es permanente y no se puede deshacer. Se eliminarán todos los datos asociados a este usuario.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={handleDelete}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                    Sí, eliminar usuario
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
 
                     <Dialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
                         <DialogContent>
