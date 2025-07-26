@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
+import { PasswordInput } from './ui/password-input';
 
 export type LoginFormData = {
     email: string;
@@ -62,9 +63,8 @@ export function LoginForm({ data, setData, errors, processing, canResetPassword,
                             </TextLink>
                         )}
                     </div>
-                    <Input
+                    <PasswordInput
                         id="password"
-                        type="password"
                         required
                         tabIndex={2}
                         autoComplete="current-password"
