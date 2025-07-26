@@ -61,11 +61,11 @@ class PermissionSeeder extends Seeder
                 'logs:export',
             ],
             'events' => [
-            'events:view',
-            'events:create',
-            'events:edit',
-            'events:delete',
-            'events:export',
+                'events:view',
+                'events:create',
+                'events:edit',
+                'events:delete',
+                'events:export',
             ]
         ];
     }
@@ -96,7 +96,7 @@ class PermissionSeeder extends Seeder
 
         // Crear todos los permisos
         foreach ($allPermissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
     }
 
@@ -133,9 +133,14 @@ class PermissionSeeder extends Seeder
                 'description' => 'Administrador Académico de Sede',
                 'groups' => ['general'],
                 'permissions' => [
-                    'users:view-sede', 'users:list',
-                    'roles:list', 'sedes:list', 'areas:list',
-                    'events:view', 'events:create', 'events:edit'
+                    'users:view-sede',
+                    'users:list',
+                    'roles:list',
+                    'sedes:list',
+                    'areas:list',
+                    'events:view',
+                    'events:create',
+                    'events:edit'
                 ],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -144,9 +149,15 @@ class PermissionSeeder extends Seeder
                 'description' => 'Coordinador de Área',
                 'groups' => ['general'],
                 'permissions' => [
-                    'users:view-sede', 'users:view-area', 'users:list',
-                    'users:create', 'users:edit', 'roles:assign',
-                    'events:view', 'events:create', 'events:edit'
+                    'users:view-sede',
+                    'users:view-area',
+                    'users:list',
+                    'users:create',
+                    'users:edit',
+                    'roles:assign',
+                    'events:view',
+                    'events:create',
+                    'events:edit'
                 ],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -155,8 +166,11 @@ class PermissionSeeder extends Seeder
                 'description' => 'Jefe de Psicología',
                 'groups' => ['general'],
                 'permissions' => [
-                    'users:view-sede', 'users:list',
-                    'users:create', 'users:edit', 'roles:assign'
+                    'users:view-sede',
+                    'users:list',
+                    'users:create',
+                    'users:edit',
+                    'roles:assign'
                 ],
                 'inherits' => ['psicologo'],
                 'exclude_permissions' => []
@@ -172,8 +186,11 @@ class PermissionSeeder extends Seeder
                 'description' => 'Jefe de Medicina',
                 'groups' => ['general'],
                 'permissions' => [
-                    'users:view-sede', 'users:list',
-                    'users:create', 'users:edit', 'roles:assign'
+                    'users:view-sede',
+                    'users:list',
+                    'users:create',
+                    'users:edit',
+                    'roles:assign'
                 ],
                 'inherits' => ['doctor'],
                 'exclude_permissions' => []
