@@ -70,7 +70,7 @@ export function LoginForm({ data, setData, errors, processing, canResetPassword,
                         autoComplete="current-password"
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
-                        placeholder="Contraseña"
+                        placeholder="••••••••"
                         disabled={processing}
                     />
                     <InputError message={errors.password} />
@@ -89,7 +89,7 @@ export function LoginForm({ data, setData, errors, processing, canResetPassword,
                 </div>
 
                 <Button type="submit" className="w-full" tabIndex={4} disabled={processing}>
-                    {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                    {processing && <LoaderCircle className="mr-2 size-4 animate-spin" />}
                     Iniciar sesión
                 </Button>
             </div>
