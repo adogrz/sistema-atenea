@@ -2,14 +2,14 @@ import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
-import { Transition } from '@headlessui/react';
 import { Head, useForm } from '@inertiajs/react';
-import { FormEventHandler, useRef } from 'react';
+import { FormEventHandler, useRef, useEffect, useState } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
+import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,18 +22,41 @@ export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
-    const { data, setData, errors, put, reset, processing, recentlySuccessful } = useForm({
+    const { data, setData, errors, put, reset, processing } = useForm({
         current_password: '',
         password: '',
         password_confirmation: '',
     });
+
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        const newErrors: Record<string, string> = {};
+        const password = data.password as string;
+        const passwordConfirmation = data.password_confirmation as string;
+
+        if (password && password.length < 8) {
+            newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+        }
+        if (passwordConfirmation && password !== passwordConfirmation) {
+            newErrors.password_confirmation = 'Las contraseñas no coinciden';
+        }
+        setValidationErrors(newErrors);
+    }, [data.password, data.password_confirmation]);
+
+    const isFormValid = () => {
+        return data.current_password && data.password && data.password_confirmation && Object.keys(validationErrors).length === 0;
+    };
 
     const updatePassword: FormEventHandler = (e) => {
         e.preventDefault();
 
         put(route('password.update'), {
             preserveScroll: true,
-            onSuccess: () => reset(),
+            onSuccess: () => {
+                toast.success('Contraseña actualizada correctamente');
+                reset();
+            },
             onError: (errors) => {
                 if (errors.password) {
                     reset('password', 'password_confirmation');
@@ -63,65 +86,62 @@ export default function Password() {
                         <div className="grid gap-2">
                             <Label htmlFor="current_password">Contraseña actual</Label>
 
-                            <Input
+                            <PasswordInput
                                 id="current_password"
                                 ref={currentPasswordInput}
+                                autoComplete="current-password"
+                                required
+                                autoFocus
                                 value={data.current_password}
                                 onChange={(e) => setData('current_password', e.target.value)}
-                                type="password"
-                                className="mt-1 block w-full"
-                                autoComplete="current-password"
-                                placeholder="Contraseña actual"
+                                placeholder="••••••••"
                             />
 
-                            <InputError message={errors.current_password} />
+                            <InputError id="current-password-error" message={errors.current_password} />
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="password">Nueva contraseña</Label>
 
-                            <Input
+                            <PasswordInput
                                 id="password"
                                 ref={passwordInput}
+                                autoComplete="new-password"
+                                required
                                 value={data.password}
                                 onChange={(e) => setData('password', e.target.value)}
-                                type="password"
-                                className="mt-1 block w-full"
-                                autoComplete="new-password"
+                                placeholder="••••••••"
+                                aria-invalid={!!(errors.password || validationErrors.password)}
+                                aria-describedby={errors.password || validationErrors.password ? 'password-error' : undefined}
                             />
 
-                            <InputError message={errors.password} />
+                            <InputError id="password-error" message={errors.password || validationErrors.password} />
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="password_confirmation">Confirmar contraseña</Label>
 
-                            <Input
+                            <PasswordInput
                                 id="password_confirmation"
+                                ref={passwordInput}
+                                autoComplete="new-password"
+                                required
                                 value={data.password_confirmation}
                                 onChange={(e) => setData('password_confirmation', e.target.value)}
-                                type="password"
-                                className="mt-1 block w-full"
-                                autoComplete="new-password"
-                                placeholder="Confirmar contraseña"
+                                placeholder="••••••••"
+                                aria-invalid={!!(errors.password_confirmation || validationErrors.password_confirmation)}
+                                aria-describedby={
+                                    errors.password_confirmation || validationErrors.password_confirmation ? 'password-confirm-error' : undefined
+                                }
                             />
 
-                            <InputError message={errors.password_confirmation} />
+                            <InputError
+                                id="password-confirm-error"
+                                message={errors.password_confirmation || validationErrors.password_confirmation}
+                            />
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Guardar contraseña</Button>
-
-                            <Transition
-                                show={recentlySuccessful}
-                                enter="transition ease-in-out"
-                                enterFrom="opacity-0"
-                                leave="transition ease-in-out"
-                                leaveTo="opacity-0"
-                            >
-                                <p className="text-sm text-neutral-600">Contraseña guardada</p>
-                            </Transition>
-                        </div>
+                        <Button disabled={processing || !isFormValid()}>Guardar contraseña</Button>
                     </form>
                 </div>
             </SettingsLayout>
