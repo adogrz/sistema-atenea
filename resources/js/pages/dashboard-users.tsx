@@ -161,10 +161,10 @@ export default function DashboardUsers() {
                 setSelectedSedes,
                 selectedAreas,
                 setSelectedAreas,
-                selectedStatus, // Pasar el nuevo estado
-                setSelectedStatus, // Pasar el nuevo setter
+                selectedStatus,
+                setSelectedStatus,
             ),
-        [users, selectedUserId, selectedRoles, selectedSedes, selectedAreas, selectedStatus], // Añadir selectedStatus a las dependencias
+        [users, selectedUserId, selectedRoles, selectedSedes, selectedAreas, selectedStatus],
     );
     const totalUsuarios = users.length;
     const activos = users.filter((u) => u.status === 'active').length;
@@ -234,7 +234,7 @@ export default function DashboardUsers() {
         setSelectedRoles([]);
         setSelectedSedes([]);
         setSelectedAreas([]);
-        setSelectedStatus([]); // Limpiar el nuevo filtro de estado
+        setSelectedStatus([]);
         setColumnFilters([]);
     };
 
@@ -252,7 +252,7 @@ export default function DashboardUsers() {
                             onClick={() => setShowResetConfirm(true)}
                             disabled={!selectedUserId || !canResetUserPassword}
                         >
-                            <MailCheck className="h-4 w-4" />
+                            <MailCheck className="size-4" />
                             <span>Enviar enlace de recuperación</span>
                         </Button>
                         <Button
@@ -262,7 +262,7 @@ export default function DashboardUsers() {
                             disabled={!canCreateUser}
                             onClick={() => canCreateUser && router.visit('/dashboard/users/create')}
                         >
-                            <UserPlus className="h-4 w-4" />
+                            <UserPlus className="size-4" />
                             <span>Agregar</span>
                         </Button>
                         <Button
@@ -272,7 +272,7 @@ export default function DashboardUsers() {
                             disabled={isEditDisabled}
                             className="flex items-center gap-2"
                         >
-                            <Edit className="h-4 w-4" /> Editar
+                            <Edit className="size-4" /> Editar
                         </Button>
                         <Button
                             variant="ghost"
@@ -281,11 +281,11 @@ export default function DashboardUsers() {
                             onClick={() => setShowDeleteModal(true)}
                             disabled={!selectedUserId || !canDeleteUser}
                         >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="size-4" />
                             <span>Eliminar</span>
                         </Button>
                         <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleClearAllFilters}>
-                            <X className="h-4 w-4" />
+                            <X className="size-4" />
                             <span>Limpiar Filtros</span>
                         </Button>
                     </div>

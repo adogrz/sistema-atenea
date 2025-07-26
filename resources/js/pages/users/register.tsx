@@ -1,6 +1,7 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PasswordInput } from '@/components/ui/password-input';
 import UserForm from '@/components/users/user-form';
@@ -35,6 +36,7 @@ export default function RegisterUserPage() {
         roles: [] as Array<{ name: string; is_primary: boolean; expires_at?: string }>,
         sede_name: '',
         area_name: '',
+        send_credentials_email: true,
     });
     const { data, setData, post, processing, errors, reset } = form;
 
@@ -277,6 +279,19 @@ export default function RegisterUserPage() {
                                                 id="password-confirm-error"
                                             />
                                         </div>
+                                    </div>
+                                    <div className="mt-4 flex items-center space-x-2">
+                                        <Checkbox
+                                            id="send_credentials_email"
+                                            checked={data.send_credentials_email}
+                                            onCheckedChange={(checked) => setData('send_credentials_email', !!checked)}
+                                        />
+                                        <label
+                                            htmlFor="send_credentials_email"
+                                            className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                            Enviar credenciales por correo electrónico al usuario
+                                        </label>
                                     </div>
                                 </div>
 

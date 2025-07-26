@@ -1,3 +1,14 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import UserForm from '@/components/users/user-form';
@@ -5,8 +16,8 @@ import useRolesManagement from '@/hooks/use-roles-management';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SelectItem, type User } from '@/types';
 import { doesRoleRequireArea } from '@/utils/user-form-helpers';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, AlertTriangle, Check, LoaderCircle } from 'lucide-react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { AlertCircle, AlertTriangle, Check, LoaderCircle, Mail, Trash2 } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -112,6 +123,32 @@ export default function EditUserPage() {
                 toast.error('Hubo un error al editar el usuario', {
                     description: 'Por favor, revisa los campos del formulario e inténtalo de nuevo.',
                 });
+            },
+        });
+    };
+
+    const handleSendResetLink = () => {
+        router.post(
+            route('users.send-reset-link', user.id),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Enlace de restablecimiento de contraseña enviado correctamente.');
+                },
+                onError: () => {
+                    toast.error('Error al enviar el enlace de restablecimiento de contraseña.');
+                },
+            },
+        );
+    };
+
+    const handleDeleteUser = () => {
+        router.delete(route('users.destroy', user.id), {
+            onSuccess: () => {
+                toast.success('Usuario eliminado correctamente.');
+            },
+            onError: () => {
+                toast.error('Error al eliminar el usuario.');
             },
         });
     };
@@ -239,6 +276,52 @@ export default function EditUserPage() {
                                             </p>
                                         </div>
                                     )}
+                                </div>
+
+                                {/* Acciones adicionales */}
+                                <div className="space-y-4 rounded-lg border border-dashed border-border p-4">
+                                    <h4 className="text-base font-semibold text-foreground">Acciones adicionales</h4>
+                                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium">Enviar enlace de restablecimiento</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Se enviará un correo al usuario con un enlace para que pueda cambiar su contraseña.
+                                            </p>
+                                        </div>
+                                        <Button type="button" variant="outline" size="sm" onClick={handleSendResetLink} disabled={processing}>
+                                            <Mail className="size-4" />
+                                            Enviar enlace
+                                        </Button>
+                                    </div>
+                                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-red-600 dark:text-red-400">Eliminar usuario</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Esta acción no se puede deshacer. El usuario y sus datos asociados se eliminarán permanentemente.
+                                            </p>
+                                        </div>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button type="button" variant="destructive" size="sm" disabled={processing}>
+                                                    <Trash2 className="size-4" />
+                                                    Eliminar
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>¿Estás seguro de que quieres eliminar a este usuario?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Esta acción es permanente y no se puede deshacer. Se eliminarán todos los datos asociados a
+                                                        este usuario.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={handleDeleteUser}>Sí, eliminar usuario</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 </div>
 
                                 {/* Botones de acción */}
