@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { MultiSelectColumnFilter } from '@/components/ui/multi-select-column-filter';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
 import { BadgeCheckIcon, Clock } from 'lucide-react';
@@ -73,23 +74,48 @@ export function getUserColumns(
     // Roles que requieren área
     const rolesRequiringArea = ['coordinador-area', 'mentor', 'instructor', 'calificador'];
 
-    const RoleBadge = ({ role, isPrimary = false, hasExpiry = false }: { role: Role; isPrimary?: boolean; hasExpiry?: boolean }) => {
-        if (isPrimary) {
-            return (
-                <Badge variant="secondary" className="bg-blue-500 text-white dark:bg-blue-600">
-                    <BadgeCheckIcon />
-                    {role.description || role.name}
-                </Badge>
-            );
-        }
+    // Función para formatear fecha de expiración
+    const formatExpiryDate = (expiresAt: string | null): string => {
+        if (!expiresAt) return '';
 
-        // Roles secundarios
-        return (
-            <Badge className="bg-gray-600 text-white dark:bg-gray-300 dark:text-gray-800">
+        try {
+            const date = new Date(expiresAt);
+            return date.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            });
+        } catch {
+            return expiresAt;
+        }
+    };
+
+    const RoleBadge = ({ role, isPrimary = false, hasExpiry = false }: { role: Role; isPrimary?: boolean; hasExpiry?: boolean }) => {
+        const badgeContent = (
+            <Badge
+                variant={isPrimary ? 'secondary' : 'default'}
+                className={isPrimary ? 'bg-blue-500 text-white dark:bg-blue-600' : 'bg-gray-600 text-white dark:bg-gray-300 dark:text-gray-800'}
+            >
+                {isPrimary && <BadgeCheckIcon className="mr-1 size-4" />}
                 {hasExpiry && <Clock className="mr-1 size-4" />}
                 {role.description || role.name}
             </Badge>
         );
+
+        // Si el rol tiene fecha de expiración, envolver en tooltip
+        if (hasExpiry && role.pivot?.expires_at) {
+            return (
+                <Tooltip>
+                    <TooltipTrigger asChild>{badgeContent}</TooltipTrigger>
+                    <TooltipContent>
+                        <p>Este rol expira el {formatExpiryDate(role.pivot.expires_at)}</p>
+                    </TooltipContent>
+                </Tooltip>
+            );
+        }
+
+        // Si no tiene expiración, devolver el badge sin tooltip
+        return badgeContent;
     };
 
     return [
@@ -303,8 +329,7 @@ export function getUserColumns(
             },
             filterFn: (row, id, filterValue) => {
                 if (!filterValue || filterValue.length === 0) return true;
-                const originalStatus = row.original.status; // 'active' or 'inactive'
-                // Traducir los valores del filtro (ej. ['Activo']) de vuelta a los valores originales (ej. ['active'])
+                const originalStatus = row.original.status;
                 const translatedFilterValues = (filterValue as string[]).map((fv) => statusMap[fv] || fv);
                 return translatedFilterValues.includes(originalStatus);
             },
