@@ -173,7 +173,7 @@ export default function DatosPersonales() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="max-w-xs">Debes tener entre 10 y 25 años para participar en el programa</p>
+                      <p className="max-w-xs">Selecciona la fecha de nacimiento del aspirante</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -208,7 +208,7 @@ export default function DatosPersonales() {
                   />
                 </PopoverContent>
               </Popover>
-              <FormDescription>Debes tener entre 10 y 25 años para participar</FormDescription>
+              <FormDescription>Debes seleccionar una fecha de nacimiento</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -242,7 +242,7 @@ export default function DatosPersonales() {
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between">
-                <FormLabel>Correo electrónico</FormLabel>
+                <FormLabel>Correo electrónico - Este correo será utilizado para acceder a la plataforma</FormLabel>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -252,7 +252,7 @@ export default function DatosPersonales() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="max-w-xs">Recibirás notificaciones importantes en este correo</p>
+                      <p className="max-w-xs">Este correo sera utilizado para crear tu cuenta y gestionar tu acceso a la plataforma. Recibirás notificaciones importantes en este correo.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -266,20 +266,6 @@ export default function DatosPersonales() {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="telefono_estudiante"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Teléfono de contacto</FormLabel>
-              <FormControl>
-                <Input type="tel" placeholder="Ej. 12345678" {...field} />
-              </FormControl>
-              <FormDescription>Ingresa un número de teléfono donde podamos contactarte</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </CardContent>
     </Card>
   )

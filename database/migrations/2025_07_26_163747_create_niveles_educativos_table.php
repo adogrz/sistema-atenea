@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sedes', function (Blueprint $table) {
-            $table->string('name')->primary();
-            $table->string('description');
+        Schema::create('niveles_educativos', function (Blueprint $table) {
+            $table->string('codigo')->primary();
+            $table->string('descripcion');
+            $table->string('nivel');
+            $table->string('id_sede');
+            $table->foreign('id_sede')->references('name')->on('sedes')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -23,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sedes');
+        Schema::dropIfExists('nivel_educativo');
     }
 };

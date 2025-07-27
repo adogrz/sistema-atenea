@@ -25,13 +25,14 @@ return new class extends Migration
             $table->string('centro_educativo');
             $table->foreign('centro_educativo')->references('codigo')->on('centros_educativos');
             $table->string('nie')->unique();
-            $table->string('telefono_estudiante');
             $table->string('telefono_casa')->nullable();
             $table->string('email')->unique();
             $table->string('direccion');
             $table->string('distrito');
             $table->foreign('distrito')->references('id')->on('distritos');
             $table->string('nivel_educativo');
+            $table->foreign('nivel_educativo')->references('codigo')->on('niveles_educativos');
+            $table->string('nivel')->default('-1');
             $table->softDeletes();
         });
     }
