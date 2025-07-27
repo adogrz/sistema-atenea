@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PasswordInput } from '@/components/ui/password-input';
+import PasswordStrengthInput from '@/components/ui/password-strength-input';
 import UserForm from '@/components/users/user-form';
 import { usePasswordGenerator } from '@/hooks/use-password-generator';
 import useRolesManagement from '@/hooks/use-roles-management';
@@ -46,6 +47,22 @@ export default function RegisterUserPage() {
 
     const requiresArea = () => doesRoleRequireArea(data.roles as Array<{ name: string; is_primary: boolean; expires_at?: string }>);
 
+    // Función para validar fortaleza de contraseña
+    const checkPasswordStrength = (pass: string) => {
+        const requirements = [
+            { regex: /.{8,}/, text: 'Al menos 8 caracteres' },
+            { regex: /[0-9]/, text: 'Al menos 1 número' },
+            { regex: /[a-z]/, text: 'Al menos 1 letra minúscula' },
+            { regex: /[A-Z]/, text: 'Al menos 1 letra mayúscula' },
+        ];
+
+        return requirements.filter((req) => req.regex.test(pass)).length;
+    };
+
+    const isPasswordStrong = (password: string) => {
+        return checkPasswordStrength(password) >= 4;
+    };
+
     useEffect(() => {
         const newErrors: Record<string, string> = {};
         const email = data.email as string;
@@ -55,12 +72,13 @@ export default function RegisterUserPage() {
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             newErrors.email = 'Por favor ingresa un email válido';
         }
-        if (password && password.length < 8) {
-            newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
-        }
+
+        // Removemos la validación básica de longitud ya que el componente PasswordStrengthInput se encarga de eso
+        // Solo validamos que las contraseñas coincidan
         if (passwordConfirmation && password !== passwordConfirmation) {
             newErrors.password_confirmation = 'Las contraseñas no coinciden';
         }
+
         setValidationErrors(newErrors);
     }, [data.email, data.password, data.password_confirmation]);
 
@@ -120,6 +138,7 @@ export default function RegisterUserPage() {
             data.name &&
             data.email &&
             data.password &&
+            isPasswordStrong(data.password) && // Verificamos que la contraseña sea fuerte
             data.password_confirmation &&
             roles.length > 0 &&
             data.sede_name &&
@@ -165,8 +184,13 @@ export default function RegisterUserPage() {
                 };
             case 'password':
                 return {
-                    isValid: !!data.password && !!data.password_confirmation && !validationErrors.password && !validationErrors.password_confirmation,
-                    value: data.password ? 'Configurada' : 'Sin configurar',
+                    isValid:
+                        !!data.password && !!data.password_confirmation && isPasswordStrong(data.password) && !validationErrors.password_confirmation,
+                    value: data.password
+                        ? isPasswordStrong(data.password)
+                            ? 'Contraseña fuerte configurada'
+                            : 'Contraseña débil'
+                        : 'Sin configurar',
                     isEmpty: !data.password || !data.password_confirmation,
                 };
             default:
@@ -242,21 +266,21 @@ export default function RegisterUserPage() {
                                         </Button>
                                     </div>
                                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                        {/* Campo de contraseña con validación de fortaleza */}
                                         <div className="space-y-2">
-                                            <Label htmlFor="password">Contraseña</Label>
-                                            <PasswordInput
-                                                id="password"
-                                                value={data.password}
-                                                onChange={(e) => setData('password', e.target.value)}
-                                                disabled={processing}
-                                                placeholder="••••••••"
-                                                autoComplete="new-password"
-                                                required
-                                                aria-invalid={!!(errors.password || validationErrors.password)}
-                                                aria-describedby={errors.password || validationErrors.password ? 'password-error' : undefined}
+                                            <PasswordStrengthInput
+                                                field={{
+                                                    value: data.password,
+                                                    onChange: (e) => setData('password', e.target.value),
+                                                    onBlur: () => {},
+                                                    name: 'password',
+                                                    ref: () => {},
+                                                }}
                                             />
-                                            <InputError message={errors.password || validationErrors.password} id="password-error" />
+                                            <InputError message={errors.password} id="password-error" />
                                         </div>
+
+                                        {/* Campo de confirmación de contraseña */}
                                         <div className="space-y-2">
                                             <Label htmlFor="password_confirmation">Confirmar contraseña</Label>
                                             <PasswordInput
