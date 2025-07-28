@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             SedeSeeder::class,
             AreaSeeder::class,
             EssentialUserSeeder::class,
+            OlimpiadaSeeder::class,
         ]);
     }
 }
