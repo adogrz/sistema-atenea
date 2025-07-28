@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\User;
 
-class AdmisionVerificacionCorreo extends Notification
+class AdmisionVerificacionCorreo extends Notification implements ShouldQueue
 {
     use Queueable;
     private $usuario;
@@ -17,9 +17,8 @@ class AdmisionVerificacionCorreo extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct(User $usuario, $linkVerificacion) {
-        $this->usuario = $usuario;
-        $this->linkVerificacion = $linkVerificacion;
+    public function __construct() {
+       
     }
 
     /**
@@ -38,9 +37,9 @@ class AdmisionVerificacionCorreo extends Notification
     public function toMail(object $notifiable): MailMessage {
         return (new MailMessage)
             ->subject('Confirma tu correo')
-            ->greeting('Hola ' . $this->usuario->name)
+            ->greeting('Hola ' . $notifiable->name)
             ->line('Gracias por registrarte. Por favor confirma tu correo.')
-            ->action('Verificar ahora', $this->linkVerificacion)
+            ->action('Verificar ahora', $notifiable->linkVerificacion)
             ->line('Si no creaste esta cuenta, ignora este mensaje.');
     }
 

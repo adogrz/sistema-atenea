@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('nivel');
             $table->string('id_sede');
             $table->foreign('id_sede')->references('name')->on('sedes')->onDelete('cascade');
-            $table->timestamps();
         });
     }
 
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('nivel_educativo');
+        Schema::dropIfExists('niveles_educativos');
     }
 };

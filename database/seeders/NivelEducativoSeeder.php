@@ -13,15 +13,15 @@ class NivelEducativoSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('nivel_educativo')->insert([
-            ['id_sede' => 'central', 'nivel' => 'Primer nivel', 'descripcion' => 'Cuarto Grado', 'codigo' => 'n1'],
-            ['id_sede' => 'central', 'nivel' => 'Segundo nivel', 'descripcion' => 'Quinto Grado', 'codigo' => 'n2'],
-            ['id_sede' => 'central', 'nivel' => 'Tercer nivel', 'descripcion' => 'Sexto Grado', 'codigo' => 'n3'],
-            ['id_sede' => 'occidental', 'nivel' => 'Cuarto nivel', 'descripcion' => 'Séptimo Grado', 'codigo' => 'n4'],
-            ['id_sede' => 'occidental', 'nivel' => 'Quinto nivel', 'descripcion' => 'Octavo Grado', 'codigo' => 'n5'],
-            ['id_sede' => 'oriental', 'nivel' => 'Sexto nivel', 'descripcion' => 'Noveno Grado', 'codigo' => 'n6'],
-            ['id_sede' => 'oriental', 'nivel' => 'Septimo nivel', 'descripcion' => 'Primero de Bachillerato', 'codigo' => 'n7'],
-            ['id_sede' => 'oriental', 'nivel' => 'Octavo nivel', 'descripcion' => 'Segundo de Bachillerato', 'codigo' => 'n8'],
+        DB::table('niveles_educativos')->insert([
+            ['id_sede' => 'central', 'nivel' => 'Nivel 0', 'descripcion' => 'Cuarto Grado', 'codigo' => 'n0'],
+            ['id_sede' => 'central', 'nivel' => 'Nivel 1', 'descripcion' => 'Quinto Grado', 'codigo' => 'n1'],
+            ['id_sede' => 'central', 'nivel' => 'Nivel 2', 'descripcion' => 'Sexto Grado', 'codigo' => 'n2'],
+            ['id_sede' => 'occidental', 'nivel' => 'Nivel 3', 'descripcion' => 'Séptimo Grado', 'codigo' => 'n3'],
+            ['id_sede' => 'occidental', 'nivel' => 'Nivel 4', 'descripcion' => 'Octavo Grado', 'codigo' => 'n4'],
+            ['id_sede' => 'oriental', 'nivel' => 'Nivel 5', 'descripcion' => 'Noveno Grado', 'codigo' => 'n5'],
+            ['id_sede' => 'oriental', 'nivel' => 'Nivel 6', 'descripcion' => 'Primero de Bachillerato', 'codigo' => 'n6'],
+            ['id_sede' => 'oriental', 'nivel' => 'Nivel 7', 'descripcion' => 'Segundo de Bachillerato', 'codigo' => 'n7'],
         ]);
     }
 }

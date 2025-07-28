@@ -124,6 +124,7 @@ export default function DatosPersonales() {
               )}
             />
 
+            {/* Segundo apellido */}
             <FormField
               control={form.control}
               name="segundo_apellido"
@@ -157,13 +158,14 @@ export default function DatosPersonales() {
           </div>
         </div>
 
+        {/* Fecha de nacimiento */}
         <FormField
           control={form.control}
           name="fecha_nacimiento"
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <div className="flex items-center justify-between">
-                <FormLabel>Fecha de nacimiento</FormLabel>
+                <FormLabel>Selecciona una fecha de nacimiento</FormLabel>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -178,42 +180,26 @@ export default function DatosPersonales() {
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                    >
-                      {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <DatePicker
-                    placeholder="Fecha de nacimiento"
-                    width="w-[160px]"
-                    disabled={(date) => date < new Date()}
-                    dateFormat={(date) =>
-                      date.toLocaleDateString('es-ES', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })
-                    }
-                    onChange={(date) => {
-                      field.value = date;
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+              <DatePicker
+                value={field.value ? new Date(field.value) : undefined}
+                onChange={(date) => field.onChange(date ? date.toISOString().slice(0, 10) : "")}
+                placeholder="Fecha de nacimiento"
+                disableDates={(date) => date > new Date()}
+                format={(date) =>
+                  date.toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })
+                }
+              />
               <FormDescription>Debes seleccionar una fecha de nacimiento</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        {/* Sexo */}
         <FormField
           control={form.control}
           name="sexo"
@@ -236,6 +222,7 @@ export default function DatosPersonales() {
           )}
         />
 
+        {/* Email */}
         <FormField
           control={form.control}
           name="email"
@@ -260,7 +247,7 @@ export default function DatosPersonales() {
               <FormControl>
                 <Input type="email" placeholder="tu.correo@ejemplo.com" {...field} />
               </FormControl>
-              <FormDescription>Recibirás un correo de confirmación en esta dirección</FormDescription>
+              <FormDescription>Recibirás un correo de confirmación en esta correo electrónico</FormDescription>
               <FormMessage />
             </FormItem>
           )}

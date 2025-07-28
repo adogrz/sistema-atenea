@@ -5,16 +5,9 @@ use Illuminate\Support\Facades\Route;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Collection;
 
-use App\Models\Departamento;
-use App\Models\Municipio;
-use App\Models\Distrito;
-use App\Models\CentroEducativo;
-
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
-
-
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.

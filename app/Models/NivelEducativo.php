@@ -4,14 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CentroEducativo extends Model
+class NivelEducativo extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'centros_educativos';
+    protected $table = 'niveles_educativos';
 
     /**
      * The attributes that are mass assignable.
@@ -20,12 +20,8 @@ class CentroEducativo extends Model
      */
     protected $fillable = [
         'codigo',
-        'nombre',
-        'departamento',
-        'distrito',
-        'sector',
-        'zona',
-        'direccion',
-        'internacional',
-    ];
+        'descripcion',
+        'nivel',
+        'id_sede',
+    ]; 
 }

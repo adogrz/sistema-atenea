@@ -9,3 +9,10 @@ export interface CentroEducativo {
     direccion: string;
     internacional: string;
 }
+
+export interface NivelEducativo {
+    codigo: string;
+    descripcion: string;
+    nivel: string;
+    id_sede: string;
+}

@@ -9,13 +9,18 @@ use App\Models\Departamento;
 use App\Models\Municipio;
 use App\Models\Distrito;
 use App\Models\CentroEducativo;
+use App\Models\NivelEducativo;
+
 use App\Notifications\UserCredentialsNotification;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Collection;
 
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AdmisionController extends Controller
 {
@@ -25,7 +30,7 @@ class AdmisionController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        dump($request);
+        //dump($request);
         $validated = $request->validate([
 
             // Estudiante
@@ -38,7 +43,6 @@ class AdmisionController extends Controller
             'centro_educativo' => 'required|exists:centros_educativos,nombre',
             'codigo' => 'required|exists:centros_educativos,codigo',
             'nie' => 'required|string|unique:estudiantes,nie',
-            'telefono_estudiante' => 'required|string|size:8',
             'telefono_casa' => 'nullable|string|size:8',
             'email' => 'required|email|unique:estudiantes,email',
             'direccion' => 'required|string|max:255',
@@ -53,7 +57,6 @@ class AdmisionController extends Controller
             'apellidos_responsable_1' => 'required|string|max:100',
             'email_responsable_1' => 'required|email',
             'telefono_responsable_1' => 'required|string|size:8',
-            'telefono_opcional_1' => 'required|string|size:8',
             'tipo_parentesco_1' => 'required|in:Madre,Padre,Abuelo,Tio,Tutor legal',
 
             // Responsable 2 (opcional)
@@ -62,23 +65,27 @@ class AdmisionController extends Controller
             'apellidos_responsable_2' => 'nullable|string|max:100',
             'email_responsable_2' => 'nullable|email',
             'telefono_responsable_2' => 'nullable|string|size:8',
-            'telefono_opcional_2' => 'nullable|string|size:8',
             'tipo_parentesco_2' => 'nullable|in:Madre,Padre,Abuelo,Tio,Tutor legal',
         ]);
+
+        // Creación de passwordTemporal
+        $passwordTemporal = bin2hex(random_bytes(6)); // genera 12 caracteres hexadecimales
+
+        // Obtención de nivel educativo
+        $nivelEducativo = NivelEducativo::where('codigo', $validated['nivel_educativo'])->first();
 
         // Buscar o crear usuario
         $usuario = User::firstOrCreate(
             ['email' => $validated['email']],          // condiciones de búsqueda
             [                                           // atributos para creación
                 'name' => $validated['primer_nombre'] . ' ' . $validated['primer_apellido'],
-                'password' => Hash::make($request->password),
+                'password' => Hash::make($passwordTemporal),
                 'role_name' => 'none',
-                'sede_name' => 'none',
+                'sede_name' => $nivelEducativo->id_sede,
             ]
         );
 
         // Generación de codigo temporal
-        $fecha = now()->format('dm'); // Ej. '1407' para 14 de julio
         $codigoTemporal = 'ASP-' . $validated['primer_apellido'][0] . '' . $validated['segundo_apellido'][0] . '' . substr($validated['nie'], -3) . '-' . strtoupper(substr(uniqid(), -3)); // Genera un identificador unico temporal
 
         // Guardar estudiante
@@ -93,7 +100,6 @@ class AdmisionController extends Controller
             'fecha_nacimiento' => $validated['fecha_nacimiento'],
             'centro_educativo' => $validated['codigo'], // ← aquí se guarda el valor de 'codigo'
             'nie' => $validated['nie'],
-            'telefono_estudiante' => $validated['telefono_estudiante'],
             'telefono_casa' => $validated['telefono_casa'],
             'email' => $validated['email'],
             'direccion' => $validated['direccion'],
@@ -132,8 +138,7 @@ class AdmisionController extends Controller
             ]);
         }
 
-        $passwordTemporal = '';
-        $usuario->notify(new UserCredentialsNotification($usuario, $passwordTemporal));
+        $usuario->notify(new UserCredentialsNotification($passwordTemporal));
 
         return response()->json([
             'message' => 'Solicitud registrada exitosamente',
@@ -142,11 +147,10 @@ class AdmisionController extends Controller
         ], 201);
     }
 
-
     /*
      *  Muestra el formulario de admisión
      */
-    public function create()
+    public function create(): Response
     {
         $departamentos = Departamento::select('id', 'nombre_departamento')->get()
             ->map(fn($d) => [
@@ -175,6 +179,7 @@ class AdmisionController extends Controller
             'municipiosPorDepartamento' => $municipiosPorDepartamento,
             'distritosPorMunicipio' => $distritosPorMunicipio,
             'centrosEducativos' => CentroEducativo::all(),
+            'nivelesEducativos' => NivelEducativo::all(),
         ]);
     }
 }
