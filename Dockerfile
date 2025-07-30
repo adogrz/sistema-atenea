@@ -87,8 +87,8 @@ RUN mkdir -p storage/logs storage/framework/{cache,sessions,views} \
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/up || exit 1
+#HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+#    CMD curl -f http://localhost:8000/up || exit 1
 
 # Dokploy will manage the entrypoint and process.
 # We set the default command to run Nginx Unit directly.
