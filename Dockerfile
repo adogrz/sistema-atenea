@@ -25,6 +25,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /var/www/html
 
+RUN git config --global --add safe.directory /var/www/html
+
 # Instalar dependencias de Composer
 COPY composer.json composer.lock ./
 RUN composer install --no-interaction --no-plugins --no-scripts --no-dev --prefer-dist
