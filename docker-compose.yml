@@ -8,8 +8,8 @@ services:
     ports:
       - '8000:8000'
     depends_on:
-      db:
-        condition: service_healthy
+      configurator:
+        condition: service_completed_successfully
     env_file:
       - .env.docker
     networks:
@@ -30,24 +30,34 @@ services:
     volumes:
       - atenea-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 5s
       timeout: 5s
       retries: 10
     networks:
       - atenea-net
 
-  migrator:
+  configurator:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: atenea-migrator
+    container_name: atenea-configurator
     depends_on:
       db:
         condition: service_healthy
     env_file:
       - .env.docker
-    command: ["php", "artisan", "migrate", "--force"]
+    command:
+      - /bin/sh
+      - -c
+      - |
+        php artisan config:clear
+        php artisan route:clear
+        php artisan view:clear
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+        php artisan migrate --force
     networks:
       - atenea-net
 
