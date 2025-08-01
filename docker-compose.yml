@@ -3,14 +3,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: atenea-app
     restart: unless-stopped
     ports:
       - '8000:8000'
     depends_on:
       configurator:
         condition: service_completed_successfully
-    
     networks:
       - atenea-net
     healthcheck:
@@ -22,9 +20,7 @@ services:
 
   db:
     image: postgres:15-alpine
-    container_name: atenea-db
     restart: unless-stopped
-    
     volumes:
       - atenea-db-data:/var/lib/postgresql/data
     healthcheck:
@@ -39,11 +35,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    
     depends_on:
       db:
         condition: service_healthy
-    
     command:
       - /bin/sh
       - -c
