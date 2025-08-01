@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: atenea-configurator
+    
     depends_on:
       db:
         condition: service_healthy
