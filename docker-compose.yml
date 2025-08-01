@@ -10,8 +10,7 @@ services:
     depends_on:
       configurator:
         condition: service_completed_successfully
-    env_file:
-      - .env.docker
+    
     networks:
       - atenea-net
     healthcheck:
@@ -25,8 +24,7 @@ services:
     image: postgres:15-alpine
     container_name: atenea-db
     restart: unless-stopped
-    env_file:
-      - .env.docker
+    
     volumes:
       - atenea-db-data:/var/lib/postgresql/data
     healthcheck:
@@ -45,8 +43,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    env_file:
-      - .env.docker
+    
     command:
       - /bin/sh
       - -c
