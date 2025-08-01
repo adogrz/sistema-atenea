@@ -36,7 +36,10 @@ COPY . .
 RUN npm run build
 
 # Optimizar Laravel para producción
-RUN composer install --optimize-autoloader --no-dev --prefer-dist
+RUN composer install --optimize-autoloader --no-dev --prefer-dist \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
 # ---
 
