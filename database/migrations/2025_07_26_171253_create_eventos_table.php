@@ -16,9 +16,14 @@ return new class extends Migration
             $table->string('clasificacion');
             $table->text('descripcion');
             $table->date('fecha_inicio');
-            $table->time('hora_incio');
+            $table->time('hora_inicio');
             $table->date('fecha_fin');
             $table->time('hora_fin');
+            $table->string('nombre')->nullable()->after('descripcion');
+            $table->string('tipo')->nullable()->after('nombre');
+            $table->string('ubicacion')->nullable()->after('tipo');
+            $table->enum('estado', ['activo', 'inactivo', 'completado'])->default('activo')->after('ubicacion');
+
             $table->timestamps();
         });
     }
