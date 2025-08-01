@@ -71,7 +71,7 @@ COPY --from=builder /var/www/html/bootstrap/cache ./bootstrap/cache
 COPY --from=builder /var/www/html .
 
 # Crear directorios necesarios y establecer permisos
-RUN mkdir -p storage/logs storage/framework/{cache,sessions,views}     && chown -R unit:unit storage bootstrap/cache     && chmod -R 775 storage bootstrap/cache
+RUN mkdir -p storage/logs storage/framework/{cache,sessions,views}     && chown -R unit:unit storage bootstrap/cache public     && chmod -R 775 storage bootstrap/cache public
 
 # Copiar la configuración de Nginx Unit
 COPY unit.json /docker-entrypoint.d/unit.json
