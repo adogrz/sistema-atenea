@@ -3,18 +3,18 @@
 [phases.setup]
 # Asegurar que se instalen TODOS los paquetes necesarios
 nixPkgs = [
-    # PHP y extensiones
-    "php82",
-    "php82Extensions.curl",
-    "php82Extensions.mbstring",
-    "php82Extensions.xml",
-    "php82Extensions.pdo",
-    "php82Extensions.pdo_mysql",
-    "php82Extensions.bcmath",
-    "php82Extensions.gd",
-    "php82Extensions.zip",
-    "php82Extensions.opcache",
-    "php82Packages.composer",
+    # PHP y extensiones (PHP 8.3)
+    "php83",
+    "php83Extensions.curl",
+    "php83Extensions.mbstring",
+    "php83Extensions.xml",
+    "php83Extensions.pdo",
+    "php83Extensions.pdo_mysql",
+    "php83Extensions.bcmath",
+    "php83Extensions.gd",
+    "php83Extensions.zip",
+    "php83Extensions.opcache",
+    "php83Packages.composer",
 
     # Node.js y npm (CRÍTICO - esto faltaba)
     "nodejs_20",
@@ -72,7 +72,7 @@ cmd = "/assets/start.sh"
 # Variables de entorno importantes
 [variables]
 NIXPACKS_NODE_VERSION = "20"
-PHP_VERSION = "8.2"
+PHP_VERSION = "8.3"
 
 # Archivos estáticos necesarios
 [staticAssets]
