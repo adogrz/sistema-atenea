@@ -3,11 +3,11 @@
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Spatie\Activitylog\Models\Activity;
-use Illuminate\Support\Collection;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
+use App\Http\Controllers\AcademicoController;
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -43,8 +43,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::get('users/create', [UserController::class, 'create'])->name('users.create')->middleware('permission:users:create');
         Route::post('users', [UserController::class, 'store'])->name('users.store')->middleware('permission:users:create');
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('permission:users:edit');
-        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
-        Route::patch('users/{user}', [UserController::class, 'update'])->middleware('permission:users:edit');
+        Route::match(['PUT', 'PATCH'], 'users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users:delete');
     });
 
@@ -56,6 +55,9 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     Route::get('/users/{user}/debug', [UserController::class, 'debug'])
         ->name('users.debug')
         ->middleware('permission:users:view-all');
+
+    // Ruta para el dashboard académico
+    Route::get('/dashboard/academico', AcademicoController::class)->name('dashboard.academico');
 });
 
 
@@ -74,67 +76,28 @@ Route::middleware(['web'])->group(function () {
     Route::post('/admision', [AdmisionController::class, 'store'])->name('admision.store');
 });
 
-Route::get('/dashboard/academico', function () {
-    // Datos de ejemplo para mostrar en la vista
-    $sampleEvents = [
-        [
-            'id' => 1,
-            'name' => 'Registro de Aspirantes 2025',
-            'type' => 'registro-aspirantes',
-            'start_date' => '2025-01-15',
-            'end_date' => '2025-01-30',
-            'start_time' => '09:00',
-            'end_time' => '17:00',
-            'description' => 'Periodo de registro para nuevos aspirantes',
-            'location' => 'Campus Principal',
-            'status' => 'activo',
-            'created_at' => '2025-01-01 10:00:00',
-        ],
-        [
-            'id' => 2,
-            'name' => 'Academia Sabatina',
-            'type' => 'academia-sabatina',
-            'start_date' => '2025-02-01',
-            'end_date' => '2025-02-28',
-            'start_time' => '08:00',
-            'end_time' => '12:00',
-            'description' => 'Clases de fin de semana',
-            'location' => 'Aula 101',
-            'status' => 'activo',
-            'created_at' => '2025-01-02 14:30:00',
-        ],
-        [
-            'id' => 3,
-            'name' => 'Examen Final FDTC',
-            'type' => 'examen',
-            'start_date' => '2025-03-15',
-            'end_date' => '2025-03-15',
-            'start_time' => '10:00',
-            'end_time' => '12:00',
-            'description' => 'Examen final del programa FDTC',
-            'location' => 'Auditorio Principal',
-            'status' => 'inactivo',
-            'created_at' => '2025-01-03 16:45:00',
-        ],
-        [
-            'id' => 4,
-            'name' => 'Graduación 2025',
-            'type' => 'graduacion',
-            'start_date' => '2025-04-20',
-            'end_date' => '2025-04-20',
-            'start_time' => '18:00',
-            'end_time' => '21:00',
-            'description' => 'Ceremonia de graduación',
-            'location' => 'Teatro Municipal',
-            'status' => 'completado',
-            'created_at' => '2025-01-04 12:15:00',
-        ],
-    ];
+Route::get('/up', function () {
+    return response('OK', 200);
+});
 
-    return Inertia::render('dashboard-academico', [
-        'events' => $sampleEvents,
-    ]);
-})->name('dashboard_academico');
+Route::get('/health', function () {
+    try {
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+        return response()->json([
+            'status' => 'ok',
+            'services' => [
+                'database' => 'ok',
+            ],
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'services' => [
+                'database' => 'error',
+            ],
+        ], 503);
+    }
+});
 
-require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+require __DIR__ . '/settings.php';
