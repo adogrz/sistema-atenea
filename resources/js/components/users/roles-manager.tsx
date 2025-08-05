@@ -106,15 +106,8 @@ export default function RolesManager({
                                             value={role.expires_at ? parseLocalDate(role.expires_at) : undefined}
                                             onChange={(date) => onSetExpiryDate(index, date)}
                                             placeholder="Fecha expiración"
-                                            width="w-[160px]"
-                                            disabled={(date) => date < new Date()}
-                                            dateFormat={(date) =>
-                                                date.toLocaleDateString('es-ES', {
-                                                    day: '2-digit',
-                                                    month: '2-digit',
-                                                    year: 'numeric',
-                                                })
-                                            }
+                                            disableDates={(date) => date < new Date()}
+                                            captionLayout="label"
                                         />
                                     )}
                                     <Button

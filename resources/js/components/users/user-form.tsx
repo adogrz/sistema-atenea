@@ -4,7 +4,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch'; // Importar Switch
+import { Switch } from '@/components/ui/switch';
 import RolesManager from '@/components/users/roles-manager';
 import { type SelectItem as SelectItemType } from '@/types';
 import { doesRoleRequireArea } from '@/utils/user-form-helpers';
@@ -120,12 +120,12 @@ export default function UserForm({
                                 </div>
                                 <InputError message={errors.status} id="status-error" />
                                 <div
-                                    className={`transition-all duration-300 overflow-hidden ${data.status === 'inactive' ? 'max-h-[24px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 translate-y-1'}`}
+                                    className={`overflow-hidden transition-all duration-300 ${data.status === 'inactive' ? 'max-h-[24px] translate-y-0 opacity-100' : 'max-h-0 translate-y-1 opacity-0'}`}
                                 >
                                     <p className="mt-1 flex items-center gap-2 text-sm text-yellow-600 dark:text-yellow-400">
-                                    <AlertTriangle className="h-4 w-4" />
-                                    Esta cuenta está deshabilitada. El usuario no podrá iniciar sesión.
-                                </p>
+                                        <AlertTriangle className="h-4 w-4" />
+                                        Esta cuenta está deshabilitada. El usuario no podrá iniciar sesión.
+                                    </p>
                                 </div>
                             </div>
                         </div>

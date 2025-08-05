@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Notifications\UserCredentialsNotification;
 use App\Models\Area;
 use App\Models\Sede;
 use App\Models\User;
@@ -154,8 +155,9 @@ class UserController extends Controller
             'roles' => 'required|array|min:1',
             'roles.*.name' => 'required|string|exists:roles,name',
             'roles.*.is_primary' => 'boolean',
-            'roles.*.expires_at' => 'nullable|date', // <-- Añadir esta validación
+            'roles.*.expires_at' => 'nullable|date',
             'area_name' => 'nullable|string|exists:areas,name',
+            'send_credentials_email' => 'boolean',
         ]);
 
         // Verificar si los roles seleccionados requieren un área
@@ -200,6 +202,10 @@ class UserController extends Controller
             }
         }
 
+        if ($validated['send_credentials_email']) {
+            $user->notify(new UserCredentialsNotification($validated['password']));
+        }
+
         activity('usuarios')
             ->performedOn($user)
             ->causedBy($request->user())
@@ -216,7 +222,7 @@ class UserController extends Controller
     }
 
     /**
-     * Actualiza un usuario existente con gestión de roles temporales y áreas.
+     * Actualiza un usuario.
      */
     public function update(Request $request, User $user): RedirectResponse
     {
@@ -372,7 +378,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        return back()->with('success', 'Usuario eliminado correctamente.');
+        return redirect()->route('users.index')->with('success', 'Usuario eliminado correctamente.');
     }
 
     /**

@@ -9,8 +9,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure pgsql --with-pgsql=/usr/local/pgsql \
     && docker-php-ext-install -j$(nproc) pcntl opcache pdo pdo_pgsql pgsql intl zip gd exif ftp bcmath \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -29,17 +27,16 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --no-interaction --no-plugins --no-scripts --no-dev --prefer-dist
 
-# Instalar dependencias de NPM y construir assets
+# Instalar dependencias de NPM
 COPY package.json package-lock.json ./
 RUN npm ci
+
+# Copiar el resto de la aplicación y construir assets
 COPY . .
 RUN npm run build
 
 # Optimizar Laravel para producción
-RUN composer install --optimize-autoloader --no-dev --prefer-dist \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+RUN composer install --optimize-autoloader --no-dev --prefer-dist
 
 # ---
 
@@ -53,8 +50,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure pgsql --with-pgsql=/usr/local/pgsql \
     && docker-php-ext-install -j$(nproc) pdo pdo_pgsql pgsql intl zip gd exif ftp bcmath \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -68,14 +63,14 @@ RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/custom.ini \
 
 WORKDIR /var/www/html
 
-# Copiar los artefactos construidos desde la etapa \'builder\'
+# Copiar los artefactos construidos desde la etapa 'builder'
 COPY --from=builder /var/www/html/vendor ./vendor
 COPY --from=builder /var/www/html/public ./public
 COPY --from=builder /var/www/html/bootstrap/cache ./bootstrap/cache
+# Copiamos el resto de la aplicación
 COPY --from=builder /var/www/html .
 
 # Crear directorios necesarios y establecer permisos
-# No es necesario crear bootstrap/cache ya que se copia desde el builder
 RUN mkdir -p storage/logs storage/framework/{cache,sessions,views} \
     && chown -R unit:unit storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
