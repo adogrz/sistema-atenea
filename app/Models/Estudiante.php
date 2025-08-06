@@ -7,6 +7,18 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Estudiante extends Model
 {
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'estudiantes';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
         'codigo',
         'user_id',
@@ -24,6 +36,7 @@ class Estudiante extends Model
         'direccion',
         'distrito',
         'nivel_educativo',
+        'aprobado',
     ];
 
     public function responsable(): HasOne

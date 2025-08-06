@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Responsable extends Model
 {
 
-     /**
+    /**
      * The table associated with the model.
      *
      * @var string

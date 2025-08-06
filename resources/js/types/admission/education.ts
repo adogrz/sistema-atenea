@@ -11,7 +11,7 @@ export interface CentroEducativo {
 }
 
 export interface NivelEducativo {
-    codigo: string;
+    codigo: number;
     descripcion: string;
     nivel: string;
     id_sede: string;

@@ -204,7 +204,7 @@ export default function Educacion(
                 </FormControl>
                 <SelectContent>
                   {niveles_educativos.map((nivel) => (
-                    <SelectItem key={nivel.codigo} value={nivel.codigo}>
+                    <SelectItem key={nivel.codigo} value={nivel.codigo.toString()}>
                       {nivel.descripcion}
                     </SelectItem>
                   ))}

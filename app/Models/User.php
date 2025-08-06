@@ -58,6 +58,15 @@ class User extends Authenticatable
     }
 
     /**
+     * Devuelve el estudiante asociado al usuario
+     * @return Estudiante
+     */
+    public function estudiante()
+    {
+        return $this->hasOne(Estudiante::class, 'user_id', 'id');
+    }
+
+    /**
      * Devuelve la descripcion de la sede del usuario
      * @return BelongsTo
      */

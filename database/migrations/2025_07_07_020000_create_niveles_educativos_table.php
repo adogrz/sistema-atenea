@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('niveles_educativos', function (Blueprint $table) {
-            $table->string('codigo')->primary();
+            $table->id('codigo');
             $table->string('descripcion');
             $table->string('nivel');
             $table->string('id_sede');
