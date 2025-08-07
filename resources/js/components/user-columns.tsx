@@ -4,7 +4,7 @@ import { MultiSelectColumnFilter } from '@/components/ui/multi-select-column-fil
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
-import { BadgeCheckIcon, Clock } from 'lucide-react';
+import { Atom, BadgeCheckIcon, Clock, Dna, FlaskConical, Keyboard, Sigma, Telescope } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 export type User = {
@@ -34,6 +34,39 @@ export type User = {
 };
 
 type Role = User['roles'][number];
+
+const areasTypes = [
+    {
+        label: 'Matemática',
+        value: 'matematica',
+        icon: Sigma,
+    },
+    {
+        label: 'Biología',
+        value: 'biologia',
+        icon: Dna,
+    },
+    {
+        label: 'Física',
+        value: 'fisica',
+        icon: Atom,
+    },
+    {
+        label: 'Astronomía',
+        value: 'astronomia',
+        icon: Telescope,
+    },
+    {
+        label: 'Química',
+        value: 'quimica',
+        icon: FlaskConical,
+    },
+    {
+        label: 'Informática',
+        value: 'informatica',
+        icon: Keyboard,
+    },
+];
 
 export function getUserColumns(
     users: User[],
@@ -264,19 +297,24 @@ export function getUserColumns(
                     return <span className="text-xs text-muted-foreground">No requerido</span>;
                 }
 
-                if (!user.areas || user.areas.length === 0) {
+                if (!user.areas?.length) {
                     return <span className="text-xs text-orange-600">Sin asignar</span>;
                 }
 
                 const primaryArea = user.areas.find((a) => a.pivot?.is_primary);
+                const areaType = primaryArea ? areasTypes.find((type) => type.value === primaryArea.name) : null;
+
+                if (!primaryArea || !areaType) {
+                    return <span className="text-xs text-muted-foreground">No requerido</span>;
+                }
+
+                const { icon: AreaIcon } = areaType;
+                const areaName = primaryArea.description || primaryArea.name;
 
                 return (
-                    <div className="flex flex-wrap gap-1">
-                        {primaryArea && (
-                            <Badge variant="secondary" className="bg-indigo-500 text-white dark:bg-indigo-600">
-                                {primaryArea.description || primaryArea.name}
-                            </Badge>
-                        )}
+                    <div className="flex items-center gap-x-2">
+                        {AreaIcon && <AreaIcon size={16} className="text-muted-foreground" />}
+                        <span className="text-sm capitalize">{areaName}</span>
                     </div>
                 );
             },
@@ -314,12 +352,13 @@ export function getUserColumns(
                 const isActive = status.toLowerCase() === 'active';
 
                 return (
-                    <div className="flex justify-center">
+                    <div className="flex space-x-2">
                         <Badge
-                            variant={isActive ? 'default' : 'secondary'}
+                            variant="outline"
                             className={cn(
-                                'text-xs',
-                                isActive ? 'bg-green-500 text-white dark:bg-green-600' : 'bg-red-500 text-white dark:bg-red-600',
+                                isActive
+                                    ? 'border-teal-200 bg-teal-100/30 text-teal-900 dark:text-teal-200'
+                                    : 'border-red-200 bg-red-100/30 text-red-900 dark:text-red-200',
                             )}
                         >
                             {isActive ? 'Activo' : 'Inactivo'}
