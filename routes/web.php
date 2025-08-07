@@ -3,6 +3,7 @@
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Spatie\Activitylog\Models\Activity;
+use Illuminate\Support\Facades\DB;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
@@ -45,6 +46,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('permission:users:edit');
         Route::match(['PUT', 'PATCH'], 'users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users:delete');
+        Route::post('users/{id}/restore', [UserController::class, 'restore'])->name('users.restore')->middleware('permission:users:delete');
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
@@ -60,9 +62,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     Route::get('/dashboard/academico', AcademicoController::class)->name('dashboard.academico');
 });
 
-
 Route::middleware(['web'])->group(function () {
-
     // Página que contiene el formulario de carga
     Route::get('/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create');
 
@@ -82,7 +82,7 @@ Route::get('/up', function () {
 
 Route::get('/health', function () {
     try {
-        \Illuminate\Support\Facades\DB::connection()->getPdo();
+        DB::connection()->getPdo();
         return response()->json([
             'status' => 'ok',
             'services' => [

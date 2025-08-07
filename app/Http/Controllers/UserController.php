@@ -223,7 +223,9 @@ class UserController extends Controller
 
         $successMessage = [
             'title' => 'Usuario Creado',
-            'description' => 'El correo de credenciales ha sido encolado para su envío.',
+            'description' => $validated['send_credentials_email']
+                ? 'El correo de credenciales ha sido encolado para su envío.'
+                : 'El usuario ha sido creado correctamente.',
         ];
 
         return redirect()->route('users.index')->with('success', $successMessage);
@@ -386,7 +388,15 @@ class UserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'Usuario eliminado correctamente.');
+        return redirect()->route('users.index')->with('success', [
+            'title' => 'Usuario eliminado correctamente',
+            'description' => 'El usuario ha sido eliminado del sistema',
+            'action' => [
+                'label' => 'Deshacer',
+                'route' => 'users.restore',
+                'params' => ['id' => $user->id]
+            ]
+        ]);
     }
 
     /**

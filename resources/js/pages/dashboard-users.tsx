@@ -78,11 +78,32 @@ export default function DashboardUsers() {
 
     useEffect(() => {
         if (flash?.success) {
-            if (typeof flash.success === 'object' && flash.success !== null && 'title' in flash.success && 'description' in flash.success) {
-                const { title, description } = flash.success as { title: string; description: string };
-                toast.success(title, {
-                    description: description,
-                });
+            if (typeof flash.success === 'object' && flash.success !== null && 'title' in flash.success) {
+                const { title, description, action } = flash.success as {
+                    title: string;
+                    description: string;
+                    action?: {
+                        label: string;
+                        route: string;
+                        params: Record<string, any>;
+                    };
+                };
+
+                if (action) {
+                    toast.success(title, {
+                        description: description,
+                        action: {
+                            label: action.label,
+                            onClick: () => {
+                                router.post(route(action.route, action.params));
+                            },
+                        },
+                    });
+                } else {
+                    toast.success(title, {
+                        description: description,
+                    });
+                }
             } else {
                 toast.success(flash.success as string);
             }

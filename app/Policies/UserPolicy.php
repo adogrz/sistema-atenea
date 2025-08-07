@@ -56,7 +56,7 @@ class UserPolicy
      */
     public function restore(User $user): bool
     {
-        return $user->hasPermissionTo('user-restore');
+        return $user->hasPermissionTo('users:delete');
     }
 
     /**
