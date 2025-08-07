@@ -4,7 +4,7 @@ import { MultiSelectColumnFilter } from '@/components/ui/multi-select-column-fil
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
-import { Atom, BadgeCheckIcon, Clock, Dna, FlaskConical, Keyboard, Sigma, Telescope } from 'lucide-react';
+import { Atom, Clock, Dna, FlaskConical, Keyboard, Sigma, Star, Telescope } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 export type User = {
@@ -124,30 +124,39 @@ export function getUserColumns(
     };
 
     const RoleBadge = ({ role, isPrimary = false, hasExpiry = false }: { role: Role; isPrimary?: boolean; hasExpiry?: boolean }) => {
+        const icon = isPrimary ? (
+            <Star className="size-4 text-yellow-500" aria-label="Rol primario" />
+        ) : hasExpiry ? (
+            <Clock className="size-4" aria-label="Rol con expiración" />
+        ) : null;
+
         const badgeContent = (
             <Badge
-                variant={isPrimary ? 'secondary' : 'default'}
-                className={isPrimary ? 'bg-blue-500 text-white dark:bg-blue-600' : 'bg-gray-600 text-white dark:bg-gray-300 dark:text-gray-800'}
+                variant="outline"
+                className={cn(
+                    'gap-1.5 pr-2 pl-2.5 text-gray-700 dark:text-white',
+                    isPrimary ? 'border-yellow-300 dark:border-yellow-800' : 'border-neutral-300 dark:border-neutral-700',
+                )}
+                title={isPrimary ? 'Rol principal del usuario' : hasExpiry && role.pivot?.expires_at ? '' : undefined}
             >
-                {isPrimary && <BadgeCheckIcon className="mr-1 size-4" />}
-                {hasExpiry && <Clock className="mr-1 size-4" />}
+                {icon}
                 {role.description || role.name}
             </Badge>
         );
 
-        // Si el rol tiene fecha de expiración, envolver en tooltip
         if (hasExpiry && role.pivot?.expires_at) {
             return (
                 <Tooltip>
                     <TooltipTrigger asChild>{badgeContent}</TooltipTrigger>
                     <TooltipContent>
-                        <p>Este rol expira el {formatExpiryDate(role.pivot.expires_at)}</p>
+                        <p>
+                            Este rol expira el <strong>{formatExpiryDate(role.pivot.expires_at)}</strong>
+                        </p>
                     </TooltipContent>
                 </Tooltip>
             );
         }
 
-        // Si no tiene expiración, devolver el badge sin tooltip
         return badgeContent;
     };
 
@@ -356,11 +365,14 @@ export function getUserColumns(
                         <Badge
                             variant="outline"
                             className={cn(
+                                'gap-1.5',
                                 isActive
-                                    ? 'border-teal-200 bg-teal-100/30 text-teal-900 dark:text-teal-200'
-                                    : 'border-red-200 bg-red-100/30 text-red-900 dark:text-red-200',
+                                    ? 'border-teal-200 text-emerald-900 dark:border-teal-800 dark:text-emerald-200'
+                                    : 'border-destructive/20 text-red-900 dark:border-destructive/80 dark:text-red-200',
                             )}
+                            title={isActive ? 'Usuario activo' : 'Usuario inactivo'}
                         >
+                            <span className={cn('size-1.5 rounded-full', isActive ? 'bg-emerald-500' : 'bg-red-500')} aria-hidden="true"></span>
                             {isActive ? 'Activo' : 'Inactivo'}
                         </Badge>
                     </div>
