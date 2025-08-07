@@ -3,11 +3,12 @@
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Spatie\Activitylog\Models\Activity;
-use Illuminate\Support\Collection;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
+use App\Http\Controllers\InscripcionOlimpiadaController;
+use App\Http\Controllers\OlimpiadaController;
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -37,8 +38,10 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         ]);
     })->name('dashboard.audit')->middleware('permission:audit:view');
 
-    // Rutas para gestión de usuarios
+    // Dashboard
     Route::prefix('dashboard')->group(function () {
+
+        // Rutas para gestión de usuarios
         Route::get('users', [UserController::class, 'index'])->name('users.index')->middleware('permission:users:list');
         Route::get('users/create', [UserController::class, 'create'])->name('users.create')->middleware('permission:users:create');
         Route::post('users', [UserController::class, 'store'])->name('users.store')->middleware('permission:users:create');
@@ -46,6 +49,26 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
         Route::patch('users/{user}', [UserController::class, 'update'])->middleware('permission:users:edit');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users:delete');
+
+        // Olimpiadas
+        Route::prefix('olimpiadas')->name('olimpiadas.')->group(function () {
+            Route::get('/', [OlimpiadaController::class, 'index'])->name('index');
+            Route::get('/crear', [OlimpiadaController::class, 'create'])->name('create');
+            Route::post('/', [OlimpiadaController::class, 'store'])->name('store');
+            Route::get('/{olimpiada}', [OlimpiadaController::class, 'show'])->name('show');
+            Route::put('/{olimpiada}', [OlimpiadaController::class, 'update'])->name('update');
+            Route::delete('/{olimpiada}', [OlimpiadaController::class, 'destroy'])->name('destroy');
+        });
+
+        // Inscripciones
+        Route::prefix('inscripciones')->name('inscripciones.')->group(function () {
+            Route::get('/', [InscripcionOlimpiadaController::class, 'index'])->name('index');
+            Route::get('/crear', [InscripcionOlimpiadaController::class, 'create'])->name('create');
+            Route::post('/', [InscripcionOlimpiadaController::class, 'store'])->name('store');
+            Route::get('/{inscripcion}', [InscripcionOlimpiadaController::class, 'show'])->name('show');
+            Route::put('/{inscripcion}', [InscripcionOlimpiadaController::class, 'update'])->name('update');
+            Route::delete('/{inscripcion}', [InscripcionOlimpiadaController::class, 'destroy'])->name('destroy');
+        });
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
@@ -57,7 +80,6 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         ->name('users.debug')
         ->middleware('permission:users:view-all');
 });
-
 
 Route::middleware(['web'])->group(function () {
 

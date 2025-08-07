@@ -17,15 +17,34 @@ class InscripcionOlimpiadaController extends Controller
      */
     public function index(): Response
     {
-        $inscripciones = InscripcionOlimpiada::with([
-            'fase.olimpiada',
-            'participante',
-            'estado'
-        ])
-        ->orderByDesc('created_at')
-        ->get();
+        $user = Auth::user();
+        $estudiante = $user->estudiante;
 
-        return Inertia::render('Olympics/Inscripciones', [
+        if (!$estudiante) {
+            abort(403, 'No se encontró perfil de estudiante.');
+        }
+
+        // Fases disponibles
+        $fases = FaseOlimpiada::with('olimpiada')
+            ->where('activa', true)
+            ->orderBy('fecha_inicio')
+            ->get();
+
+        // Inscripciones realizadas por el estudiante
+        $inscripciones = InscripcionOlimpiada::where('participante_id', $estudiante->codigo)
+            ->select('fase_id', 'estado') // Puedes incluir más si quieres mostrar fechas
+            ->get();
+
+        return Inertia::render('dashboard-students', [
+            'fases' => $fases,
+            'estudiante' => [
+                'codigo' => $estudiante->codigo,
+                'nombre_completo' => $estudiante->primer_nombre . ' ' . $estudiante->segundo_nombre . ' ' . $estudiante->primer_apellido . ' ' . $estudiante->segundo_apellido,
+                'centro_educativo' => $estudiante->centro_educativo,
+                'nivel_educativo' => $estudiante->nivel_educativo,
+                'nivel' => $estudiante->nivel,
+            ],
+            'centro_educativo' => $estudiante->centro_educativo(),
             'inscripciones' => $inscripciones,
         ]);
     }
@@ -38,7 +57,7 @@ class InscripcionOlimpiadaController extends Controller
         $fases = FaseOlimpiada::with('olimpiada')->where('activa', true)->get();
         $estudiante = Auth::user()->estudiante ?? null;
 
-        return Inertia::render('Olympics/Inscribirse', [
+        return Inertia::render('dashboard-studens', [
             'fases' => $fases,
             'estudiante' => $estudiante,
         ]);

@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Estudiante extends Model
 {
+    use HasFactory;
     /**
      * The table associated with the model.
      *
@@ -30,7 +32,6 @@ class Estudiante extends Model
         'fecha_nacimiento',
         'centro_educativo',
         'nie',
-        'telefono_estudiante',
         'telefono_casa',
         'email',
         'direccion',
@@ -42,5 +43,20 @@ class Estudiante extends Model
     public function responsable(): HasOne
     {
         return $this->hasOne(Responsable::class, 'codigo_estudiante', 'codigo');
+    }
+
+    public function centro_educativo(): HasOne
+    {
+        return $this->hasOne(CentroEducativo::class, 'centro_educativo', 'codigo');
+    }
+
+    public function nivel_educativo(): HasOne
+    {
+        return $this->hasOne(NivelEducativo::class, 'nivel_educativo', 'codigo');
+    }
+
+    public function distrito(): HasOne
+    {
+        return $this->hasOne(Distrito::class, 'distrito', 'id');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Estudiante;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -16,6 +17,8 @@ class DatabaseSeeder extends Seeder
             MunicipioSeeder::class,
             DistritoSeeder::class,
             NivelEducativoSeeder::class,
+            OlimpiadaSeeder::class,
+            FaseOlimpiadaSeeder::class,
             EssentialUserSeeder::class,
         ]);
     }

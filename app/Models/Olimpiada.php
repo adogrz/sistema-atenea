@@ -3,22 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Olimpiada extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'olimpiadas';
-
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'nombre',
         'descripcion',
@@ -27,4 +15,25 @@ class Olimpiada extends Model
         'area_academica',
         'activa',
     ];
+
+    protected $casts = [
+        'fecha_inicio' => 'date',
+        'fecha_fin' => 'date',
+        'activa' => 'boolean',
+    ];
+
+    public function fases(): HasMany
+    {
+        return $this->hasMany(FaseOlimpiada::class);
+    }
+
+    public function scopeActivas($query)
+    {
+        return $query->where('activa', true);
+    }
+
+    public function scopePorArea($query, $area)
+    {
+        return $query->where('area_academica', $area);
+    }
 }

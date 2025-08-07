@@ -16,7 +16,7 @@ class OlimpiadaController extends Controller
     {
         $olimpiadas = Olimpiada::with('fases')->orderByDesc('fecha_inicio')->get();
 
-        return Inertia::render('Olympics', [
+        return Inertia::render('dashboard-students', [
             'olimpiadas' => $olimpiadas,
         ]);
     }
@@ -26,7 +26,7 @@ class OlimpiadaController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Olympics/Create');
+        return Inertia::render('dashboard-students');
     }
 
     /**
