@@ -52,6 +52,9 @@ class UserController extends Controller
             $user->setRelation('roles', $user->getAllRolesWithExpired);
             unset($user->getAllRolesWithExpired);
 
+            // Añadir la capacidad de eliminación para el usuario actual
+            $user->can_be_deleted = auth()->user()->can('delete', $user);
+
             // Asegurarse de que la descripción de la sede esté disponible
             if ($user->sede) {
                 $user->sede_description = $user->sede->description;
@@ -218,7 +221,12 @@ class UserController extends Controller
             ->event('created')
             ->log('Usuario creado');
 
-        return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
+        $successMessage = [
+            'title' => 'Usuario Creado',
+            'description' => 'El correo de credenciales ha sido encolado para su envío.',
+        ];
+
+        return redirect()->route('users.index')->with('success', $successMessage);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Services\RoleAssignmentService;
+use App\Services\UserDeletionService;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class UserPolicy
@@ -46,12 +47,8 @@ class UserPolicy
      */
     public function delete(User $user, User $model): bool
     {
-        // Un usuario no puede eliminarse a sí mismo.
-        if ($user->id === $model->id) {
-            return false;
-        }
-
-        return $user->hasPermissionTo('users:delete');
+        // Delegamos toda la lógica compleja a nuestro servicio.
+        return app(UserDeletionService::class)->canDelete($user, $model);
     }
 
     /**

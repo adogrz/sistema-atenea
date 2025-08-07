@@ -4,7 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { ClipboardListIcon, HouseIcon, ShieldCheck, User, Calendar, Clock, BookOpen, GraduationCap, LayoutDashboard, Users } from 'lucide-react';
+import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -24,7 +24,7 @@ export function AppSidebar() {
             title: 'Administración',
             icon: ShieldCheck,
             items: [
-                ...(hasPermission('users:list') ? [{ title: 'Usuarios', href: '/dashboard/users', icon: User }] : []),
+                ...(hasPermission('users:list') ? [{ title: 'Usuarios', href: '/dashboard/users', icon: Users }] : []),
                 ...(hasPermission('audit:view')
                     ? [
                           {
@@ -46,7 +46,6 @@ export function AppSidebar() {
                 ...(hasPermission('events:view') ? [{ title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users }] : []),
                 ...(hasPermission('events:view') ? [{ title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen }] : []),
                 ...(hasPermission('events:view') ? [{ title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap }] : []),
-                
             ],
         },
     ];

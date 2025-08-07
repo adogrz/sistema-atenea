@@ -53,6 +53,7 @@ interface User {
     sede_description?: string;
     status: string;
     areas?: Area[];
+    can_be_deleted: boolean;
 }
 
 interface FlashMessages {
@@ -77,7 +78,14 @@ export default function DashboardUsers() {
 
     useEffect(() => {
         if (flash?.success) {
-            toast.success(flash.success);
+            if (typeof flash.success === 'object' && flash.success !== null && 'title' in flash.success && 'description' in flash.success) {
+                const { title, description } = flash.success as { title: string; description: string };
+                toast.success(title, {
+                    description: description,
+                });
+            } else {
+                toast.success(flash.success as string);
+            }
         }
         if (flash?.error) {
             toast.error(flash.error);
@@ -90,7 +98,6 @@ export default function DashboardUsers() {
     const canViewAllUsers = hasPermission('users:view-all');
     const canCreateUser = hasPermission('users:create');
     const canEditUser = hasPermission('users:edit');
-    const canDeleteUser = hasPermission('users:delete');
     const canResetUserPassword = hasPermission('users:reset-password');
 
     // Estados para manejo de UI
@@ -290,7 +297,7 @@ export default function DashboardUsers() {
                                     variant="ghost"
                                     size="sm"
                                     className="flex items-center gap-2 text-red-600 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
-                                    disabled={!selectedUserId || !canDeleteUser}
+                                    disabled={!selectedUser?.can_be_deleted}
                                 >
                                     <Trash2 className="size-4" />
                                     <span>Eliminar</span>

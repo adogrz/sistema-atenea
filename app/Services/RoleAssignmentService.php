@@ -15,8 +15,16 @@ class RoleAssignmentService
         return [
             'admin-ti' => [
                 'assignable_roles' => [
-                    'director', 'admin-academico', 'admin-academico-sede', 'coordinador-area',
-                    'mentor', 'instructor', 'estudiante', 'aspirante', 'calificador'
+                    'admin-ti',
+                    'director',
+                    'admin-academico',
+                    'admin-academico-sede',
+                    'coordinador-area',
+                    'mentor',
+                    'instructor',
+                    'estudiante',
+                    'aspirante',
+                    'calificador'
                     // No incluye roles médicos ni psicológicos
                 ],
             ],
@@ -25,8 +33,13 @@ class RoleAssignmentService
             ],
             'admin-academico' => [
                 'assignable_roles' => [
-                    'admin-academico-sede', 'coordinador-area', 'mentor',
-                    'instructor', 'estudiante', 'aspirante', 'calificador'
+                    'admin-academico-sede',
+                    'coordinador-area',
+                    'mentor',
+                    'instructor',
+                    'estudiante',
+                    'aspirante',
+                    'calificador'
                     // No incluye director, admin-ti, ni roles médicos/psicológicos
                 ],
             ],
@@ -35,14 +48,16 @@ class RoleAssignmentService
             ],
             'coordinador-area' => [
                 'assignable_roles' => [
-                    'mentor', 'instructor', 'calificador'
+                    'mentor',
+                    'instructor',
+                    'calificador'
                 ],
             ],
             'jefe-psicologia' => [
-                'assignable_roles' => ['psicologo'],
+                'assignable_roles' => ['jefe-psicologia', 'psicologo'],
             ],
             'jefe-medicina' => [
-                'assignable_roles' => ['doctor'],
+                'assignable_roles' => ['jefe-medicina', 'doctor'],
             ],
         ];
     }
@@ -68,9 +83,11 @@ class RoleAssignmentService
             }
 
             // Si puede asignar cualquier rol
-            if (isset($hierarchy[$userRole]['assignable_roles']) &&
+            if (
+                isset($hierarchy[$userRole]['assignable_roles']) &&
                 is_array($hierarchy[$userRole]['assignable_roles']) &&
-                in_array('*', $hierarchy[$userRole]['assignable_roles'], true)) {
+                in_array('*', $hierarchy[$userRole]['assignable_roles'], true)
+            ) {
                 return true;
             }
 
@@ -106,9 +123,11 @@ class RoleAssignmentService
             }
 
             // Si puede asignar cualquier rol
-            if (isset($hierarchy[$userRole]['assignable_roles']) &&
+            if (
+                isset($hierarchy[$userRole]['assignable_roles']) &&
                 is_array($hierarchy[$userRole]['assignable_roles']) &&
-                in_array('*', $hierarchy[$userRole]['assignable_roles'], true)) {
+                in_array('*', $hierarchy[$userRole]['assignable_roles'], true)
+            ) {
                 return $allRoles->toArray();
             }
 
