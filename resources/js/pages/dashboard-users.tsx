@@ -54,6 +54,7 @@ interface User {
     status: string;
     areas?: Area[];
     can_be_deleted: boolean;
+    can_be_edited: boolean;
 }
 
 interface FlashMessages {
@@ -69,8 +70,7 @@ const BREADCRUMBS: BreadcrumbItem[] = [
 
 export default function DashboardUsers() {
     const { hasPermission } = usePermissions();
-    const { assignableRoles, users, auth, flash } = usePage<{
-        assignableRoles: Array<Role>;
+    const { users, auth, flash } = usePage<{
         users: Array<User>;
         auth: { user: User };
         flash: FlashMessages;
@@ -113,12 +113,9 @@ export default function DashboardUsers() {
         }
     }, [flash]);
 
-    const authUser = auth.user;
-
     // Verificación de permisos
     const canViewAllUsers = hasPermission('users:view-all');
     const canCreateUser = hasPermission('users:create');
-    const canEditUser = hasPermission('users:edit');
     const canResetUserPassword = hasPermission('users:reset-password');
 
     // Estados para manejo de UI
@@ -132,60 +129,6 @@ export default function DashboardUsers() {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const selectedUser = selectedUserId ? users.find((u) => u.id === selectedUserId) || null : null;
-
-    const isEditDisabled = useMemo(() => {
-        if (!selectedUserId || !canEditUser) {
-            return true;
-        }
-
-        if (!selectedUser || !authUser) {
-            return true;
-        }
-
-        const authUserAssignableRoleNames = assignableRoles.map((r) => r.name);
-
-        if (selectedUser.id === authUser.id) {
-            return true;
-        }
-
-        const authUserRoleNames = authUser.roles.map((r) => r.name);
-        const selectedUserRoleNames = selectedUser.roles.map((r) => r.name);
-        if (selectedUserRoleNames.some((roleName) => authUserRoleNames.includes(roleName))) {
-            return true;
-        }
-
-        if (authUserRoleNames.includes('admin-ti')) {
-            const restrictedRoles = ['psicologo', 'jefe-psicologia', 'doctor', 'doctor-jefe'];
-            if (selectedUserRoleNames.some((roleName) => restrictedRoles.includes(roleName))) {
-                return true;
-            }
-        }
-
-        if (authUserRoleNames.includes('admin-academico')) {
-            const restrictedRoles = ['director', 'admin-ti', 'psicologo', 'jefe-psicologia', 'doctor', 'doctor-jefe'];
-            if (selectedUserRoleNames.some((roleName) => restrictedRoles.includes(roleName))) {
-                return true;
-            }
-        }
-
-        if (authUserRoleNames.includes('coordinador-area')) {
-            const allowedRoles = ['mentor', 'instructor', 'calificador'];
-            if (!selectedUserRoleNames.some((roleName) => allowedRoles.includes(roleName))) {
-                return true;
-            }
-        }
-
-        if (authUserRoleNames.includes('admin-academico-sede')) {
-            const higherRoles = ['director', 'admin-ti', 'admin-academico'];
-            if (selectedUserRoleNames.some((roleName) => higherRoles.includes(roleName))) {
-                return true;
-            }
-        }
-
-        const canAuthUserAssignAnyOfSelectedUserRoles = selectedUserRoleNames.some((roleName) => authUserAssignableRoleNames.includes(roleName));
-
-        return !canAuthUserAssignAnyOfSelectedUserRoles;
-    }, [selectedUserId, canEditUser, selectedUser, authUser, assignableRoles]);
 
     const columns = useMemo(
         () =>
@@ -307,7 +250,7 @@ export default function DashboardUsers() {
                             variant="ghost"
                             size="sm"
                             onClick={() => router.visit(`/dashboard/users/${selectedUserId}/edit`)}
-                            disabled={isEditDisabled}
+                            disabled={!selectedUser?.can_be_edited}
                             className="flex items-center gap-2"
                         >
                             <Edit className="size-4" /> Editar

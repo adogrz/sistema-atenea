@@ -54,16 +54,25 @@ class UserPolicy
     /**
      * Determina si el usuario puede restaurar un usuario eliminado.
      */
-    public function restore(User $user): bool
+    public function restore(User $user, User $model): bool
     {
-        return $user->hasPermissionTo('users:delete');
+        // Reutiliza la misma lógica de jerarquía que delete
+        return app(UserDeletionService::class)->canDelete($user, $model);
     }
 
     /**
-     * Determina si el usuario puede enviar un enlace de reseteo de contraseña.
+     * Determina si el usuario puede enviar un enlace de reseteo de contraseña a otro usuario.
      */
-    public function sendResetLink(User $user): bool
+    public function sendResetLink(User $user, User $model): bool
     {
-        return $user->hasPermissionTo('users:reset-password');
+        if (!$user->hasPermissionTo('users:reset-password')) {
+            return false;
+        }
+
+        // Evitar accionar sobre roles protegidos o superiores
+        $roleAssignmentService = app(RoleAssignmentService::class);
+
+        // Puedes relajar esta regla si así lo prefieres
+        return $roleAssignmentService->getUserRank($user) > $roleAssignmentService->getUserRank($model);
     }
 }

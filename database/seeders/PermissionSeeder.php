@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
+use Spatie\Permission\Models\Permission;
 
 class PermissionSeeder extends Seeder
 {
@@ -94,9 +94,12 @@ class PermissionSeeder extends Seeder
         // Aplanar el array para crear todos los permisos
         $allPermissions = $this->getAllPermissionsFlattened();
 
-        // Crear todos los permisos
+        // Crear todos los permisos (forzando guard consistente)
         foreach ($allPermissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ]);
         }
     }
 
@@ -300,7 +303,9 @@ class PermissionSeeder extends Seeder
         foreach ($rolesWithPermissions as $roleName => $roleData) {
             $role = Role::firstOrCreate([
                 'name' => $roleName,
-                'description' => $roleData['description']
+                'guard_name' => 'web',
+            ], [
+                'description' => $roleData['description'],
             ]);
 
             $permissionsToAssign = $this->getPermissionsForRole($roleData);

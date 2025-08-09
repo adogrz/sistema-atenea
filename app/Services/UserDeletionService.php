@@ -3,11 +3,19 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Config\RolesConfig;
 
 class UserDeletionService
 {
+    protected RoleAssignmentService $roleAssignmentService;
+
+    public function __construct(RoleAssignmentService $roleAssignmentService)
+    {
+        $this->roleAssignmentService = $roleAssignmentService;
+    }
+
     /**
-     * Determina si un usuario puede eliminar a otro.
+     * Determina si un usuario puede eliminar a otro, basándose en permisos y la jerarquía de rangos.
      */
     public function canDelete(User $deleter, User $target): bool
     {
@@ -16,20 +24,22 @@ class UserDeletionService
             return false;
         }
 
-        // Regla 2: Reglas específicas para el rol 'admin-ti'.
-        if ($deleter->hasRole('admin-ti')) {
-            // Un admin-ti no puede eliminar a otro admin-ti.
-            if ($target->hasRole('admin-ti')) {
-                return false;
-            }
-
-            // Un admin-ti no puede eliminar a jefes de área clave.
-            if ($target->hasAnyRole(['jefe-medicina', 'jefe-psicologia'])) {
-                return false;
-            }
+        // Regla 2: Protección absoluta para roles críticos.
+        $protectedRoles = RolesConfig::getProtectedRoles();
+        if ($target->hasAnyRole($protectedRoles)) {
+            return false;
         }
 
-        // Regla final: Verificar el permiso general de eliminación.
-        return $deleter->hasPermissionTo('users:delete');
+        // Regla 3: Verificar si el eliminador tiene el permiso general para eliminar.
+        if (!$deleter->hasPermissionTo('users:delete')) {
+            return false;
+        }
+
+        // Regla 4: La eliminación se basa en la jerarquía de rangos.
+        // Solo puedes eliminar usuarios con un rango estrictamente menor al tuyo.
+        $deleterRank = $this->roleAssignmentService->getUserRank($deleter);
+        $targetRank = $this->roleAssignmentService->getUserRank($target);
+
+        return $deleterRank > $targetRank;
     }
 }
