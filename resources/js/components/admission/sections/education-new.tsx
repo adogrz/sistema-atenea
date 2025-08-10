@@ -174,7 +174,7 @@ export default function Educacion({ centros_educativos, niveles_educativos }: Ed
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p className="max-w-xs">Ingresa el número unico de identificación estudiantil</p>
+                                            <p className="max-w-xs">Ingresa el número único de identificación estudiantil</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
@@ -203,7 +203,7 @@ export default function Educacion({ centros_educativos, niveles_educativos }: Ed
                                 <SelectContent>
                                     {niveles_educativos && Array.isArray(niveles_educativos) && niveles_educativos.length > 0 ? (
                                         niveles_educativos.map((nivel) => (
-                                            <SelectItem key={nivel.codigo} value={nivel.codigo.toString()}>
+                                            <SelectItem key={nivel.codigo} value={nivel.codigo}>
                                                 {nivel.descripcion}
                                             </SelectItem>
                                         ))

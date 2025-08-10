@@ -33,6 +33,9 @@ export default function Direccion({ departamentos, municipiosPorDepartamento, di
             form.setValue('municipio', '');
             form.setValue('distrito', '');
             setDistritos([]);
+        } else {
+            setMunicipios([]);
+            setDistritos([]);
         }
     }, [departamentoSeleccionado, municipiosPorDepartamento, form]);
 
@@ -43,13 +46,15 @@ export default function Direccion({ departamentos, municipiosPorDepartamento, di
             setDistritos(distritosMunicipio);
             // Resetear distrito
             form.setValue('distrito', '');
+        } else {
+            setDistritos([]);
         }
     }, [municipioSeleccionado, distritosPorMunicipio, form]);
 
-    // Nombres para mostrar
-    const nombreDepartamento = departamentos?.find((d) => d.id === departamentoSeleccionado)?.nombre_departamento;
-    const nombreMunicipio = municipios?.find((m) => m.id === municipioSeleccionado)?.nombre_municipio;
-    const nombreDistrito = distritos?.find((d) => d.id === distritoSeleccionado)?.nombre_distrito;
+    // Obtener nombres para mostrar
+    const nombreDepartamento = departamentos.find((d) => d.id === departamentoSeleccionado)?.nombre_departamento;
+    const nombreMunicipio = municipios.find((m) => m.id === municipioSeleccionado)?.nombre_municipio;
+    const nombreDistrito = distritos.find((d) => d.id === distritoSeleccionado)?.nombre_distrito;
 
     return (
         <div className="space-y-6">
@@ -69,7 +74,7 @@ export default function Direccion({ departamentos, municipiosPorDepartamento, di
                             <FormControl>
                                 <Input type="tel" placeholder="Ej. 12345678" {...field} />
                             </FormControl>
-                            <FormDescription>Número de teléfono fijo de tu hogar</FormDescription>
+                            <FormDescription>Ingresa el número de teléfono fijo de tu casa (opcional)</FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -89,7 +94,7 @@ export default function Direccion({ departamentos, municipiosPorDepartamento, di
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {departamentos?.map((departamento) => (
+                                    {departamentos.map((departamento) => (
                                         <SelectItem key={departamento.id} value={departamento.id}>
                                             {departamento.nombre_departamento}
                                         </SelectItem>
