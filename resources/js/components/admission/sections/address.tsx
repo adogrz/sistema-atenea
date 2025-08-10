@@ -1,5 +1,6 @@
 'use client';
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -52,134 +53,135 @@ export default function Direccion({ departamentos, municipiosPorDepartamento, di
     const nombreDistrito = distritos?.find((d) => d.id === distritoSeleccionado)?.nombre_distrito;
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h3 className="text-lg font-semibold">Dirección</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Ingresa los datos de tu lugar de residencia actual</p>
-            </div>
-
-            <div className="space-y-6">
-                {/* Teléfono de casa */}
-                <FormField
-                    control={form.control}
-                    name="telefono_casa"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Teléfono de casa - Opcional</FormLabel>
-                            <FormControl>
-                                <Input type="tel" placeholder="Ej. 12345678" {...field} />
-                            </FormControl>
-                            <FormDescription>Número de teléfono fijo de tu hogar</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                {/* Departamento */}
-                <FormField
-                    control={form.control}
-                    name="departamento"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Departamento</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+        <Card>
+            <CardHeader>
+                <CardTitle>Dirección</CardTitle>
+                <p className="text-sm text-muted-foreground">Ingresa tu lugar de residencia actual</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-6">
+                    {/* Teléfono de casa */}
+                    <FormField
+                        control={form.control}
+                        name="telefono_casa"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Teléfono de casa - Opcional</FormLabel>
                                 <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un departamento" />
-                                    </SelectTrigger>
+                                    <Input type="tel" placeholder="Ej. 12345678" {...field} />
                                 </FormControl>
-                                <SelectContent>
-                                    {departamentos?.map((departamento) => (
-                                        <SelectItem key={departamento.id} value={departamento.id}>
-                                            {departamento.nombre_departamento}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                                <FormDescription>Número de teléfono fijo de tu hogar</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                {/* Municipio */}
-                <FormField
-                    control={form.control}
-                    name="municipio"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Municipio</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={!departamentoSeleccionado}>
+                    {/* Departamento */}
+                    <FormField
+                        control={form.control}
+                        name="departamento"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Departamento</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un departamento" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {departamentos?.map((departamento) => (
+                                            <SelectItem key={departamento.id} value={departamento.id}>
+                                                {departamento.nombre_departamento}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Municipio */}
+                    <FormField
+                        control={form.control}
+                        name="municipio"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Municipio</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={!departamentoSeleccionado}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un municipio" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {municipios.map((municipio) => (
+                                            <SelectItem key={municipio.id} value={municipio.id}>
+                                                {municipio.nombre_municipio}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Distrito */}
+                    <FormField
+                        control={form.control}
+                        name="distrito"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Distrito</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={!municipioSeleccionado}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un distrito" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {distritos.map((distrito) => (
+                                            <SelectItem key={distrito.id} value={distrito.id}>
+                                                {distrito.nombre_distrito}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Resumen visual de selección */}
+                    {(nombreDepartamento || nombreMunicipio || nombreDistrito) && (
+                        <p className="text-sm text-muted-foreground">
+                            <strong>Seleccionado:</strong> {nombreDepartamento ?? '—'} → {nombreMunicipio ?? '—'} → {nombreDistrito ?? '—'}
+                        </p>
+                    )}
+
+                    {/* Dirección detallada */}
+                    <FormField
+                        control={form.control}
+                        name="direccion"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Dirección detallada</FormLabel>
                                 <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un municipio" />
-                                    </SelectTrigger>
+                                    <Textarea
+                                        placeholder="Ej. Colonia Las Flores, Calle Principal, Casa #123, Avenida Los Pinos"
+                                        className="min-h-[100px]"
+                                        {...field}
+                                    />
                                 </FormControl>
-                                <SelectContent>
-                                    {municipios.map((municipio) => (
-                                        <SelectItem key={municipio.id} value={municipio.id}>
-                                            {municipio.nombre_municipio}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                {/* Distrito */}
-                <FormField
-                    control={form.control}
-                    name="distrito"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Distrito</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={!municipioSeleccionado}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un distrito" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {distritos.map((distrito) => (
-                                        <SelectItem key={distrito.id} value={distrito.id}>
-                                            {distrito.nombre_distrito}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                {/* Resumen visual de selección */}
-                {(nombreDepartamento || nombreMunicipio || nombreDistrito) && (
-                    <p className="text-sm text-muted-foreground">
-                        <strong>Seleccionado:</strong> {nombreDepartamento ?? '—'} → {nombreMunicipio ?? '—'} → {nombreDistrito ?? '—'}
-                    </p>
-                )}
-
-                {/* Dirección detallada */}
-                <FormField
-                    control={form.control}
-                    name="direccion"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Dirección detallada</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Ej. Colonia Las Flores, Calle Principal, Casa #123, Avenida Los Pinos"
-                                    className="min-h-[100px]"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormDescription>Incluye referencias que faciliten la ubicación de tu domicilio</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-        </div>
+                                <FormDescription>Incluye referencias que faciliten la ubicación de tu domicilio</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            </CardContent>
+        </Card>
     );
 }

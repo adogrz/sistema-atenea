@@ -1,49 +1,25 @@
 'use client';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { BookOpen, GraduationCap, HelpCircle, Users } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 
 export default function DatosPersonales() {
     const form = useFormContext();
 
     return (
-        <div className="space-y-6">
-            {/* Banner informativo del programa */}
-            <Alert className="border-primary/20 bg-primary/5">
-                <GraduationCap className="h-5 w-5 text-primary" />
-                <AlertDescription className="text-sm">
-                    <div className="space-y-2">
-                        <p className="font-semibold text-primary">Programa Jóvenes Talento - Instituto Especializado de Educación Superior Atenea</p>
-                        <p className="text-muted-foreground">
-                            Postúlate para formar parte de nuestro programa especializado en tecnología e innovación. Este proceso de admisión
-                            evaluará tu perfil académico y aptitudes para las carreras disponibles.
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                                <Users className="h-3 w-3" />
-                                <span>Proceso 2025</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <BookOpen className="h-3 w-3" />
-                                <span>Carreras técnicas y superiores</span>
-                            </div>
-                        </div>
-                    </div>
-                </AlertDescription>
-            </Alert>
-
-            <div className="space-y-6">
-                <div className="space-y-2">
-                    <h3 className="text-lg font-semibold">Datos Personales</h3>
-                    <p className="text-sm text-muted-foreground">Ingresa tus datos personales para iniciar tu solicitud de admisión</p>
-                </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Datos Personales</CardTitle>
+                <p className="text-sm text-muted-foreground">Ingresa tu información personal básica</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
                 <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                         {/* Nombres */}
@@ -267,8 +243,39 @@ export default function DatosPersonales() {
                             </FormItem>
                         )}
                     />
+
+                    {/* NIE */}
+                    <FormField
+                        control={form.control}
+                        name="nie"
+                        render={({ field }) => (
+                            <FormItem>
+                                <div className="flex items-center justify-between">
+                                    <FormLabel>NIE (Número de Identificación Estudiantil)</FormLabel>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-5 w-5">
+                                                    <HelpCircle className="h-4 w-4" />
+                                                    <span className="sr-only">Ayuda</span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p className="max-w-xs">Ingresa tu NIE asignado por el MINED</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                                <FormControl>
+                                    <Input placeholder="Ej. 1234567" {...field} />
+                                </FormControl>
+                                <FormDescription>Tu número de identificación estudiantil único</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }
