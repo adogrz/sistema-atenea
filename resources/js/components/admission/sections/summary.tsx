@@ -61,7 +61,7 @@ export default function ResumenSolicitud(props: ResumenProps) {
         <TooltipProvider>
             <Card>
                 <CardHeader>
-                    <CardTitle>Resumen de tu Solicitud</CardTitle>
+                    <CardTitle>Resumen</CardTitle>
                     <CardDescription>Revisa los datos ingresados cuidadosamente antes de enviarlos</CardDescription>
                 </CardHeader>
 

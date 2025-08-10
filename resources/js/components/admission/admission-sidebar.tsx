@@ -27,7 +27,7 @@ export default function AdmissionSidebar({ activeTab, onTabChange, erroresPorSec
             </SidebarHeader>
 
             {/* Contenido principal con el stepper */}
-            <SidebarContent className="flex-1 overflow-hidden px-6 py-2">
+            <SidebarContent className="flex flex-1 items-center justify-center overflow-hidden px-6 py-2">
                 <StepperAdmision activeTab={activeTab} onTabChange={onTabChange} erroresPorSeccion={erroresPorSeccion} />
             </SidebarContent>
 
