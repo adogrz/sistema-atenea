@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Estado;
+use App\Models\BitacoraInscripcion;
 use App\Models\InscripcionOlimpiada;
 use App\Models\FaseOlimpiada;
+use App\Services\OlimpiadaService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -12,54 +14,89 @@ use Inertia\Response;
 
 class InscripcionOlimpiadaController extends Controller
 {
+    protected OlimpiadaService $olimpiadaService;
+
     /**
-     * Muestra todas las inscripciones (admin).
+     * Constructor de la clase InscripcionOlimpiadaController.
+     *
+     * @param OlimpiadaService $olimpiadaService
+     */
+    public function __construct(OlimpiadaService $olimpiadaService)
+    {
+        $this->olimpiadaService = $olimpiadaService;
+    }
+
+    /**
+     * Muestra todas las inscripciones (admin/estudiante).
      */
     public function index(): Response
     {
         $user = Auth::user();
         $estudiante = $user->estudiante;
 
-        if (!$estudiante) {
-            abort(403, 'No se encontró perfil de estudiante.');
-        }
+        abort_if(!$estudiante, 403, 'No se encontró perfil de estudiante.');
 
-        // Fases disponibles
-        $fases = FaseOlimpiada::with('olimpiada')
-            ->where('activa', true)
-            ->orderBy('fecha_inicio')
-            ->get();
+        // Cargar relaciones del estudiante
+        $estudiante->load(['centroEducativo', 'nivelEducativo']);
 
-        // Inscripciones realizadas por el estudiante
-        $inscripciones = InscripcionOlimpiada::where('participante_id', $estudiante->codigo)
-            ->select('fase_id', 'estado') // Puedes incluir más si quieres mostrar fechas
-            ->get();
+        // Obtener fases vigentes e inscripciones agrupadas
+        $fasesVigentes = $this->olimpiadaService->fasesVigentesAgrupadas();
+        $inscripciones = $this->olimpiadaService->inscripcionesPorEstudiante($estudiante->codigo);
+        $puedeInscribirse = $this->olimpiadaService->puedeInscribirse($fasesVigentes, $inscripciones);
 
         return Inertia::render('dashboard-students', [
-            'fases' => $fases,
+            'fasesAgrupadas' => $fasesVigentes,
             'estudiante' => [
                 'codigo' => $estudiante->codigo,
-                'nombre_completo' => $estudiante->primer_nombre . ' ' . $estudiante->segundo_nombre . ' ' . $estudiante->primer_apellido . ' ' . $estudiante->segundo_apellido,
-                'centro_educativo' => $estudiante->centro_educativo,
-                'nivel_educativo' => $estudiante->nivel_educativo,
+                'nombre_completo' => trim("{$estudiante->primer_nombre} {$estudiante->segundo_nombre} {$estudiante->primer_apellido} {$estudiante->segundo_apellido}"),
+                'centro_educativo' => $estudiante->centroEducativo->nombre,
+                'nivel_educativo' => $estudiante->nivelEducativo->descripcion,
                 'nivel' => $estudiante->nivel,
             ],
-            'centro_educativo' => $estudiante->centro_educativo(),
             'inscripciones' => $inscripciones,
+            'puedeInscribirse' => $puedeInscribirse,
         ]);
     }
 
-    /**
-     * Muestra el formulario para inscribirse en una fase específica.
-     */
     public function create(Request $request): Response
     {
-        $fases = FaseOlimpiada::with('olimpiada')->where('activa', true)->get();
+        $hoy = Carbon::today();
+
+        // Fases vigentes agrupadas por olimpiada
+        $fasesVigentes = FaseOlimpiada::with('olimpiada')
+            ->where('activa', true)
+            ->whereDate('fecha_inicio', '<=', $hoy)
+            ->whereDate('fecha_fin', '>=', $hoy)
+            ->orderBy('olimpiada_id')
+            ->orderBy('numero_fase')
+            ->get()
+            ->groupBy('olimpiada_id');
+
         $estudiante = Auth::user()->estudiante ?? null;
 
-        return Inertia::render('dashboard-studens', [
-            'fases' => $fases,
+        $inscripciones = collect();
+        $puedeInscribirse = [];
+
+        if ($estudiante) {
+            $inscripciones = InscripcionOlimpiada::where('codigo_estudiante', $estudiante->codigo)
+                ->get()
+                ->groupBy(function ($insc) {
+                    return $insc->fase->olimpiada_id;
+                });
+
+            foreach ($fasesVigentes as $olimpiadaId => $fases) {
+                $primeraFase = $fases->first();
+                $yaInscrito = isset($inscripciones[$olimpiadaId]) &&
+                    $inscripciones[$olimpiadaId]->contains('fase_id', $primeraFase->id);
+
+                $puedeInscribirse[$olimpiadaId] = !$yaInscrito;
+            }
+        }
+
+        return Inertia::render('dashboard-students', [
+            'fasesAgrupadas' => $fasesVigentes,
             'estudiante' => $estudiante,
+            'puedeInscribirse' => $puedeInscribirse,
         ]);
     }
 
@@ -81,12 +118,16 @@ class InscripcionOlimpiadaController extends Controller
             return back()->withErrors(['msg' => 'Ya existe una inscripción para este estudiante en esta fase.']);
         }
 
-        InscripcionOlimpiada::create([
+        $inscripcion = InscripcionOlimpiada::create([
             'fase_id' => $request->fase_id,
             'codigo_estudiante' => $request->codigo_estudiante,
-            'estado_id' => Estado::where('nombre', 'pendiente')->value('id'),
             'fecha_inscripcion' => now(),
-            'activa' => true,
+        ]);
+
+        BitacoraInscripcion::create([
+            'inscripcion_id' => $inscripcion->id,
+            'usuario_id' => Auth::id(),
+            'accion' => 'inscripcion',
         ]);
 
         return redirect()->route('inscripciones.index')->with('success', 'Inscripción registrada correctamente.');
@@ -120,8 +161,6 @@ class InscripcionOlimpiadaController extends Controller
             'observaciones',
             'activa',
         ]));
-
-        // Si deseas registrar un historial de cambio de estado, puedo ayudarte a agregarlo aquí también.
 
         return redirect()->route('inscripciones.index')->with('success', 'Inscripción actualizada correctamente.');
     }

@@ -13,17 +13,16 @@ return new class extends Migration {
     {
         Schema::create('fases_olimpiadas', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('olimpiada_id'); // FK hacia olimpiadas
-            $table->string('nombre');                  // Ej: "Fase Regional", "Fase Nacional"
-            $table->date('fecha_inicio')->nullable();
-            $table->date('fecha_fin')->nullable();
-            $table->decimal('nota_minima', 5, 2)->nullable();
-            $table->string('modalidad')->nullable();   // Ej: "Presencial", "Virtual"
+            $table->foreignId('olimpiada_id')->constrained()->onDelete('cascade');
+            $table->unsignedTinyInteger('numero_fase'); // Para orden lógico
+            $table->string('nombre');
+            $table->date('fecha_inicio');
+            $table->date('fecha_fin');
             $table->boolean('activa')->default(true);
             $table->text('descripcion')->nullable();
             $table->timestamps();
-
-            $table->foreign('olimpiada_id')->references('id')->on('olimpiadas')->onDelete('cascade');
+            //$table->softDeletes();
+            $table->unique(['olimpiada_id', 'numero_fase']); // Evita duplicados por olimpiada
         });
     }
 

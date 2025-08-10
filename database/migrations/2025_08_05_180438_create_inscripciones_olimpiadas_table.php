@@ -14,15 +14,11 @@ return new class extends Migration
         Schema::create('inscripciones_olimpiadas', function (Blueprint $table) {
             $table->id();
             $table->string('codigo_estudiante');
-            $table->unsignedBigInteger('fase_id');
-            $table->unsignedBigInteger('estado');
-            $table->boolean('activo')->default(false);
-            $table->text('observaciones')->nullable();
+            $table->foreignId('fase_id')->constrained('fases_olimpiadas')->onDelete('cascade');
+            $table->dateTime('fecha_inscripcion');
             $table->timestamps();
-
-            $table->foreign('codigo_estudiante')->references('codigo')->on('estudiantes');
-            $table->foreign('fase_id')->references('id')->on('fases_olimpiadas')->onDelete('cascade');
-            $table->foreign('estado')->references('id')->on('estados');
+            // Clave foránea para el estudiante
+            $table->foreign('codigo_estudiante')->references('codigo')->on('estudiantes')->onDelete('cascade');
         });
     }
 

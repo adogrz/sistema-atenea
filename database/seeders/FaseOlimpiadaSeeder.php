@@ -27,6 +27,7 @@ class FaseOlimpiadaSeeder extends Seeder
                 'activa'         => true,
                 'created_at'     => now(),
                 'updated_at'     => now(),
+                'numero_fase'    => ($index + 1),
             ]);
         }
 
@@ -40,6 +41,7 @@ class FaseOlimpiadaSeeder extends Seeder
             'activa'         => false,
             'created_at'     => now(),
             'updated_at'     => now(),
+            'numero_fase'    => 2,
         ]);
     }
 }

@@ -1,3 +1,9 @@
+export interface Distrito {
+  id: string;
+  nombre_distrito: string;
+  id_municipio: string;
+}
+
 export interface CentroEducativo {
     codigo: string;
     nombre: string;
@@ -32,23 +38,29 @@ export interface Estudiante {
     direccion: string;
     distrito: number;
     nivel_educativo: number;
+    nivel: string;
     aprobado: boolean;
 }
 
 export interface FaseOlimpiada {
-    id: number
-    nombre: string
-    fecha_inicio: string
-    fecha_fin: string
-    modalidad: string
-    nota_minima: string
+    id: number;
+    nombre: string;
+    fecha_inicio: Date;
+    fecha_fin: Date;
+    activa: boolean;
+    descripcion: string;
     olimpiada: {
-        nombre: string
-        area_academica: string
+        nombre: string;
+        area_academica: string;
+        descripcion: string;
+        fecha_inicio: Date;
+        fecha_fin: Date;
+        activa: boolean;
     }
 }
 
 export interface Inscripcion {
-    fase_id: number
-    estado: string
+    codigo_estudiante: string;
+    fase_id: number;
+    fecha_inscripcion: Date;
 }

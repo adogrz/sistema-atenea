@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Estudiante extends Model
@@ -15,6 +16,15 @@ class Estudiante extends Model
      * @var string
      */
     protected $table = 'estudiantes';
+
+    /**
+     * The primary key associated with the table.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'codigo';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     /**
      * The attributes that are mass assignable.
@@ -30,7 +40,7 @@ class Estudiante extends Model
         'segundo_apellido',
         'sexo',
         'fecha_nacimiento',
-        'centro_educativo',
+        'centro_educativo_codigo',
         'nie',
         'telefono_casa',
         'email',
@@ -40,23 +50,45 @@ class Estudiante extends Model
         'aprobado',
     ];
 
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'fecha_nacimiento' => 'date',
+        'aprobado' => 'boolean',
+    ];
+
+    /**
+     * Relación con el modelo Responsable
+     */
     public function responsable(): HasOne
     {
         return $this->hasOne(Responsable::class, 'codigo_estudiante', 'codigo');
     }
 
-    public function centro_educativo(): HasOne
+    /**
+     * Relación con el modelo CentroEducativo
+     */
+    public function centroEducativo(): BelongsTo
     {
-        return $this->hasOne(CentroEducativo::class, 'centro_educativo', 'codigo');
+        return $this->belongsTo(CentroEducativo::class, 'centro_educativo', 'codigo');
     }
 
-    public function nivel_educativo(): HasOne
+    /**
+     * Relación con el modelo NivelEducativo
+     */
+    public function nivelEducativo(): BelongsTo
     {
-        return $this->hasOne(NivelEducativo::class, 'nivel_educativo', 'codigo');
+        return $this->belongsTo(NivelEducativo::class, 'nivel_educativo', 'codigo');
     }
 
-    public function distrito(): HasOne
+    /**
+     * Relación con el modelo Distrito
+     */
+    public function distrito(): BelongsTo
     {
-        return $this->hasOne(Distrito::class, 'distrito', 'id');
+        return $this->belongsTo(Distrito::class, 'distrito', 'id');
     }
 }

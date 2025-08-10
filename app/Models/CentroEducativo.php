@@ -13,6 +13,11 @@ class CentroEducativo extends Model
      */
     protected $table = 'centros_educativos';
 
+    // Clave primaria personalizada
+    protected $primaryKey = 'codigo';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     /**
      * The attributes that are mass assignable.
      *
