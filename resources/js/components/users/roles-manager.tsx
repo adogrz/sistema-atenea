@@ -105,7 +105,8 @@ export default function RolesManager({
                                         <DatePicker
                                             value={role.expires_at ? parseLocalDate(role.expires_at) : undefined}
                                             onChange={(date) => onSetExpiryDate(index, date)}
-                                            placeholder="Fecha expiración"
+                                            placeholder="Expiración"
+                                            className="truncate"
                                             disableDates={(date) => date < new Date()}
                                             captionLayout="label"
                                         />
