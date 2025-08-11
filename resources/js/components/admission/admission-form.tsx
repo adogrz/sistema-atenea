@@ -5,14 +5,15 @@ import axios from 'axios';
 import { AlertCircle, CheckCircle2, Loader2, Save } from 'lucide-react';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { z } from 'zod';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Toaster, toast } from 'sonner';
 
+import { useStepValidation } from '@/hooks/useStepValidation';
 import AdmissionLayout from '@/layouts/admission/admission-layout';
+import { fullFormSchema, getErrorsBySection } from '@/lib/validations/admission-schemas';
 import { Departamento } from '@/types/admission/address';
 import { CentroEducativo, NivelEducativo } from '@/types/admission/education';
 import { usePage } from '@inertiajs/react';
@@ -24,148 +25,39 @@ import DatosPersonales from './sections/personal-data';
 import DatosResponsable from './sections/responsible';
 import ResumenSolicitud from './sections/summary';
 
-// Esquema de validación completo para todo el formulario
-export const formSchema = z.object({
-    // Datos del estudiante
-    codigo: z
-        .string()
-        .min(1)
-        .regex(/^\d{5,10}$/, {
-            message: 'Código debe ser numérico entre 5 y 10 dígitos',
-        }),
-    primer_nombre: z
-        .string()
-        .min(1)
-        .max(50)
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-            message: 'Nombre no válido',
-        }),
-    segundo_nombre: z
-        .string()
-        .min(1)
-        .max(50)
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-            message: 'Segundo nombre no válido',
-        }),
-    primer_apellido: z
-        .string()
-        .min(1)
-        .max(50)
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-            message: 'Apellido no válido',
-        }),
-    segundo_apellido: z
-        .string()
-        .min(1)
-        .max(50)
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-            message: 'Segundo apellido no válido',
-        }),
-    sexo: z.enum(['H', 'M']),
-    fecha_nacimiento: z.string().refine(
-        (val) => {
-            const parsed = Date.parse(val);
-            return !isNaN(parsed) && new Date(parsed) < new Date();
-        },
-        { message: 'Fecha inválida o en el futuro' },
-    ),
-    nie: z.string().regex(/^\d{7,10}$/, {
-        message: 'NIE debe ser numérico entre 7 y 10 dígitos',
-    }),
-    email: z.string().email(),
-
-    // Dirección
-    telefono_casa: z
-        .string()
-        .regex(/^[267]\d{7}$/)
-        .nullable()
-        .optional(),
-    direccion: z.string().min(5).max(255),
-    distrito: z.string().regex(/^\d+$/, {
-        message: 'Debes seleccionar un distrito',
-    }),
-    departamento: z.string().min(1, {
-        message: 'Debes seleccionar un departamento',
-    }),
-    municipio: z.string().min(1, {
-        message: 'Debes seleccionar un municipio',
-    }),
-
-    // Datos del responsable 1
-    dui_responsable_1: z.string().regex(/^\d{9}$/, {
-        message: 'DUI debe tener 9 dígitos numéricos',
-    }),
-    nombres_responsable_1: z
-        .string()
-        .min(1)
-        .max(100)
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-            message: 'Nombre del responsable no válido',
-        }),
-    apellidos_responsable_1: z
-        .string()
-        .min(1)
-        .max(100)
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-            message: 'Apellido del responsable no válido',
-        }),
-    email_responsable_1: z.string().email().nullable().optional(),
-    telefono_responsable_1: z.string().regex(/^[267]\d{7}$/, {
-        message: 'Teléfono del responsable inválido',
-    }),
-    tipo_parentesco_1: z.enum(['Madre', 'Padre', 'Abuelo', 'Tio', 'Tutor legal']),
-
-    // Datos del responsable 2 (opcional)
-    dui_responsable_2: z
-        .string()
-        .regex(/^\d{9}$/, {
-            message: 'DUI debe tener 9 dígitos numéricos',
-        })
-        .optional(),
-    nombres_responsable_2: z
-        .string()
-        .max(100)
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-            message: 'Nombre del responsable no válido',
-        })
-        .optional(),
-    apellidos_responsable_2: z
-        .string()
-        .max(100)
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-            message: 'Apellido del responsable no válido',
-        })
-        .optional(),
-    email_responsable_2: z.string().email().nullable().optional(),
-    telefono_responsable_2: z
-        .string()
-        .regex(/^[267]\d{7}$/, {
-            message: 'Teléfono del responsable inválido',
-        })
-        .optional(),
-    tipo_parentesco_2: z.enum(['Madre', 'Padre', 'Abuelo', 'Tio', 'Tutor legal']).optional(),
-
-    // Educación
-    centro_educativo: z
-        .string()
-        .min(5, { message: 'El nombre debe tener al menos 5 caracteres' })
-        .max(100)
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9"'\s\-.]+$/, {
-            message: 'Formato de nombre inválido',
-        }),
-    sector: z.enum(['PÚBLICO', 'PRIVADO'], {
-        required_error: 'Selecciona el sector',
-    }),
-    zona: z.enum(['Rural', 'Urbana'], {
-        required_error: 'Selecciona la zona',
-    }),
-    internacional: z.enum(['SI', 'NO'], {
-        required_error: 'Selecciona si el centro es internacional',
-    }),
-    nivel_educativo: z.enum(['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7'], {
-        required_error: 'Selecciona tu nivel de estudios',
-    }),
-});
+// Tipo para los datos del formulario
+type FormData = {
+    primer_nombre: string;
+    segundo_nombre?: string;
+    primer_apellido: string;
+    segundo_apellido?: string;
+    sexo?: 'H' | 'M';
+    fecha_nacimiento: string;
+    nie: string;
+    email: string;
+    telefono_casa?: string;
+    direccion: string;
+    distrito: string;
+    departamento: string;
+    municipio: string;
+    centro_educativo: string;
+    sector: 'PÚBLICO' | 'PRIVADO';
+    zona: 'Rural' | 'Urbana';
+    internacional: 'SI' | 'NO';
+    nivel_educativo?: string;
+    dui_responsable_1: string;
+    nombres_responsable_1: string;
+    apellidos_responsable_1: string;
+    email_responsable_1?: string;
+    telefono_responsable_1: string;
+    tipo_parentesco_1?: string;
+    dui_responsable_2?: string;
+    nombres_responsable_2?: string;
+    apellidos_responsable_2?: string;
+    email_responsable_2?: string;
+    telefono_responsable_2?: string;
+    tipo_parentesco_2?: string;
+};
 
 export default function FormularioAdmision() {
     const [activeTab, setActiveTab] = useState('datos-personales');
@@ -179,8 +71,8 @@ export default function FormularioAdmision() {
         niveles_educativos: NivelEducativo[];
     }>().props;
 
-    const methods = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const methods = useForm<FormData>({
+        resolver: zodResolver(fullFormSchema),
         defaultValues: {
             primer_nombre: '',
             segundo_nombre: '',
@@ -195,7 +87,6 @@ export default function FormularioAdmision() {
             distrito: '',
             departamento: '',
             municipio: '',
-            codigo: '',
             centro_educativo: '',
             sector: 'PÚBLICO',
             zona: 'Rural',
@@ -207,53 +98,33 @@ export default function FormularioAdmision() {
             email_responsable_1: '',
             telefono_responsable_1: '',
             tipo_parentesco_1: undefined,
-            dui_responsable_2: undefined,
-            nombres_responsable_2: undefined,
-            apellidos_responsable_2: undefined,
-            email_responsable_2: undefined,
-            telefono_responsable_2: undefined,
+            dui_responsable_2: '',
+            nombres_responsable_2: '',
+            apellidos_responsable_2: '',
+            email_responsable_2: '',
+            telefono_responsable_2: '',
             tipo_parentesco_2: undefined,
         },
-        mode: 'onBlur',
+        mode: 'onTouched',
     });
 
     const {
         formState: { errors },
         trigger,
+        getValues,
     } = methods;
+
+    // Usar el hook personalizado para validación
+    const { validateStep, isValidating } = useStepValidation({ getValues, trigger });
 
     const steps = ['datos-personales', 'datos-responsables', 'direccion', 'educacion', 'resumen'];
     const currentStepIndex = steps.indexOf(activeTab);
 
+    // Función simplificada usando el hook
     const handleNext = async () => {
-        const fieldsToValidate = {
-            'datos-personales': [
-                'codigo',
-                'primer_nombre',
-                'segundo_nombre',
-                'primer_apellido',
-                'segundo_apellido',
-                'sexo',
-                'fecha_nacimiento',
-                'nie',
-                'email',
-            ] as const,
-            'datos-responsables': [
-                'dui_responsable_1',
-                'nombres_responsable_1',
-                'apellidos_responsable_1',
-                'telefono_responsable_1',
-                'tipo_parentesco_1',
-            ] as const,
-            direccion: ['direccion', 'distrito', 'departamento', 'municipio'] as const,
-            educacion: ['centro_educativo', 'nivel_educativo'] as const,
-        }[activeTab];
-
-        if (fieldsToValidate) {
-            const isValid = await trigger(fieldsToValidate);
-            if (isValid && currentStepIndex < steps.length - 1) {
-                setActiveTab(steps[currentStepIndex + 1]);
-            }
+        const isValid = await validateStep(activeTab);
+        if (isValid && currentStepIndex < steps.length - 1) {
+            setActiveTab(steps[currentStepIndex + 1]);
         }
     };
 
@@ -263,34 +134,12 @@ export default function FormularioAdmision() {
         }
     };
 
-    const erroresPorSeccion = {
-        'datos-personales': Object.keys(errors).filter((key) =>
-            ['codigo', 'primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'sexo', 'fecha_nacimiento', 'nie', 'email'].includes(
-                key,
-            ),
-        ).length,
-        'datos-responsables': Object.keys(errors).filter((key) =>
-            [
-                'dui_responsable_1',
-                'nombres_responsable_1',
-                'apellidos_responsable_1',
-                'telefono_responsable_1',
-                'tipo_parentesco_1',
-                'dui_responsable_2',
-                'nombres_responsable_2',
-                'apellidos_responsable_2',
-                'telefono_responsable_2',
-                'tipo_parentesco_2',
-            ].includes(key),
-        ).length,
-        direccion: Object.keys(errors).filter((key) => ['direccion', 'distrito', 'departamento', 'municipio'].includes(key)).length,
-        educacion: Object.keys(errors).filter((key) => ['centro_educativo', 'nivel_educativo'].includes(key)).length,
-        resumen: 0,
-    };
+    // Usar la función helper para calcular errores por sección
+    const erroresPorSeccion = getErrorsBySection(errors);
 
     const totalErrors = Object.values(erroresPorSeccion).reduce((acc, curr) => acc + curr, 0);
 
-    const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    const onSubmit = async (data: FormData) => {
         setIsSubmitting(true);
         try {
             await axios.post('/admision', data, {
@@ -348,7 +197,16 @@ export default function FormularioAdmision() {
     return (
         <FormProvider {...methods}>
             <Toaster richColors />
-            <AdmissionLayout sidebar={<AdmissionSidebar activeTab={activeTab} onTabChange={setActiveTab} erroresPorSeccion={erroresPorSeccion} />}>
+            <AdmissionLayout
+                sidebar={
+                    <AdmissionSidebar
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        erroresPorSeccion={erroresPorSeccion}
+                        isLoading={isValidating}
+                    />
+                }
+            >
                 <div className="flex h-full flex-1 flex-col gap-6 p-4">
                     <div className="mx-auto w-full max-w-4xl">
                         {/* Encabezado global - siempre visible */}
@@ -414,7 +272,7 @@ export default function FormularioAdmision() {
                             {/* Botones de navegación - fuera de cualquier Card */}
                             <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-background pt-6">
                                 {currentStepIndex > 0 && (
-                                    <Button type="button" variant="outline" onClick={handlePrevious} disabled={isSubmitting}>
+                                    <Button type="button" variant="outline" onClick={handlePrevious} disabled={isSubmitting || isValidating}>
                                         Anterior
                                     </Button>
                                 )}
@@ -422,8 +280,15 @@ export default function FormularioAdmision() {
                                 {currentStepIndex === 0 && <div />}
 
                                 {activeTab !== 'resumen' ? (
-                                    <Button type="button" onClick={handleNext} disabled={isSubmitting}>
-                                        Siguiente
+                                    <Button type="button" onClick={handleNext} disabled={isSubmitting || isValidating} className="min-w-[120px]">
+                                        {isValidating ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Validando...
+                                            </>
+                                        ) : (
+                                            'Siguiente'
+                                        )}
                                     </Button>
                                 ) : (
                                     <Button
