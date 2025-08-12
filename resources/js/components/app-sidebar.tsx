@@ -4,7 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { ClipboardListIcon, HouseIcon, ShieldCheck, User, Calendar, Clock, BookOpen, GraduationCap, LayoutDashboard, Users } from 'lucide-react';
+import { ClipboardListIcon, HouseIcon, ShieldCheck, User, Calendar, Clock, BookOpen, GraduationCap, LayoutDashboard, Users, GraduationCapIcon } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -47,6 +47,15 @@ export function AppSidebar() {
                 ...(hasPermission('events:view') ? [{ title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen }] : []),
                 ...(hasPermission('events:view') ? [{ title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap }] : []),
                 
+            ],
+        },
+        {
+            title: 'Estudiante',
+            icon: GraduationCapIcon,
+            items: [
+                ...(hasPermission('profile:view') ? [{ title: 'Inscripciones', href: '/dashboard/inscripciones', icon: LayoutDashboard }] : []),
+                ...(hasPermission('profile:view') ? [{ title: 'Calendario', href: '/dashboard/calendario', icon: Calendar }] : []),
+                ...(hasPermission('profile:view') ? [{ title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap }] : []),
             ],
         },
     ];

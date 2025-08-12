@@ -29,10 +29,11 @@ class EstudianteFactory extends Factory
         $centro = CentroEducativo::inRandomOrder()->first();
         $nivel = NivelEducativo::inRandomOrder()->first();
         $distrito = Distrito::inRandomOrder()->first();
-
+        $usuario = User::factory()->create();
+        $usuario->syncRoles(['estudiante']);
         return [
             'codigo'           => strtoupper(Str::random(8)),
-            'user_id'          => User::factory(),
+            'user_id'          => $usuario->id,
             'primer_nombre'    => $this->faker->firstName,
             'segundo_nombre'   => $this->faker->firstName,
             'primer_apellido'  => $this->faker->lastName,
