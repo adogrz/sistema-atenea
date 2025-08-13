@@ -79,12 +79,7 @@ export const responsableSchema = z.object({
         .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
             message: 'Solo se permiten letras, espacios, guiones y apostrofes',
         }),
-    email_responsable_1: z
-        .string()
-        .email('Ingresa un correo electrónico válido')
-        .nullable()
-        .optional()
-        .or(z.literal('')),
+    email_responsable_1: z.string().email('Ingresa un correo electrónico válido').nullable().optional().or(z.literal('')),
     telefono_responsable_1: z.string().regex(/^[267]\d{7}$/, {
         message: 'El teléfono debe tener 8 dígitos y empezar con 2, 6 o 7',
     }),
@@ -116,12 +111,7 @@ export const responsableSchema = z.object({
         })
         .optional()
         .or(z.literal('')),
-    email_responsable_2: z
-        .string()
-        .email('Ingresa un correo electrónico válido')
-        .nullable()
-        .optional()
-        .or(z.literal('')),
+    email_responsable_2: z.string().email('Ingresa un correo electrónico válido').nullable().optional().or(z.literal('')),
     telefono_responsable_2: z
         .string()
         .regex(/^[267]\d{7}$/, {
@@ -129,9 +119,7 @@ export const responsableSchema = z.object({
         })
         .optional()
         .or(z.literal('')),
-    tipo_parentesco_2: z
-        .enum(['Madre', 'Padre', 'Abuelo', 'Tio', 'Tutor legal'])
-        .optional(),
+    tipo_parentesco_2: z.enum(['Madre', 'Padre', 'Abuelo', 'Tio', 'Tutor legal']).optional(),
 });
 
 export const addressSchema = z.object({
@@ -143,10 +131,7 @@ export const addressSchema = z.object({
         .nullable()
         .optional()
         .or(z.literal('')),
-    direccion: z
-        .string()
-        .min(5, 'La dirección debe tener al menos 5 caracteres')
-        .max(255, 'Máximo 255 caracteres'),
+    direccion: z.string().min(5, 'La dirección debe tener al menos 5 caracteres').max(255, 'Máximo 255 caracteres'),
     distrito: z.string().regex(/^\d+$/, {
         message: 'Debes seleccionar un distrito',
     }),
@@ -181,13 +166,10 @@ export const educationSchema = z.object({
 });
 
 // Esquema completo que combina todos los esquemas individuales
-export const fullFormSchema = personalDataSchema
-    .and(responsableSchema)
-    .and(addressSchema)
-    .and(educationSchema);
+export const fullFormSchema = personalDataSchema.and(responsableSchema).and(addressSchema).and(educationSchema);
 
 // Función helper para validar una sección específica
-export function validateSection(sectionName: string, data: any) {
+export function validateSection(sectionName: string, data: Record<string, unknown>) {
     switch (sectionName) {
         case 'datos-personales':
             return personalDataSchema.safeParse(data);
@@ -203,20 +185,28 @@ export function validateSection(sectionName: string, data: any) {
 }
 
 // Función helper para obtener errores por sección
-export function getErrorsBySection(errors: any) {
+export function getErrorsBySection(errors: Record<string, unknown>) {
     const personalDataFields = ['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'sexo', 'fecha_nacimiento', 'nie', 'email'];
     const responsableFields = [
-        'dui_responsable_1', 'nombres_responsable_1', 'apellidos_responsable_1', 'telefono_responsable_1', 'tipo_parentesco_1',
-        'dui_responsable_2', 'nombres_responsable_2', 'apellidos_responsable_2', 'telefono_responsable_2', 'tipo_parentesco_2'
+        'dui_responsable_1',
+        'nombres_responsable_1',
+        'apellidos_responsable_1',
+        'telefono_responsable_1',
+        'tipo_parentesco_1',
+        'dui_responsable_2',
+        'nombres_responsable_2',
+        'apellidos_responsable_2',
+        'telefono_responsable_2',
+        'tipo_parentesco_2',
     ];
     const addressFields = ['direccion', 'distrito', 'departamento', 'municipio', 'telefono_casa'];
     const educationFields = ['centro_educativo', 'nivel_educativo', 'sector', 'zona', 'internacional'];
 
     return {
-        'datos-personales': Object.keys(errors).filter(key => personalDataFields.includes(key)).length,
-        'datos-responsables': Object.keys(errors).filter(key => responsableFields.includes(key)).length,
-        'direccion': Object.keys(errors).filter(key => addressFields.includes(key)).length,
-        'educacion': Object.keys(errors).filter(key => educationFields.includes(key)).length,
-        'resumen': 0,
+        'datos-personales': Object.keys(errors).filter((key) => personalDataFields.includes(key)).length,
+        'datos-responsables': Object.keys(errors).filter((key) => responsableFields.includes(key)).length,
+        direccion: Object.keys(errors).filter((key) => addressFields.includes(key)).length,
+        educacion: Object.keys(errors).filter((key) => educationFields.includes(key)).length,
+        resumen: 0,
     };
 }
