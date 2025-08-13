@@ -84,7 +84,7 @@ function Stepper({
       <div
         data-slot="stepper"
         className={cn(
-          "group/stepper inline-flex data-[orientation=horizontal]:w-full data-[orientation=horizontal]:flex-row data-[orientation=vertical]:flex-col",
+          "group/stepper flex data-[orientation=horizontal]:w-full data-[orientation=horizontal]:flex-row data-[orientation=vertical]:flex-col data-[orientation=vertical]:w-full",
           className
         )}
         data-orientation={orientation}
@@ -133,7 +133,7 @@ function StepperItem({
           className
         )}
         data-state={state}
-        {...(isLoading ? { "data-loading": true } : {})}
+        {...(isLoading ? { "data-loading": "true" } : {})}
         {...props}
       >
         {children}
@@ -209,21 +209,25 @@ function StepperIndicator({
         children
       ) : (
         <>
-          <span className="transition-all group-data-loading/step:scale-0 group-data-loading/step:opacity-0 group-data-loading/step:transition-none group-data-[state=completed]/step:scale-0 group-data-[state=completed]/step:opacity-0">
+          <span
+            className={cn(
+              "transition-opacity",
+              isLoading ? "opacity-0" : state === "completed" ? "opacity-0" : "opacity-100"
+            )}
+          >
             {step}
           </span>
           <CheckIcon
-            className="absolute scale-0 opacity-0 transition-all group-data-[state=completed]/step:scale-100 group-data-[state=completed]/step:opacity-100"
+            className={cn(
+              "absolute transition-opacity",
+              state === "completed" ? "opacity-100" : "opacity-0"
+            )}
             size={16}
             aria-hidden="true"
           />
           {isLoading && (
-            <span className="absolute transition-all">
-              <LoaderCircleIcon
-                className="animate-spin"
-                size={14}
-                aria-hidden="true"
-              />
+            <span className="absolute transition-opacity">
+              <LoaderCircleIcon className="animate-spin" size={14} aria-hidden="true" />
             </span>
           )}
         </>

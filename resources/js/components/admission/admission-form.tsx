@@ -5,6 +5,7 @@ import axios from 'axios';
 import { AlertCircle, CheckCircle2, Loader2, Save } from 'lucide-react';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -25,39 +26,7 @@ import DatosPersonales from './sections/personal-data';
 import DatosResponsable from './sections/responsible';
 import ResumenSolicitud from './sections/summary';
 
-// Tipo para los datos del formulario
-type FormData = {
-    primer_nombre: string;
-    segundo_nombre?: string;
-    primer_apellido: string;
-    segundo_apellido?: string;
-    sexo?: 'H' | 'M';
-    fecha_nacimiento: string;
-    nie: string;
-    email: string;
-    telefono_casa?: string;
-    direccion: string;
-    distrito: string;
-    departamento: string;
-    municipio: string;
-    centro_educativo: string;
-    sector: 'PÚBLICO' | 'PRIVADO';
-    zona: 'Rural' | 'Urbana';
-    internacional: 'SI' | 'NO';
-    nivel_educativo?: string;
-    dui_responsable_1: string;
-    nombres_responsable_1: string;
-    apellidos_responsable_1: string;
-    email_responsable_1?: string;
-    telefono_responsable_1: string;
-    tipo_parentesco_1?: string;
-    dui_responsable_2?: string;
-    nombres_responsable_2?: string;
-    apellidos_responsable_2?: string;
-    email_responsable_2?: string;
-    telefono_responsable_2?: string;
-    tipo_parentesco_2?: string;
-};
+type FormData = z.infer<typeof fullFormSchema>;
 
 export default function FormularioAdmision() {
     const [activeTab, setActiveTab] = useState('datos-personales');
@@ -78,7 +47,7 @@ export default function FormularioAdmision() {
             segundo_nombre: '',
             primer_apellido: '',
             segundo_apellido: '',
-            sexo: undefined,
+            sexo: '' as unknown as 'H' | 'M',
             fecha_nacimiento: '',
             nie: '',
             email: '',
@@ -91,20 +60,20 @@ export default function FormularioAdmision() {
             sector: 'PÚBLICO',
             zona: 'Rural',
             internacional: 'NO',
-            nivel_educativo: undefined,
+            nivel_educativo: '' as unknown as string,
             dui_responsable_1: '',
             nombres_responsable_1: '',
             apellidos_responsable_1: '',
             email_responsable_1: '',
             telefono_responsable_1: '',
-            tipo_parentesco_1: undefined,
+            tipo_parentesco_1: '' as unknown as string,
             dui_responsable_2: '',
             nombres_responsable_2: '',
             apellidos_responsable_2: '',
             email_responsable_2: '',
             telefono_responsable_2: '',
-            tipo_parentesco_2: undefined,
-        },
+            tipo_parentesco_2: '' as unknown as string,
+        } as FormData,
         mode: 'onTouched',
     });
 
@@ -112,10 +81,11 @@ export default function FormularioAdmision() {
         formState: { errors },
         trigger,
         getValues,
+        clearErrors,
     } = methods;
 
     // Usar el hook personalizado para validación
-    const { validateStep, isValidating } = useStepValidation({ getValues, trigger });
+    const { validateStep, isValidating } = useStepValidation({ getValues, trigger, clearErrors });
 
     const steps = ['datos-personales', 'datos-responsables', 'direccion', 'educacion', 'resumen'];
     const currentStepIndex = steps.indexOf(activeTab);
@@ -291,12 +261,7 @@ export default function FormularioAdmision() {
                                         )}
                                     </Button>
                                 ) : (
-                                    <Button
-                                        type="submit"
-                                        disabled={isSubmitting || !captchaVerified || totalErrors > 0}
-                                        onClick={methods.handleSubmit(onSubmit)}
-                                        className="min-w-[160px]"
-                                    >
+                                    <Button type="submit" disabled={isSubmitting || !captchaVerified || totalErrors > 0} className="min-w-[160px]">
                                         {isSubmitting ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

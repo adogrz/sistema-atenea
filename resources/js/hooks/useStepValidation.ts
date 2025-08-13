@@ -1,47 +1,19 @@
+import { fullFormSchema, validateSection } from '@/lib/validations/admission-schemas';
 import { useState } from 'react';
-import { UseFormGetValues, UseFormTrigger } from 'react-hook-form';
+import { UseFormClearErrors, UseFormGetValues, UseFormTrigger } from 'react-hook-form';
 import { toast } from 'sonner';
-import { validateSection } from '@/lib/validations/admission-schemas';
+import { z } from 'zod';
 
-type FormData = {
-    primer_nombre: string;
-    segundo_nombre?: string;
-    primer_apellido: string;
-    segundo_apellido?: string;
-    sexo?: 'H' | 'M';
-    fecha_nacimiento: string;
-    nie: string;
-    email: string;
-    telefono_casa?: string;
-    direccion: string;
-    distrito: string;
-    departamento: string;
-    municipio: string;
-    centro_educativo: string;
-    sector: 'PÚBLICO' | 'PRIVADO';
-    zona: 'Rural' | 'Urbana';
-    internacional: 'SI' | 'NO';
-    nivel_educativo?: string;
-    dui_responsable_1: string;
-    nombres_responsable_1: string;
-    apellidos_responsable_1: string;
-    email_responsable_1?: string;
-    telefono_responsable_1: string;
-    tipo_parentesco_1?: string;
-    dui_responsable_2?: string;
-    nombres_responsable_2?: string;
-    apellidos_responsable_2?: string;
-    email_responsable_2?: string;
-    telefono_responsable_2?: string;
-    tipo_parentesco_2?: string;
-};
+// Inferir el tipo desde el esquema de Zod para asegurar consistencia
+type FormData = z.infer<typeof fullFormSchema>;
 
 interface UseStepValidationProps {
     getValues: UseFormGetValues<FormData>;
     trigger: UseFormTrigger<FormData>;
+    clearErrors?: UseFormClearErrors<FormData>;
 }
 
-export function useStepValidation({ getValues, trigger }: UseStepValidationProps) {
+export function useStepValidation({ getValues, trigger, clearErrors }: UseStepValidationProps) {
     const [isValidating, setIsValidating] = useState(false);
 
     const validateStep = async (stepName: string): Promise<boolean> => {
@@ -51,12 +23,48 @@ export function useStepValidation({ getValues, trigger }: UseStepValidationProps
 
         try {
             // Simular un pequeño delay para mostrar el loading
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise((resolve) => setTimeout(resolve, 300));
 
             const currentData = getValues();
             const validation = validateSection(stepName, currentData);
 
             if (validation.success) {
+                // Limpiar errores del paso actual después de validación exitosa
+                if (clearErrors) {
+                    const fieldsMap: Record<string, (keyof FormData)[]> = {
+                        'datos-personales': [
+                            'primer_nombre',
+                            'segundo_nombre',
+                            'primer_apellido',
+                            'segundo_apellido',
+                            'sexo',
+                            'fecha_nacimiento',
+                            'nie',
+                            'email',
+                        ],
+                        'datos-responsables': [
+                            'dui_responsable_1',
+                            'nombres_responsable_1',
+                            'apellidos_responsable_1',
+                            'email_responsable_1',
+                            'telefono_responsable_1',
+                            'tipo_parentesco_1',
+                            'dui_responsable_2',
+                            'nombres_responsable_2',
+                            'apellidos_responsable_2',
+                            'email_responsable_2',
+                            'telefono_responsable_2',
+                            'tipo_parentesco_2',
+                        ],
+                        direccion: ['telefono_casa', 'direccion', 'distrito', 'departamento', 'municipio'],
+                        educacion: ['centro_educativo', 'sector', 'zona', 'internacional', 'nivel_educativo'],
+                    };
+
+                    const fields = fieldsMap[stepName];
+                    if (fields) {
+                        clearErrors(fields);
+                    }
+                }
                 return true;
             } else {
                 // Mostrar toast con errores
@@ -66,9 +74,15 @@ export function useStepValidation({ getValues, trigger }: UseStepValidationProps
                 // Disparar validación para mostrar errores en el formulario
                 const fieldsMap: Record<string, (keyof FormData)[]> = {
                     'datos-personales': ['primer_nombre', 'primer_apellido', 'sexo', 'fecha_nacimiento', 'nie', 'email'],
-                    'datos-responsables': ['dui_responsable_1', 'nombres_responsable_1', 'apellidos_responsable_1', 'telefono_responsable_1', 'tipo_parentesco_1'],
-                    'direccion': ['direccion', 'distrito', 'departamento', 'municipio'],
-                    'educacion': ['centro_educativo', 'nivel_educativo', 'sector', 'zona', 'internacional'],
+                    'datos-responsables': [
+                        'dui_responsable_1',
+                        'nombres_responsable_1',
+                        'apellidos_responsable_1',
+                        'telefono_responsable_1',
+                        'tipo_parentesco_1',
+                    ],
+                    direccion: ['direccion', 'distrito', 'departamento', 'municipio'],
+                    educacion: ['centro_educativo', 'nivel_educativo', 'sector', 'zona', 'internacional'],
                 };
 
                 const fields = fieldsMap[stepName];

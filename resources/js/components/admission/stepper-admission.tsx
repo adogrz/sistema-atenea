@@ -56,21 +56,30 @@ export default function StepperAdmision({ activeTab, onTabChange, erroresPorSecc
     };
 
     return (
-        <div className="space-y-2">
-            <Stepper value={currentStep} onValueChange={handleStepChange} orientation="vertical">
+        <div className="w-full max-w-[256px] min-w-[256px] space-y-2">
+            {/* Fija ancho al del sidebar (16rem) para evitar encogimiento visual */}
+            <Stepper value={currentStep} onValueChange={handleStepChange} orientation="vertical" className="w-full">
+                {/* Ancho completo del Stepper */}
                 {steps.map(({ step, id, title, description }) => (
-                    <StepperItem key={id} step={step} className="relative items-start not-last:flex-1" loading={isLoading && step === currentStep}>
-                        <StepperTrigger className="items-start rounded pb-8 last:pb-0" disabled={isLoading}>
+                    <StepperItem
+                        key={id}
+                        step={step}
+                        className="relative w-full items-start not-last:flex-1"
+                        loading={isLoading && step === currentStep}
+                    >
+                        {/* Ancho completo por ítem */}
+                        <StepperTrigger className="min-h-[56px] w-full items-start rounded pb-8 last:pb-0 disabled:opacity-100" disabled={isLoading}>
+                            {/* Altura mínima y opacidad estable cuando está disabled */}
                             <div className="relative">
                                 <StepperIndicator />
-                                {/* Indicador de errores - mejorado para no tapar el número */}
+                                {/* Indicador de errores - mejorado para visibilidad en ambos modos */}
                                 {erroresPorSeccion[id] > 0 && !isLoading && (
-                                    <div className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground ring-2 ring-background">
+                                    <div className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full border border-red-600 bg-red-500 text-xs font-bold text-white shadow-md ring-2 ring-background dark:border-red-500 dark:bg-red-600">
                                         {erroresPorSeccion[id] > 9 ? '9+' : erroresPorSeccion[id]}
                                     </div>
                                 )}
                             </div>
-                            <div className="mt-0.5 space-y-0.5 px-2 text-left">
+                            <div className="mt-0.5 w-full space-y-0.5 px-2 text-left">
                                 <StepperTitle className={`text-sm font-medium ${isLoading && step === currentStep ? 'text-muted-foreground' : ''}`}>
                                     {title}
                                 </StepperTitle>
