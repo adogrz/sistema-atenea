@@ -100,88 +100,104 @@ export default function DatosPersonales() {
                                 </FormItem>
                             )}
                         />
-                    </div>
 
-                    {/* Sexo */}
-                    <FormField
-                        control={form.control}
-                        name="sexo"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>
-                                    Sexo <span className="text-destructive">*</span>
-                                </FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger className="max-w-xs">
-                                            <SelectValue placeholder="Selecciona una opción" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="H">Hombre</SelectItem>
-                                        <SelectItem value="M">Mujer</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Fecha de nacimiento */}
-                    <FormField
-                        control={form.control}
-                        name="fecha_nacimiento"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <div className="flex items-center gap-2">
+                        {/* Sexo */}
+                        <FormField
+                            control={form.control}
+                            name="sexo"
+                            render={({ field }) => (
+                                <FormItem>
                                     <FormLabel>
-                                        Fecha de nacimiento <span className="text-destructive">*</span>
+                                        Sexo <span className="text-destructive">*</span>
                                     </FormLabel>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Ayuda para fecha de nacimiento">
-                                                    <HelpCircle className="h-4 w-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p className="max-w-xs">Para estudiantes entre 8 y 18 años</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
-                                <DatePicker
-                                    value={(() => {
-                                        if (!field.value) return undefined;
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="max-w-xs">
+                                                <SelectValue placeholder="Selecciona una opción" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="H">Hombre</SelectItem>
+                                            <SelectItem value="M">Mujer</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                                        // Convertir string a Date de forma segura
-                                        try {
-                                            const date = new Date(field.value);
-                                            // Verificar si la fecha es válida
-                                            if (isNaN(date.getTime())) {
+                        {/* Fecha de nacimiento */}
+                        <FormField
+                            control={form.control}
+                            name="fecha_nacimiento"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <div className="flex items-center gap-2">
+                                        <FormLabel>
+                                            Fecha de nacimiento <span className="text-destructive">*</span>
+                                        </FormLabel>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-5 w-5"
+                                                        aria-label="Ayuda para fecha de nacimiento"
+                                                    >
+                                                        <HelpCircle className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p className="max-w-xs">Para estudiantes entre 8 y 18 años</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                    <DatePicker
+                                        value={(() => {
+                                            if (!field.value) return undefined;
+
+                                            try {
+                                                // Parsear fecha usando el mismo método que funciona en roles-manager
+                                                if (field.value.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                                                    const [year, month, day] = field.value.split('-').map((num: string) => parseInt(num, 10));
+                                                    return new Date(year, month - 1, day);
+                                                } else {
+                                                    // Fallback para otros formatos
+                                                    return new Date(field.value);
+                                                }
+                                            } catch (error) {
+                                                console.warn('Invalid date value:', field.value, error);
                                                 return undefined;
                                             }
-                                            return date;
-                                        } catch (error) {
-                                            console.warn('Invalid date value:', field.value, error);
-                                            return undefined;
-                                        }
-                                    })()}
-                                    onChange={(date) => field.onChange(date ? date.toISOString().slice(0, 10) : '')}
-                                    placeholder="Selecciona fecha"
-                                    className="truncate"
-                                    disableDates={(date) => {
-                                        const today = new Date();
-                                        const maxAge = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-                                        const minAge = new Date(today.getFullYear() - 8, today.getMonth(), today.getDate());
-                                        return date > minAge || date < maxAge;
-                                    }}
-                                />
-                                <FormDescription>Edad permitida: 8 a 18 años</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                                        })()}
+                                        onChange={(date) => {
+                                            if (date) {
+                                                // Formatear fecha en timezone local
+                                                const year = date.getFullYear();
+                                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                                const day = String(date.getDate()).padStart(2, '0');
+                                                field.onChange(`${year}-${month}-${day}`);
+                                            } else {
+                                                field.onChange('');
+                                            }
+                                        }}
+                                        placeholder="Selecciona fecha"
+                                        className="truncate"
+                                        disableDates={(date) => {
+                                            const today = new Date();
+                                            const maxAge = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+                                            const minAge = new Date(today.getFullYear() - 8, today.getMonth(), today.getDate());
+                                            return date > minAge || date < maxAge;
+                                        }}
+                                    />
+                                    <FormDescription>Edad permitida: 8 a 18 años</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                 </div>
 
                 {/* DATOS DE CONTACTO */}
