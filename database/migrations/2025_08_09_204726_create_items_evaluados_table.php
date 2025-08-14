@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('evaluacion_id')->constrained('evaluaciones_fase')->onDelete('cascade');
             $table->string('item_codigo'); // Ej: P1, P2, etc. -> etiqueta del problema
-            $table->decimal('nota', 5, 2); // Ej: 8.50
+            $table->decimal('nota_final', 5, 2); // Ej: 8.50
+            $table->decimal('nota_real', 6, 4); // Ej: 8.1234
             $table->text('observaciones')->nullable();
             $table->timestamps();
         });

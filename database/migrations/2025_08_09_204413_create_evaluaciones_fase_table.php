@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('evaluaciones_fase', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('inscripcion_id')->constrained('inscripciones_fase')->onDelete('cascade');
+            $table->foreignId('inscripcion_id')->constrained('inscripciones_olimpiadas')->onDelete('cascade');
             $table->enum('estado', ['pendiente', 'completada', 'anulada']);
             $table->dateTime('fecha_evaluacion');
             $table->timestamps();
+            // Clave foranea con definiciones_evaluacion
+            $table->foreignId('definicion_id')->nullable()->constrained('definiciones_evaluacion')->nullOnDelete();
         });
     }
 
