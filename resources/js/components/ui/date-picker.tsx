@@ -84,7 +84,9 @@ function dateToDateValue(date: Date): DateValue {
 
 // Función para convertir DateValue a Date
 function dateValueToDate(dateValue: DateValue): Date {
-  return dateValue.toDate("UTC");
+  // Usar timezone local en lugar de UTC para evitar desfase de días
+  const localDate = new Date(dateValue.year, dateValue.month - 1, dateValue.day);
+  return localDate;
 }
 
 export function DatePicker({
