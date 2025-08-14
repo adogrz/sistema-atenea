@@ -3,10 +3,59 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Config\RolesConfig;
 use Spatie\Permission\Models\Role;
 
 class RoleAssignmentService
 {
+    /**
+     * Define la jerarquía de poder de los roles a través de un rango numérico.
+     * Un rol con un número más alto tiene más poder.
+     */
+    private const UNKNOWN_ROLE_RANK = PHP_INT_MAX;
+    private function getRoleRanks(): array
+    {
+        return [
+            'admin-ti' => 100,
+            'director' => 90,
+            'admin-academico' => 80,
+            'jefe-psicologia' => 75,
+            'jefe-medicina' => 75,
+            'admin-academico-sede' => 70,
+            'coordinador-area' => 60,
+            'psicologo' => 50,
+            'doctor' => 50,
+            'mentor' => 40,
+            'instructor' => 30,
+            'calificador' => 20,
+            'estudiante' => 10,
+            'aspirante' => 5,
+        ];
+    }
+
+    /**
+     * Obtiene el rango jerárquico más alto de un usuario basado en sus roles.
+     * Roles desconocidos se tratan como máximamente protegidos.
+     */
+    public function getUserRank(User $user): int
+    {
+        $ranks = $this->getRoleRanks();
+        $userRoles = $user->roles->pluck('name')->toArray();
+
+        $maxRank = null;
+
+        foreach ($userRoles as $role) {
+            if (!isset($ranks[$role])) {
+                // Rol desconocido -> proteger
+                return self::UNKNOWN_ROLE_RANK;
+            }
+            $maxRank = max($maxRank ?? 0, $ranks[$role]);
+        }
+
+        // Sin roles => 0
+        return $maxRank ?? 0;
+    }
+
     /**
      * Define qué roles puede asignar cada rol de usuario
      */
@@ -15,8 +64,16 @@ class RoleAssignmentService
         return [
             'admin-ti' => [
                 'assignable_roles' => [
-                    'director', 'admin-academico', 'admin-academico-sede', 'coordinador-area',
-                    'mentor', 'instructor', 'estudiante', 'aspirante', 'calificador'
+                    'admin-ti',
+                    'director',
+                    'admin-academico',
+                    'admin-academico-sede',
+                    'coordinador-area',
+                    'mentor',
+                    'instructor',
+                    'estudiante',
+                    'aspirante',
+                    'calificador'
                     // No incluye roles médicos ni psicológicos
                 ],
             ],
@@ -25,8 +82,13 @@ class RoleAssignmentService
             ],
             'admin-academico' => [
                 'assignable_roles' => [
-                    'admin-academico-sede', 'coordinador-area', 'mentor',
-                    'instructor', 'estudiante', 'aspirante', 'calificador'
+                    'admin-academico-sede',
+                    'coordinador-area',
+                    'mentor',
+                    'instructor',
+                    'estudiante',
+                    'aspirante',
+                    'calificador'
                     // No incluye director, admin-ti, ni roles médicos/psicológicos
                 ],
             ],
@@ -35,14 +97,16 @@ class RoleAssignmentService
             ],
             'coordinador-area' => [
                 'assignable_roles' => [
-                    'mentor', 'instructor', 'calificador'
+                    'mentor',
+                    'instructor',
+                    'calificador'
                 ],
             ],
             'jefe-psicologia' => [
-                'assignable_roles' => ['psicologo'],
+                'assignable_roles' => ['jefe-psicologia', 'psicologo'],
             ],
             'jefe-medicina' => [
-                'assignable_roles' => ['doctor'],
+                'assignable_roles' => ['jefe-medicina', 'doctor'],
             ],
         ];
     }
@@ -68,9 +132,11 @@ class RoleAssignmentService
             }
 
             // Si puede asignar cualquier rol
-            if (isset($hierarchy[$userRole]['assignable_roles']) &&
+            if (
+                isset($hierarchy[$userRole]['assignable_roles']) &&
                 is_array($hierarchy[$userRole]['assignable_roles']) &&
-                in_array('*', $hierarchy[$userRole]['assignable_roles'], true)) {
+                in_array('*', $hierarchy[$userRole]['assignable_roles'], true)
+            ) {
                 return true;
             }
 
@@ -106,9 +172,11 @@ class RoleAssignmentService
             }
 
             // Si puede asignar cualquier rol
-            if (isset($hierarchy[$userRole]['assignable_roles']) &&
+            if (
+                isset($hierarchy[$userRole]['assignable_roles']) &&
                 is_array($hierarchy[$userRole]['assignable_roles']) &&
-                in_array('*', $hierarchy[$userRole]['assignable_roles'], true)) {
+                in_array('*', $hierarchy[$userRole]['assignable_roles'], true)
+            ) {
                 return $allRoles->toArray();
             }
 
@@ -136,74 +204,22 @@ class RoleAssignmentService
      */
     public function canEditUser(User $editor, User $target): bool
     {
-        // No puede editar usuarios que no puede ver
-        $userVisibilityService = app(UserVisibilityService::class);
-        $visibleUsers = $userVisibilityService->getVisibleUsers($editor);
-
-        if (!$visibleUsers->contains('id', $target->id)) {
+        // Regla 1: Un usuario no puede editarse a sí mismo.
+        if ($editor->id === $target->id) {
             return false;
         }
 
-        // Obtener los roles del editor y del objetivo
-        $editorRoles = $editor->roles->pluck('name')->toArray();
-        $targetRoles = $target->roles->pluck('name')->toArray();
-
-        // Si el editor y el objetivo comparten algún rol, no se permite la edición
-        if (!empty(array_intersect($editorRoles, $targetRoles))) {
+        // Regla 2: Protección absoluta para roles críticos.
+        $protectedRoles = RolesConfig::getProtectedRoles();
+        if ($target->hasAnyRole($protectedRoles)) {
             return false;
         }
 
-        // Admin TI no puede editar usuarios del área médica o psicológica
-        if ($editor->hasRole('admin-ti')) {
-            $targetRoles = $target->roles->pluck('name')->toArray();
-            $restrictedRoles = ['psicologo', 'jefe-psicologia', 'doctor', 'jefe-medicina'];
+        // Regla 3: La lógica de edición se basa en la jerarquía de rangos.
+        // Solo puedes editar usuarios con un rango estrictamente menor al tuyo.
+        $editorRank = $this->getUserRank($editor);
+        $targetRank = $this->getUserRank($target);
 
-            if (array_intersect($targetRoles, $restrictedRoles)) {
-                return false;
-            }
-        }
-
-        // Admin Académico no puede editar directores ni admin-ti
-        if ($editor->hasRole('admin-academico')) {
-            $targetRoles = $target->roles->pluck('name')->toArray();
-            $restrictedRoles = ['director', 'admin-ti'];
-
-            if (array_intersect($targetRoles, $restrictedRoles)) {
-                return false;
-            }
-
-            // No puede gestionar usuarios del área médica o psicológica
-            $medicalRoles = ['psicologo', 'jefe-psicologia', 'doctor', 'jefe-medicina'];
-            if (array_intersect($targetRoles, $medicalRoles)) {
-                return false;
-            }
-        }
-
-        // Coordinador de área solo puede editar mentores, instructores y calificadores de su área
-        if ($editor->hasRole('coordinador-area')) {
-            $targetRoles = $target->roles->pluck('name')->toArray();
-            $allowedRoles = ['mentor', 'instructor', 'calificador'];
-
-            if (!array_intersect($targetRoles, $allowedRoles)) {
-                return false;
-            }
-
-            // Verificar que estén en la misma área
-            $editorAreaIds = $editor->areas->pluck('id')->toArray();
-            $targetAreaIds = $target->areas->pluck('id')->toArray();
-
-            if (empty(array_intersect($editorAreaIds, $targetAreaIds))) {
-                return false;
-            }
-        }
-
-        // Verificar si puede asignar al menos uno de los roles del usuario
-        foreach ($target->roles as $role) {
-            if ($this->canAssignRole($editor, $role->name)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $editorRank > $targetRank;
     }
 }

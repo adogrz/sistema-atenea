@@ -12,7 +12,11 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             SedeSeeder::class,
             AreaSeeder::class,
-            UserSeeder::class,
+            DepartamentoSeeder::class,
+            MunicipioSeeder::class,
+            DistritoSeeder::class,
+            NivelEducativoSeeder::class,
+            EssentialUserSeeder::class,
         ]);
     }
 }

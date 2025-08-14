@@ -15,27 +15,52 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { CentroEducativo, NivelEducativo } from "@/types/admission/education";
+import { Departamento, Distrito, Municipio } from "@/types/admission/address";
+import { useState } from "react";
 
-export default function ResumenSolicitud() {
+interface ResumenProps {
+  centros_educativos: CentroEducativo[];
+  niveles_educativos: NivelEducativo[];
+  departamentos: Departamento[];
+  municipios: Record<string, Municipio[]>;
+  distritos: Record<string, Distrito[]>;
+}
+
+export default function ResumenSolicitud(props: ResumenProps) {
   const form = useFormContext();
-  const values = form.watch();
+  const values = form.getValues();
 
   const sexoMap: Record<string, string> = {
     H: "Hombre",
     M: "Mujer",
-    O: "Otro",
   };
 
-  const nivelesEducativos = [
-    { value: "cuarto_grado", label: "Cuarto grado", tooltip: "Generalmente cursado a los 9 años, fortalece lectura y cálculo básico" },
-    { value: "quinto_grado", label: "Quinto grado", tooltip: "Se refuerzan habilidades de escritura y pensamiento lógico" },
-    { value: "sexto_grado", label: "Sexto grado", tooltip: "Grado final antes de secundaria, con enfoque en ciencias y matemáticas" },
-    { value: "septimo_grado", label: "Séptimo grado", tooltip: "Inicio de secundaria, se introducen nuevas asignaturas académicas" },
-    { value: "octavo_grado", label: "Octavo grado", tooltip: "Fortalecimiento en historia, biología y escritura formal" },
-    { value: "noveno_grado", label: "Noveno grado", tooltip: "Último año de secundaria básica, importante para transición al bachillerato" },
-  ];
+  const departamentoSeleccionado = form.watch("departamento");
+  const municipioSeleccionado = form.watch("municipio");
+  const distritoSeleccionado = form.watch("distrito");
 
-  const nivel = nivelesEducativos.find(n => n.value === values.nivel_educativo);
+  // Corrección: usar la clave correcta y asegurar que no sea undefined
+  const municipios = props.municipios[departamentoSeleccionado] || [];
+  const distritos = props.distritos[municipioSeleccionado] || [];
+
+  // Extraer los nombres para mostrar el resumen
+  const nombreDepartamento = props.departamentos.find(d => d.id === departamentoSeleccionado)?.nombre_departamento;
+  const nombreMunicipio = municipios.find(m => m.id === municipioSeleccionado)?.nombre_municipio;
+  const nombreDistrito = distritos.find(d => d.id === distritoSeleccionado)?.nombre_distrito;
+
+  // Utilidades para mostrar valores por id
+  const getCentroEducativo = (id?: string) =>
+    props.centros_educativos.find((c) => c.codigo === id)?.nombre || values.centro_educativo || "No especificado";
+
+  const getNivelEducativo = (id?: string) => {
+    const nivel = props.niveles_educativos.find((n) => n.codigo === id);
+    return nivel?.descripcion || "No especificado";
+  };
+
+  // Helper para mostrar "No especificado"
+  const showValue = (val: any) =>
+    val === null || val === undefined || (typeof val === "string" && val.trim() === "") ? "No especificado" : val;
 
   return (
     <TooltipProvider>
@@ -57,12 +82,27 @@ export default function ResumenSolicitud() {
             </Tooltip>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><strong>Nombre completo:</strong> {`${values.primer_nombre} ${values.segundo_nombre} ${values.primer_apellido} ${values.segundo_apellido}`.trim() || "No especificado"}</div>
-              <div><strong>Sexo:</strong> {sexoMap[values.sexo] || "No especificado"}</div>
-              <div><strong>Fecha de nacimiento:</strong> {values.fecha_nacimiento || "No especificada"}</div>
-              <div><strong>NIE:</strong> {values.nie || "No especificado"}</div>
-              <div><strong>Teléfono:</strong> {values.telefono_estudiante || "No especificado"}</div>
-              <div><strong>Email:</strong> {values.email || "No especificado"}</div>
+              <div>
+                <strong>Nombre completo:</strong>{" "}
+                {`${showValue(values.primer_nombre)} ${showValue(values.segundo_nombre)} ${showValue(values.primer_apellido)} ${showValue(values.segundo_apellido)}`.replace(/\s+/g, " ").trim() === "No especificado No especificado No especificado No especificado"
+                  ? "No especificado"
+                  : `${showValue(values.primer_nombre)} ${showValue(values.segundo_nombre)} ${showValue(values.primer_apellido)} ${showValue(values.segundo_apellido)}`.replace(/\s+/g, " ").trim()}
+              </div>
+              <div>
+                <strong>Sexo:</strong> {sexoMap[values.sexo] || "No especificado"}
+              </div>
+              <div>
+                <strong>Fecha de nacimiento:</strong> {showValue(values.fecha_nacimiento)}
+              </div>
+              <div>
+                <strong>NIE:</strong> {showValue(values.nie)}
+              </div>
+              <div>
+                <strong>Teléfono:</strong> {showValue(values.telefono_estudiante)}
+              </div>
+              <div>
+                <strong>Email:</strong> {showValue(values.email)}
+              </div>
             </div>
           </section>
 
@@ -78,11 +118,21 @@ export default function ResumenSolicitud() {
             </Tooltip>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><strong>Departamento:</strong> {values.departamento || "No especificado"}</div>
-              <div><strong>Municipio:</strong> {values.municipio || "No especificado"}</div>
-              <div><strong>Distrito:</strong> {values.distrito || "No especificado"}</div>
-              <div><strong>Teléfono de casa:</strong> {values.telefono_casa ?? "No especificado"}</div>
-              <div className="md:col-span-2"><strong>Dirección detallada:</strong> {values.direccion || "No especificada"}</div>
+              <div>
+                <strong>Departamento:</strong> {showValue(nombreDepartamento)}
+              </div>
+              <div>
+                <strong>Municipio:</strong> {showValue(nombreMunicipio)}
+              </div>
+              <div>
+                <strong>Distrito:</strong> {showValue(nombreDistrito)}
+              </div>
+              <div>
+                <strong>Teléfono de casa:</strong> {showValue(values.telefono_casa)}
+              </div>
+              <div className="md:col-span-2">
+                <strong>Dirección detallada:</strong> {showValue(values.direccion)}
+              </div>
             </div>
           </section>
 
@@ -98,39 +148,90 @@ export default function ResumenSolicitud() {
             </Tooltip>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><strong>Código del centro:</strong> {values.codigo || "No especificado"}</div>
-              <div><strong>Centro educativo:</strong> {values.centro_educativo || "No especificado"}</div>
-              <div><strong>Sector:</strong> {values.sector || "No especificado"}</div>
-              <div><strong>Zona:</strong> {values.zona || "No especificada"}</div>
-              <div><strong>¿Internacional?:</strong> {values.internacional || "No especificado"}</div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div><strong>Nivel educativo:</strong> {nivel?.label || values.nivel_educativo || "No especificado"}</div>
-                </TooltipTrigger>
-                <TooltipContent>{nivel?.tooltip || "Nivel académico actual"}</TooltipContent>
-              </Tooltip>
+              <div>
+                <strong>Código del centro:</strong> {showValue(values.codigo)}
+              </div>
+              <div>
+                <strong>Centro educativo:</strong> {getCentroEducativo(values.codigo)}
+              </div>
+              <div>
+                <strong>Sector:</strong> {showValue(values.sector)}
+              </div>
+              <div>
+                <strong>Zona:</strong> {showValue(values.zona)}
+              </div>
+              <div>
+                <strong>¿Internacional?:</strong> {showValue(values.internacional)}
+              </div>
+              <div>
+                <strong>Nivel educativo:</strong> {getNivelEducativo(values.nivel_educativo)}
+              </div>
             </div>
           </section>
 
           <Separator />
 
-          {/* Responsable */}
+          {/* Responsable 1 */}
           <section>
             <Tooltip>
               <TooltipTrigger asChild>
-                <h3 className="font-semibold text-base mb-3">Responsable</h3>
+                <h3 className="font-semibold text-base mb-3">Responsable 1</h3>
               </TooltipTrigger>
-              <TooltipContent>Persona encargada legalmente del estudiante</TooltipContent>
+              <TooltipContent>Primer responsable legal del estudiante</TooltipContent>
             </Tooltip>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><strong>DUI:</strong> {values.dui || "No especificado"}</div>
-              <div><strong>Nombres:</strong> {values.nombres_responsable || "No especificado"}</div>
-              <div><strong>Apellidos:</strong> {values.apellidos_responsable || "No especificado"}</div>
-              <div><strong>Email:</strong> {values.email_responsable ?? "No especificado"}</div>
-              <div><strong>Teléfono principal:</strong> {values.telefono_responsable || "No especificado"}</div>
-              <div><strong>Teléfono opcional:</strong> {values.telefono_opcional || "No especificado"}</div>
-              <div><strong>Parentesco:</strong> {values.tipo_parentesco || "No especificado"}</div>
+              <div>
+                <strong>DUI:</strong> {showValue(values.dui_responsable_1)}
+              </div>
+              <div>
+                <strong>Nombres:</strong> {showValue(values.nombres_responsable_1)}
+              </div>
+              <div>
+                <strong>Apellidos:</strong> {showValue(values.apellidos_responsable_1)}
+              </div>
+              <div>
+                <strong>Email:</strong> {showValue(values.email_responsable_1)}
+              </div>
+              <div>
+                <strong>Teléfono principal:</strong> {showValue(values.telefono_responsable_1)}
+              </div>
+              <div>
+                <strong>Parentesco:</strong> {showValue(values.tipo_parentesco_1)}
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Responsable 2 */}
+          <section>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h3 className="font-semibold text-base mb-3">Responsable 2</h3>
+              </TooltipTrigger>
+              <TooltipContent>Segundo responsable legal del estudiante (opcional)</TooltipContent>
+            </Tooltip>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <strong>DUI:</strong> {showValue(values.dui_responsable_2)}
+              </div>
+              <div>
+                <strong>Nombres:</strong> {showValue(values.nombres_responsable_2)}
+              </div>
+              <div>
+                <strong>Apellidos:</strong> {showValue(values.apellidos_responsable_2)}
+              </div>
+              <div>
+                <strong>Email:</strong> {showValue(values.email_responsable_2)}
+              </div>
+              <div>
+                <strong>Teléfono principal:</strong> {showValue(values.telefono_responsable_2)}
+              </div>
+              <div>
+                <strong>Parentesco:</strong> {showValue(values.tipo_parentesco_2)}
+              </div>
             </div>
           </section>
         </CardContent>

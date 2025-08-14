@@ -1,3 +1,14 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { BarChartLabel } from '@/components/ui/charts/chart-bar-label';
 import { BarChartCustomLabel } from '@/components/ui/charts/chart-bar-label-custom';
@@ -9,10 +20,10 @@ import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Description } from '@radix-ui/react-dialog';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { Edit, MailCheck, Trash2, UserPlus, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Role {
     id: number;
@@ -42,6 +53,13 @@ interface User {
     sede_description?: string;
     status: string;
     areas?: Area[];
+    can_be_deleted: boolean;
+    can_be_edited: boolean;
+}
+
+interface FlashMessages {
+    success?: string;
+    error?: string;
 }
 
 // Constantes
@@ -52,19 +70,52 @@ const BREADCRUMBS: BreadcrumbItem[] = [
 
 export default function DashboardUsers() {
     const { hasPermission } = usePermissions();
-    const { assignableRoles, users, auth } = usePage<{
-        assignableRoles: Array<Role>;
+    const { users, auth, flash } = usePage<{
         users: Array<User>;
         auth: { user: User };
+        flash: FlashMessages;
     }>().props;
 
-    const authUser = auth.user;
+    useEffect(() => {
+        if (flash?.success) {
+            if (typeof flash.success === 'object' && flash.success !== null && 'title' in flash.success) {
+                const { title, description, action } = flash.success as {
+                    title: string;
+                    description: string;
+                    action?: {
+                        label: string;
+                        route: string;
+                        params: Record<string, any>;
+                    };
+                };
+
+                if (action) {
+                    toast.success(title, {
+                        description: description,
+                        action: {
+                            label: action.label,
+                            onClick: () => {
+                                router.post(route(action.route, action.params));
+                            },
+                        },
+                    });
+                } else {
+                    toast.success(title, {
+                        description: description,
+                    });
+                }
+            } else {
+                toast.success(flash.success as string);
+            }
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
 
     // Verificación de permisos
     const canViewAllUsers = hasPermission('users:view-all');
     const canCreateUser = hasPermission('users:create');
-    const canEditUser = hasPermission('users:edit');
-    const canDeleteUser = hasPermission('users:delete');
     const canResetUserPassword = hasPermission('users:reset-password');
 
     // Estados para manejo de UI
@@ -79,60 +130,6 @@ export default function DashboardUsers() {
 
     const selectedUser = selectedUserId ? users.find((u) => u.id === selectedUserId) || null : null;
 
-    const isEditDisabled = useMemo(() => {
-        if (!selectedUserId || !canEditUser) {
-            return true;
-        }
-
-        if (!selectedUser || !authUser) {
-            return true;
-        }
-
-        const authUserAssignableRoleNames = assignableRoles.map((r) => r.name);
-
-        if (selectedUser.id === authUser.id) {
-            return true;
-        }
-
-        const authUserRoleNames = authUser.roles.map((r) => r.name);
-        const selectedUserRoleNames = selectedUser.roles.map((r) => r.name);
-        if (selectedUserRoleNames.some((roleName) => authUserRoleNames.includes(roleName))) {
-            return true;
-        }
-
-        if (authUserRoleNames.includes('admin-ti')) {
-            const restrictedRoles = ['psicologo', 'jefe-psicologia', 'doctor', 'doctor-jefe'];
-            if (selectedUserRoleNames.some((roleName) => restrictedRoles.includes(roleName))) {
-                return true;
-            }
-        }
-
-        if (authUserRoleNames.includes('admin-academico')) {
-            const restrictedRoles = ['director', 'admin-ti', 'psicologo', 'jefe-psicologia', 'doctor', 'doctor-jefe'];
-            if (selectedUserRoleNames.some((roleName) => restrictedRoles.includes(roleName))) {
-                return true;
-            }
-        }
-
-        if (authUserRoleNames.includes('coordinador-area')) {
-            const allowedRoles = ['mentor', 'instructor', 'calificador'];
-            if (!selectedUserRoleNames.some((roleName) => allowedRoles.includes(roleName))) {
-                return true;
-            }
-        }
-
-        if (authUserRoleNames.includes('admin-academico-sede')) {
-            const higherRoles = ['director', 'admin-ti', 'admin-academico'];
-            if (selectedUserRoleNames.some((roleName) => higherRoles.includes(roleName))) {
-                return true;
-            }
-        }
-
-        const canAuthUserAssignAnyOfSelectedUserRoles = selectedUserRoleNames.some((roleName) => authUserAssignableRoleNames.includes(roleName));
-
-        return !canAuthUserAssignAnyOfSelectedUserRoles;
-    }, [selectedUserId, canEditUser, selectedUser, authUser, assignableRoles]);
-
     const columns = useMemo(
         () =>
             getUserColumns(
@@ -145,10 +142,10 @@ export default function DashboardUsers() {
                 setSelectedSedes,
                 selectedAreas,
                 setSelectedAreas,
-                selectedStatus, // Pasar el nuevo estado
-                setSelectedStatus, // Pasar el nuevo setter
+                selectedStatus,
+                setSelectedStatus,
             ),
-        [users, selectedUserId, selectedRoles, selectedSedes, selectedAreas, selectedStatus], // Añadir selectedStatus a las dependencias
+        [users, selectedUserId, selectedRoles, selectedSedes, selectedAreas, selectedStatus],
     );
     const totalUsuarios = users.length;
     const activos = users.filter((u) => u.status === 'active').length;
@@ -218,7 +215,7 @@ export default function DashboardUsers() {
         setSelectedRoles([]);
         setSelectedSedes([]);
         setSelectedAreas([]);
-        setSelectedStatus([]); // Limpiar el nuevo filtro de estado
+        setSelectedStatus([]);
         setColumnFilters([]);
     };
 
@@ -236,7 +233,7 @@ export default function DashboardUsers() {
                             onClick={() => setShowResetConfirm(true)}
                             disabled={!selectedUserId || !canResetUserPassword}
                         >
-                            <MailCheck className="h-4 w-4" />
+                            <MailCheck className="size-4" />
                             <span>Enviar enlace de recuperación</span>
                         </Button>
                         <Button
@@ -246,35 +243,47 @@ export default function DashboardUsers() {
                             disabled={!canCreateUser}
                             onClick={() => canCreateUser && router.visit('/dashboard/users/create')}
                         >
-                            <UserPlus className="h-4 w-4" />
+                            <UserPlus className="size-4" />
                             <span>Agregar</span>
                         </Button>
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => router.visit(`/dashboard/users/${selectedUserId}/edit`)}
-                            disabled={isEditDisabled}
+                            disabled={!selectedUser?.can_be_edited}
                             className="flex items-center gap-2"
                         >
-                            <Edit className="h-4 w-4" /> Editar
+                            <Edit className="size-4" /> Editar
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2 text-red-600 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
-                            onClick={() => setShowDeleteModal(true)}
-                            disabled={!selectedUserId || !canDeleteUser}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                            <span>Eliminar</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2"
-                            onClick={handleClearAllFilters}
-                        >
-                            <X className="h-4 w-4" />
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="flex items-center gap-2 text-red-600 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
+                                    disabled={!selectedUser?.can_be_deleted}
+                                >
+                                    <Trash2 className="size-4" />
+                                    <span>Eliminar</span>
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Estás seguro de que quieres eliminar a este usuario?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Esta acción es permanente y no se puede deshacer. Se eliminarán todos los datos asociados a este usuario.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white hover:bg-destructive/90">
+                                        Sí, eliminar usuario
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                        <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleClearAllFilters}>
+                            <X className="size-4" />
                             <span>Limpiar Filtros</span>
                         </Button>
                     </div>
@@ -344,27 +353,25 @@ export default function DashboardUsers() {
                     </div>
 
                     {/* Modales */}
-                    <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>¿Eliminar usuario?</DialogTitle>
-                            </DialogHeader>
-                            <Description className="mb-4">
-                                <p className="mb-1">Id: {selectedUserId}</p>
-                                <p className="mb-1">Nombre: {selectedUser?.name}</p>
-                                <p className="mb-1">Email: {selectedUser?.email}</p>
-                            </Description>
-                            <p>Esta acción no se puede deshacer. El usuario seleccionado será eliminado permanentemente del sistema.</p>
-                            <DialogFooter className="flex justify-end gap-2 pt-4">
-                                <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                                    Cancelar
-                                </Button>
-                                <Button variant="destructive" onClick={handleDelete}>
-                                    Eliminar
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>¿Estás seguro de que quieres eliminar a este usuario?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Esta acción es permanente y no se puede deshacer. Se eliminarán todos los datos asociados a este usuario.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={handleDelete}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                    Sí, eliminar usuario
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
 
                     <Dialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
                         <DialogContent>

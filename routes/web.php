@@ -3,20 +3,13 @@
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Spatie\Activitylog\Models\Activity;
-use Illuminate\Support\Collection;
-
-use App\Models\Departamento;
-use App\Models\Municipio;
-use App\Models\Distrito;
-use App\Models\CentroEducativo;
+use Illuminate\Support\Facades\DB;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
 use App\Models\Evento;
 use App\Http\Controllers\EventController;
-
-
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -52,9 +45,9 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::get('users/create', [UserController::class, 'create'])->name('users.create')->middleware('permission:users:create');
         Route::post('users', [UserController::class, 'store'])->name('users.store')->middleware('permission:users:create');
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('permission:users:edit');
-        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
-        Route::patch('users/{user}', [UserController::class, 'update'])->middleware('permission:users:edit');
+        Route::match(['PUT', 'PATCH'], 'users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users:delete');
+        Route::post('users/{id}/restore', [UserController::class, 'restore'])->name('users.restore')->middleware('permission:users:delete');
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
@@ -159,10 +152,11 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     });
 });
 
-
+    // Ruta para el dashboard académico
+    Route::get('/dashboard/academico', AcademicoController::class)->name('dashboard.academico');
+});
 
 Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {
-
     // Página que contiene el formulario de carga
     Route::get('/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create');
 
@@ -170,40 +164,34 @@ Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->gr
     Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store');
 
     // Página que contiene el formulario de admisión
-    Route::get('/formulario-admision', function () {
-        $departamentos = Departamento::select('id', 'nombre_departamento')->get()
-            ->map(fn($d) => [
-                'id' => (string) $d->id,
-                'nombre_departamento' => $d->nombre_departamento,
-            ]);
-
-        $municipios = Municipio::select('id', 'nombre_municipio', 'id_departamento')->get();
-        $municipiosPorDepartamento = $municipios->groupBy('id_departamento')->map(function (Collection $items) {
-            return $items->map(fn($m) => [
-                'id' => (string) $m->id,
-                'nombre_municipio' => $m->nombre_municipio,
-            ]);
-        });
-
-        $distritos = Distrito::select('id', 'nombre_distrito', 'id_municipio')->get();
-        $distritosPorMunicipio = $distritos->groupBy('id_municipio')->map(function (Collection $items) {
-            return $items->map(fn($d) => [
-                'id' => (string) $d->id,
-                'nombre_distrito' => $d->nombre_distrito,
-            ]);
-        });
-
-        return Inertia::render('admission/admission-register', [
-            'departamentos' => $departamentos,
-            'municipiosPorDepartamento' => $municipiosPorDepartamento,
-            'distritosPorMunicipio' => $distritosPorMunicipio,
-            'centrosEducativos' => CentroEducativo::all(),
-        ]);
-    })->name('admission');
+    Route::get('/formulario-admision', [AdmisionController::class, 'create'])->name('admision.create');
 
     // Ruta POST que procesa el formulario de admision
-    Route::post('/admision', [AdmisionController::class, 'store'])->name('admission.store');
+    Route::post('/admision', [AdmisionController::class, 'store'])->name('admision.store');
 });
 
-require __DIR__ . '/settings.php';
+Route::get('/up', function () {
+    return response('OK', 200);
+});
+
+Route::get('/health', function () {
+    try {
+        DB::connection()->getPdo();
+        return response()->json([
+            'status' => 'ok',
+            'services' => [
+                'database' => 'ok',
+            ],
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'services' => [
+                'database' => 'error',
+            ],
+        ], 503);
+    }
+});
+
 require __DIR__ . '/auth.php';
+require __DIR__ . '/settings.php';

@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('nombre_municipio');
             // Clave foránea hacia departamentos
             $table->foreign('id_departamento')->references('id')->on('departamentos')->onDelete('cascade');
-            $table->timestamps();
         });
     }
 

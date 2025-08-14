@@ -28,13 +28,16 @@ import {
 import { HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { CentroEducativo } from "@/types/admission/education";
+import { CentroEducativo, NivelEducativo } from "@/types/admission/education";
 
 interface EducacionProps {
   centros_educativos: CentroEducativo[];
+  niveles_educativos: NivelEducativo[];
 }
 
-export default function Educacion({ centros_educativos }: EducacionProps) {
+export default function Educacion(
+  { centros_educativos, niveles_educativos }: EducacionProps
+) {
   const form = useFormContext();
 
   const [filtros, setFiltros] = useState({
@@ -50,6 +53,7 @@ export default function Educacion({ centros_educativos }: EducacionProps) {
   const sector = form.watch("sector");
   const zona = form.watch("zona");
   const internacional = form.watch("internacional");
+  const nivelEducativo = form.watch("nivel_educativo");
 
   // Resultados filtrados
   const resultados = useMemo(() => {
@@ -199,12 +203,11 @@ export default function Educacion({ centros_educativos }: EducacionProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="cuarto_grado">Cuarto grado</SelectItem>
-                  <SelectItem value="quinto_grado">Quinto grado</SelectItem>
-                  <SelectItem value="sexto_grado">Sexto grado</SelectItem>
-                  <SelectItem value="septimo_grado">Séptimo grado</SelectItem>
-                  <SelectItem value="octavo_grado">Octavo grado</SelectItem>
-                  <SelectItem value="noveno_grado">Noveno grado</SelectItem>
+                  {niveles_educativos.map((nivel) => (
+                    <SelectItem key={nivel.codigo} value={nivel.codigo}>
+                      {nivel.descripcion}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
