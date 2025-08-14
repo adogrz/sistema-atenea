@@ -24,6 +24,27 @@ interface Event {
     updated_at: string;
 }
 
+const formatDate = (dateString: string): string => {
+  if (!dateString) return 'No especificada';
+  
+  // Crear fecha sin conversión de timezone
+  const parts = dateString.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const day = parseInt(parts[2]);
+    const date = new Date(year, month, day);
+    
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+  
+  return dateString;
+};
+
 export function getEventColumns(
   events: Event[],
   selectedEventId: number | null,
@@ -105,28 +126,53 @@ export function getEventColumns(
     },
     {
       accessorKey: "fecha_inicio",
-      header: "Fecha",
+      header: "Fecha Inicio",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
-          <span>{new Date(row.getValue("fecha_inicio")).toLocaleDateString('es-ES')}</span>
+          <Calendar className="h-4 w-4 text-blue-500" />
+          <span className="text-sm font-medium">
+            {formatDate(row.getValue("fecha_inicio"))}
+          </span>
         </div>
       ),
     },
     {
       accessorKey: "hora_inicio",
-      header: "Hora",
+      header: "Hora Inicio",
       cell: ({ row }) => {
         const startTime = row.getValue("hora_inicio") as string;
-        const endTime = row.original.hora_fin;
         return (
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>
-              {startTime && endTime 
-                ? `${startTime} - ${endTime}` 
-                : startTime || 'No especificada'
-              }
+            <Clock className="h-4 w-4 text-green-500" />
+            <span className="text-sm">
+              {startTime || 'No especificada'}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "fecha_fin",
+      header: "Fecha Fin",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-red-500" />
+          <span className="text-sm font-medium">
+            {formatDate(row.getValue("fecha_fin"))}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "hora_fin",
+      header: "Hora Fin",
+      cell: ({ row }) => {
+        const endTime = row.getValue("hora_fin") as string;
+        return (
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-orange-500" />
+            <span className="text-sm">
+              {endTime || 'No especificada'}
             </span>
           </div>
         );

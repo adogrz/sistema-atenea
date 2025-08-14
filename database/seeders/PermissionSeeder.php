@@ -66,7 +66,11 @@ class PermissionSeeder extends Seeder
             'events:edit',
             'events:delete',
             'events:export',
-            ]
+            ],
+            'academic' => [
+            'academic:view',
+            'academic:manage',
+        ],
         ];
     }
 
@@ -124,7 +128,7 @@ class PermissionSeeder extends Seeder
             ],
             'admin-academico' => [
                 'description' => 'Administrador Académico',
-                'groups' => ['general', 'users', 'sedes', 'areas', 'events'],
+                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic'],
                 'permissions' => ['users:view-all', 'roles:list', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -145,8 +149,7 @@ class PermissionSeeder extends Seeder
                 'groups' => ['general'],
                 'permissions' => [
                     'users:view-sede', 'users:view-area', 'users:list',
-                    'users:create', 'users:edit', 'roles:assign',
-                    'events:view', 'events:create', 'events:edit'
+                    'users:create', 'users:edit', 'roles:assign'
                 ],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -195,7 +198,7 @@ class PermissionSeeder extends Seeder
             'instructor' => [
                 'description' => 'Instructor',
                 'groups' => ['general'],
-                'permissions' => ['users:view-sede', 'users:view-area', 'users:list', 'events:view'],
+                'permissions' => ['users:view-sede', 'users:view-area', 'users:list'],
                 'inherits' => [],
                 'exclude_permissions' => []
             ],
