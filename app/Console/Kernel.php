@@ -25,6 +25,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('roles:clean-expired')->hourly();
+
+        $schedule->command('academic:check-periods')
+                 ->hourly()
+                 ->withoutOverlapping()
+                 ->appendOutputTo(storage_path('logs/academic-periods.log'));
     }
 
     /**

@@ -36,18 +36,18 @@ export function AppSidebar() {
                     : []),
             ],
         },
-        {
+        ...(hasPermission('academic:view') ? [{
             title: 'Académico',
-            icon: Calendar,
+            icon: School,
             items: [
-                ...(hasPermission('events:view') ? [{ title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard }] : []),
-                ...(hasPermission('events:view') ? [{ title: 'Calendario', href: '/dashboard/calendario', icon: Calendar }] : []),
-                ...(hasPermission('events:view') ? [{ title: 'Datos Aspirantes', href: '/dashboard/academico/aspirantes', icon: Clock }] : []),
-                ...(hasPermission('events:view') ? [{ title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users }] : []),
-                ...(hasPermission('events:view') ? [{ title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen }] : []),
-                ...(hasPermission('events:view') ? [{ title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap }] : []),
+                { title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard },
+                { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
+                { title: 'Datos Aspirantes', href: '/dashboard/academico/aspirantes', icon: Clock },
+                { title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users },
+                { title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen },
+                { title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap },
             ],
-        },
+        }] : []),
     ];
 
     const mainNavItems = navStructure
