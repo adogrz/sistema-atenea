@@ -152,9 +152,6 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     });
 });
 
-    // Ruta para el dashboard académico
-    Route::get('/dashboard/academico', AcademicoController::class)->name('dashboard.academico');
-});
 
 Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {
     // Página que contiene el formulario de carga
