@@ -4,7 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
+import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
