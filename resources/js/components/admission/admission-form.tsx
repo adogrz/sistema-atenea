@@ -47,7 +47,7 @@ export default function FormularioAdmision() {
             segundo_nombre: '',
             primer_apellido: '',
             segundo_apellido: '',
-            sexo: '' as unknown as 'H' | 'M',
+            sexo: '',
             fecha_nacimiento: '',
             nie: '',
             email: '',

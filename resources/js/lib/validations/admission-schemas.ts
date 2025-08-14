@@ -32,9 +32,8 @@ export const personalDataSchema = z.object({
         })
         .optional()
         .or(z.literal('')),
-    sexo: z.enum(['H', 'M'], {
-        required_error: 'Debes seleccionar el sexo',
-        invalid_type_error: 'Debes seleccionar el sexo',
+    sexo: z.string().refine((val) => val === 'H' || val === 'M', {
+        message: 'Por favor selecciona tu sexo',
     }),
     fecha_nacimiento: z.string().refine(
         (val) => {

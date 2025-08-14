@@ -14,11 +14,13 @@ export default function DatosPersonales() {
     const form = useFormContext();
 
     // Función para manejar input de NIE con restricción de longitud
-    const handleNieChange = (e: React.ChangeEvent<HTMLInputElement>, field: { onChange: (value: string) => void }) => {
+    const handleNieChange = (e: React.ChangeEvent<HTMLInputElement>, field: { onChange: (value: string) => void; onBlur: () => void }) => {
         const value = e.target.value.replace(/\D/g, ''); // Solo números
         if (value.length <= 10) {
             // Máximo 10 dígitos
             field.onChange(value);
+            // Validar en tiempo real mientras escribe
+            form.trigger('nie');
         }
     };
 
@@ -33,8 +35,8 @@ export default function DatosPersonales() {
                 <div className="space-y-4">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Identidad</h3>
 
-                    {/* Grid 2x2 para nombres y apellidos */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Grid 2x2 para nombres, apellidos, sexo y fecha de nacimiento */}
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         <FormField
                             control={form.control}
                             name="primer_nombre"
@@ -44,7 +46,15 @@ export default function DatosPersonales() {
                                         Primer nombre <span className="text-destructive">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ej. Juan" {...field} aria-label="Ingresa tu primer nombre" />
+                                        <Input
+                                            placeholder="Ej. Juan"
+                                            {...field}
+                                            aria-label="Ingresa tu primer nombre"
+                                            onBlur={() => {
+                                                field.onBlur();
+                                                form.trigger('primer_nombre');
+                                            }}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -60,7 +70,15 @@ export default function DatosPersonales() {
                                         Primer apellido <span className="text-destructive">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ej. Pérez" {...field} aria-label="Ingresa tu primer apellido" />
+                                        <Input
+                                            placeholder="Ej. Pérez"
+                                            {...field}
+                                            aria-label="Ingresa tu primer apellido"
+                                            onBlur={() => {
+                                                field.onBlur();
+                                                form.trigger('primer_apellido');
+                                            }}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -110,9 +128,16 @@ export default function DatosPersonales() {
                                     <FormLabel>
                                         Sexo <span className="text-destructive">*</span>
                                     </FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                                    <Select
+                                        onValueChange={(value) => {
+                                            field.onChange(value);
+                                            // Validar inmediatamente después del cambio
+                                            form.trigger('sexo');
+                                        }}
+                                        value={field.value || ''}
+                                    >
                                         <FormControl>
-                                            <SelectTrigger className="max-w-xs">
+                                            <SelectTrigger className="w-full sm:max-w-fit">
                                                 <SelectValue placeholder="Selecciona una opción" />
                                             </SelectTrigger>
                                         </FormControl>
@@ -182,6 +207,8 @@ export default function DatosPersonales() {
                                             } else {
                                                 field.onChange('');
                                             }
+                                            // Validar inmediatamente después del cambio
+                                            form.trigger('fecha_nacimiento');
                                         }}
                                         placeholder="Selecciona fecha"
                                         className="truncate"
@@ -228,7 +255,17 @@ export default function DatosPersonales() {
                                 </div>
                                 <FormControl>
                                     <div className="relative">
-                                        <Input className="peer pe-9" type="email" placeholder="tu.correo@ejemplo.com" {...field} />
+                                        <Input
+                                            className="peer pe-9"
+                                            type="email"
+                                            placeholder="tu.correo@ejemplo.com"
+                                            {...field}
+                                            onBlur={() => {
+                                                field.onBlur();
+                                                // Validar cuando el usuario sale del campo
+                                                form.trigger('email');
+                                            }}
+                                        />
                                         <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground/80 peer-disabled:opacity-50">
                                             <MailIcon size={16} aria-hidden="true" />
                                         </div>
@@ -273,6 +310,11 @@ export default function DatosPersonales() {
                                         placeholder="Ej. 1234567"
                                         {...field}
                                         onChange={(e) => handleNieChange(e, field)}
+                                        onBlur={() => {
+                                            field.onBlur();
+                                            // Validar cuando el usuario sale del campo
+                                            form.trigger('nie');
+                                        }}
                                         maxLength={10}
                                     />
                                 </FormControl>
