@@ -4,20 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { 
-    ClipboardListIcon, 
-    HouseIcon, 
-    ShieldCheck, 
-    User, 
-    Calendar, 
-    Clock, 
-    BookOpen, 
-    GraduationCap, 
-    LayoutDashboard, 
-    Users,
-    CalendarDays,
-    School 
-} from 'lucide-react';
+import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -37,7 +24,7 @@ export function AppSidebar() {
             title: 'Administración',
             icon: ShieldCheck,
             items: [
-                ...(hasPermission('users:list') ? [{ title: 'Usuarios', href: '/dashboard/users', icon: User }] : []),
+                ...(hasPermission('users:list') ? [{ title: 'Usuarios', href: '/dashboard/users', icon: Users }] : []),
                 ...(hasPermission('audit:view')
                     ? [
                           {

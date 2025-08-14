@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/use-toast"
+import { Toaster, toast } from "sonner"
 
 import DatosPersonales from "./sections/personal-data"
 import DatosResponsable from "./sections/responsible"
@@ -22,11 +22,11 @@ import BarraProgreso from "./progress-bar"
 import Captcha from "./captcha"
 import { usePage } from "@inertiajs/react"
 import { Departamento, Municipio, Distrito } from "@/types/admission/address"
-import { CentroEducativo } from "@/types/admission/education"
-import { on } from "node:stream"
+import { CentroEducativo, NivelEducativo } from "@/types/admission/education"
 
 // Esquema de validación completo para todo el formulario
 export const formSchema = z.object({
+
   // Datos del estudiante
   codigo: z.string().min(1).regex(/^\d{5,10}$/, {
     message: "Código debe ser numérico entre 5 y 10 dígitos",
@@ -34,15 +34,15 @@ export const formSchema = z.object({
   primer_nombre: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
     message: "Nombre no válido",
   }),
-  segundo_nombre: z.string().max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]*$/, {
+  segundo_nombre: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
     message: "Segundo nombre no válido",
-  }).optional(),
+  }),
   primer_apellido: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
     message: "Apellido no válido",
   }),
-  segundo_apellido: z.string().max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]*$/, {
+  segundo_apellido: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
     message: "Segundo apellido no válido",
-  }).optional(),
+  }),
   sexo: z.enum(["H", "M"]),
   fecha_nacimiento: z.string().refine((val) => {
     const parsed = Date.parse(val);
@@ -51,17 +51,15 @@ export const formSchema = z.object({
   nie: z.string().regex(/^\d{7,10}$/, {
     message: "NIE debe ser numérico entre 7 y 10 dígitos",
   }),
-  telefono_estudiante: z.string().regex(/^[267]\d{7}$/, {
-    message: "Teléfono estudiante inválido (debe comenzar con 2, 6 o 7)",
-  }),
-  telefono_casa: z.string().regex(/^[267]\d{7}$/).nullable().optional(),
   email: z.string().email(),
+
+  // Dirección  
+  telefono_casa: z.string().regex(/^[267]\d{7}$/).nullable().optional(),
   direccion: z.string().min(5).max(255),
   distrito: z.string().regex(/^\d+$/, {
-    message: "ID de distrito debe ser numérico",
+    message: "Debes seleccionar un distrito",
   }),
 
-  // Dirección
   departamento: z.string().min(1, {
     message: "Debes seleccionar un departamento",
   }),
@@ -70,24 +68,37 @@ export const formSchema = z.object({
     message: "Debes seleccionar un municipio",
   }),
 
-  // Datos del responsable
-  dui: z.string().regex(/^\d{8}-\d$/, {
-    message: "DUI debe tener formato ########-#",
+  // Datos del responsable 1
+  dui_responsable_1: z.string().regex(/^\d{9}$/, {
+    message: "DUI debe tener 9 dígitos numéricos",
   }),
-  nombres_responsable: z.string().min(1).max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
+  nombres_responsable_1: z.string().min(1).max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
     message: "Nombre del responsable no válido",
   }),
-  apellidos_responsable: z.string().min(1).max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
+  apellidos_responsable_1: z.string().min(1).max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
     message: "Apellido del responsable no válido",
   }),
-  email_responsable: z.string().email().nullable().optional(),
-  telefono_responsable: z.string().regex(/^[267]\d{7}$/, {
+  email_responsable_1: z.string().email().nullable().optional(),
+  telefono_responsable_1: z.string().regex(/^[267]\d{7}$/, {
     message: "Teléfono del responsable inválido",
   }),
-  telefono_opcional: z.string().regex(/^[267]\d{7}$/, {
-    message: "Teléfono opcional inválido",
-  }),
-  tipo_parentesco: z.enum(["Madre", "Padre", "Abuelo", "Tio", "Tutor legal"]),
+  tipo_parentesco_1: z.enum(["Madre", "Padre", "Abuelo", "Tio", "Tutor legal"]),
+
+  // Datos del responsable 2
+  dui_responsable_2: z.string().regex(/^\d{9}$/, {
+    message: "DUI debe tener 9 dígitos numéricos",
+  }).optional(),
+  nombres_responsable_2: z.string().max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
+    message: "Nombre del responsable no válido",
+  }).optional(),
+  apellidos_responsable_2: z.string().max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
+    message: "Apellido del responsable no válido",
+  }).optional(),
+  email_responsable_2: z.string().email().nullable().optional(),
+  telefono_responsable_2: z.string().regex(/^[267]\d{7}$/, {
+    message: "Teléfono del responsable inválido",
+  }).optional(),
+  tipo_parentesco_2: z.enum(["Madre", "Padre", "Abuelo", "Tio", "Tutor legal"]).optional(),
 
   // Nombre del centro educativo (valida texto con acentos y símbolos comunes)
   centro_educativo: z.string()
@@ -114,12 +125,14 @@ export const formSchema = z.object({
 
   // Nivel de estudios (valores de primaria)
   nivel_educativo: z.enum([
-    "cuarto_grado",
-    "quinto_grado",
-    "sexto_grado",
-    "septimo_grado",
-    "octavo_grado",
-    "noveno_grado",
+    "n0",
+    "n1",
+    "n2",
+    "n3",
+    "n4",
+    "n5",
+    "n6",
+    "n7",
   ], {
     required_error: "Selecciona tu nivel de estudios",
   }),
@@ -144,18 +157,19 @@ export default function FormularioAdmision() {
   const [isSaving, setIsSaving] = useState(false)
   const [formStatus, setFormStatus] = useState<"idle" | "success" | "error">("idle")
   const [captchaVerified, setCaptchaVerified] = useState(false)
-  const { toast } = useToast()
 
   const {
     departamentos,
     municipiosPorDepartamento,
     distritosPorMunicipio,
     centrosEducativos,
+    nivelesEducativos,
   } = usePage<{
     departamentos: Departamento[];
     municipiosPorDepartamento: Record<string, Municipio[]>;
     distritosPorMunicipio: Record<string, Distrito[]>;
     centrosEducativos: CentroEducativo[];
+    nivelesEducativos: NivelEducativo[];
   }>().props;
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -169,7 +183,6 @@ export default function FormularioAdmision() {
       sexo: undefined,
       fecha_nacimiento: "",
       nie: "",
-      telefono_estudiante: "",
       email: "",
 
       // Dirección
@@ -187,14 +200,21 @@ export default function FormularioAdmision() {
       internacional: 'NO',
       nivel_educativo: undefined,      // Se define vacío para forzar selección
 
-      // Responsable
-      dui: "",
-      nombres_responsable: "",
-      apellidos_responsable: "",
-      email_responsable: "",
-      telefono_responsable: "",
-      telefono_opcional: "",
-      tipo_parentesco: undefined,
+      // Responsable 1
+      dui_responsable_1: "",
+      nombres_responsable_1: "",
+      apellidos_responsable_1: "",
+      email_responsable_1: "",
+      telefono_responsable_1: "",
+      tipo_parentesco_1: undefined,
+
+      // Responsable 2
+      dui_responsable_2: undefined,
+      nombres_responsable_2: undefined,
+      apellidos_responsable_2: undefined,
+      email_responsable_2: undefined,
+      telefono_responsable_2: undefined,
+      tipo_parentesco_2: undefined,
     },
     mode: 'onBlur',
   });
@@ -204,7 +224,7 @@ export default function FormularioAdmision() {
 
   // Calcular el número de errores por sección
   const erroresPorSeccion = {
-    datosPersonales: Object.keys(errors).filter((key) =>
+    "datos-personales": Object.keys(errors).filter((key) =>
       [
         "primer_nombre",
         "segundo_nombre",
@@ -213,30 +233,37 @@ export default function FormularioAdmision() {
         "sexo",
         "fecha_nacimiento",
         "nie",
-        "telefono_estudiante",
         "email",
       ].includes(key)
     ).length,
 
-    direccion: Object.keys(errors).filter((key) =>
+    "direccion": Object.keys(errors).filter((key) =>
       ["telefono_casa", "direccion", "distrito", "departamento", "municipio"].includes(key)
     ).length,
 
-    educacion: Object.keys(errors).filter((key) =>
+    "educacion": Object.keys(errors).filter((key) =>
       ["codigo", "centro_educativo", "sector", "zona", "internacional", "nivel_educativo"].includes(key)
     ).length,
 
-    responsable: Object.keys(errors).filter((key) =>
+    "datos-responsables": Object.keys(errors).filter((key) =>
       [
-        "dui",
-        "nombres_responsable",
-        "apellidos_responsable",
-        "email_responsable",
-        "telefono_responsable",
-        "telefono_opcional",
-        "tipo_parentesco",
+        "dui_responsable_1",
+        "nombres_responsable_1",
+        "apellidos_responsable_1",
+        "email_responsable_1",
+        "telefono_responsable_1",
+        "tipo_parentesco_1",
+
+        "dui_responsable_2",
+        "nombres_responsable_2",
+        "apellidos_responsable_2",
+        "email_responsable_2",
+        "telefono_responsable_2",
+        "tipo_parentesco_2",
       ].includes(key)
     ).length,
+
+    "resumen": 0, // Contador en resumen.
   };
 
   const totalErrores = Object.values(erroresPorSeccion).reduce((a, b) => a + b, 0)
@@ -268,7 +295,6 @@ export default function FormularioAdmision() {
     }
   }
 
-
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
@@ -280,49 +306,28 @@ export default function FormularioAdmision() {
         },
       });
 
-      toast({
-        title: "Solicitud enviada",
-        description: "Tu postulación ha sido registrada correctamente.",
-      });
+      toast.success("Solicitud enviada ¡Tu postulación ha sido registrada correctamente!");
 
       setFormStatus("success");
     } catch (error) {
       console.error("Error al enviar:", error);
-      toast({
-        variant: "destructive",
-        title: "Error al enviar",
-        description: "No se pudo procesar tu solicitud. Intenta nuevamente.",
-      });
-
+      toast.error("No se pudo procesar tu solicitud! Intenta nuevamente más tarde.");
       setFormStatus("error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-
   const handleSaveDraft = async () => {
     setIsSaving(true)
-
     try {
-      // Simulación de guardado de borrador
       const formData = form.getValues()
       console.log("Guardando borrador:", formData)
-
-      // Simular una petición al servidor
       await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      toast({
-        title: "Borrador guardado",
-        description: "Podrás continuar con tu solicitud más tarde.",
-      })
+      toast.success("Borrador guardado! Podrás continuar con tu solicitud más tarde.");
     } catch (error) {
       console.error("Error al guardar el borrador:", error)
-      toast({
-        variant: "destructive",
-        title: "Error al guardar",
-        description: "No se pudo guardar el borrador. Por favor inténtalo de nuevo.",
-      })
+      toast.error("No se pudo guardar el borrador! Por favor inténtalo de nuevo.");
     } finally {
       setIsSaving(false)
     }
@@ -375,6 +380,9 @@ export default function FormularioAdmision() {
 
   return (
     <FormProvider {...form}>
+
+      <Toaster position="bottom-right" richColors />
+
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {totalErrores > 0 && (
           <Alert variant="destructive">
@@ -420,11 +428,20 @@ export default function FormularioAdmision() {
           </TabsContent>
 
           <TabsContent value="educacion">
-            <Educacion centros_educativos={centrosEducativos} />
+            <Educacion
+              centros_educativos={centrosEducativos}
+              niveles_educativos={nivelesEducativos}
+            />
           </TabsContent>
 
           <TabsContent value="resumen">
-            <ResumenSolicitud />
+            <ResumenSolicitud
+              centros_educativos={centrosEducativos}
+              niveles_educativos={nivelesEducativos}
+              departamentos={departamentos}
+              municipios={municipiosPorDepartamento}
+              distritos={distritosPorMunicipio}
+            />
             <Captcha onVerify={() => setCaptchaVerified(true)} />
           </TabsContent>
         </Tabs>
@@ -481,18 +498,13 @@ export default function FormularioAdmision() {
               type="button"
               onClick={() => {
                 form.handleSubmit(onSubmit, (errors) => {
-                  console.log("🔍 Errores detectados:", errors);
-                  toast({
-                    variant: "destructive",
-                    title: "Errores en formulario",
-                    description: "Revisa los campos marcados antes de enviar.",
-                  });
+                  console.log("Errores detectados:", errors);
+                  toast.warning("Errores en formulario! Revisa los campos marcados antes de enviar.");
                 })();
               }}
             >
               Test Submit
             </Button>
-
 
           </div>
         </div>

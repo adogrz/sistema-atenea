@@ -33,6 +33,7 @@ class UserFactory extends Factory
             'status' => $this->faker->randomElement(['active', 'inactive']),
             'remember_token' => Str::random(10),
             'deleted_at' => null,
+            'email_verified_at' => now(),
         ];
     }
 

@@ -1,9 +1,10 @@
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { MultiSelectColumnFilter } from '@/components/ui/multi-select-column-filter';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
-import { BadgeCheckIcon, Clock } from 'lucide-react';
+import { Atom, Clock, Dna, FlaskConical, Keyboard, Sigma, Star, Telescope } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 export type User = {
@@ -33,6 +34,39 @@ export type User = {
 };
 
 type Role = User['roles'][number];
+
+const areasTypes = [
+    {
+        label: 'Matemática',
+        value: 'matematica',
+        icon: Sigma,
+    },
+    {
+        label: 'Biología',
+        value: 'biologia',
+        icon: Dna,
+    },
+    {
+        label: 'Física',
+        value: 'fisica',
+        icon: Atom,
+    },
+    {
+        label: 'Astronomía',
+        value: 'astronomia',
+        icon: Telescope,
+    },
+    {
+        label: 'Química',
+        value: 'quimica',
+        icon: FlaskConical,
+    },
+    {
+        label: 'Informática',
+        value: 'informatica',
+        icon: Keyboard,
+    },
+];
 
 export function getUserColumns(
     users: User[],
@@ -73,23 +107,57 @@ export function getUserColumns(
     // Roles que requieren área
     const rolesRequiringArea = ['coordinador-area', 'mentor', 'instructor', 'calificador'];
 
-    const RoleBadge = ({ role, isPrimary = false, hasExpiry = false }: { role: Role; isPrimary?: boolean; hasExpiry?: boolean }) => {
-        if (isPrimary) {
-            return (
-                <Badge variant="secondary" className="bg-blue-500 text-white dark:bg-blue-600">
-                    <BadgeCheckIcon />
-                    {role.description || role.name}
-                </Badge>
-            );
-        }
+    // Función para formatear fecha de expiración
+    const formatExpiryDate = (expiresAt: string | null): string => {
+        if (!expiresAt) return '';
 
-        // Roles secundarios
-        return (
-            <Badge className="bg-gray-600 text-white dark:bg-gray-300 dark:text-gray-800">
-                {hasExpiry && <Clock className="mr-1 size-4" />}
+        try {
+            const date = new Date(expiresAt);
+            return date.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            });
+        } catch {
+            return expiresAt;
+        }
+    };
+
+    const RoleBadge = ({ role, isPrimary = false, hasExpiry = false }: { role: Role; isPrimary?: boolean; hasExpiry?: boolean }) => {
+        const icon = isPrimary ? (
+            <Star className="size-4 text-yellow-500" aria-label="Rol primario" />
+        ) : hasExpiry ? (
+            <Clock className="size-4" aria-label="Rol con expiración" />
+        ) : null;
+
+        const badgeContent = (
+            <Badge
+                variant="outline"
+                className={cn(
+                    'gap-1.5 pr-2 pl-2.5 text-gray-700 dark:text-white',
+                    isPrimary ? 'border-yellow-300 dark:border-yellow-800' : 'border-neutral-300 dark:border-neutral-700',
+                )}
+                title={isPrimary ? 'Rol principal del usuario' : hasExpiry && role.pivot?.expires_at ? '' : undefined}
+            >
+                {icon}
                 {role.description || role.name}
             </Badge>
         );
+
+        if (hasExpiry && role.pivot?.expires_at) {
+            return (
+                <Tooltip>
+                    <TooltipTrigger asChild>{badgeContent}</TooltipTrigger>
+                    <TooltipContent>
+                        <p>
+                            Este rol expira el <strong>{formatExpiryDate(role.pivot.expires_at)}</strong>
+                        </p>
+                    </TooltipContent>
+                </Tooltip>
+            );
+        }
+
+        return badgeContent;
     };
 
     return [
@@ -238,19 +306,24 @@ export function getUserColumns(
                     return <span className="text-xs text-muted-foreground">No requerido</span>;
                 }
 
-                if (!user.areas || user.areas.length === 0) {
+                if (!user.areas?.length) {
                     return <span className="text-xs text-orange-600">Sin asignar</span>;
                 }
 
                 const primaryArea = user.areas.find((a) => a.pivot?.is_primary);
+                const areaType = primaryArea ? areasTypes.find((type) => type.value === primaryArea.name) : null;
+
+                if (!primaryArea || !areaType) {
+                    return <span className="text-xs text-muted-foreground">No requerido</span>;
+                }
+
+                const { icon: AreaIcon } = areaType;
+                const areaName = primaryArea.description || primaryArea.name;
 
                 return (
-                    <div className="flex flex-wrap gap-1">
-                        {primaryArea && (
-                            <Badge variant="secondary" className="bg-indigo-500 text-white dark:bg-indigo-600">
-                                {primaryArea.description || primaryArea.name}
-                            </Badge>
-                        )}
+                    <div className="flex items-center gap-x-2">
+                        {AreaIcon && <AreaIcon size={16} className="text-muted-foreground" />}
+                        <span className="text-sm capitalize">{areaName}</span>
                     </div>
                 );
             },
@@ -288,14 +361,18 @@ export function getUserColumns(
                 const isActive = status.toLowerCase() === 'active';
 
                 return (
-                    <div className="flex justify-center">
+                    <div className="flex space-x-2">
                         <Badge
-                            variant={isActive ? 'default' : 'secondary'}
+                            variant="outline"
                             className={cn(
-                                'text-xs',
-                                isActive ? 'bg-green-500 text-white dark:bg-green-600' : 'bg-red-500 text-white dark:bg-red-600',
+                                'gap-1.5',
+                                isActive
+                                    ? 'border-teal-200 text-emerald-900 dark:border-teal-800 dark:text-emerald-200'
+                                    : 'border-destructive/20 text-red-900 dark:border-destructive/80 dark:text-red-200',
                             )}
+                            title={isActive ? 'Usuario activo' : 'Usuario inactivo'}
                         >
+                            <span className={cn('size-1.5 rounded-full', isActive ? 'bg-emerald-500' : 'bg-red-500')} aria-hidden="true"></span>
                             {isActive ? 'Activo' : 'Inactivo'}
                         </Badge>
                     </div>
@@ -303,8 +380,7 @@ export function getUserColumns(
             },
             filterFn: (row, id, filterValue) => {
                 if (!filterValue || filterValue.length === 0) return true;
-                const originalStatus = row.original.status; // 'active' or 'inactive'
-                // Traducir los valores del filtro (ej. ['Activo']) de vuelta a los valores originales (ej. ['active'])
+                const originalStatus = row.original.status;
                 const translatedFilterValues = (filterValue as string[]).map((fv) => statusMap[fv] || fv);
                 return translatedFilterValues.includes(originalStatus);
             },

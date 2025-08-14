@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Notifications\ResetPasswordNotification;
 use App\Traits\HasTemporaryRoles;
+use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -90,5 +92,46 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /**
+     * Sincroniza roles con información de expiración y rol principal.
+     *
+     * @param array $roles Array de roles con formato [['name' => 'role_name', 'is_primary' => bool, 'expires_at' => null|date]]
+     * @return void
+     */
+    public function syncRolesWithExpiration(array $roles): void
+    {
+        // Eliminar todos los roles actuales para evitar duplicados
+        $this->roles()->detach();
+
+        // Recorrer los roles a asignar
+        foreach ($roles as $role) {
+            $roleName = $role['name'];
+            $isPrimary = $role['is_primary'] ?? false;
+            $expiresAt = null;
+
+            // Procesar la fecha de expiración para evitar problemas de zona horaria
+            if (!empty($role['expires_at'])) {
+                // Convertir a objeto Carbon y establecer la hora a 23:59:59 para asegurar que la fecha sea la correcta
+                $expiresAt = Carbon::parse($role['expires_at'])->endOfDay();
+            }
+
+            // Obtener el modelo Role
+            $roleModel = Role::where('name', $roleName)->first();
+
+            if ($roleModel) {
+                // Asignar el rol con los datos pivot
+                $this->roles()->attach($roleModel->id, [
+                    'is_primary' => $isPrimary ? 1 : 0, // Asegurar que es 1 o 0
+                    'expires_at' => $expiresAt,
+                    'model_type' => get_class($this)
+                ]);
+            }
+        }
+
+        // Limpiar caché de permisos para que los cambios surtan efecto inmediatamente
+        $this->load('roles');
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }
