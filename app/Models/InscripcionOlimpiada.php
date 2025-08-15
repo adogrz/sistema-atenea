@@ -4,64 +4,73 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InscripcionOlimpiada extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
+    // Columna deleted_at
+    use SoftDeletes;
+
     protected $table = 'inscripciones_olimpiadas';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'fase_id',
-        'codigo_estudiante',
-        'fecha_inscripcion',
+    // Protegemos claves y timestamps (incluye deleted_at si usas SoftDeletes)
+    protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];
+
+    // Ajusta estos casts a tus columnas reales
+    protected $casts = [
+        'fecha_inscripcion' => 'datetime',
+        'activa'            => 'boolean',
     ];
 
-    /*
-     * Relación con el modelo FaseOlimpiada
-     */
-    public function fase()
+    /* ========================
+     |  Relaciones
+     |======================== */
+    public function fase(): BelongsTo
     {
-        return $this->belongsTo(FaseOlimpiada::class);
+        return $this->belongsTo(FaseOlimpiada::class, 'fase_id');
     }
 
-    /**
-     * Relación con el modelo Estudiante
-     */
-    public function estudiante()
+    // Usas 'participante' en tu controlador para el estudiante
+    public function participante(): BelongsTo
     {
-        return $this->belongsTo(Estudiante::class, 'codigo_estudiante');
+        // clave local: codigo_estudiante; clave del otro lado: codigo
+        return $this->belongsTo(Estudiante::class, 'codigo_estudiante', 'codigo');
     }
 
-    /**
-     * Scope para filtrar inscripciones aprobadas
-     */
-    public function scopeAprobadas($query)
+    // Alias opcional si prefieres acceder como $inscripcion->estudiante
+    public function estudiante(): BelongsTo
     {
-        return $query->where('estado', 'aprobada');
+        return $this->participante();
     }
 
-    /**
-     * Scope para filtrar inscripciones activas
-     */
+    public function estado(): BelongsTo
+    {
+        return $this->belongsTo(EstadoInscripcion::class, 'estado_id');
+    }
+
+    public function bitacoras(): HasMany
+    {
+        return $this->hasMany(BitacoraInscripcion::class, 'inscripcion_id');
+    }
+
+    /* ========================
+     |  Scopes
+     |======================== */
+
     public function scopeActivas($query)
     {
-        return $query->where('activa', true);
+        return $query->whereNull('deleted_at'); // Solo inscripciones activas
     }
 
-    /**
-     * Scope para filtrar inscripciones por estudiante
-     */
-    public function scopePorEstudiante(Builder $query, string $codigoEstudiante): Builder
+    public function scopePorEstudiante(Builder $query, string $codigo)
     {
-        return $query->where('codigo_estudiante', $codigoEstudiante);
+        return $query->where('codigo_estudiante', $codigo);
+    }
+
+    public function scopeDeEstudiante($query, string $codigo)
+    {
+        return $query->where('codigo_estudiante', $codigo);
     }
 }

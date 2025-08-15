@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Olimpiada;
+use App\Models\EvaluacionFase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\ValidationException;
 
-class OlimpiadaController extends Controller
+class EvaluacionFaseController extends Controller
 {
     protected array $guard = ['id','created_at','updated_at'];
 
     protected function fillableFromRequest(Request $request): array
     {
-        $columns = Schema::getColumnListing('olimpiadas');
+        $columns = Schema::getColumnListing('evaluaciones_fase');
         $allowed = array_values(array_diff($columns, $this->guard));
         return $request->only($allowed);
     }
@@ -21,11 +20,10 @@ class OlimpiadaController extends Controller
     public function index(Request $request)
     {
         $perPage = (int) ($request->integer('per_page') ?: 15);
-        $columns = Schema::getColumnListing('olimpiadas');
+        $columns = Schema::getColumnListing('evaluaciones_fase');
 
-        $q = Olimpiada::query();
+        $q = EvaluacionFase::query();
 
-        // Simple "q" search across string columns
         if ($search = $request->string('q')->toString()) {
             $q->where(function ($qq) use ($columns, $search) {
                 foreach ($columns as $col) {
@@ -34,7 +32,6 @@ class OlimpiadaController extends Controller
             });
         }
 
-        // Column-based filters
         foreach ($request->all() as $key => $val) {
             if (in_array($key, $columns, true) && $val !== null && $key !== 'q' && $key !== 'per_page') {
                 $q->where($key, $val);
@@ -42,32 +39,31 @@ class OlimpiadaController extends Controller
         }
 
         $q->orderBy($request->get('order_by', 'id'), $request->get('order_dir', 'desc'));
-
         return response()->json($q->paginate($perPage));
     }
 
-    public function show(Olimpiada $olimpiada)
+    public function show(EvaluacionFase $evaluacionFase)
     {
-        return response()->json($olimpiada);
+        return response()->json($evaluacionFase);
     }
 
     public function store(Request $request)
     {
         $data = $this->fillableFromRequest($request);
-        $olimpiada = Olimpiada::create($data);
-        return response()->json($olimpiada, 201);
+        $ev = EvaluacionFase::create($data);
+        return response()->json($ev, 201);
     }
 
-    public function update(Request $request, Olimpiada $olimpiada)
+    public function update(Request $request, EvaluacionFase $evaluacionFase)
     {
         $data = $this->fillableFromRequest($request);
-        $olimpiada->fill($data)->save();
-        return response()->json($olimpiada);
+        $evaluacionFase->fill($data)->save();
+        return response()->json($evaluacionFase);
     }
 
-    public function destroy(Olimpiada $olimpiada)
+    public function destroy(EvaluacionFase $evaluacionFase)
     {
-        $olimpiada->delete();
+        $evaluacionFase->delete();
         return response()->json(['deleted' => true]);
     }
 }

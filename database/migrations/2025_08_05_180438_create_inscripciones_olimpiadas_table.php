@@ -17,8 +17,13 @@ return new class extends Migration
             $table->foreignId('fase_id')->constrained('fases_olimpiadas')->onDelete('cascade');
             $table->dateTime('fecha_inscripcion');
             $table->timestamps();
-            // Clave foránea para el estudiante
+            // Llaves foráneas
+            $table->foreignId('estado_id')
+                  ->nullable()
+                  ->constrained('estados_inscripciones')
+                  ->nullOnDelete(); // si se borra un estado, queda en null
             $table->foreign('codigo_estudiante')->references('codigo')->on('estudiantes')->onDelete('cascade');
+            $table->softDeletes();
         });
     }
 

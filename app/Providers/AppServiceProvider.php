@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\InscripcionOlimpiada;
+use App\Observers\InscripcionOlimpiadaObserver;
 use App\Services\RoleAssignmentService;
 use App\Services\UserVisibilityService;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +29,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        InscripcionOlimpiada::observe(InscripcionOlimpiadaObserver::class);
     }
 }

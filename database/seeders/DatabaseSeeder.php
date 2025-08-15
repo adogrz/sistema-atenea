@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             NivelEducativoSeeder::class,
             CentroEducativoSeeder::class,
             OlimpiadaSeeder::class,
+            EstadoInscripcionSeeder::class,
             FaseOlimpiadaSeeder::class,
             EssentialUserSeeder::class,
         ]);
