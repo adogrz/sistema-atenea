@@ -134,8 +134,6 @@ class InscripcionOlimpiadaController extends Controller
     }
 
     /**
-     * Muestra una inscripción.
-     */ /**
      * Muestra una inscripción específica.
      *
      * @param  InscripcionOlimpiada $inscripcion (route-model binding)
@@ -192,7 +190,7 @@ class InscripcionOlimpiadaController extends Controller
     }
 
     /**
-     * Elimina (soft delete recomendado) la inscripción.
+     * Elimina (soft delete) la inscripción.
      *
      * Auditoría:
      *  - Observer registrará 'desinscripcion' en bitácora al eliminar.

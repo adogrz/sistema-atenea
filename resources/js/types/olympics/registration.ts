@@ -43,6 +43,7 @@ export interface Estudiante {
 }
 
 export interface FaseOlimpiada {
+    numero_fase: number;
     id: number;
     nombre: string;
     fecha_inicio: Date;
@@ -60,6 +61,8 @@ export interface FaseOlimpiada {
 }
 
 export interface Inscripcion {
+    id: number | null | undefined;
+    estado: any;
     codigo_estudiante: string;
     fase_id: number;
     fecha_inscripcion: Date;

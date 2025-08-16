@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\BitacoraInscripcion;
+use App\Models\Estudiante;
+use App\Models\FaseOlimpiada;
+use App\Models\EstadoInscripcion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +18,7 @@ class InscripcionOlimpiada extends Model
 
     protected $table = 'inscripciones_olimpiadas';
 
-    // Protegemos claves y timestamps (incluye deleted_at si usas SoftDeletes)
+    // Protegemos claves y timestamps (incluye deleted_at
     protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];
 
     // Ajusta estos casts a tus columnas reales
@@ -32,14 +35,11 @@ class InscripcionOlimpiada extends Model
         return $this->belongsTo(FaseOlimpiada::class, 'fase_id');
     }
 
-    // Usas 'participante' en tu controlador para el estudiante
     public function participante(): BelongsTo
     {
-        // clave local: codigo_estudiante; clave del otro lado: codigo
         return $this->belongsTo(Estudiante::class, 'codigo_estudiante', 'codigo');
     }
 
-    // Alias opcional si prefieres acceder como $inscripcion->estudiante
     public function estudiante(): BelongsTo
     {
         return $this->participante();
@@ -64,13 +64,8 @@ class InscripcionOlimpiada extends Model
         return $query->whereNull('deleted_at'); // Solo inscripciones activas
     }
 
-    public function scopePorEstudiante(Builder $query, string $codigo)
+    public function scopePorEstudiante($q, string $codigo)
     {
-        return $query->where('codigo_estudiante', $codigo);
-    }
-
-    public function scopeDeEstudiante($query, string $codigo)
-    {
-        return $query->where('codigo_estudiante', $codigo);
+        return $q->where('codigo_estudiante', $codigo);
     }
 }
