@@ -3,35 +3,83 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * @property int $id
+ * @property string $nombre
+ * @property string|null $descripcion
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ *
+ * ──────────────── Métodos personalizados ────────────────
+ * @method static Builder activos()        // Inscrito
+ * @method static Builder retirados()      // Retirado
+ * @method static Builder anulados()       // Anulado
+ * @method static Builder preinscritos()   // Preinscrito
+ */
 class EstadoInscripcion extends Model
 {
     protected $table = 'estados_inscripciones';
 
-    protected $guarded = ['id', 'created_at', 'updated_at'];
+    protected $fillable = ['nombre', 'slug', 'descripcion'];
 
-    protected $casts = [
-        'es_final' => 'boolean',
-        'activo'   => 'boolean',
-    ];
+    public $timestamps = true;
 
-    /**
-     * Relación: un estado tiene muchas inscripciones.
-     */
-    public function inscripciones(): HasMany
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeActivos(Builder $query): Builder
     {
-        return $this->hasMany(InscripcionOlimpiada::class, 'estado_id');
+        return $query->where('nombre', 'Inscrito');
     }
 
-    /* Scopes útiles */
-    public function scopeActivos($query)
+    public function scopeRetirados(Builder $query): Builder
     {
-        return $query->where('activo', true);
+        return $query->where('nombre', 'Retirado');
     }
 
-    public function scopeFinales($query)
+    public function scopeAnulados(Builder $query): Builder
     {
-        return $query->where('es_final', true);
+        return $query->where('nombre', 'Anulado');
+    }
+
+    public function scopePreinscritos(Builder $query): Builder
+    {
+        return $query->where('nombre', 'Preinscrito');
+    }
+
+    public function scopeSlug($query, string $slug)
+    {
+        return $query->where('slug', $slug);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function esActivo(): bool
+    {
+        return $this->nombre === 'Inscrito';
+    }
+
+    public function esRetirado(): bool
+    {
+        return $this->nombre === 'Retirado';
+    }
+
+    public function esAnulado(): bool
+    {
+        return $this->nombre === 'Anulado';
+    }
+
+    public function esPreinscrito(): bool
+    {
+        return $this->nombre === 'Preinscrito';
     }
 }

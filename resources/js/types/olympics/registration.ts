@@ -61,7 +61,7 @@ export interface FaseOlimpiada {
 }
 
 export interface Inscripcion {
-    id: number | null | undefined;
+    id: number;
     estado: any;
     codigo_estudiante: string;
     fase_id: number;

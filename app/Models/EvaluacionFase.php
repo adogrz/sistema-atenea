@@ -3,30 +3,42 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EvaluacionFase extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'evaluaciones_fase';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
-        'nombre',
-        'descripcion',
-        'fecha_inicio',
-        'fecha_fin',
+        'fase_olimpiada_id',
+        'inscripcion_id',
+        'calificador_id',
+        'estado',
+        'total',
     ];
 
-    public function itemsEvaluados()
+    /* ========================
+     |  Relaciones
+     ========================*/
+
+    public function fase(): BelongsTo
     {
-        return $this->hasMany(ItemEvaluado::class, 'evaluacion_id');
+        return $this->belongsTo(FaseOlimpiada::class, 'fase_olimpiada_id');
+    }
+
+    public function inscripcion(): BelongsTo
+    {
+        return $this->belongsTo(InscripcionOlimpiada::class, 'inscripcion_id');
+    }
+
+    public function calificador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'calificador_id');
+    }
+
+    public function itemsEvaluados(): HasMany
+    {
+        return $this->hasMany(ItemEvaluado::class, 'evaluacion_fase_id');
     }
 }

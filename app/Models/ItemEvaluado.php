@@ -6,28 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class ItemEvaluado extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'items_evaluados';
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
-        'evaluacion_id',
-        'item_codigo',
-        'nota_final',
-        'nota_real',
-        'observaciones',
+        'evaluacion_fase_id', 'item_definido_id', 'puntaje', 'observacion',
+        'calificado_por', 'calificado_en'
     ];
 
-    public function evaluacion()
+    public function evaluacionFase()
     {
-        return $this->belongsTo(EvaluacionFase::class, 'evaluacion_id');
+        return $this->belongsTo(EvaluacionFase::class, 'evaluacion_fase_id');
+    }
+
+    public function itemDefinido()
+    {
+        return $this->belongsTo(ItemDefinido::class, 'item_definido_id');
     }
 }

@@ -100,4 +100,24 @@ class User extends Authenticatable
     {
         $this->notify(new ResetPasswordNotification($token));
     }
+
+    public function area()
+    {
+        return $this->belongsTo(Area::class, 'area_id');
+    }
+
+    public function olimpiada()
+    {
+        return $this->belongsTo(Olimpiada::class, 'olimpiada_id');
+    }
+
+    public function fase()
+    {
+        return $this->belongsTo(FaseOlimpiada::class, 'fase_id');
+    }
+
+    public function participante()
+    {
+        return $this->belongsTo(Estudiante::class, 'codigo_estudiante', 'codigo');
+    }
 }

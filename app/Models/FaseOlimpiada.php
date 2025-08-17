@@ -46,9 +46,9 @@ class FaseOlimpiada extends Model
     /**
      * Relación: pertenece a una olimpiada
      */
-    public function olimpiada(): BelongsTo
+    public function olimpiada()
     {
-        return $this->belongsTo(Olimpiada::class);
+        return $this->belongsTo(Olimpiada::class, 'olimpiada_id');
     }
 
     /**

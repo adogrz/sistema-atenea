@@ -2,70 +2,49 @@
 
 namespace App\Models;
 
-use App\Models\BitacoraInscripcion;
-use App\Models\Estudiante;
-use App\Models\FaseOlimpiada;
-use App\Models\EstadoInscripcion;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InscripcionOlimpiada extends Model
 {
-    // Columna deleted_at
-    use SoftDeletes;
-
     protected $table = 'inscripciones_olimpiadas';
-
-    // Protegemos claves y timestamps (incluye deleted_at
-    protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];
-
-    // Ajusta estos casts a tus columnas reales
-    protected $casts = [
-        'fecha_inscripcion' => 'datetime',
-        'activa'            => 'boolean',
+    protected $fillable = [
+        'olimpiada_id', 'fase_id', 'estudiante_codigo', 'estado_inscripcion_id',
+        'codigo', 'fecha_inscripcion', 'activo', 'observaciones'
     ];
 
-    /* ========================
-     |  Relaciones
-     |======================== */
-    public function fase(): BelongsTo
+    public function olimpiada()
+    {
+        return $this->belongsTo(Olimpiada::class, 'olimpiada_id');
+    }
+
+    public function fase()
     {
         return $this->belongsTo(FaseOlimpiada::class, 'fase_id');
     }
 
-    public function participante(): BelongsTo
+    public function participante()
     {
-        return $this->belongsTo(Estudiante::class, 'codigo_estudiante', 'codigo');
+        return $this->belongsTo(Estudiante::class, 'estudiante_codigo', 'codigo');
     }
 
-    public function estudiante(): BelongsTo
+    public function estado()
     {
-        return $this->participante();
+        return $this->belongsTo(EstadoInscripcion::class, 'estado_inscripcion_id');
     }
 
-    public function estado(): BelongsTo
+    public function evaluacionesFase()
     {
-        return $this->belongsTo(EstadoInscripcion::class, 'estado_id');
+        return $this->hasMany(EvaluacionFase::class, 'inscripcion_id');
     }
 
-    public function bitacoras(): HasMany
+    public function bitacoras()
     {
         return $this->hasMany(BitacoraInscripcion::class, 'inscripcion_id');
     }
 
-    /* ========================
-     |  Scopes
-     |======================== */
 
-    public function scopeActivas($query)
+    public function scopeDeEstudiante($query, $estudianteId)
     {
-        return $query->whereNull('deleted_at'); // Solo inscripciones activas
-    }
-
-    public function scopePorEstudiante($q, string $codigo)
-    {
-        return $q->where('codigo_estudiante', $codigo);
+        return $query->where('estudiante_codigo', $estudianteId);
     }
 }

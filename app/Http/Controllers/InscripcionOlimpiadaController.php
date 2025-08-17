@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreInscripcionOlimpiadaRequest;
 use App\Http\Requests\UpdateInscripcionOlimpiadaRequest;
 use App\Models\EstadoInscripcion;
+use App\Models\FaseOlimpiada;
 use App\Models\InscripcionOlimpiada;
 use App\Services\OlimpiadaService;
 use Illuminate\Http\RedirectResponse;
@@ -14,30 +15,12 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/**
- * Controlador de Inscripciones a Olimpiadas con manejo de estado.
- *
- * - Al crear: asigna estado por defecto "pendiente" si existe.
- * - Al actualizar: permite cambiar estado salvo que el actual sea final (no se puede mover desde un estado final).
- * - Bitácora: se registra vía Observer (created => 'inscripcion', deleted => 'desinscripcion').
- */
 class InscripcionOlimpiadaController extends Controller
 {
-    /**
-     * Constructor para el controlador de inscripciones a olimpiadas.
-     * @var OlimpiadaService
-     */
     public function __construct(
         protected OlimpiadaService $olimpiadaService
-    ) {
-        // $this->authorizeResource(InscripcionOlimpiada::class, 'inscripcion');
-    }
+    ) {}
 
-    /**
-     * Formulario de inscripción (mismo dataset que index para reutilizar UI).
-     *
-     * @return Response
-     */
     public function index(): Response
     {
         $user = Auth::user();
@@ -65,20 +48,6 @@ class InscripcionOlimpiadaController extends Controller
         ]);
     }
 
-    /**
-     * Crea una nueva inscripción.
-     *
-     * Validación:
-     *  - fase_id: exists:fases_olimpiadas,id
-     *  - codigo_estudiante: exists:estudiantes,codigo
-     *  - unique compuesto (fase_id + codigo_estudiante) considerando soft deletes.
-     *
-     * Auditoría:
-     *  - Observer registrará 'inscripcion' en bitácora al crear.
-     *
-     * @param  StoreInscripcionOlimpiadaRequest $request
-     * @return RedirectResponse
-     */
     public function create(): Response
     {
         $estudiante = Auth::user()?->estudiante;
@@ -99,84 +68,71 @@ class InscripcionOlimpiadaController extends Controller
 
     /**
      * Crea una nueva inscripción.
-     *
-     * Validación:
-     *  - fase_id: exists:fases_olimpiadas,id
-     *  - codigo_estudiante: exists:estudiantes,codigo
-     *  - unique compuesto (fase_id + codigo_estudiante) considerando soft deletes.
-     *
-     * Auditoría:
-     *  - Observer registrará 'inscripcion' en bitácora al crear.
-     *
-     * @param  StoreInscripcionOlimpiadaRequest $request
-     * @return RedirectResponse
+     * Espera (en el request): olimpiada_id, estudiante_codigo
      */
     public function store(StoreInscripcionOlimpiadaRequest $request): RedirectResponse
-    {
-        // $this->authorize('create', InscripcionOlimpiada::class);
+{
+    $faseId = $request->integer('fase_id');
+    $codigoEstudiante = $request->string('codigo_estudiante');
 
-        DB::transaction(function () use ($request) {
-            // Buscar estado 'pendiente' si existe
-            $estadoPendienteId = EstadoInscripcion::where('nombre', 'pendiente')->value('id');
+    $fase = FaseOlimpiada::findOrFail($faseId);
 
-            InscripcionOlimpiada::create([
-                'fase_id'           => $request->integer('fase_id'),
-                'codigo_estudiante' => $request->string('codigo_estudiante'),
-                'fecha_inscripcion' => now(),
-                'estado_id'         => $estadoPendienteId, // puede quedar null si no existe
-            ]);
-            // Bitácora -> Observer (created)
-        });
+    // Bloquear inscripción si el estudiante ya tiene una fase activa sin finalizar
+    $yaTieneFaseNoFinal = InscripcionOlimpiada::where('estudiante_codigo', $codigoEstudiante)
+        ->where('olimpiada_id', $fase->olimpiada_id)
+        ->whereHas('estado', fn ($q) => $q->where('es_final', false))
+        ->exists();
 
-        return redirect()
-            ->route('inscripciones.index')
-            ->with('success', 'Inscripción registrada correctamente.');
+    if ($yaTieneFaseNoFinal) {
+        return back()->withErrors([
+            'msg' => 'No puedes inscribirte a esta fase hasta completar la anterior.',
+        ]);
     }
 
-    /**
-     * Muestra una inscripción específica.
-     *
-     * @param  InscripcionOlimpiada $inscripcion (route-model binding)
-     * @return Response
-     */
+    $estadoPendienteId = EstadoInscripcion::where('nombre', 'pendiente')->value('id');
+
+    InscripcionOlimpiada::create([
+        'olimpiada_id' => $fase->olimpiada_id,
+        'estudiante_codigo' => $codigoEstudiante,
+        'estado_inscripcion_id' => $estadoPendienteId,
+        'fecha_inscripcion' => now(),
+    ]);
+
+    return redirect()
+        ->route('inscripciones.index')
+        ->with('success', 'Inscripción registrada correctamente.');
+}
+
     public function show(InscripcionOlimpiada $inscripcion): Response
     {
         // $this->authorize('view', $inscripcion);
-        $inscripcion->load(['fase.olimpiada', 'participante', 'estado']);
+        // Ajusta los nombres de relaciones según tu modelo:
+        // - 'olimpiada' (belongsTo)
+        // - 'participante' (belongsTo Estudiante::class, 'estudiante_codigo', 'codigo')
+        // - 'estado' (belongsTo EstadoInscripcion::class, 'estado_inscripcion_id')
+        $inscripcion->load(['olimpiada', 'participante', 'estado']);
 
         return Inertia::render('Olympics/InscripcionShow', [
             'inscripcion' => $inscripcion,
         ]);
     }
 
-    /**
-     * Actualiza campos de la inscripción.
-     *
-     * NOTA: tu migración de bitácora solo contempla 'inscripcion' y 'desinscripcion',
-     * por ello no se registra 'actualizacion'. Si en el futuro agregas 'actualizacion'
-     * al enum, puedes anotar el evento 'updated' en el Observer.
-     *
-     * @param  UpdateInscripcionOlimpiadaRequest $request
-     * @param  InscripcionOlimpiada $inscripcion
-     * @return RedirectResponse
-     */
     public function update(UpdateInscripcionOlimpiadaRequest $request, InscripcionOlimpiada $inscripcion): RedirectResponse
     {
         // $this->authorize('update', $inscripcion);
 
         $data = $request->validated();
 
-        // Manejo de estado: si viene estado_id y cambia, validar transición
-        if (array_key_exists('estado_id', $data) && $data['estado_id']) {
-            $nuevoEstado = EstadoInscripcion::find($data['estado_id']);
+        // Si se intenta cambiar el estado, validamos transición
+        if (array_key_exists('estado_inscripcion_id', $data) && $data['estado_inscripcion_id']) {
+            $nuevoEstado = EstadoInscripcion::find($data['estado_inscripcion_id']);
             if ($nuevoEstado) {
                 $inscripcion->loadMissing('estado');
                 $estadoActual = $inscripcion->estado;
 
-                // No permitir cambios si el estado actual es final y difiere del nuevo
                 if ($estadoActual && $estadoActual->es_final && $estadoActual->id !== $nuevoEstado->id) {
                     return back()->withErrors([
-                        'estado_id' => 'La inscripción está en un estado final y no puede modificarse.',
+                        'estado_inscripcion_id' => 'La inscripción está en un estado final y no puede modificarse.',
                     ]);
                 }
             }
@@ -189,22 +145,12 @@ class InscripcionOlimpiadaController extends Controller
             ->with('success', 'Inscripción actualizada correctamente.');
     }
 
-    /**
-     * Elimina (soft delete) la inscripción.
-     *
-     * Auditoría:
-     *  - Observer registrará 'desinscripcion' en bitácora al eliminar.
-     *
-     * @param  InscripcionOlimpiada $inscripcion
-     * @return RedirectResponse
-     */
     public function destroy(InscripcionOlimpiada $inscripcion): RedirectResponse
     {
         // $this->authorize('delete', $inscripcion);
 
         DB::transaction(function () use ($inscripcion) {
             $inscripcion->delete();
-            // Bitácora -> Observer (deleted)
         });
 
         return redirect()
@@ -213,27 +159,27 @@ class InscripcionOlimpiadaController extends Controller
     }
 
     /**
-     * Endpoint dedicado para cambiar estado con reglas de transición.
+     * Cambio de estado con reglas.
+     * Request: estado_inscripcion_id
      */
     public function cambiarEstado(Request $request, InscripcionOlimpiada $inscripcion): RedirectResponse
     {
         // $this->authorize('update', $inscripcion);
 
         $validated = $request->validate([
-            'estado_id' => ['required', 'integer', 'exists:estados_inscripciones,id'],
+            'estado_inscripcion_id' => ['required', 'integer', 'exists:estados_inscripciones,id'],
         ]);
 
         $inscripcion->loadMissing('estado');
 
-        // Bloquear si ya está en estado final diferente
-        if ($inscripcion->estado && $inscripcion->estado->es_final && $inscripcion->estado_id !== (int) $validated['estado_id']) {
+        if ($inscripcion->estado && $inscripcion->estado->es_final && $inscripcion->estado_inscripcion_id !== (int) $validated['estado_inscripcion_id']) {
             return back()->withErrors([
-                'estado_id' => 'La inscripción está en un estado final y no puede modificarse.',
+                'estado_inscripcion_id' => 'La inscripción está en un estado final y no puede modificarse.',
             ]);
         }
 
         $inscripcion->update([
-            'estado_id' => (int) $validated['estado_id'],
+            'estado_inscripcion_id' => (int) $validated['estado_inscripcion_id'],
         ]);
 
         return back()->with('success', 'Estado de la inscripción actualizado correctamente.');

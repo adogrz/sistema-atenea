@@ -7,6 +7,7 @@ use Spatie\Activitylog\Models\Activity;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
+use App\Http\Controllers\CalificacionInscripcionController;
 use App\Http\Controllers\InscripcionOlimpiadaController;
 use App\Http\Controllers\OlimpiadaController;
 
@@ -68,6 +69,13 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             Route::get('/{inscripcion}', [InscripcionOlimpiadaController::class, 'show'])->name('show');
             Route::put('/{inscripcion}', [InscripcionOlimpiadaController::class, 'update'])->name('update');
             Route::delete('/{inscripcion}', [InscripcionOlimpiadaController::class, 'destroy'])->name('destroy');
+        });
+
+        // Calificar Inscripciones
+        Route::prefix('calificar-inscripciones')->name('calificar-inscripciones.')->group(function () {
+            Route::get('/', [CalificacionInscripcionController::class, 'index'])->name('index');
+            Route::get('/{inscripcion}', [CalificacionInscripcionController::class, 'show'])->name('show');
+            Route::put('/{inscripcion}', [CalificacionInscripcionController::class, 'update'])->name('update');
         });
     });
 

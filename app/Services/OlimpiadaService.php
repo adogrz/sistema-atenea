@@ -8,16 +8,24 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Servicio de lógica para fases e inscripciones a olimpiadas.
+ *
+ * Métodos clave:
+ *  - fasesVigentesAgrupadas(): agrupa fases activas por olimpiada
+ *  - inscripcionesPorEstudiante(): agrupa inscripciones por olimpiada
+ *  - puedeInscribirse(): determina si un estudiante puede inscribirse a una olimpiada
+ */
 class OlimpiadaService
 {
     /**
-     * Retorna las fases (vigentes o no) agrupadas por olimpiada.
+     * Retorna las fases agrupadas por olimpiada (vigentes o no).
      *
-     * @param  bool        $aplicarVentanaFechas   Si true, filtra por fecha_inicio/fecha_fin y activa=1
-     * @param  Carbon|null $fechaReferencia        Día de referencia (por defecto today())
-     * @param  bool        $usarCache              Si true, cachea el resultado (TTL corto)
-     * @param  int         $ttlSegundos            TTL del cache
-     * @return Collection<int, \Illuminate\Support\Collection>  [olimpiada_id => Collection<FaseOlimpiada>]
+     * @param  bool        $aplicarVentanaFechas   Si true, filtra por fecha_inicio/fin y activa
+     * @param  Carbon|null $fechaReferencia        Día de referencia (default: today)
+     * @param  bool        $usarCache              Si true, cachea el resultado
+     * @param  int         $ttlSegundos            Duración del cache (en segundos)
+     * @return Collection<int, Collection<FaseOlimpiada>> [olimpiada_id => fases]
      */
     public function fasesVigentesAgrupadas(
         bool $aplicarVentanaFechas = true,
@@ -38,54 +46,50 @@ class OlimpiadaService
     /**
      * Retorna las inscripciones del estudiante agrupadas por olimpiada.
      *
-     * @return Collection<int, \Illuminate\Support\Collection>  [olimpiada_id => Collection<InscripcionOlimpiada>]
+     * @param  string $codigoEstudiante
+     * @return Collection<int, Collection<InscripcionOlimpiada>> [olimpiada_id => inscripciones]
      */
     public function inscripcionesPorEstudiante(string $codigoEstudiante): Collection
     {
-        // Eager mínimo: sólo lo necesario para agrupar
-        $inscripciones = InscripcionOlimpiada::with([
-            'fase:id,olimpiada_id,numero_fase,area_academica'
-            ])
-            ->porEstudiante($codigoEstudiante)   // mantiene tu scope
-            ->get();
-
-        // Agrupa por la olimpiada de la fase
-        return $inscripciones->groupBy(fn(InscripcionOlimpiada $i) => $i->fase->olimpiada_id);
+        return InscripcionOlimpiada::with([
+            'estado:id,nombre,slug,es_final',
+            'olimpiada:id,nombre,area_academica',
+        ])
+            ->deEstudiante($codigoEstudiante)
+            ->get()
+            ->groupBy('olimpiada_id');
     }
 
     /**
-     * Determina si el estudiante puede inscribirse en la PRIMERA fase (por numero_fase) de cada olimpiada.
+     * Determina si el estudiante puede inscribirse a cada olimpiada.
      *
-     * @param  Collection $fasesVigentes    [olimpiada_id => Collection<FaseOlimpiada>]
-     * @param  Collection $inscripciones    [olimpiada_id => Collection<InscripcionOlimpiada>]
-     * @return Collection<int, bool>        [olimpiada_id => bool]
+     * Regla: puede inscribirse si NO tiene ya una inscripción (activa o no) para esa olimpiada.
+     *
+     * @param  Collection<int, Collection<FaseOlimpiada>> $fasesVigentes
+     * @param  Collection<int, Collection<InscripcionOlimpiada>> $inscripciones
+     * @return Collection<int, bool>  [olimpiada_id => bool]
      */
     public function puedeInscribirse(Collection $fasesVigentes, Collection $inscripciones): Collection
     {
         return $fasesVigentes->mapWithKeys(function (Collection $fases, int|string $olimpiadaId) use ($inscripciones) {
             if ($fases->isEmpty()) {
-                return [$olimpiadaId => false];
+                return [(int) $olimpiadaId => false];
             }
 
-            // Asegura orden estable por numero_fase
-            $primeraFase = $fases->sortBy('numero_fase')->first();
-            $delEstudiante = $inscripciones->get($olimpiadaId);
+            $yaInscrito = $inscripciones->has((int) $olimpiadaId);
 
-            $yaInscritoEnPrimera = $delEstudiante?->contains(fn($insc) => (int)$insc->fase_id === (int)$primeraFase->id) ?? false;
-
-            return [$olimpiadaId => !$yaInscritoEnPrimera];
+            return [(int) $olimpiadaId => !$yaInscrito];
         });
     }
 
     /* =======================
-     * Helpers privados
-     * =======================
-     */
+     * Helpers internos
+     * ======================= */
 
     /**
-     * Construye el dataset base de fases (con/sin ventana fechas) agrupadas por olimpiada.
+     * Agrupa las fases por olimpiada, filtrando si se requiere.
      *
-     * @return Collection<int, \Illuminate\Support\Collection>
+     * @return Collection<int, Collection<FaseOlimpiada>>
      */
     private function buildFasesAgrupadas(bool $aplicarVentanaFechas, Carbon $fecha): Collection
     {

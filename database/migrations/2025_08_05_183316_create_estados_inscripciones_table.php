@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('estados_inscripciones', function (Blueprint $table) {
             $table->id();
             $table->string('nombre', 50)->unique();       // p.ej. "pendiente", "aprobada", "rechazada"
+            $table->string('slug')->unique();
             $table->string('descripcion', 255)->nullable();
             $table->boolean('es_final')->default(false);  // true si el estado cierra el flujo
             $table->boolean('activo')->default(true);     // para deshabilitar estados sin borrarlos

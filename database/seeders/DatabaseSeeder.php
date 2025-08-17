@@ -15,15 +15,25 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             SedeSeeder::class,
             AreaSeeder::class,
+            // USUARIOS
+            EssentialUserSeeder::class,
+            // CATALOGOS
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
             DistritoSeeder::class,
             NivelEducativoSeeder::class,
             CentroEducativoSeeder::class,
+
+            
+            // TEST DATA
             OlimpiadaSeeder::class,
-            EstadoInscripcionSeeder::class,
             FaseOlimpiadaSeeder::class,
-            EssentialUserSeeder::class,
+            EstadoInscripcionSeeder::class,
+            DefinicionEvaluacionSeeder::class,
+            InscripcionOlimpiadaSeeder::class,
+            ItemDefinidoSeeder::class,
+            EvaluacionFaseSeeder::class,
+            ItemEvaluadoSeeder::class,
         ]);
 
         // Crear estudiantes de prueba
