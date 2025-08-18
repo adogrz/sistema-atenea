@@ -141,9 +141,9 @@ class User extends Authenticatable
 
         // Limpiar caché de permisos para que los cambios surtan efecto inmediatamente
         $this->load('roles');
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions()
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     }
-  
+    
    /*********************************
     * Relaciones entres modelos
     ********************************/

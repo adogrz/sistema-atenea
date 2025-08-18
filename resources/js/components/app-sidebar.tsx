@@ -5,8 +5,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 
-import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays } from 'lucide-react';
-import { ClipboardListIcon, HouseIcon, ShieldCheck, User, Calendar, Clock, BookOpen, GraduationCap, LayoutDashboard, Users, GraduationCapIcon } from 'lucide-react';
+import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays, GraduationCapIcon} from 'lucide-react';
 
 import AppLogo from './app-logo';
 
@@ -51,7 +50,6 @@ export function AppSidebar() {
                 { title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap },
             ],
         }] : []),
-        },
         {
             title: 'Estudiante',
             icon: GraduationCapIcon,
