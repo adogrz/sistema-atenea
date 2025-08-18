@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateInscripcionOlimpiadaRequest;
 use App\Models\EstadoInscripcion;
 use App\Models\FaseOlimpiada;
 use App\Models\InscripcionOlimpiada;
+use App\Rules\FasePreviaPasadaRule;
 use App\Services\OlimpiadaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -70,38 +71,47 @@ class InscripcionOlimpiadaController extends Controller
      * Crea una nueva inscripción.
      * Espera (en el request): olimpiada_id, estudiante_codigo
      */
-    public function store(StoreInscripcionOlimpiadaRequest $request): RedirectResponse
-{
-    $faseId = $request->integer('fase_id');
-    $codigoEstudiante = $request->string('codigo_estudiante');
+    public function store(Request $request): RedirectResponse
+    {
+        // Asumimos que el usuario autenticado tiene el "código" del estudiante
+        $estudianteCodigo = $request->user()?->estudiante?->codigo
+            ?? $request->input('estudiante_codigo'); // fallback si lo envías en el form
 
-    $fase = FaseOlimpiada::findOrFail($faseId);
-
-    // Bloquear inscripción si el estudiante ya tiene una fase activa sin finalizar
-    $yaTieneFaseNoFinal = InscripcionOlimpiada::where('estudiante_codigo', $codigoEstudiante)
-        ->where('olimpiada_id', $fase->olimpiada_id)
-        ->whereHas('estado', fn ($q) => $q->where('es_final', false))
-        ->exists();
-
-    if ($yaTieneFaseNoFinal) {
-        return back()->withErrors([
-            'msg' => 'No puedes inscribirte a esta fase hasta completar la anterior.',
+        $validated = $request->validate([
+            'fase_olimpiada_id' => [
+                'required',
+                'integer',
+                'exists:fases_olimpiadas,id',
+                new FasePreviaPasadaRule((string)$estudianteCodigo),
+            ],
         ]);
+
+        DB::transaction(function () use ($validated, $estudianteCodigo) {
+            // 1) Resolver inscripcion_id por (olimpiada_id, estudiante_codigo)
+            $fase = DB::table('fases_olimpiadas')->select('id', 'olimpiada_id')->where('id', $validated['fase_olimpiada_id'])->first();
+            $inscripcion = DB::table('inscripciones_olimpiadas')
+                ->where('olimpiada_id', $fase->olimpiada_id)
+                ->where('estudiante_codigo', $estudianteCodigo)
+                ->first();
+
+            // 2) Crear evaluación/participación para la fase seleccionada (si no existe)
+            DB::table('evaluaciones_fase')->updateOrInsert(
+                [
+                    'inscripcion_id'   => $inscripcion->id,
+                    'fase_olimpiada_id' => $fase->id,
+                ],
+                [
+                    'finalizada' => 0,
+                    'aprobada'   => 0,
+                    // 'total'    => null,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
+        });
+
+        return back()->with('success', 'Inscripción registrada correctamente.');
     }
-
-    $estadoPendienteId = EstadoInscripcion::where('nombre', 'pendiente')->value('id');
-
-    InscripcionOlimpiada::create([
-        'olimpiada_id' => $fase->olimpiada_id,
-        'estudiante_codigo' => $codigoEstudiante,
-        'estado_inscripcion_id' => $estadoPendienteId,
-        'fecha_inscripcion' => now(),
-    ]);
-
-    return redirect()
-        ->route('inscripciones.index')
-        ->with('success', 'Inscripción registrada correctamente.');
-}
 
     public function show(InscripcionOlimpiada $inscripcion): Response
     {
