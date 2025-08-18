@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/tooltip";
 import { CentroEducativo, NivelEducativo } from "@/types/admission/education";
 import { Departamento, Distrito, Municipio } from "@/types/admission/address";
-import { useState } from "react";
 
 interface ResumenProps {
   centros_educativos: CentroEducativo[];
@@ -54,7 +53,7 @@ export default function ResumenSolicitud(props: ResumenProps) {
     props.centros_educativos.find((c) => c.codigo === id)?.nombre || values.centro_educativo || "No especificado";
 
   const getNivelEducativo = (id?: string) => {
-    const nivel = props.niveles_educativos.find((n) => n.codigo === id);
+    const nivel = props.niveles_educativos.find((n) => n.codigo.toString() === id);
     return nivel?.descripcion || "No especificado";
   };
 

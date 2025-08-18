@@ -25,5 +25,14 @@
             "user": "unit",
             "group": "unit"
         }
+    },
+    "settings": {
+        "http": {
+            "log_stream": "stderr" 
+        },
+        "php": {
+            "log_errors": true,
+            "error_log": "stderr" 
+        }
     }
 }

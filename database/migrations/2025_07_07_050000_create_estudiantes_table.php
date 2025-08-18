@@ -13,9 +13,7 @@ return new class extends Migration
     {
         Schema::create('estudiantes', function (Blueprint $table) {
             $table->string('codigo')->primary();
-            $table->timestamps();
             $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users');
             $table->string('primer_nombre');
             $table->string('segundo_nombre');
             $table->string('primer_apellido');
@@ -23,16 +21,21 @@ return new class extends Migration
             $table->enum('sexo', ['H', 'M']);
             $table->date('fecha_nacimiento');
             $table->string('centro_educativo');
-            $table->foreign('centro_educativo')->references('codigo')->on('centros_educativos');
             $table->string('nie')->unique();
             $table->string('telefono_casa')->nullable();
             $table->string('email')->unique();
             $table->string('direccion');
-            $table->unsignedBigInteger('distrito');
-            $table->foreign('distrito')->references('id')->on('distritos');
-            $table->string('nivel_educativo');
-            $table->foreign('nivel_educativo')->references('codigo')->on('niveles_educativos');
+            $table->unsignedSmallInteger('distrito');
+            $table->unsignedSmallInteger('nivel_educativo');
             $table->string('nivel')->default('-1');
+            $table->boolean('aprobado')->default(false);
+            $table->timestamps();
+            // Llaves foraneas
+            $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('distrito')->references('id')->on('distritos');
+            $table->foreign('nivel_educativo')->references('codigo')->on('niveles_educativos');
+            $table->foreign('centro_educativo')->references('codigo')->on('centros_educativos');
+
             $table->softDeletes();
         });
     }
