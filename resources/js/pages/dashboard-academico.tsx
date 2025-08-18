@@ -1,58 +1,34 @@
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getEventColumns } from '@/components/event-columns';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, usePage, useForm } from '@inertiajs/react';
-import { Description } from '@radix-ui/react-dialog';
+import { Head, router, usePage, Link } from '@inertiajs/react';
 import { ColumnFiltersState } from '@tanstack/react-table';
-import { Calendar, Plus, Edit, Trash2, X, Clock, MapPin } from 'lucide-react';
+import { Plus, Edit, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
+import { Description } from '@radix-ui/react-dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface Event {
     id: number;
-    name: string;
-    type: string;
-    start_date: string;
-    end_date: string;
-    start_time: string;
-    end_time: string;
-    description?: string;
-    location?: string;
-    status: 'active' | 'inactive' | 'completed';
+    nombre: string;
+    clasificacion: string;
+    fecha_inicio: string;
+    fecha_fin: string;
+    hora_inicio: string;
+    hora_fin: string;
+    descripcion?: string;
+    ubicacion?: string;
+    estado: 'activo' | 'inactivo' | 'completado';
     created_at: string;
-}
-
-interface EventForm extends Record<string, string> {
-    name: string;
-    type: string;
-    start_date: string;
-    end_date: string;
-    start_time: string;
-    end_time: string;
-    description: string;
-    location: string;
+    updated_at: string;
 }
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
     { title: 'Administrador Académico', href: '/dashboard/academico' },
-];
-
-const EVENT_TYPES = [
-    { value: 'registro-aspirantes', label: 'Registro de Aspirantes' },
-    { value: 'inscripcion', label: 'Inscripción' },
-    { value: 'academia-sabatina', label: 'Academia Sabatina' },
-    { value: 'fin-de-mes', label: 'Fin de Mes' },
-    { value: 'fdtc', label: 'FDTC' },
-    { value: 'fin-de-semana', label: 'Fin de Semana' },
-    { value: 'examen', label: 'Examen' },
-    { value: 'graduacion', label: 'Graduación' },
 ];
 
 export default function DashboardAcademico() {
@@ -68,73 +44,38 @@ export default function DashboardAcademico() {
     const canDeleteEvent = hasPermission('events:delete');
 
     // Estados
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const selectedEvent = selectedEventId ? events.find((e) => e.id === selectedEventId) || null : null;
 
-    // Formulario para agregar/editar eventos
-    const { data, setData, post, put, processing, errors, reset } = useForm<EventForm>({
-        name: '',
-        type: '',
-        start_date: '',
-        end_date: '',
-        start_time: '09:00',
-        end_time: '17:00',
-        description: '',
-        location: '',
-    });
-
-    const handleAddEvent = () => {
-        post('/dashboard/events', {
-            onSuccess: () => {
-                setShowAddModal(false);
-                reset();
-            },
-        });
-    };
-
-    const handleEditEvent = () => {
-        if (selectedEventId) {
-            put(`/dashboard/events/${selectedEventId}`, {
-                onSuccess: () => {
-                    setShowEditModal(false);
-                    reset();
-                },
-            });
+    // FUNCIÓN PARA EDITAR EVENTO
+    const handleEdit = () => {
+        if (!selectedEventId) {
+            alert('Por favor selecciona un evento primero');
+            return;
         }
+        
+        router.get(`/dashboard/academic-forms/${selectedEventId}/edit`);
     };
 
-    const handleDeleteEvent = () => {
+    // FUNCIÓN PARA ELIMINAR EVENTO
+    const handleDelete = () => {
         if (selectedEventId) {
-            router.delete(`/dashboard/events/${selectedEventId}`, {
+            router.delete(`/dashboard/academic-forms/${selectedEventId}`, {
                 onSuccess: () => {
                     setShowDeleteModal(false);
                     setSelectedEventId(null);
                 },
+                onError: (errors) => {
+                    console.error('Error al eliminar:', errors);
+                },
             });
         }
     };
 
-    const openEditModal = () => {
-        if (selectedEvent) {
-            setData({
-                name: selectedEvent.name,
-                type: selectedEvent.type,
-                start_date: selectedEvent.start_date,
-                end_date: selectedEvent.end_date,
-                start_time: selectedEvent.start_time,
-                end_time: selectedEvent.end_time,
-                description: selectedEvent.description || '',
-                location: selectedEvent.location || '',
-            });
-            setShowEditModal(true);
-        }
-    };
-
+    //FUNCIÓN PARA LIMPIAR FILTROS
     const handleClearAllFilters = () => {
         setColumnFilters([]);
     };
@@ -143,9 +84,10 @@ export default function DashboardAcademico() {
 
     // Estadísticas
     const totalEvents = events.length;
-    const activeEvents = events.filter(e => e.status === 'active').length;
-    const completedEvents = events.filter(e => e.status === 'completed').length;
-    const upcomingEvents = events.filter(e => new Date(e.start_date) > new Date()).length;
+    const activeEvents = events.filter(e => e.estado === 'activo').length;
+    const inactiveEvents = events.filter(e => e.estado === 'inactivo').length;
+    const completedEvents = events.filter(e => e.estado === 'completado').length;
+    const upcomingEvents = events.filter(e => new Date(e.fecha_inicio) > new Date()).length;
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
@@ -157,21 +99,24 @@ export default function DashboardAcademico() {
                         <Button
                             variant="ghost"
                             className="flex items-center gap-2"
-                            onClick={() => setShowAddModal(true)}
+                            asChild
                             disabled={!canCreateEvent}
                         >
-                            <Plus className="h-4 w-4" />
-                            <span>Agregar Evento</span>
+                            <Link href="/dashboard/academic-forms/create-event">
+                                <Plus className="h-4 w-4" />
+                                <span>Agregar Evento</span>
+                            </Link>
                         </Button>
-                        <Button
-                            variant="ghost"
-                            className="flex items-center gap-2"
-                            onClick={openEditModal}
+                        
+                        <Button 
+                            onClick={handleEdit}
                             disabled={!selectedEventId || !canEditEvent}
+                            variant="outline"
                         >
                             <Edit className="h-4 w-4" />
-                            <span>Editar Evento</span>
+                            Editar Evento
                         </Button>
+                        
                         <Button
                             variant="ghost"
                             className="flex items-center gap-2 text-red-600 hover:text-red-600"
@@ -181,7 +126,12 @@ export default function DashboardAcademico() {
                             <Trash2 className="h-4 w-4" />
                             <span>Eliminar Evento</span>
                         </Button>
-                        <Button variant="ghost" className="flex items-center gap-2" onClick={handleClearAllFilters}>
+                        
+                        <Button 
+                            variant="ghost" 
+                            className="flex items-center gap-2" 
+                            onClick={handleClearAllFilters}
+                        >
                             <X className="h-4 w-4" />
                             <span>Limpiar Filtros</span>
                         </Button>
@@ -198,8 +148,8 @@ export default function DashboardAcademico() {
                             <span className="text-muted-foreground">Activos</span>
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-lg border bg-background p-4">
-                            <span className="text-2xl font-bold text-blue-600">{upcomingEvents}</span>
-                            <span className="text-muted-foreground">Próximos</span>
+                            <span className="text-2xl font-bold text-red-600">{inactiveEvents}</span>
+                            <span className="text-muted-foreground">Inactivos</span>
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-lg border bg-background p-4">
                             <span className="text-2xl font-bold text-gray-600">{completedEvents}</span>
@@ -208,7 +158,7 @@ export default function DashboardAcademico() {
                     </div>
 
                     {/* Tabla de eventos */}
-                    <div className="relative min-h-[60vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
+                    <div className="relative min-h-[60vh] flex-1 overflow-hidden rounded-xl border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
                         <DataTable
                             columns={columns}
                             data={events}
@@ -220,7 +170,31 @@ export default function DashboardAcademico() {
                         />
                     </div>
 
-                    {/* ...resto de modales igual... */}
+                    {/* MODAL DE CONFIRMACIÓN PARA ELIMINAR */}
+                    <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>¿Eliminar evento?</DialogTitle>
+                            </DialogHeader>
+                            <Description className="mb-4">
+                                <p className="mb-1">ID: {selectedEventId}</p>
+                                <p className="mb-1">Nombre: {selectedEvent?.nombre}</p>
+                                <p className="mb-1">Tipo: {selectedEvent?.clasificacion}</p>
+                                <p className="mb-1">Estado: {selectedEvent?.estado}</p>
+                                <p className="mb-1">Fecha: {selectedEvent?.fecha_inicio && new Date(selectedEvent.fecha_inicio).toLocaleDateString('es-ES')}</p>
+                            </Description>
+                            <p>Esta acción no se puede deshacer. El evento seleccionado será eliminado permanentemente del sistema.</p>
+                            <DialogFooter className="flex justify-end gap-2 pt-4">
+                                <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                                    Cancelar
+                                </Button>
+                                <Button variant="destructive" onClick={handleDelete}>
+                                    Eliminar
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
                 </div>
             </div>
         </AppLayout>

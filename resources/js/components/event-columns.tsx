@@ -9,45 +9,82 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Calendar, Clock, MapPin } from "lucide-react";
 
-export type Event = {
-  id: number;
-  name: string;
-  type: string;
-  start_date: string;
-  end_date: string;
-  start_time: string;
-  end_time: string;
-  description?: string;
-  location?: string;
-  status: 'active' | 'inactive' | 'completed';
-  created_at: string;
+interface Event {
+    id: number;
+    nombre: string;
+    clasificacion: string;
+    fecha_inicio: string;
+    fecha_fin: string;
+    hora_inicio: string;
+    hora_fin: string;
+    descripcion?: string;
+    ubicacion?: string;
+    estado: 'activo' | 'inactivo' | 'completado';
+    created_at: string;
+    updated_at: string;
+}
+
+const formatDate = (dateString: string): string => {
+  if (!dateString) return 'No especificada';
+  
+  // Crear fecha sin conversión de timezone
+  const parts = dateString.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const day = parseInt(parts[2]);
+    const date = new Date(year, month, day);
+    
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+  
+  return dateString;
 };
 
 export function getEventColumns(
   events: Event[],
   selectedEventId: number | null,
-  setSelectedEventId: (id: number) => void
+  setSelectedEventId: (id: number | null) => void
 ): ColumnDef<Event>[] {
-  const uniqueTypes = Array.from(new Set(events.map(e => e.type)));
-  const uniqueStatuses = Array.from(new Set(events.map(e => e.status)));
+  const uniqueTypes = Array.from(new Set(events.map(e => e.clasificacion)));
+  const uniqueStatuses = Array.from(new Set(events.map(e => e.estado)));
 
   return [
     {
-      accessorKey: "id",
-      header: "ID",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("id")}</div>
-      ),
+      id: 'radio_select',
+      cell: ({ row }) => {
+        const event = row.original;
+        return (
+          <div className="flex justify-center">
+            <input
+              type="radio"
+              name="event-selection"
+              checked={selectedEventId === event.id}
+              onChange={() => setSelectedEventId(event.id)}
+              onClick={(e) => e.stopPropagation()}
+              className="h-4 w-4 text-primary"
+            />
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+      size: 60,
+      meta: { title: 'Seleccionar' },
     },
     {
-      accessorKey: "name",
+      accessorKey: "nombre",
       header: "Nombre del Evento",
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("name")}</div>
+        <div className="font-medium">{row.getValue("nombre")}</div>
       ),
     },
     {
-      accessorKey: "type",
+      accessorKey: "clasificacion",
       header: ({ column }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -69,43 +106,99 @@ export function getEventColumns(
           </DropdownMenuContent>
         </DropdownMenu>
       ),
-      cell: ({ row }) => (
-        <Badge variant="outline">{row.getValue("type")}</Badge>
-      ),
+      cell: ({ row }) => {
+        const type = row.getValue("clasificacion") as string;
+        const typeLabels: Record<string, string> = {
+          'registro-aspirantes': 'Registro de Aspirantes',
+          'inscripcion': 'Inscripción',
+          'academia-sabatina': 'Academia Sabatina',
+          'fin-de-mes': 'Fin de Mes',
+          'fdtc': 'FDTC',
+          'fin-de-semana': 'Fin de Semana',
+          'examen': 'Examen',
+          'graduacion': 'Graduación',
+        };
+        return (
+          <Badge variant="outline">{typeLabels[type] || type}</Badge>
+        );
+      },
       filterFn: "equalsString",
     },
     {
-      accessorKey: "start_date",
-      header: "Fecha",
+      accessorKey: "fecha_inicio",
+      header: "Fecha Inicio",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
-          <span>{new Date(row.getValue("start_date")).toLocaleDateString()}</span>
+          <Calendar className="h-4 w-4 text-blue-500" />
+          <span className="text-sm font-medium">
+            {formatDate(row.getValue("fecha_inicio"))}
+          </span>
         </div>
       ),
     },
     {
-      accessorKey: "start_time",
-      header: "Hora",
+      accessorKey: "hora_inicio",
+      header: "Hora Inicio",
+      cell: ({ row }) => {
+        const startTime = row.getValue("hora_inicio") as string;
+        return (
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-green-500" />
+            <span className="text-sm">
+              {startTime || 'No especificada'}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "fecha_fin",
+      header: "Fecha Fin",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4" />
-          <span>{row.getValue("start_time")} - {row.original.end_time}</span>
+          <Calendar className="h-4 w-4 text-red-500" />
+          <span className="text-sm font-medium">
+            {formatDate(row.getValue("fecha_fin"))}
+          </span>
         </div>
       ),
     },
     {
-      accessorKey: "location",
+      accessorKey: "hora_fin",
+      header: "Hora Fin",
+      cell: ({ row }) => {
+        const endTime = row.getValue("hora_fin") as string;
+        return (
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-orange-500" />
+            <span className="text-sm">
+              {endTime || 'No especificada'}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "ubicacion",
       header: "Ubicación",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4" />
-          <span>{row.getValue("location") || "No especificada"}</span>
+          <span>{row.getValue("ubicacion") || "No especificada"}</span>
         </div>
       ),
     },
     {
-      accessorKey: "status",
+      accessorKey: "created_at",
+      header: "Creado",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {new Date(row.getValue("created_at")).toLocaleDateString('es-ES')}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'estado',
       header: ({ column }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -121,20 +214,41 @@ export function getEventColumns(
             </DropdownMenuItem>
             {uniqueStatuses.map((status) => (
               <DropdownMenuItem key={status} onClick={() => column.setFilterValue(status)}>
-                {status}
+                {status === 'activo' ? 'Activo' : 
+                 status === 'inactivo' ? 'Inactivo' : 
+                 status === 'completado' ? 'Completado' : status}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
       cell: ({ row }) => {
-        const status = row.getValue("status") as string;
+        const status = row.getValue('estado') as string;
+        const statusConfig = {
+          activo: { 
+            label: 'Activo', 
+            className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+            dot: 'bg-green-500'
+          },
+          inactivo: { 
+            label: 'Inactivo', 
+            className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+            dot: 'bg-red-500'
+          },
+          completado: { 
+            label: 'Completado', 
+            className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+            dot: 'bg-gray-500'
+          },
+        };
+        
+        const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.inactivo;
+        
         return (
-          <Badge 
-            variant={status === 'activo' ? 'default' : status === 'completado' ? 'secondary' : 'outline'}
-          >
-            {status}
-          </Badge>
+          <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${config.className}`}>
+            <div className={`h-2 w-2 rounded-full ${config.dot}`} />
+            {config.label}
+          </span>
         );
       },
       filterFn: "equalsString",

@@ -13,10 +13,11 @@ class AreaSeeder extends Seeder
     public function run(): void
     {
         $areas = [
-            'matematicas' => 'Matemáticas',
-            'fisica' => 'Física',
-            'quimica' => 'Química',
+            'matematica' => 'Matemática',
             'biologia' => 'Biología',
+            'fisica' => 'Física',
+            'astronomia' => 'Astronomía',
+            'quimica' => 'Química',
             'informatica' => 'Informática',
         ];
 

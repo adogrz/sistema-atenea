@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
+use Spatie\Permission\Models\Permission;
 
 class PermissionSeeder extends Seeder
 {
@@ -61,12 +61,16 @@ class PermissionSeeder extends Seeder
                 'logs:export',
             ],
             'events' => [
-                'events:view',
-                'events:create',
-                'events:edit',
-                'events:delete',
-                'events:export',
-            ]
+            'events:view',
+            'events:create',
+            'events:edit',
+            'events:delete',
+            'events:export',
+            ],
+            'academic' => [
+            'academic:view',
+            'academic:manage',
+        ],
         ];
     }
 
@@ -94,9 +98,12 @@ class PermissionSeeder extends Seeder
         // Aplanar el array para crear todos los permisos
         $allPermissions = $this->getAllPermissionsFlattened();
 
-        // Crear todos los permisos
+        // Crear todos los permisos (forzando guard consistente)
         foreach ($allPermissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ]);
         }
     }
 
@@ -124,7 +131,7 @@ class PermissionSeeder extends Seeder
             ],
             'admin-academico' => [
                 'description' => 'Administrador Académico',
-                'groups' => ['general', 'users', 'sedes', 'areas', 'events'],
+                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic'],
                 'permissions' => ['users:view-all', 'roles:list', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -148,17 +155,8 @@ class PermissionSeeder extends Seeder
             'coordinador-area' => [
                 'description' => 'Coordinador de Área',
                 'groups' => ['general'],
-                'permissions' => [
-                    'users:view-sede',
-                    'users:view-area',
-                    'users:list',
-                    'users:create',
-                    'users:edit',
-                    'roles:assign',
-                    'events:view',
-                    'events:create',
-                    'events:edit'
-                ],
+                'permissions' => ['users:view-sede', 'users:view-area', 'users:list',
+                                  'users:create', 'users:edit', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []
             ],
@@ -212,7 +210,7 @@ class PermissionSeeder extends Seeder
             'instructor' => [
                 'description' => 'Instructor',
                 'groups' => ['general'],
-                'permissions' => ['users:view-sede', 'users:view-area', 'users:list', 'events:view'],
+                'permissions' => ['users:view-sede', 'users:view-area', 'users:list'],
                 'inherits' => [],
                 'exclude_permissions' => []
             ],
@@ -300,7 +298,9 @@ class PermissionSeeder extends Seeder
         foreach ($rolesWithPermissions as $roleName => $roleData) {
             $role = Role::firstOrCreate([
                 'name' => $roleName,
-                'description' => $roleData['description']
+                'guard_name' => 'web',
+            ], [
+                'description' => $roleData['description'],
             ]);
 
             $permissionsToAssign = $this->getPermissionsForRole($roleData);
