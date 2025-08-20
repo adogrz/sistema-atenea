@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-class EstadosInscripcionSeeder extends Seeder
+class EstadoInscripcionSeeder extends Seeder
 {
     public function run(): void
     {

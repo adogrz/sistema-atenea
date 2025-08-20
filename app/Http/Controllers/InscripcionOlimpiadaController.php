@@ -73,50 +73,86 @@ class InscripcionOlimpiadaController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // Asumimos que el usuario autenticado tiene el "código" del estudiante
+        // El código del estudiante siempre viene del usuario autenticado; 
+        // si por alguna razón no existe el perfil, toma el del formulario (mismo nombre que en el TSX).
         $estudianteCodigo = $request->user()?->estudiante?->codigo
-            ?? $request->input('estudiante_codigo'); // fallback si lo envías en el form
+            ?? $request->input('codigo_estudiante');
 
-        $validated = $request->validate([
-            'fase_olimpiada_id' => [
-                'required',
-                'integer',
-                'exists:fases_olimpiadas,id',
-                new FasePreviaPasadaRule((string)$estudianteCodigo),
+        // Reglas alineadas al TSX (fase_id, codigo_estudiante)
+        $validated = validator(
+            $request->all(),
+            [
+                'fase_id'           => ['required', 'integer', 'exists:fases_olimpiadas,id', new FasePreviaPasadaRule((string) $estudianteCodigo)],
+                'codigo_estudiante' => ['required', 'string', 'exists:estudiantes,codigo'],
             ],
-        ]);
+            [], // mensajes por defecto (usar resources/lang/es/validation.php)
+            [
+                // aliases legibles
+                'fase_id'           => 'fase',
+                'codigo_estudiante' => 'código de estudiante',
+            ]
+        )->validate();
+
+        // Seguridad: el código del form debe coincidir con el del usuario
+        abort_if(
+            (string) $estudianteCodigo !== (string) $validated['codigo_estudiante'],
+            403,
+            'El código del estudiante no coincide con el usuario actual.'
+        );
 
         DB::transaction(function () use ($validated, $estudianteCodigo) {
-            // 1) Resolver inscripcion_id por (olimpiada_id, estudiante_codigo)
-            $fase = DB::table('fases_olimpiadas')->select('id', 'olimpiada_id')->where('id', $validated['fase_olimpiada_id'])->first();
-            $inscripcion = DB::table('inscripciones_olimpiadas')
+            // 1) Cargar la fase y su olimpiada
+            /** @var \App\Models\FaseOlimpiada $fase */
+            $fase = FaseOlimpiada::query()
+                ->select(['id', 'olimpiada_id'])
+                ->findOrFail((int) $validated['fase_id']);
+
+            // 2) Obtener o crear la inscripción del estudiante en esa olimpiada
+            /** @var \App\Models\InscripcionOlimpiada $inscripcion */
+            $inscripcion = InscripcionOlimpiada::query()
                 ->where('olimpiada_id', $fase->olimpiada_id)
                 ->where('estudiante_codigo', $estudianteCodigo)
                 ->first();
 
-            // 2) Crear evaluación/participación para la fase seleccionada (si no existe)
+            if (!$inscripcion) {
+                // Estado por defecto: intenta 'inscrito', si no existe usa el menor id
+                $estadoId = EstadoInscripcion::query()
+                    ->where('slug', 'inscrito')
+                    ->value('id');
+
+                if (!$estadoId) {
+                    $estadoId = EstadoInscripcion::query()->min('id');
+                }
+
+                $inscripcion = InscripcionOlimpiada::create([
+                    'olimpiada_id'       => $fase->olimpiada_id,
+                    'estudiante_codigo'  => $estudianteCodigo,
+                    'estado_inscripcion_id' => $estadoId,
+                ]);
+            }
+
+            // 3) Crear/actualizar evaluación/participación para la fase seleccionada
             DB::table('evaluaciones_fase')->updateOrInsert(
                 [
-                    'inscripcion_id'   => $inscripcion->id,
+                    'inscripcion_id'    => $inscripcion->id,
                     'fase_olimpiada_id' => $fase->id,
                 ],
                 [
                     'finalizada' => 0,
                     'aprobada'   => 0,
-                    // 'total'    => null,
                     'updated_at' => now(),
                     'created_at' => now(),
                 ]
             );
         });
 
-        return back()->with('success', 'Inscripción registrada correctamente.');
+        return redirect()->back()->with('success', 'Inscripción registrada correctamente.');
     }
 
     public function show(InscripcionOlimpiada $inscripcion): Response
     {
         // $this->authorize('view', $inscripcion);
-        // Ajusta los nombres de relaciones según tu modelo:
+        // Ajusta los nombres de relaciones segun el modelo:
         // - 'olimpiada' (belongsTo)
         // - 'participante' (belongsTo Estudiante::class, 'estudiante_codigo', 'codigo')
         // - 'estado' (belongsTo EstadoInscripcion::class, 'estado_inscripcion_id')

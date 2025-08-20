@@ -4,8 +4,19 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
 
-class ProgresoFasesService
+class ProgresoFaseService
 {
+    /**
+     * Constructor.
+     *
+     * @param OlimpiadaService $olimpiadaService
+     */
+    public function __construct(
+        //protected OlimpiadaService $olimpiadaService
+    ) {
+        //
+    }
+
     /**
      * Regla: puede inscribirse a $faseId si:
      *  - Es la primera fase (orden = 1), o
