@@ -4,6 +4,14 @@ import { UseFormClearErrors, UseFormGetValues, UseFormTrigger } from 'react-hook
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+// Declarar tipos globales para el estado de duplicados
+declare global {
+    var __admissionDuplicateState: {
+        hasDuplicates: boolean;
+        duplicateData: { field: 'email' | 'nie'; value: string } | null;
+    };
+}
+
 // Inferir el tipo desde el esquema de Zod para asegurar consistencia
 type FormData = z.infer<typeof fullFormSchema>;
 
@@ -26,6 +34,19 @@ export function useStepValidation({ getValues, trigger, clearErrors }: UseStepVa
             await new Promise((resolve) => setTimeout(resolve, 300));
 
             const currentData = getValues();
+
+            // Verificar duplicados antes de la validación del esquema para datos personales
+            if (stepName === 'datos-personales') {
+                const duplicateState = typeof window !== 'undefined' ? window.__admissionDuplicateState : null;
+                if (duplicateState?.hasDuplicates) {
+                    toast.error('No puedes continuar con datos duplicados', {
+                        description: 'Por favor corrige el correo o NIE que ya existe en el sistema.',
+                    });
+                    setIsValidating(false);
+                    return false;
+                }
+            }
+
             const validation = validateSection(stepName, currentData);
 
             if (validation.success) {
@@ -73,7 +94,7 @@ export function useStepValidation({ getValues, trigger, clearErrors }: UseStepVa
 
                 // Disparar validación para mostrar errores en el formulario
                 const fieldsMap: Record<string, (keyof FormData)[]> = {
-                    'datos-personales': ['primer_nombre', 'primer_apellido', 'sexo', 'fecha_nacimiento', 'nie', 'email'],
+                    'datos-personales': ['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'sexo', 'fecha_nacimiento', 'nie', 'email'],
                     'datos-responsables': [
                         'dui_responsable_1',
                         'nombres_responsable_1',

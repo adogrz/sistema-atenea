@@ -1,5 +1,6 @@
 'use client';
 
+import { DuplicateModal } from '@/components/admission/duplicate-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -7,22 +8,117 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { HelpCircle, MailIcon } from 'lucide-react';
+import { useAsyncFieldValidation } from '@/hooks/useAsyncFieldValidation';
+import { useDebounce } from '@/hooks/useDebounce';
+import { HelpCircle, Loader2, MailIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+
+// Crear una variable global para compartir el estado de duplicados
+declare global {
+    var __admissionDuplicateState: {
+        hasDuplicates: boolean;
+        duplicateData: { field: 'email' | 'nie'; value: string } | null;
+    };
+}
+
+if (typeof window !== 'undefined') {
+    window.__admissionDuplicateState = {
+        hasDuplicates: false,
+        duplicateData: null,
+    };
+}
 
 export default function DatosPersonales() {
     const form = useFormContext();
+
+    // Hook para validación asíncrona
+    const {
+        emailValidation,
+        nieValidation,
+        duplicateData,
+        checkFieldDuplicate,
+        clearValidation,
+        setDuplicateData,
+        dismissDuplicate,
+        clearFieldDismissals,
+    } = useAsyncFieldValidation();
+
+    // Estados para los valores actuales de los campos
+    const [currentEmail, setCurrentEmail] = useState('');
+    const [currentNie, setCurrentNie] = useState('');
+
+    // Estados para rastrear valores anteriores y detectar cambios reales
+    const [previousEmail, setPreviousEmail] = useState('');
+    const [previousNie, setPreviousNie] = useState('');
+
+    // Debounce de los valores para evitar demasiadas peticiones
+    const debouncedEmail = useDebounce(currentEmail, 800);
+    const debouncedNie = useDebounce(currentNie, 800);
+
+    // Efecto para validar email cuando cambie el valor debounced
+    useEffect(() => {
+        if (debouncedEmail && debouncedEmail !== currentEmail) return;
+
+        if (debouncedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(debouncedEmail)) {
+            checkFieldDuplicate('email', debouncedEmail);
+        } else if (debouncedEmail === '') {
+            clearValidation('email');
+        }
+    }, [debouncedEmail, checkFieldDuplicate, clearValidation, currentEmail]);
+
+    // Efecto para validar NIE cuando cambie el valor debounced
+    useEffect(() => {
+        if (debouncedNie && debouncedNie !== currentNie) return;
+
+        if (debouncedNie && /^\d{7,10}$/.test(debouncedNie)) {
+            checkFieldDuplicate('nie', debouncedNie);
+        } else if (debouncedNie === '') {
+            clearValidation('nie');
+        }
+    }, [debouncedNie, checkFieldDuplicate, clearValidation, currentNie]);
 
     // Función para manejar input de NIE con restricción de longitud
     const handleNieChange = (e: React.ChangeEvent<HTMLInputElement>, field: { onChange: (value: string) => void; onBlur: () => void }) => {
         const value = e.target.value.replace(/\D/g, ''); // Solo números
         if (value.length <= 10) {
-            // Máximo 10 dígitos
+            // Si el valor realmente cambió, limpiar los descartes para este campo
+            if (value !== previousNie && previousNie !== '') {
+                clearFieldDismissals('nie');
+            }
+
             field.onChange(value);
+            setCurrentNie(value);
+            setPreviousNie(currentNie); // Actualizar valor anterior
             // Validar en tiempo real mientras escribe
             form.trigger('nie');
         }
     };
+
+    // Función para manejar cambio de email
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>, field: { onChange: (value: string) => void; onBlur: () => void }) => {
+        const value = e.target.value;
+
+        // Si el valor realmente cambió, limpiar los descartes para este campo
+        if (value !== previousEmail && previousEmail !== '') {
+            clearFieldDismissals('email');
+        }
+
+        field.onChange(value);
+        setCurrentEmail(value);
+        setPreviousEmail(currentEmail); // Actualizar valor anterior
+    };
+
+    // Actualizar el estado global cuando cambie el estado de duplicados
+    useEffect(() => {
+        const hasDuplicates = emailValidation.isDuplicate || nieValidation.isDuplicate;
+        if (typeof window !== 'undefined') {
+            window.__admissionDuplicateState = {
+                hasDuplicates,
+                duplicateData,
+            };
+        }
+    }, [emailValidation.isDuplicate, nieValidation.isDuplicate, duplicateData]);
 
     return (
         <Card>
@@ -46,15 +142,23 @@ export default function DatosPersonales() {
                                         Primer nombre <span className="text-destructive">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input
-                                            placeholder="Ej. Juan"
-                                            {...field}
-                                            aria-label="Ingresa tu primer nombre"
-                                            onBlur={() => {
-                                                field.onBlur();
-                                                form.trigger('primer_nombre');
-                                            }}
-                                        />
+                                        <Input placeholder="Ej. Juan" {...field} aria-label="Ingresa tu primer nombre" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="segundo_nombre"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>
+                                        Segundo nombre <span className="text-destructive">*</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Ej. Antonio" {...field} aria-label="Ingresa tu segundo nombre" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -70,32 +174,7 @@ export default function DatosPersonales() {
                                         Primer apellido <span className="text-destructive">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input
-                                            placeholder="Ej. Pérez"
-                                            {...field}
-                                            aria-label="Ingresa tu primer apellido"
-                                            onBlur={() => {
-                                                field.onBlur();
-                                                form.trigger('primer_apellido');
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="segundo_nombre"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <div className="flex items-center justify-between gap-1">
-                                        <FormLabel>Segundo nombre</FormLabel>
-                                        <span className="text-sm text-muted-foreground">Opcional</span>
-                                    </div>
-                                    <FormControl>
-                                        <Input placeholder="Ej. Antonio" {...field} aria-label="Ingresa tu segundo nombre (opcional)" />
+                                        <Input placeholder="Ej. Pérez" {...field} aria-label="Ingresa tu primer apellido" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -107,10 +186,9 @@ export default function DatosPersonales() {
                             name="segundo_apellido"
                             render={({ field }) => (
                                 <FormItem>
-                                    <div className="flex items-center justify-between gap-1">
-                                        <FormLabel>Segundo apellido</FormLabel>
-                                        <span className="text-sm text-muted-foreground">Opcional</span>
-                                    </div>
+                                    <FormLabel>
+                                        Segundo apellido <span className="text-destructive">*</span>
+                                    </FormLabel>
                                     <FormControl>
                                         <Input placeholder="Ej. González" {...field} aria-label="Ingresa tu segundo apellido" />
                                     </FormControl>
@@ -128,17 +206,10 @@ export default function DatosPersonales() {
                                     <FormLabel>
                                         Sexo <span className="text-destructive">*</span>
                                     </FormLabel>
-                                    <Select
-                                        onValueChange={(value) => {
-                                            field.onChange(value);
-                                            // Validar inmediatamente después del cambio
-                                            form.trigger('sexo');
-                                        }}
-                                        value={field.value || ''}
-                                    >
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
-                                            <SelectTrigger className="w-full sm:max-w-fit">
-                                                <SelectValue placeholder="Selecciona una opción" />
+                                            <SelectTrigger aria-label="Selecciona tu sexo">
+                                                <SelectValue placeholder="Seleccionar" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -156,70 +227,45 @@ export default function DatosPersonales() {
                             control={form.control}
                             name="fecha_nacimiento"
                             render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <div className="flex items-center gap-2">
-                                        <FormLabel>
-                                            Fecha de nacimiento <span className="text-destructive">*</span>
-                                        </FormLabel>
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-5 w-5"
-                                                        aria-label="Ayuda para fecha de nacimiento"
-                                                    >
-                                                        <HelpCircle className="h-4 w-4" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p className="max-w-xs">Para estudiantes entre 8 y 18 años</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    </div>
-                                    <DatePicker
-                                        value={(() => {
-                                            if (!field.value) return undefined;
-
-                                            try {
-                                                // Parsear fecha usando el mismo método que funciona en roles-manager
-                                                if (field.value.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
-                                                    const [year, month, day] = field.value.split('-').map((num: string) => parseInt(num, 10));
-                                                    return new Date(year, month - 1, day);
+                                <FormItem>
+                                    <FormLabel>
+                                        Fecha de nacimiento <span className="text-destructive">*</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                        <DatePicker
+                                            value={
+                                                field.value
+                                                    ? (() => {
+                                                          try {
+                                                              // Intentar parsear la fecha, manejando diferentes formatos
+                                                              const date = new Date(field.value);
+                                                              return isNaN(date.getTime()) ? undefined : date;
+                                                          } catch {
+                                                              return undefined;
+                                                          }
+                                                      })()
+                                                    : undefined
+                                            }
+                                            onChange={(date) => {
+                                                // Convertir la fecha a string en formato ISO (YYYY-MM-DD)
+                                                if (date) {
+                                                    const year = date.getFullYear();
+                                                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                                                    const day = String(date.getDate()).padStart(2, '0');
+                                                    field.onChange(`${year}-${month}-${day}`);
                                                 } else {
-                                                    // Fallback para otros formatos
-                                                    return new Date(field.value);
+                                                    field.onChange('');
                                                 }
-                                            } catch (error) {
-                                                console.warn('Invalid date value:', field.value, error);
-                                                return undefined;
-                                            }
-                                        })()}
-                                        onChange={(date) => {
-                                            if (date) {
-                                                // Formatear fecha en timezone local
-                                                const year = date.getFullYear();
-                                                const month = String(date.getMonth() + 1).padStart(2, '0');
-                                                const day = String(date.getDate()).padStart(2, '0');
-                                                field.onChange(`${year}-${month}-${day}`);
-                                            } else {
-                                                field.onChange('');
-                                            }
-                                            // Validar inmediatamente después del cambio
-                                            form.trigger('fecha_nacimiento');
-                                        }}
-                                        placeholder="Selecciona fecha"
-                                        className="truncate"
-                                        disableDates={(date) => {
-                                            const today = new Date();
-                                            const maxAge = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-                                            const minAge = new Date(today.getFullYear() - 8, today.getMonth(), today.getDate());
-                                            return date > minAge || date < maxAge;
-                                        }}
-                                    />
-                                    <FormDescription>Edad permitida: 8 a 18 años</FormDescription>
+                                            }}
+                                            disableDates={(date) => {
+                                                // Deshabilitar fechas que no permitan edades entre 6 y 20 años
+                                                const today = new Date();
+                                                const minDate = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate());
+                                                const maxDate = new Date(today.getFullYear() - 6, today.getMonth(), today.getDate());
+                                                return date < minDate || date > maxDate;
+                                            }}
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -260,6 +306,7 @@ export default function DatosPersonales() {
                                             type="email"
                                             placeholder="tu.correo@ejemplo.com"
                                             {...field}
+                                            onChange={(e) => handleEmailChange(e, field)}
                                             onBlur={() => {
                                                 field.onBlur();
                                                 // Validar cuando el usuario sale del campo
@@ -267,11 +314,19 @@ export default function DatosPersonales() {
                                             }}
                                         />
                                         <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground/80 peer-disabled:opacity-50">
-                                            <MailIcon size={16} aria-hidden="true" />
+                                            {emailValidation.isChecking ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <MailIcon size={16} aria-hidden="true" />
+                                            )}
                                         </div>
                                     </div>
                                 </FormControl>
                                 <FormDescription>Recibirás notificaciones importantes en este correo</FormDescription>
+                                {emailValidation.isDuplicate && (
+                                    <p className="text-sm text-destructive">Este correo ya está registrado en nuestra plataforma.</p>
+                                )}
+                                {emailValidation.error && <p className="text-sm text-destructive">{emailValidation.error}</p>}
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -305,26 +360,47 @@ export default function DatosPersonales() {
                                     </TooltipProvider>
                                 </div>
                                 <FormControl>
-                                    <Input
-                                        type="text"
-                                        placeholder="Ej. 1234567"
-                                        {...field}
-                                        onChange={(e) => handleNieChange(e, field)}
-                                        onBlur={() => {
-                                            field.onBlur();
-                                            // Validar cuando el usuario sale del campo
-                                            form.trigger('nie');
-                                        }}
-                                        maxLength={10}
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            type="text"
+                                            placeholder="Ej. 1234567"
+                                            {...field}
+                                            onChange={(e) => handleNieChange(e, field)}
+                                            onBlur={() => {
+                                                field.onBlur();
+                                                // Validar cuando el usuario sale del campo
+                                                form.trigger('nie');
+                                            }}
+                                            maxLength={10}
+                                            className={nieValidation.isChecking ? 'pr-10' : ''}
+                                        />
+                                        {nieValidation.isChecking && (
+                                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                            </div>
+                                        )}
+                                    </div>
                                 </FormControl>
                                 <FormDescription>Tu número de identificación estudiantil único (7-10 dígitos)</FormDescription>
+                                {nieValidation.isDuplicate && (
+                                    <p className="text-sm text-destructive">Este NIE ya está registrado en nuestra plataforma.</p>
+                                )}
+                                {nieValidation.error && <p className="text-sm text-destructive">{nieValidation.error}</p>}
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
                 </div>
             </CardContent>
+
+            {/* Modal de duplicado */}
+            <DuplicateModal
+                isOpen={!!duplicateData}
+                onClose={() => setDuplicateData(null)}
+                field={duplicateData?.field || 'email'}
+                value={duplicateData?.value || ''}
+                onDismiss={dismissDuplicate}
+            />
         </Card>
     );
 }

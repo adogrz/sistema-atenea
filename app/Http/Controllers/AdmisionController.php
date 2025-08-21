@@ -35,9 +35,9 @@ class AdmisionController extends Controller
 
             // Estudiante
             'primer_nombre' => 'required|string|max:50',
-            'segundo_nombre' => 'nullable|string|max:50',
+            'segundo_nombre' => 'required|string|max:50',
             'primer_apellido' => 'required|string|max:50',
-            'segundo_apellido' => 'nullable|string|max:50',
+            'segundo_apellido' => 'required|string|max:50',
             'sexo' => 'required|in:H,M',
             'fecha_nacimiento' => 'required|date',
             'centro_educativo' => 'required|exists:centros_educativos,nombre',
