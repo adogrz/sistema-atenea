@@ -3,16 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Olimpiada extends Model
 {
+    protected $table = 'olimpiadas';
+
     protected $fillable = [
         'nombre',
         'descripcion',
         'fecha_inicio',
         'fecha_fin',
-        'area_academica',
+        'area_id', // Relación con el área académica
         'activa',
     ];
 
@@ -21,6 +24,11 @@ class Olimpiada extends Model
         'fecha_fin' => 'date',
         'activa' => 'boolean',
     ];
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class, 'area_id');
+    }
 
     public function fases(): HasMany
     {
@@ -34,11 +42,6 @@ class Olimpiada extends Model
 
     public function scopePorArea($query, $area)
     {
-        return $query->where('area_academica', $area);
-    }
-
-    public function area()
-    {
-        return $this->belongsTo(Area::class, 'area_id');
+        return $query->where('area_id', $area);
     }
 }

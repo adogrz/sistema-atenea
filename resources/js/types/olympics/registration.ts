@@ -52,7 +52,7 @@ export interface FaseOlimpiada {
     descripcion: string;
     olimpiada: {
         nombre: string;
-        area_academica: string;
+        area: Area;
         descripcion: string;
         fecha_inicio: Date;
         fecha_fin: Date;
@@ -66,4 +66,10 @@ export interface Inscripcion {
     codigo_estudiante: string;
     fase_id: number;
     fecha_inscripcion: Date;
+}
+
+export interface Area {
+    id: string | number;
+    name: string;
+    description: string;
 }

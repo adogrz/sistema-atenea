@@ -53,7 +53,8 @@ class OlimpiadaService
     {
         return InscripcionOlimpiada::with([
             'estado:id,nombre,slug,es_final',
-            'olimpiada:id,nombre,area_academica',
+            'olimpiada:id,nombre,area_id',
+            'olimpiada.area:id,name,description',
         ])
             ->deEstudiante($codigoEstudiante)
             ->get()
@@ -94,7 +95,10 @@ class OlimpiadaService
     private function buildFasesAgrupadas(bool $aplicarVentanaFechas, Carbon $fecha): Collection
     {
         $q = FaseOlimpiada::query()
-            ->with('olimpiada:id,nombre,area_academica')
+            ->with([
+                'olimpiada:id,nombre,area_id',
+                'olimpiada.area:id,name,description',
+            ])
             ->orderBy('olimpiada_id')
             ->orderBy('numero_fase');
 

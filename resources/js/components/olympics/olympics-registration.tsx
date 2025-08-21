@@ -227,7 +227,7 @@ export default function InscripcionOlimpiada({
                         </CardHeader>
                         <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           <div className="text-sm space-y-1">
-                            <p>Área: <span className="font-medium">{fase.olimpiada.area_academica}</span></p>
+                            <p>Área: <span className="font-medium">{fase.olimpiada.area.description}</span></p>
                             {inscripcion && estadoTag(estado, estadoNombre)}
                           </div>
                           {puedeInscribirseEnFase ? (
