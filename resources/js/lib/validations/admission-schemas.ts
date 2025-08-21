@@ -11,12 +11,11 @@ export const personalDataSchema = z.object({
         }),
     segundo_nombre: z
         .string()
+        .min(1, 'El segundo nombre es obligatorio')
         .max(50, 'Máximo 50 caracteres')
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]*$/, {
+        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
             message: 'Solo se permiten letras, espacios, guiones y apostrofes',
-        })
-        .optional()
-        .or(z.literal('')),
+        }),
     primer_apellido: z
         .string()
         .min(1, 'El primer apellido es obligatorio')
@@ -26,12 +25,11 @@ export const personalDataSchema = z.object({
         }),
     segundo_apellido: z
         .string()
+        .min(1, 'El segundo apellido es obligatorio')
         .max(50, 'Máximo 50 caracteres')
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]*$/, {
+        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
             message: 'Solo se permiten letras, espacios, guiones y apostrofes',
-        })
-        .optional()
-        .or(z.literal('')),
+        }),
     sexo: z.string().refine((val) => val === 'H' || val === 'M', {
         message: 'Por favor selecciona tu sexo',
     }),
@@ -50,9 +48,9 @@ export const personalDataSchema = z.object({
             // Ajustar la edad si no ha pasado el cumpleaños
             const finalAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
 
-            return finalAge >= 8 && finalAge <= 18;
+            return finalAge >= 6 && finalAge <= 20;
         },
-        { message: 'La edad debe estar entre 8 y 18 años' },
+        { message: 'La edad debe estar entre 6 y 20 años' },
     ),
     nie: z.string().regex(/^\d{7,10}$/, {
         message: 'El NIE debe tener entre 7 y 10 dígitos',

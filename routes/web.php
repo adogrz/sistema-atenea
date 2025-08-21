@@ -99,5 +99,10 @@ Route::get('/health', function () {
     }
 });
 
+// Rutas de API públicas para el formulario de admisión (sin CSRF)
+Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
+    Route::post('api/check-duplicate', [App\Http\Controllers\Api\DuplicateCheckController::class, 'checkDuplicate']);
+});
+
 require __DIR__ . '/auth.php';
 require __DIR__ . '/settings.php';
