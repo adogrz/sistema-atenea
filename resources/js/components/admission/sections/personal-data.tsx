@@ -139,7 +139,7 @@ export default function DatosPersonales() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Primer nombre <span className="text-destructive">*</span>
+                                        Primer nombre <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
                                         <Input placeholder="Ej. Juan" {...field} aria-label="Ingresa tu primer nombre" />
@@ -155,7 +155,7 @@ export default function DatosPersonales() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Segundo nombre <span className="text-destructive">*</span>
+                                        Segundo nombre <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
                                         <Input placeholder="Ej. Antonio" {...field} aria-label="Ingresa tu segundo nombre" />
@@ -171,7 +171,7 @@ export default function DatosPersonales() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Primer apellido <span className="text-destructive">*</span>
+                                        Primer apellido <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
                                         <Input placeholder="Ej. Pérez" {...field} aria-label="Ingresa tu primer apellido" />
@@ -187,7 +187,7 @@ export default function DatosPersonales() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Segundo apellido <span className="text-destructive">*</span>
+                                        Segundo apellido <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
                                         <Input placeholder="Ej. González" {...field} aria-label="Ingresa tu segundo apellido" />
@@ -204,7 +204,7 @@ export default function DatosPersonales() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Sexo <span className="text-destructive">*</span>
+                                        Sexo <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
@@ -229,7 +229,7 @@ export default function DatosPersonales() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Fecha de nacimiento <span className="text-destructive">*</span>
+                                        Fecha de nacimiento <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
                                         <DatePicker
@@ -284,7 +284,7 @@ export default function DatosPersonales() {
                             <FormItem>
                                 <div className="flex items-center gap-2">
                                     <FormLabel>
-                                        Correo electrónico <span className="text-destructive">*</span>
+                                        Correo electrónico <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <TooltipProvider>
                                         <Tooltip>
@@ -324,9 +324,9 @@ export default function DatosPersonales() {
                                 </FormControl>
                                 <FormDescription>Recibirás notificaciones importantes en este correo</FormDescription>
                                 {emailValidation.isDuplicate && (
-                                    <p className="text-sm text-destructive">Este correo ya está registrado en nuestra plataforma.</p>
+                                    <p className="text-sm text-red-500">Este correo ya está registrado en nuestra plataforma.</p>
                                 )}
-                                {emailValidation.error && <p className="text-sm text-destructive">{emailValidation.error}</p>}
+                                {emailValidation.error && <p className="text-sm text-red-500">{emailValidation.error}</p>}
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -344,7 +344,7 @@ export default function DatosPersonales() {
                             <FormItem>
                                 <div className="flex items-center gap-2">
                                     <FormLabel>
-                                        NIE (Número de Identificación Estudiantil) <span className="text-destructive">*</span>
+                                        NIE (Número de Identificación Estudiantil) <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <TooltipProvider>
                                         <Tooltip>
@@ -383,9 +383,9 @@ export default function DatosPersonales() {
                                 </FormControl>
                                 <FormDescription>Tu número de identificación estudiantil único (7-10 dígitos)</FormDescription>
                                 {nieValidation.isDuplicate && (
-                                    <p className="text-sm text-destructive">Este NIE ya está registrado en nuestra plataforma.</p>
+                                    <p className="text-sm text-red-500">Este NIE ya está registrado en nuestra plataforma.</p>
                                 )}
-                                {nieValidation.error && <p className="text-sm text-destructive">{nieValidation.error}</p>}
+                                {nieValidation.error && <p className="text-sm text-red-500">{nieValidation.error}</p>}
                                 <FormMessage />
                             </FormItem>
                         )}

@@ -30,9 +30,13 @@ export const personalDataSchema = z.object({
         .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
             message: 'Solo se permiten letras, espacios, guiones y apostrofes',
         }),
-    sexo: z.string().refine((val) => val === 'H' || val === 'M', {
-        message: 'Por favor selecciona tu sexo',
-    }),
+    sexo: z
+        .string({
+            required_error: 'Por favor selecciona tu sexo',
+        })
+        .refine((val) => ['H', 'M'].includes(val), {
+            message: 'Por favor selecciona tu sexo',
+        }),
     fecha_nacimiento: z.string().refine(
         (val) => {
             if (!val) return false;
@@ -81,43 +85,136 @@ export const responsableSchema = z.object({
     telefono_responsable_1: z.string().regex(/^[267]\d{7}$/, {
         message: 'El teléfono debe tener 8 dígitos y empezar con 2, 6 o 7',
     }),
-    tipo_parentesco_1: z.enum(['Madre', 'Padre', 'Abuelo', 'Tio', 'Tutor legal'], {
-        required_error: 'Selecciona el tipo de parentesco',
-    }),
+    tipo_parentesco_1: z
+        .string({
+            required_error: 'Selecciona el tipo de parentesco',
+            invalid_type_error: 'Selecciona el tipo de parentesco',
+        })
+        .refine((val) => ['Madre', 'Padre', 'Abuelo', 'Tio', 'Tutor legal', 'Otro'].includes(val), {
+            message: 'Selecciona el tipo de parentesco',
+        }),
+    otro_parentesco_1: z
+        .string()
+        .max(50, 'Máximo 50 caracteres')
+        .optional()
+        .or(z.literal('')),
 
     // Responsable 2 (opcional)
     dui_responsable_2: z
         .string()
-        .regex(/^\d{9}$/, {
-            message: 'El DUI debe tener 9 dígitos numéricos',
-        })
         .optional()
         .or(z.literal('')),
     nombres_responsable_2: z
         .string()
-        .max(100, 'Máximo 100 caracteres')
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]*$/, {
-            message: 'Solo se permiten letras, espacios, guiones y apostrofes',
-        })
         .optional()
         .or(z.literal('')),
     apellidos_responsable_2: z
         .string()
-        .max(100, 'Máximo 100 caracteres')
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]*$/, {
-            message: 'Solo se permiten letras, espacios, guiones y apostrofes',
-        })
         .optional()
         .or(z.literal('')),
-    email_responsable_2: z.string().email('Ingresa un correo electrónico válido').nullable().optional().or(z.literal('')),
+    email_responsable_2: z
+        .string()
+        .optional()
+        .or(z.literal('')),
     telefono_responsable_2: z
         .string()
-        .regex(/^[267]\d{7}$/, {
-            message: 'El teléfono debe tener 8 dígitos y empezar con 2, 6 o 7',
+        .optional()
+        .or(z.literal('')),
+    tipo_parentesco_2: z
+        .string()
+        .refine((val) => val === '' || ['Madre', 'Padre', 'Abuelo', 'Tio', 'Tutor legal', 'Otro'].includes(val), {
+            message: 'Selecciona el tipo de parentesco',
         })
         .optional()
         .or(z.literal('')),
-    tipo_parentesco_2: z.enum(['Madre', 'Padre', 'Abuelo', 'Tio', 'Tutor legal']).optional(),
+    otro_parentesco_2: z
+        .string()
+        .optional()
+        .or(z.literal('')),
+}).refine((data) => {
+    // Validar que si tipo_parentesco_1 es "Otro", entonces otro_parentesco_1 es requerido
+    if (data.tipo_parentesco_1 === 'Otro' && (!data.otro_parentesco_1 || data.otro_parentesco_1.trim() === '')) {
+        return false;
+    }
+    return true;
+}, {
+    message: 'Especifica el tipo de parentesco cuando seleccionas "Otro"',
+    path: ['otro_parentesco_1'],
+}).refine((data) => {
+    // Validar que si tipo_parentesco_2 es "Otro", entonces otro_parentesco_2 es requerido
+    if (data.tipo_parentesco_2 === 'Otro' && (!data.otro_parentesco_2 || data.otro_parentesco_2.trim() === '')) {
+        return false;
+    }
+    return true;
+}, {
+    message: 'Especifica el tipo de parentesco cuando seleccionas "Otro"',
+    path: ['otro_parentesco_2'],
+}).refine((data) => {
+    // Validación condicional para responsable 2: si se llena algún campo, todos los campos obligatorios deben estar llenos
+    const hasAnySecondResponsableData =
+        (data.dui_responsable_2 && data.dui_responsable_2.trim() !== '') ||
+        (data.nombres_responsable_2 && data.nombres_responsable_2.trim() !== '') ||
+        (data.apellidos_responsable_2 && data.apellidos_responsable_2.trim() !== '') ||
+        (data.telefono_responsable_2 && data.telefono_responsable_2.trim() !== '') ||
+        (data.tipo_parentesco_2 && data.tipo_parentesco_2.trim() !== '');
+
+    if (hasAnySecondResponsableData) {
+        // Validar DUI
+        if (!data.dui_responsable_2 || data.dui_responsable_2.trim() === '') {
+            return false;
+        }
+        if (!/^\d{9}$/.test(data.dui_responsable_2)) {
+            return false;
+        }
+
+        // Validar nombres
+        if (!data.nombres_responsable_2 || data.nombres_responsable_2.trim() === '') {
+            return false;
+        }
+        if (data.nombres_responsable_2.length > 100) {
+            return false;
+        }
+        if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/.test(data.nombres_responsable_2)) {
+            return false;
+        }
+
+        // Validar apellidos
+        if (!data.apellidos_responsable_2 || data.apellidos_responsable_2.trim() === '') {
+            return false;
+        }
+        if (data.apellidos_responsable_2.length > 100) {
+            return false;
+        }
+        if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/.test(data.apellidos_responsable_2)) {
+            return false;
+        }
+
+        // Validar teléfono
+        if (!data.telefono_responsable_2 || data.telefono_responsable_2.trim() === '') {
+            return false;
+        }
+        if (!/^[267]\d{7}$/.test(data.telefono_responsable_2)) {
+            return false;
+        }
+
+        // Validar parentesco
+        if (!data.tipo_parentesco_2 || data.tipo_parentesco_2.trim() === '') {
+            return false;
+        }
+
+        // Validar email si se proporciona
+        if (data.email_responsable_2 && data.email_responsable_2.trim() !== '') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.email_responsable_2)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}, {
+    message: 'Si vas a agregar un segundo responsable, debes completar todos sus datos obligatorios correctamente',
+    path: ['nombres_responsable_2'], // Se mostrará el error en el primer campo
 });
 
 export const addressSchema = z.object({
@@ -189,13 +286,17 @@ export function getErrorsBySection(errors: Record<string, unknown>) {
         'dui_responsable_1',
         'nombres_responsable_1',
         'apellidos_responsable_1',
+        'email_responsable_1',
         'telefono_responsable_1',
         'tipo_parentesco_1',
+        'otro_parentesco_1',
         'dui_responsable_2',
         'nombres_responsable_2',
         'apellidos_responsable_2',
+        'email_responsable_2',
         'telefono_responsable_2',
         'tipo_parentesco_2',
+        'otro_parentesco_2',
     ];
     const addressFields = ['direccion', 'distrito', 'departamento', 'municipio', 'telefono_casa'];
     const educationFields = ['centro_educativo', 'nivel_educativo', 'sector', 'zona', 'internacional'];
