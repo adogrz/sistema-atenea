@@ -131,26 +131,26 @@ export const responsableSchema = z.object({
         .string()
         .optional()
         .or(z.literal('')),
-}).refine((data) => {
+}).superRefine((data, ctx) => {
     // Validar que si tipo_parentesco_1 es "Otro", entonces otro_parentesco_1 es requerido
     if (data.tipo_parentesco_1 === 'Otro' && (!data.otro_parentesco_1 || data.otro_parentesco_1.trim() === '')) {
-        return false;
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Especifica el tipo de parentesco cuando seleccionas "Otro"',
+            path: ['otro_parentesco_1'],
+        });
     }
-    return true;
-}, {
-    message: 'Especifica el tipo de parentesco cuando seleccionas "Otro"',
-    path: ['otro_parentesco_1'],
-}).refine((data) => {
+
     // Validar que si tipo_parentesco_2 es "Otro", entonces otro_parentesco_2 es requerido
     if (data.tipo_parentesco_2 === 'Otro' && (!data.otro_parentesco_2 || data.otro_parentesco_2.trim() === '')) {
-        return false;
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Especifica el tipo de parentesco cuando seleccionas "Otro"',
+            path: ['otro_parentesco_2'],
+        });
     }
-    return true;
-}, {
-    message: 'Especifica el tipo de parentesco cuando seleccionas "Otro"',
-    path: ['otro_parentesco_2'],
-}).refine((data) => {
-    // Validación condicional para responsable 2: si se llena algún campo, todos los campos obligatorios deben estar llenos
+
+    // Verificar si hay algún dato del responsable 2
     const hasAnySecondResponsableData =
         (data.dui_responsable_2 && data.dui_responsable_2.trim() !== '') ||
         (data.nombres_responsable_2 && data.nombres_responsable_2.trim() !== '') ||
@@ -158,63 +158,101 @@ export const responsableSchema = z.object({
         (data.telefono_responsable_2 && data.telefono_responsable_2.trim() !== '') ||
         (data.tipo_parentesco_2 && data.tipo_parentesco_2.trim() !== '');
 
+    // Si hay algún dato del responsable 2, validar todos los campos requeridos
     if (hasAnySecondResponsableData) {
-        // Validar DUI
+        // Validar DUI del responsable 2
         if (!data.dui_responsable_2 || data.dui_responsable_2.trim() === '') {
-            return false;
-        }
-        if (!/^\d{9}$/.test(data.dui_responsable_2)) {
-            return false;
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'El DUI del responsable 2 es requerido',
+                path: ['dui_responsable_2'],
+            });
+        } else if (!/^\d{9}$/.test(data.dui_responsable_2)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'El DUI debe tener 9 dígitos numéricos',
+                path: ['dui_responsable_2'],
+            });
         }
 
-        // Validar nombres
+        // Validar nombres del responsable 2
         if (!data.nombres_responsable_2 || data.nombres_responsable_2.trim() === '') {
-            return false;
-        }
-        if (data.nombres_responsable_2.length > 100) {
-            return false;
-        }
-        if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/.test(data.nombres_responsable_2)) {
-            return false;
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Los nombres del responsable 2 son requeridos',
+                path: ['nombres_responsable_2'],
+            });
+        } else if (data.nombres_responsable_2.length > 100) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Máximo 100 caracteres',
+                path: ['nombres_responsable_2'],
+            });
+        } else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/.test(data.nombres_responsable_2)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Solo se permiten letras, espacios, guiones y apostrofes',
+                path: ['nombres_responsable_2'],
+            });
         }
 
-        // Validar apellidos
+        // Validar apellidos del responsable 2
         if (!data.apellidos_responsable_2 || data.apellidos_responsable_2.trim() === '') {
-            return false;
-        }
-        if (data.apellidos_responsable_2.length > 100) {
-            return false;
-        }
-        if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/.test(data.apellidos_responsable_2)) {
-            return false;
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Los apellidos del responsable 2 son requeridos',
+                path: ['apellidos_responsable_2'],
+            });
+        } else if (data.apellidos_responsable_2.length > 100) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Máximo 100 caracteres',
+                path: ['apellidos_responsable_2'],
+            });
+        } else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/.test(data.apellidos_responsable_2)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Solo se permiten letras, espacios, guiones y apostrofes',
+                path: ['apellidos_responsable_2'],
+            });
         }
 
-        // Validar teléfono
+        // Validar teléfono del responsable 2
         if (!data.telefono_responsable_2 || data.telefono_responsable_2.trim() === '') {
-            return false;
-        }
-        if (!/^[267]\d{7}$/.test(data.telefono_responsable_2)) {
-            return false;
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'El teléfono del responsable 2 es requerido',
+                path: ['telefono_responsable_2'],
+            });
+        } else if (!/^[267]\d{7}$/.test(data.telefono_responsable_2)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'El teléfono debe tener 8 dígitos y empezar con 2, 6 o 7',
+                path: ['telefono_responsable_2'],
+            });
         }
 
-        // Validar parentesco
+        // Validar parentesco del responsable 2
         if (!data.tipo_parentesco_2 || data.tipo_parentesco_2.trim() === '') {
-            return false;
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'El parentesco del responsable 2 es requerido',
+                path: ['tipo_parentesco_2'],
+            });
         }
 
         // Validar email si se proporciona
         if (data.email_responsable_2 && data.email_responsable_2.trim() !== '') {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(data.email_responsable_2)) {
-                return false;
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'El formato del email no es válido',
+                    path: ['email_responsable_2'],
+                });
             }
         }
     }
-
-    return true;
-}, {
-    message: 'Si vas a agregar un segundo responsable, debes completar todos sus datos obligatorios correctamente',
-    path: ['nombres_responsable_2'], // Se mostrará el error en el primer campo
 });
 
 export const addressSchema = z.object({
