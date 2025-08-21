@@ -34,6 +34,7 @@ export const personalDataSchema = z.object({
         .string({
             required_error: 'Por favor selecciona tu sexo',
         })
+        .min(1, 'Por favor selecciona tu sexo')
         .refine((val) => ['H', 'M'].includes(val), {
             message: 'Por favor selecciona tu sexo',
         }),
@@ -90,6 +91,7 @@ export const responsableSchema = z.object({
             required_error: 'Selecciona el tipo de parentesco',
             invalid_type_error: 'Selecciona el tipo de parentesco',
         })
+        .min(1, 'Selecciona el tipo de parentesco')
         .refine((val) => ['Madre', 'Padre', 'Abuelo', 'Tio', 'Tutor legal', 'Otro'].includes(val), {
             message: 'Selecciona el tipo de parentesco',
         }),
@@ -293,9 +295,12 @@ export const educationSchema = z.object({
     internacional: z.enum(['SI', 'NO'], {
         required_error: 'Selecciona si el centro es internacional',
     }),
-    nivel_educativo: z.enum(['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7'], {
-        required_error: 'Selecciona tu nivel de estudios',
-    }),
+    nivel_educativo: z
+        .string()
+        .min(1, 'Selecciona tu nivel de estudios')
+        .refine((val) => ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7'].includes(val), {
+            message: 'Selecciona un nivel educativo válido',
+        }),
 });
 
 // Esquema completo que combina todos los esquemas individuales
