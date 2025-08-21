@@ -9,29 +9,11 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HelpCircle, Minus, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 export default function DatosResponsables() {
     const form = useFormContext();
     const [showSecondResponsable, setShowSecondResponsable] = useState(false);
-
-    // Observar los valores del responsable 2 para mostrar asteriscos dinámicamente
-    const watchedValues = useWatch({
-        control: form.control,
-        name: ['dui_responsable_2', 'nombres_responsable_2', 'apellidos_responsable_2', 'telefono_responsable_2', 'tipo_parentesco_2'],
-    });
-
-    // Verificar si hay algún dato del responsable 2 para mostrar asteriscos
-    const hasAnySecondResponsableData = () => {
-        const [dui, nombres, apellidos, telefono, parentesco] = watchedValues;
-        return (
-            (dui && dui.trim() !== '') ||
-            (nombres && nombres.trim() !== '') ||
-            (apellidos && apellidos.trim() !== '') ||
-            (telefono && telefono.trim() !== '') ||
-            (parentesco && parentesco.trim() !== '')
-        );
-    };
 
     // Función para formatear DUI mientras escribe
     const formatDUI = (value: string) => {
@@ -42,36 +24,6 @@ export default function DatosResponsables() {
         return cleaned.substring(0, 8) + '-' + cleaned.substring(8, 9);
     };
 
-    // Función para validar todos los campos del responsable 2 cuando hay datos parciales
-    const triggerResponsable2Validation = (currentFieldName: string, currentValue: string) => {
-        // Obtener los valores actuales del formulario
-        const formValues = form.getValues();
-
-        // Simular el valor que se acaba de cambiar
-        const updatedValues = { ...formValues, [currentFieldName]: currentValue };
-
-        // Verificar si hay algún dato del responsable 2 con los valores actualizados
-        const hasAnyData =
-            (updatedValues.dui_responsable_2 && updatedValues.dui_responsable_2.trim() !== '') ||
-            (updatedValues.nombres_responsable_2 && updatedValues.nombres_responsable_2.trim() !== '') ||
-            (updatedValues.apellidos_responsable_2 && updatedValues.apellidos_responsable_2.trim() !== '') ||
-            (updatedValues.telefono_responsable_2 && updatedValues.telefono_responsable_2.trim() !== '') ||
-            (updatedValues.tipo_parentesco_2 && updatedValues.tipo_parentesco_2.trim() !== '');
-
-        // Si hay algún dato, validar todos los campos del responsable 2
-        if (hasAnyData) {
-            setTimeout(() => {
-                form.trigger([
-                    'dui_responsable_2',
-                    'nombres_responsable_2',
-                    'apellidos_responsable_2',
-                    'telefono_responsable_2',
-                    'tipo_parentesco_2',
-                ]);
-            }, 150);
-        }
-    };
-
     // Función para manejar cambio en DUI
     const handleDUIChange = (e: React.ChangeEvent<HTMLInputElement>, field: { onChange: (value: string) => void }, fieldName: string) => {
         const value = e.target.value.replace(/\D/g, '');
@@ -80,11 +32,6 @@ export default function DatosResponsables() {
             // Validar en tiempo real y limpiar errores si es válido
             if (value.length === 9) {
                 setTimeout(() => form.trigger(fieldName), 100);
-            }
-
-            // Si es del responsable 2, activar validación de todos los campos cuando hay datos parciales
-            if (fieldName.includes('responsable_2')) {
-                triggerResponsable2Validation(fieldName, value);
             }
         }
     };
@@ -98,11 +45,6 @@ export default function DatosResponsables() {
             if (value.length === 8 && /^[267]/.test(value)) {
                 setTimeout(() => form.trigger(fieldName), 100);
             }
-
-            // Si es del responsable 2, activar validación de todos los campos cuando hay datos parciales
-            if (fieldName.includes('responsable_2')) {
-                triggerResponsable2Validation(fieldName, value);
-            }
         }
     };
 
@@ -114,11 +56,6 @@ export default function DatosResponsables() {
         if (value.trim().length > 0) {
             setTimeout(() => form.trigger(fieldName), 100);
         }
-
-        // Si es del responsable 2, activar validación de todos los campos cuando hay datos parciales
-        if (fieldName.includes('responsable_2')) {
-            triggerResponsable2Validation(fieldName, value);
-        }
     };
 
     // Función para manejar cambio en Select
@@ -126,11 +63,6 @@ export default function DatosResponsables() {
         field.onChange(value);
         // Validar en tiempo real y limpiar errores si es válido
         setTimeout(() => form.trigger(fieldName), 100);
-
-        // Si es del responsable 2, activar validación de todos los campos cuando hay datos parciales
-        if (fieldName.includes('responsable_2')) {
-            triggerResponsable2Validation(fieldName, value);
-        }
     };
 
     return (
@@ -408,7 +340,7 @@ export default function DatosResponsables() {
                                     name="nombres_responsable_2"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Nombres {hasAnySecondResponsableData() && <span className="text-red-500">*</span>}</FormLabel>
+                                            <FormLabel>Nombres</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     placeholder="Ej. Carlos Alberto"
@@ -426,9 +358,7 @@ export default function DatosResponsables() {
                                     name="apellidos_responsable_2"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>
-                                                Apellidos {hasAnySecondResponsableData() && <span className="text-red-500">*</span>}
-                                            </FormLabel>
+                                            <FormLabel>Apellidos</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     placeholder="Ej. Martínez Silva"
@@ -447,7 +377,7 @@ export default function DatosResponsables() {
                                     name="dui_responsable_2"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>DUI {hasAnySecondResponsableData() && <span className="text-red-500">*</span>}</FormLabel>
+                                            <FormLabel>DUI</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     placeholder="12345678-9"
@@ -466,9 +396,7 @@ export default function DatosResponsables() {
                                     name="tipo_parentesco_2"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>
-                                                Parentesco {hasAnySecondResponsableData() && <span className="text-red-500">*</span>}
-                                            </FormLabel>
+                                            <FormLabel>Parentesco</FormLabel>
                                             <Select
                                                 onValueChange={(value) => handleSelectChange(value, field, 'tipo_parentesco_2')}
                                                 value={field.value || ''}
@@ -548,9 +476,7 @@ export default function DatosResponsables() {
                                     name="telefono_responsable_2"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>
-                                                Teléfono de contacto {hasAnySecondResponsableData() && <span className="text-red-500">*</span>}
-                                            </FormLabel>
+                                            <FormLabel>Teléfono de contacto</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="tel"
