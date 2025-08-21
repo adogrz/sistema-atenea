@@ -302,21 +302,24 @@ export default function DatosResponsables() {
                             name="email_responsable_1"
                             render={({ field }) => (
                                 <FormItem>
-                                    <div className="flex items-center gap-2">
-                                        <FormLabel>Correo electrónico (recomendado)</FormLabel>
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-4 w-4">
-                                                        <HelpCircle className="h-3 w-3" />
-                                                        <span className="sr-only">Ayuda</span>
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Para recibir notificaciones importantes del proceso</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
+                                    <div className="flex items-center justify-between gap-1">
+                                        <FormLabel>Correo electrónico</FormLabel>
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-sm text-muted-foreground">Recomendado</span>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-4 w-4">
+                                                            <HelpCircle className="h-3 w-3" />
+                                                            <span className="sr-only">Ayuda</span>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Para recibir notificaciones importantes del proceso</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
                                     </div>
                                     <FormControl>
                                         <Input type="email" placeholder="responsable@ejemplo.com" {...field} />
@@ -523,7 +526,10 @@ export default function DatosResponsables() {
                                     name="email_responsable_2"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Correo electrónico (opcional)</FormLabel>
+                                            <div className="flex items-center justify-between gap-1">
+                                                <FormLabel>Correo electrónico</FormLabel>
+                                                <span className="text-sm text-muted-foreground">Opcional</span>
+                                            </div>
                                             <FormControl>
                                                 <Input
                                                     type="email"
