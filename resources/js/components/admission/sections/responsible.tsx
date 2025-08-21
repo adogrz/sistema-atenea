@@ -7,13 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { HelpCircle, Minus, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowRight, HelpCircle, Minus } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 export default function DatosResponsables() {
     const form = useFormContext();
     const [showSecondResponsable, setShowSecondResponsable] = useState(false);
+    const secondResponsableRef = useRef<HTMLDivElement>(null);
 
     // Observar los valores del responsable 2 para mostrar asteriscos dinámicamente
     const watchedValues = useWatch({
@@ -220,6 +221,7 @@ export default function DatosResponsables() {
                                             maxLength={10}
                                         />
                                     </FormControl>
+                                    <FormDescription>Debe contener 9 dígitos, formato: 12345678-9</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -358,8 +360,22 @@ export default function DatosResponsables() {
                 {/* BOTÓN PARA AGREGAR SEGUNDO RESPONSABLE */}
                 {!showSecondResponsable && (
                     <div className="flex justify-center">
-                        <Button type="button" variant="outline" onClick={() => setShowSecondResponsable(true)} className="w-full max-w-md">
-                            <Plus className="mr-2 h-4 w-4" />
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                                setShowSecondResponsable(true);
+                                // Scroll suave hacia el segundo responsable después de un breve delay
+                                setTimeout(() => {
+                                    secondResponsableRef.current?.scrollIntoView({
+                                        behavior: 'smooth',
+                                        block: 'start',
+                                    });
+                                }, 100);
+                            }}
+                            className="group text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                            <ArrowRight className="mr-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                             Agregar segundo responsable (opcional)
                         </Button>
                     </div>
@@ -370,38 +386,43 @@ export default function DatosResponsables() {
                     <>
                         <Separator className="my-6" />
 
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                    Información del responsable 2 <span className="text-sm text-muted-foreground">(Opcional)</span>
-                                </h3>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                        setShowSecondResponsable(false);
-                                        // Limpiar campos del segundo responsable
-                                        form.setValue('dui_responsable_2', '');
-                                        form.setValue('nombres_responsable_2', '');
-                                        form.setValue('apellidos_responsable_2', '');
-                                        form.setValue('tipo_parentesco_2', undefined);
-                                        form.setValue('email_responsable_2', '');
-                                        form.setValue('telefono_responsable_2', '');
-                                        form.setValue('otro_parentesco_2', '');
-                                        // Limpiar errores de validación
-                                        form.clearErrors('dui_responsable_2');
-                                        form.clearErrors('nombres_responsable_2');
-                                        form.clearErrors('apellidos_responsable_2');
-                                        form.clearErrors('tipo_parentesco_2');
-                                        form.clearErrors('email_responsable_2');
-                                        form.clearErrors('telefono_responsable_2');
-                                        form.clearErrors('otro_parentesco_2');
-                                    }}
-                                >
-                                    <Minus className="mr-1 h-4 w-4" />
-                                    Quitar
-                                </Button>
+                        <div className="space-y-6" ref={secondResponsableRef}>
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                        Información del responsable 2 <span className="text-sm text-muted-foreground">(Opcional)</span>
+                                    </h3>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            setShowSecondResponsable(false);
+                                            // Limpiar campos del segundo responsable
+                                            form.setValue('dui_responsable_2', '');
+                                            form.setValue('nombres_responsable_2', '');
+                                            form.setValue('apellidos_responsable_2', '');
+                                            form.setValue('tipo_parentesco_2', undefined);
+                                            form.setValue('email_responsable_2', '');
+                                            form.setValue('telefono_responsable_2', '');
+                                            form.setValue('otro_parentesco_2', '');
+                                            // Limpiar errores de validación
+                                            form.clearErrors('dui_responsable_2');
+                                            form.clearErrors('nombres_responsable_2');
+                                            form.clearErrors('apellidos_responsable_2');
+                                            form.clearErrors('tipo_parentesco_2');
+                                            form.clearErrors('email_responsable_2');
+                                            form.clearErrors('telefono_responsable_2');
+                                            form.clearErrors('otro_parentesco_2');
+                                        }}
+                                    >
+                                        <Minus className="mr-1 h-4 w-4" />
+                                        Quitar
+                                    </Button>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    Si decides completar este responsable, todos los campos son obligatorios excepto el correo electrónico.
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -416,6 +437,7 @@ export default function DatosResponsables() {
                                                 <Input
                                                     placeholder="Ej. Carlos Alberto"
                                                     {...field}
+                                                    autoFocus
                                                     onChange={(e) => handleTextChange(e, field, 'nombres_responsable_2')}
                                                 />
                                             </FormControl>
