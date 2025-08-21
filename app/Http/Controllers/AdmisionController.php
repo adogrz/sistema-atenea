@@ -55,18 +55,47 @@ class AdmisionController extends Controller
             'dui_responsable_1' => 'required|string|size:9',
             'nombres_responsable_1' => 'required|string|max:100',
             'apellidos_responsable_1' => 'required|string|max:100',
-            'email_responsable_1' => 'required|email',
+            'email_responsable_1' => 'nullable|email',
             'telefono_responsable_1' => 'required|string|size:8',
-            'tipo_parentesco_1' => 'required|in:Madre,Padre,Abuelo,Tio,Tutor legal',
+            'tipo_parentesco_1' => 'required|in:Madre,Padre,Abuelo,Tio,Tutor legal,Otro',
+            'otro_parentesco_1' => 'nullable|string|max:50',
 
-            // Responsable 2 (opcional)
-            'dui_responsable_2' => 'nullable|string|size:9',
-            'nombres_responsable_2' => 'nullable|string|max:100',
-            'apellidos_responsable_2' => 'nullable|string|max:100',
-            'email_responsable_2' => 'nullable|email',
-            'telefono_responsable_2' => 'nullable|string|size:8',
-            'tipo_parentesco_2' => 'nullable|in:Madre,Padre,Abuelo,Tio,Tutor legal',
+            'otro_parentesco_1' => 'nullable|string|max:50',
         ]);
+
+        // Validación condicional para responsable 2
+        $hasSecondResponsableData = !empty($request->dui_responsable_2) ||
+            !empty($request->nombres_responsable_2) ||
+            !empty($request->apellidos_responsable_2) ||
+            !empty($request->telefono_responsable_2) ||
+            !empty($request->tipo_parentesco_2);
+
+        if ($hasSecondResponsableData) {
+            $secondResponsableRules = [
+                'dui_responsable_2' => 'required|string|size:9',
+                'nombres_responsable_2' => 'required|string|max:100',
+                'apellidos_responsable_2' => 'required|string|max:100',
+                'telefono_responsable_2' => 'required|string|size:8',
+                'tipo_parentesco_2' => 'required|in:Madre,Padre,Abuelo,Tio,Tutor legal,Otro',
+                'email_responsable_2' => 'nullable|email',
+                'otro_parentesco_2' => 'nullable|string|max:50',
+            ];
+
+            $validated = array_merge($validated, $request->validate($secondResponsableRules));
+        } else {
+            // Si no hay datos del responsable 2, establecer valores por defecto
+            $secondResponsableDefaults = [
+                'dui_responsable_2' => null,
+                'nombres_responsable_2' => null,
+                'apellidos_responsable_2' => null,
+                'telefono_responsable_2' => null,
+                'tipo_parentesco_2' => null,
+                'email_responsable_2' => null,
+                'otro_parentesco_2' => null,
+            ];
+
+            $validated = array_merge($validated, $secondResponsableDefaults);
+        }
 
         // Creación de passwordTemporal
         $passwordTemporal = bin2hex(random_bytes(6)); // genera 12 caracteres hexadecimales
@@ -113,9 +142,10 @@ class AdmisionController extends Controller
             'codigo_estudiante' => $codigoTemporal,
             'nombres_responsable' => $validated['nombres_responsable_1'],
             'apellidos_responsable' => $validated['apellidos_responsable_1'],
-            'email_responsable' => $validated['email_responsable_1'],
+            'email_responsable' => $validated['email_responsable_1'] ?? null,
             'telefono_responsable' => $validated['telefono_responsable_1'],
             'tipo_parentesco' => $validated['tipo_parentesco_1'],
+            'otro_parentesco' => $validated['tipo_parentesco_1'] === 'Otro' ? $validated['otro_parentesco_1'] : null,
         ]);
 
         // Responsable 2
@@ -132,9 +162,10 @@ class AdmisionController extends Controller
                 'codigo_estudiante' => $codigoTemporal,
                 'nombres_responsable' => $validated['nombres_responsable_2'],
                 'apellidos_responsable' => $validated['apellidos_responsable_2'],
-                'email_responsable' => $validated['email_responsable_2'] ?? null, // opcional
+                'email_responsable' => $validated['email_responsable_2'] ?? null,
                 'telefono_responsable' => $validated['telefono_responsable_2'],
                 'tipo_parentesco' => $validated['tipo_parentesco_2'],
+                'otro_parentesco' => $validated['tipo_parentesco_2'] === 'Otro' ? $validated['otro_parentesco_2'] : null,
             ]);
         }
 
