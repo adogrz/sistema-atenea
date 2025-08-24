@@ -238,15 +238,14 @@ export const responsableSchema = z.object({
         if (!data.tipo_parentesco_2 || data.tipo_parentesco_2.trim() === '') {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'El parentesco del responsable 2 es requerido',
+                message: 'El tipo de parentesco del responsable 2 es requerido',
                 path: ['tipo_parentesco_2'],
             });
         }
 
         // Validar email si se proporciona
         if (data.email_responsable_2 && data.email_responsable_2.trim() !== '') {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(data.email_responsable_2)) {
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email_responsable_2)) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     message: 'El formato del email no es válido',
@@ -266,7 +265,28 @@ export const addressSchema = z.object({
         .nullable()
         .optional()
         .or(z.literal('')),
-    direccion: z.string().min(5, 'La dirección debe tener al menos 5 caracteres').max(255, 'Máximo 255 caracteres'),
+    colonia: z
+        .string()
+        .min(3, 'La colonia debe tener al menos 3 caracteres')
+        .max(100, 'Máximo 100 caracteres'),
+    calle: z
+        .string()
+        .min(3, 'La calle debe tener al menos 3 caracteres')
+        .max(100, 'Máximo 100 caracteres'),
+    numero_casa: z
+        .string()
+        .min(1, 'El número de casa es obligatorio')
+        .max(20, 'Máximo 20 caracteres'),
+    punto_referencia: z
+        .string()
+        .max(150, 'Máximo 150 caracteres')
+        .optional()
+        .or(z.literal('')),
+    direccion: z
+        .string()
+        .max(255, 'Máximo 255 caracteres')
+        .optional()
+        .or(z.literal('')),
     distrito: z.string().regex(/^\d+$/, {
         message: 'Debes seleccionar un distrito',
     }),
@@ -341,7 +361,7 @@ export function getErrorsBySection(errors: Record<string, unknown>) {
         'tipo_parentesco_2',
         'otro_parentesco_2',
     ];
-    const addressFields = ['direccion', 'distrito', 'departamento', 'municipio', 'telefono_casa'];
+    const addressFields = ['telefono_casa', 'colonia', 'calle', 'numero_casa', 'punto_referencia', 'direccion', 'distrito', 'departamento', 'municipio'];
     const educationFields = ['centro_educativo', 'nivel_educativo', 'sector', 'zona', 'internacional'];
 
     return {
