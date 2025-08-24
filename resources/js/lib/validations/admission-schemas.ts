@@ -310,15 +310,28 @@ export const educationSchema = z.object({
         .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9"'\s\-.]+$/, {
             message: 'Formato de nombre inválido',
         }),
-    sector: z.enum(['PÚBLICO', 'PRIVADO'], {
-        required_error: 'Selecciona el sector',
-    }),
-    zona: z.enum(['Rural', 'Urbana'], {
-        required_error: 'Selecciona la zona',
-    }),
-    internacional: z.enum(['SI', 'NO'], {
-        required_error: 'Selecciona si el centro es internacional',
-    }),
+    codigo: z
+        .string()
+        .optional()
+        .or(z.literal('')), // Opcional porque puede no haber código para centros ingresados manualmente
+    sector: z
+        .string()
+        .optional()
+        .refine((val) => !val || val === '' || ['PÚBLICO', 'PRIVADO'].includes(val), {
+            message: 'Sector debe ser PÚBLICO o PRIVADO',
+        }),
+    zona: z
+        .string()
+        .optional()
+        .refine((val) => !val || val === '' || ['Rural', 'Urbana'].includes(val), {
+            message: 'Zona debe ser Rural o Urbana',
+        }),
+    internacional: z
+        .string()
+        .optional()
+        .refine((val) => !val || val === '' || ['SI', 'NO'].includes(val), {
+            message: 'Internacional debe ser SI o NO',
+        }),
     nivel_educativo: z
         .string()
         .min(1, 'Selecciona tu nivel de estudios')
@@ -366,7 +379,7 @@ export function getErrorsBySection(errors: Record<string, unknown>) {
         'otro_parentesco_2',
     ];
     const addressFields = ['telefono_casa', 'colonia', 'calle', 'numero_casa', 'punto_referencia', 'direccion', 'distrito', 'departamento', 'municipio'];
-    const educationFields = ['centro_educativo', 'nivel_educativo', 'sector', 'zona', 'internacional'];
+    const educationFields = ['centro_educativo', 'codigo', 'nivel_educativo', 'sector', 'zona', 'internacional'];
 
     return {
         'datos-personales': Object.keys(errors).filter((key) => personalDataFields.includes(key)).length,

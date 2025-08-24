@@ -239,8 +239,8 @@ class AdmisionController extends Controller
             'departamentos' => $departamentos,
             'municipios' => $municipios,
             'distritos' => $distritos,
-            'centrosEducativos' => CentroEducativo::all(),
-            'nivelesEducativos' => NivelEducativo::all(),
+            'centros_educativos' => CentroEducativo::all(),
+            'niveles_educativos' => NivelEducativo::all(),
         ]);
     }
 }

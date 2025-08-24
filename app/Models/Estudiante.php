@@ -44,7 +44,7 @@ class Estudiante extends Model
         'nie',
         'telefono_casa',
         'email',
-        'direccion_id', // Referencia a direcciones normalizadas
+        'direccion_id',
         'nivel_educativo',
         'aprobado',
     ];
