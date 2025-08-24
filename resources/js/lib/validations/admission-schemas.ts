@@ -259,12 +259,16 @@ export const responsableSchema = z.object({
 export const addressSchema = z.object({
     telefono_casa: z
         .string()
-        .regex(/^[267]\d{7}$/, {
-            message: 'El teléfono debe tener 8 dígitos y empezar con 2, 6 o 7',
-        })
-        .nullable()
         .optional()
-        .or(z.literal('')),
+        .refine(
+            (val) => {
+                if (!val || val.trim() === '') return true; // Permite que el campo sea opcional
+                return /^[267]\d{7}$/.test(val);
+            },
+            {
+                message: 'El teléfono debe tener 8 dígitos y empezar con 2, 6 o 7',
+            },
+        ),
     colonia: z
         .string()
         .min(3, 'La colonia debe tener al menos 3 caracteres')
