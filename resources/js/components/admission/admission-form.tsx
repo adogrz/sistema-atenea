@@ -15,7 +15,7 @@ import { Toaster, toast } from 'sonner';
 import { useStepValidation } from '@/hooks/useStepValidation';
 import AdmissionLayout from '@/layouts/admission/admission-layout';
 import { fullFormSchema, getErrorsBySection } from '@/lib/validations/admission-schemas';
-import { Departamento } from '@/types/admission/address';
+import { Departamento, Municipio, Distrito } from '@/types/admission/address';
 import { CentroEducativo, NivelEducativo } from '@/types/admission/education';
 import { usePage } from '@inertiajs/react';
 import AdmissionSidebar from './admission-sidebar';
@@ -28,17 +28,24 @@ import ResumenSolicitud from './sections/summary';
 
 type FormData = z.infer<typeof fullFormSchema>;
 
-export default function FormularioAdmision() {
+export default function FormularioAdmision(props: {
+    departamentos: Departamento[];
+    municipios: Municipio[];
+    distritos: Distrito[];
+    centros_educativos: CentroEducativo[];
+    niveles_educativos: NivelEducativo[];
+}) {
+    const {
+        departamentos,
+        municipios,
+        distritos,
+        centros_educativos,
+        niveles_educativos,
+    } = props;
     const [activeTab, setActiveTab] = useState('datos-personales');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [captchaVerified, setCaptchaVerified] = useState(false);
     const [formStatus, setFormStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
-    const { departamentos, centros_educativos, niveles_educativos } = usePage<{
-        departamentos: Departamento[];
-        centros_educativos: CentroEducativo[];
-        niveles_educativos: NivelEducativo[];
-    }>().props;
 
     const methods = useForm<FormData>({
         resolver: zodResolver(fullFormSchema),
@@ -52,6 +59,10 @@ export default function FormularioAdmision() {
             nie: '',
             email: '',
             telefono_casa: '',
+            colonia: '',
+            calle: '',
+            numero_casa: '',
+            punto_referencia: '',
             direccion: '',
             distrito: '',
             departamento: '',
@@ -198,17 +209,15 @@ export default function FormularioAdmision() {
                             <div>
                                 {activeTab === 'datos-personales' && <DatosPersonales />}
                                 {activeTab === 'datos-responsables' && <DatosResponsable />}
-                                {activeTab === 'direccion' && (
-                                    <Direccion departamentos={departamentos} municipiosPorDepartamento={{}} distritosPorMunicipio={{}} />
-                                )}
+                                {activeTab === 'direccion' && <Direccion departamentos={departamentos} municipios={municipios} distritos={distritos} />}
                                 {activeTab === 'educacion' && (
                                     <Educacion centros_educativos={centros_educativos} niveles_educativos={niveles_educativos} />
                                 )}
                                 {activeTab === 'resumen' && (
                                     <ResumenSolicitud
                                         departamentos={departamentos}
-                                        municipios={{}}
-                                        distritos={{}}
+                                        municipios={municipios}
+                                        distritos={distritos}
                                         niveles_educativos={niveles_educativos}
                                         centros_educativos={centros_educativos}
                                     />

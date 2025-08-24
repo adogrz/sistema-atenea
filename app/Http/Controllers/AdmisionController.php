@@ -24,6 +24,35 @@ use Inertia\Response;
 
 class AdmisionController extends Controller
 {
+    /**
+     * Construye una dirección completa a partir de los campos estructurados
+     */
+    private function buildAddressString(array $validated): string
+    {
+        $parts = [];
+
+        if (!empty($validated['colonia'])) {
+            $parts[] = $validated['colonia'];
+        }
+
+        if (!empty($validated['calle'])) {
+            $parts[] = $validated['calle'];
+        }
+
+        if (!empty($validated['numero_casa'])) {
+            $parts[] = $validated['numero_casa'];
+        }
+
+        if (!empty($validated['punto_referencia'])) {
+            $parts[] = $validated['punto_referencia'];
+        }
+
+        if (!empty($validated['direccion'])) {
+            $parts[] = $validated['direccion'];
+        }
+
+        return implode(', ', $parts);
+    }
 
     /*
      * Método de registro de estudiantes del proceso de admisión
@@ -45,7 +74,14 @@ class AdmisionController extends Controller
             'nie' => 'required|string|unique:estudiantes,nie',
             'telefono_casa' => 'nullable|string|size:8',
             'email' => 'required|email|unique:estudiantes,email',
-            'direccion' => 'required|string|max:255',
+
+            // Dirección estructurada
+            'colonia' => 'required|string|min:3|max:100',
+            'calle' => 'required|string|min:3|max:100',
+            'numero_casa' => 'required|string|min:1|max:20',
+            'punto_referencia' => 'nullable|string|max:150',
+            'direccion' => 'nullable|string|max:255',
+
             'distrito' => 'required|exists:distritos,id',
             'departamento' => 'required|string',
             'municipio' => 'required|string',
@@ -58,8 +94,6 @@ class AdmisionController extends Controller
             'email_responsable_1' => 'nullable|email',
             'telefono_responsable_1' => 'required|string|size:8',
             'tipo_parentesco_1' => 'required|in:Madre,Padre,Abuelo,Tio,Tutor legal,Otro',
-            'otro_parentesco_1' => 'nullable|string|max:50',
-
             'otro_parentesco_1' => 'nullable|string|max:50',
         ]);
 
@@ -131,7 +165,12 @@ class AdmisionController extends Controller
             'nie' => $validated['nie'],
             'telefono_casa' => $validated['telefono_casa'],
             'email' => $validated['email'],
-            'direccion' => $validated['direccion'],
+            // Dirección estructurada
+            'colonia' => $validated['colonia'],
+            'calle' => $validated['calle'],
+            'numero_casa' => $validated['numero_casa'],
+            'punto_referencia' => $validated['punto_referencia'] ?? null,
+            'direccion' => $validated['direccion'] ?? null,
             'distrito' => $validated['distrito'],
             'nivel_educativo' => $validated['nivel_educativo'],
         ]);
@@ -183,32 +222,39 @@ class AdmisionController extends Controller
      */
     public function create(): Response
     {
-        $departamentos = Departamento::select('id', 'nombre_departamento')->get()
+        // Obtener departamentos y convertir IDs a string
+        $departamentos = Departamento::select('id', 'nombre_departamento')
+            ->orderBy('nombre_departamento')
+            ->get()
             ->map(fn($d) => [
                 'id' => (string) $d->id,
                 'nombre_departamento' => $d->nombre_departamento,
             ]);
 
-        $municipios = Municipio::select('id', 'nombre_municipio', 'id_departamento')->get();
-        $municipiosPorDepartamento = $municipios->groupBy('id_departamento')->map(function (Collection $items) {
-            return $items->map(fn($m) => [
+        // Obtener todos los municipios y convertir IDs a string
+        $municipios = Municipio::select('id', 'nombre_municipio', 'id_departamento')
+            ->orderBy('nombre_municipio')
+            ->get()
+            ->map(fn($m) => [
                 'id' => (string) $m->id,
                 'nombre_municipio' => $m->nombre_municipio,
+                'id_departamento' => (string) $m->id_departamento,
             ]);
-        });
 
-        $distritos = Distrito::select('id', 'nombre_distrito', 'id_municipio')->get();
-        $distritosPorMunicipio = $distritos->groupBy('id_municipio')->map(function (Collection $items) {
-            return $items->map(fn($d) => [
+        // Obtener todos los distritos y convertir IDs a string
+        $distritos = Distrito::select('id', 'nombre_distrito', 'id_municipio')
+            ->orderBy('nombre_distrito')
+            ->get()
+            ->map(fn($d) => [
                 'id' => (string) $d->id,
                 'nombre_distrito' => $d->nombre_distrito,
+                'id_municipio' => (string) $d->id_municipio,
             ]);
-        });
 
         return Inertia::render('admission/admission-register', [
             'departamentos' => $departamentos,
-            'municipiosPorDepartamento' => $municipiosPorDepartamento,
-            'distritosPorMunicipio' => $distritosPorMunicipio,
+            'municipios' => $municipios,
+            'distritos' => $distritos,
             'centrosEducativos' => CentroEducativo::all(),
             'nivelesEducativos' => NivelEducativo::all(),
         ]);

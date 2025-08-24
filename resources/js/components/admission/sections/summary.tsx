@@ -11,8 +11,8 @@ interface ResumenProps {
     centros_educativos: CentroEducativo[];
     niveles_educativos: NivelEducativo[];
     departamentos: Departamento[];
-    municipios: Record<string, Municipio[]>;
-    distritos: Record<string, Distrito[]>;
+    municipios: Municipio[];
+    distritos: Distrito[];
 }
 
 export default function ResumenSolicitud(props: ResumenProps) {
@@ -28,14 +28,10 @@ export default function ResumenSolicitud(props: ResumenProps) {
     const municipioSeleccionado = form.watch('municipio');
     const distritoSeleccionado = form.watch('distrito');
 
-    // Corrección: usar la clave correcta y asegurar que no sea undefined
-    const municipios = props.municipios[departamentoSeleccionado] || [];
-    const distritos = props.distritos[municipioSeleccionado] || [];
-
     // Extraer los nombres para mostrar el resumen
     const nombreDepartamento = props.departamentos?.find((d) => d.id === departamentoSeleccionado)?.nombre_departamento;
-    const nombreMunicipio = municipios?.find?.((m) => m.id === municipioSeleccionado)?.nombre_municipio;
-    const nombreDistrito = distritos?.find?.((d) => d.id === distritoSeleccionado)?.nombre_distrito;
+    const nombreMunicipio = props.municipios?.find?.((m) => m.id === municipioSeleccionado)?.nombre_municipio;
+    const nombreDistrito = props.distritos?.find?.((d) => d.id === distritoSeleccionado)?.nombre_distrito;
 
     // Utilidades para mostrar valores por id
     const getCentroEducativo = (id?: string) => {
