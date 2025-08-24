@@ -10,6 +10,7 @@ use App\Models\Municipio;
 use App\Models\Distrito;
 use App\Models\CentroEducativo;
 use App\Models\NivelEducativo;
+use App\Models\Direccion;
 
 use App\Notifications\UserCredentialsNotification;
 
@@ -17,49 +18,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Collection;
 
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AdmisionController extends Controller
 {
-    /**
-     * Construye una dirección completa a partir de los campos estructurados
-     */
-    private function buildAddressString(array $validated): string
-    {
-        $parts = [];
-
-        if (!empty($validated['colonia'])) {
-            $parts[] = $validated['colonia'];
-        }
-
-        if (!empty($validated['calle'])) {
-            $parts[] = $validated['calle'];
-        }
-
-        if (!empty($validated['numero_casa'])) {
-            $parts[] = $validated['numero_casa'];
-        }
-
-        if (!empty($validated['punto_referencia'])) {
-            $parts[] = $validated['punto_referencia'];
-        }
-
-        if (!empty($validated['direccion'])) {
-            $parts[] = $validated['direccion'];
-        }
-
-        return implode(', ', $parts);
-    }
-
     /*
      * Método de registro de estudiantes del proceso de admisión
      */
     public function store(Request $request): JsonResponse
     {
-        //dump($request);
         $validated = $request->validate([
 
             // Estudiante
@@ -151,6 +120,25 @@ class AdmisionController extends Controller
         // Generación de codigo temporal
         $codigoTemporal = 'ASP-' . $validated['primer_apellido'][0] . '' . $validated['segundo_apellido'][0] . '' . substr($validated['nie'], -3) . '-' . strtoupper(substr(uniqid(), -3)); // Genera un identificador unico temporal
 
+        // Buscar o crear dirección (para evitar duplicados)
+        $direccion = Direccion::similar(
+            $validated['colonia'],
+            $validated['calle'],
+            $validated['numero_casa'],
+            $validated['distrito']
+        )->first();
+
+        if (!$direccion) {
+            $direccion = Direccion::create([
+                'colonia' => $validated['colonia'],
+                'calle' => $validated['calle'],
+                'numero_casa' => $validated['numero_casa'],
+                'punto_referencia' => $validated['punto_referencia'] ?? null,
+                'direccion_completa' => $validated['direccion'] ?? null,
+                'distrito_id' => $validated['distrito'],
+            ]);
+        }
+
         // Guardar estudiante
         $estudiante = Estudiante::create([
             'codigo' => $codigoTemporal,
@@ -161,17 +149,11 @@ class AdmisionController extends Controller
             'segundo_apellido' => $validated['segundo_apellido'],
             'sexo' => $validated['sexo'],
             'fecha_nacimiento' => $validated['fecha_nacimiento'],
-            'centro_educativo' => $validated['codigo'], // ← aquí se guarda el valor de 'codigo'
+            'centro_educativo' => $validated['codigo'],
             'nie' => $validated['nie'],
             'telefono_casa' => $validated['telefono_casa'],
             'email' => $validated['email'],
-            // Dirección estructurada
-            'colonia' => $validated['colonia'],
-            'calle' => $validated['calle'],
-            'numero_casa' => $validated['numero_casa'],
-            'punto_referencia' => $validated['punto_referencia'] ?? null,
-            'direccion' => $validated['direccion'] ?? null,
-            'distrito' => $validated['distrito'],
+            'direccion_id' => $direccion->id, // ← Referencia limpia a direcciones normalizadas
             'nivel_educativo' => $validated['nivel_educativo'],
         ]);
 
