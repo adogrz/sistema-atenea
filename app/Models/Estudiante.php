@@ -26,7 +26,7 @@ class Estudiante extends Model
         'telefono_estudiante',
         'telefono_casa',
         'email',
-        'direccion_id', // Referencia a direcciones normalizadas
+        'direccion_id',
         'nivel_educativo',
     ];
 
