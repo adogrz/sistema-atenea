@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Combobox } from '@/components/ui/combobox';
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -35,7 +36,6 @@ const useLocation = (departamentos: Departamento[], municipios: Municipio[], dis
         } else if (level === 'municipio') {
             form.setValue('distrito', '', { shouldValidate: false });
         }
-        // Trigger validation on change to clear errors if the field is now valid
         form.trigger(level);
     };
 
@@ -84,6 +84,8 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
         }
     };
 
+    const showSummary = nombreDepartamento || nombreMunicipio || nombreDistrito;
+
     return (
         <Card>
             <CardHeader>
@@ -124,6 +126,7 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
                                     <Input
                                         type="tel"
                                         placeholder="2234-5678"
+                                        pattern="[267]\d{7}"
                                         {...field}
                                         value={field.value ? formatTelefono(field.value) : ''}
                                         onChange={(e) => handlePhoneChange(e, field)}
@@ -144,28 +147,34 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
                         <FormField
                             control={form.control}
                             name="departamento"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>
-                                        Departamento <span className="text-red-500">*</span>
-                                    </FormLabel>
-                                    <Select onValueChange={handleLocationChange(field, 'departamento')} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecciona un departamento" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {departamentos.map((depto) => (
-                                                <SelectItem key={depto.id} value={depto.id}>
-                                                    {depto.nombre_departamento}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                            render={({ field }) => {
+                                const selectedDeptName = departamentos.find((d) => d.id === field.value)?.nombre_departamento || '';
+
+                                const handleComboboxChange = (deptoName: string) => {
+                                    const selectedDept = departamentos.find((d) => d.nombre_departamento === deptoName);
+                                    const deptoId = selectedDept ? selectedDept.id : '';
+                                    handleLocationChange(field, 'departamento')(deptoId);
+                                };
+
+                                return (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>
+                                            Departamento <span className="text-red-500">*</span>
+                                        </FormLabel>
+                                        <Combobox
+                                            items={departamentos}
+                                            value={selectedDeptName}
+                                            onValueChange={handleComboboxChange}
+                                            valueKey="nombre_departamento"
+                                            labelKey="nombre_departamento"
+                                            placeholder="Selecciona un departamento"
+                                            searchPlaceholder="Buscar departamento..."
+                                            emptyText="No se encontraron departamentos."
+                                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                );
+                            }}
                         />
 
                         {departamentoId && (
@@ -184,7 +193,13 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Selecciona un municipio" />
+                                                    <SelectValue
+                                                        placeholder={
+                                                            municipiosFiltrados.length > 0
+                                                                ? 'Selecciona un municipio'
+                                                                : 'No hay municipios disponibles'
+                                                        }
+                                                    />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -195,9 +210,6 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        {municipiosFiltrados.length === 0 && (
-                                            <FormDescription>No hay municipios para el departamento seleccionado.</FormDescription>
-                                        )}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -216,7 +228,11 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
                                         <Select onValueChange={field.onChange} value={field.value} disabled={distritosFiltrados.length === 0}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Selecciona un distrito" />
+                                                    <SelectValue
+                                                        placeholder={
+                                                            distritosFiltrados.length > 0 ? 'Selecciona un distrito' : 'No hay distritos disponibles'
+                                                        }
+                                                    />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -227,26 +243,25 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        {distritosFiltrados.length === 0 && (
-                                            <FormDescription>No hay distritos para el municipio seleccionado.</FormDescription>
-                                        )}
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         )}
                     </div>
-                    {(nombreDepartamento || nombreMunicipio || nombreDistrito) && (
-                        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
-                            <div className="flex items-center gap-2 text-sm font-medium text-blue-900 dark:text-blue-100">
-                                <MapPin className="h-4 w-4" />
-                                Ubicación seleccionada:
+                    <div className={`transition-opacity duration-500 ease-in-out ${showSummary ? 'opacity-100' : 'opacity-0'}`}>
+                        {showSummary && (
+                            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
+                                <div className="flex items-center gap-2 text-sm font-medium text-blue-900 dark:text-blue-100">
+                                    <MapPin className="h-4 w-4" />
+                                    Ubicación seleccionada:
+                                </div>
+                                <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                                    {nombreDepartamento ?? 'Pendiente'} → {nombreMunicipio ?? 'Pendiente'} → {nombreDistrito ?? 'Pendiente'}
+                                </p>
                             </div>
-                            <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
-                                {nombreDepartamento ?? '—'} → {nombreMunicipio ?? '—'} → {nombreDistrito ?? '—'}
-                            </p>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
                 {/* Dirección Específica */}
@@ -321,7 +336,10 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
                         name="direccion"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Notas adicionales</FormLabel>
+                                <div className="flex items-center justify-between gap-1">
+                                    <FormLabel>Notas adicionales</FormLabel>
+                                    <span className="text-sm text-muted-foreground">Opcional</span>
+                                </div>
                                 <FormControl>
                                     <Textarea
                                         placeholder="Ej: Portón verde, casa de dos plantas, frente a tienda Don Mincho"
