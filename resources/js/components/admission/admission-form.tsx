@@ -15,9 +15,8 @@ import { Toaster, toast } from 'sonner';
 import { useStepValidation } from '@/hooks/useStepValidation';
 import AdmissionLayout from '@/layouts/admission/admission-layout';
 import { fullFormSchema, getErrorsBySection } from '@/lib/validations/admission-schemas';
-import { Departamento, Municipio, Distrito } from '@/types/admission/address';
+import { Departamento, Distrito, Municipio } from '@/types/admission/address';
 import { CentroEducativo, NivelEducativo } from '@/types/admission/education';
-import { usePage } from '@inertiajs/react';
 import AdmissionSidebar from './admission-sidebar';
 import Captcha from './captcha';
 import Direccion from './sections/address';
@@ -35,13 +34,7 @@ export default function FormularioAdmision(props: {
     centros_educativos: CentroEducativo[];
     niveles_educativos: NivelEducativo[];
 }) {
-    const {
-        departamentos,
-        municipios,
-        distritos,
-        centros_educativos,
-        niveles_educativos,
-    } = props;
+    const { departamentos, municipios, distritos, centros_educativos, niveles_educativos } = props;
     const [activeTab, setActiveTab] = useState('datos-personales');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [captchaVerified, setCaptchaVerified] = useState(false);
@@ -209,7 +202,9 @@ export default function FormularioAdmision(props: {
                             <div>
                                 {activeTab === 'datos-personales' && <DatosPersonales />}
                                 {activeTab === 'datos-responsables' && <DatosResponsable />}
-                                {activeTab === 'direccion' && <Direccion departamentos={departamentos} municipios={municipios} distritos={distritos} />}
+                                {activeTab === 'direccion' && (
+                                    <Direccion departamentos={departamentos} municipios={municipios} distritos={distritos} />
+                                )}
                                 {activeTab === 'educacion' && (
                                     <Educacion centros_educativos={centros_educativos} niveles_educativos={niveles_educativos} />
                                 )}
@@ -220,6 +215,7 @@ export default function FormularioAdmision(props: {
                                         distritos={distritos}
                                         niveles_educativos={niveles_educativos}
                                         centros_educativos={centros_educativos}
+                                        onNavigateToSection={setActiveTab}
                                     />
                                 )}
                             </div>
