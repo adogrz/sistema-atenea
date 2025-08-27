@@ -227,7 +227,7 @@ export default function EducationCenterFinder({ centros_educativos }: EducationC
                                                 className="border-green-300 bg-green-50 text-xs font-medium text-green-800 dark:border-green-700 dark:bg-green-950/50 dark:text-green-300"
                                             >
                                                 <Globe className="mr-1 h-3 w-3" />
-                                                {internacional}
+                                                {internacional === 'SI' ? 'Internacional' : 'Nacional'}
                                             </Badge>
                                         )}
                                     </div>

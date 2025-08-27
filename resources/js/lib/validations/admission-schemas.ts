@@ -307,7 +307,7 @@ export const educationSchema = z.object({
         .string()
         .min(5, { message: 'El nombre debe tener al menos 5 caracteres' })
         .max(100, 'Máximo 100 caracteres')
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9"'\s\-.]+$/, {
+        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9"'°\s\-.()]+$/, {
             message: 'Formato de nombre inválido',
         }),
     codigo: z
