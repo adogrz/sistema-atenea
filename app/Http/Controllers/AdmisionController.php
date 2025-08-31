@@ -117,6 +117,17 @@ class AdmisionController extends Controller
             ]
         );
 
+        // Asignar rol de estudiante al usuario (solo si es un usuario nuevo)
+        if ($usuario->wasRecentlyCreated) {
+            $usuario->syncRolesWithExpiration([
+                [
+                    'name' => 'estudiante',
+                    'is_primary' => true,
+                    'expires_at' => null
+                ]
+            ]);
+        }
+
         // Generación de codigo temporal
         $codigoTemporal = 'ASP-' . $validated['primer_apellido'][0] . '' . $validated['segundo_apellido'][0] . '' . substr($validated['nie'], -3) . '-' . strtoupper(substr(uniqid(), -3)); // Genera un identificador unico temporal
 
