@@ -20,12 +20,13 @@ interface ResumenProps {
     municipios: Municipio[];
     distritos: Distrito[];
     onNavigateToSection?: (section: string) => void;
+    onSaveManually?: () => void;
 }
 
 export default function ResumenSolicitud(props: ResumenProps) {
     const form = useFormContext();
     const values = form.getValues();
-    const { onNavigateToSection } = props;
+    const { onNavigateToSection, onSaveManually } = props;
 
     // Estados para controlar secciones colapsables
     const [openSections, setOpenSections] = useState({
@@ -332,9 +333,9 @@ export default function ResumenSolicitud(props: ResumenProps) {
                                 variant="outline"
                                 className="flex items-center gap-2"
                                 onClick={() => {
-                                    // Guardar borrador localmente
-                                    localStorage.setItem('admission_draft', JSON.stringify(values));
-                                    // TODO: Mostrar toast de confirmación
+                                    if (onSaveManually) {
+                                        onSaveManually();
+                                    }
                                 }}
                             >
                                 <Save className="size-4" />
