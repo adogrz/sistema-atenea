@@ -9,9 +9,16 @@ interface AdmissionSidebarProps {
     onTabChange: (tab: string) => void;
     erroresPorSeccion?: Record<string, number>;
     isLoading?: boolean;
+    disabled?: boolean;
 }
 
-export default function AdmissionSidebar({ activeTab, onTabChange, erroresPorSeccion = {}, isLoading = false }: AdmissionSidebarProps) {
+export default function AdmissionSidebar({
+    activeTab,
+    onTabChange,
+    erroresPorSeccion = {},
+    isLoading = false,
+    disabled = false,
+}: AdmissionSidebarProps) {
     return (
         <>
             {/* Header del Sidebar */}
@@ -29,13 +36,19 @@ export default function AdmissionSidebar({ activeTab, onTabChange, erroresPorSec
 
             {/* Contenido principal con el stepper */}
             <SidebarContent className="flex flex-1 items-start justify-start overflow-hidden px-6 py-6">
-                <StepperAdmision activeTab={activeTab} onTabChange={onTabChange} erroresPorSeccion={erroresPorSeccion} isLoading={isLoading} />
+                <StepperAdmision
+                    activeTab={activeTab}
+                    onTabChange={onTabChange}
+                    erroresPorSeccion={erroresPorSeccion}
+                    isLoading={isLoading}
+                    disabled={disabled}
+                />
             </SidebarContent>
 
             {/* Footer con indicador de progreso */}
             <SidebarFooter className="border-t bg-muted/30 p-4">
                 <div className="text-center text-sm text-muted-foreground">
-                    {activeTab === 'resumen' ? '✓ Listo para enviar' : 'Completa todos los pasos'}
+                    {disabled ? '✅ Solicitud enviada' : activeTab === 'resumen' ? '✓ Listo para enviar' : 'Completa todos los pasos'}
                 </div>
             </SidebarFooter>
         </>

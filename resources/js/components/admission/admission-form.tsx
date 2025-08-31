@@ -26,6 +26,8 @@ import Educacion from './sections/education';
 import DatosPersonales from './sections/personal-data';
 import DatosResponsable from './sections/responsible';
 import ResumenSolicitud from './sections/summary';
+import SuccessAlert from './success-alert';
+import SuccessModal from './success-modal';
 
 type FormData = z.infer<typeof fullFormSchema>;
 
@@ -41,6 +43,17 @@ export default function FormularioAdmision(props: {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [captchaVerified, setCaptchaVerified] = useState(false);
     const [formStatus, setFormStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+    const [submissionData, setSubmissionData] = useState<{
+        estudiante: {
+            codigo: string;
+            primer_nombre: string;
+            primer_apellido: string;
+            email: string;
+        };
+        submissionDate: Date;
+    } | null>(null);
 
     const methods = useForm<FormData>({
         resolver: zodResolver(fullFormSchema),
@@ -187,7 +200,7 @@ export default function FormularioAdmision(props: {
     const onSubmit = async (data: FormData) => {
         setIsSubmitting(true);
         try {
-            await axios.post('/admision', data, {
+            const response = await axios.post('/admision', data, {
                 headers: {
                     Accept: 'application/json',
                 },
@@ -196,7 +209,20 @@ export default function FormularioAdmision(props: {
             // Limpiar borrador al enviar exitosamente
             clearDraft();
 
-            toast.success('Solicitud enviada ¡Tu postulación ha sido registrada correctamente!');
+            // Configurar datos de la respuesta
+            const submissionDate = new Date();
+            setSubmissionData({
+                estudiante: {
+                    codigo: response.data.estudiante?.codigo || 'N/A',
+                    primer_nombre: data.primer_nombre,
+                    primer_apellido: data.primer_apellido,
+                    email: data.email,
+                },
+                submissionDate,
+            });
+
+            // Mostrar modal de éxito
+            setShowSuccessModal(true);
             setFormStatus('success');
         } catch (error) {
             console.error('Error al enviar:', error);
@@ -207,20 +233,16 @@ export default function FormularioAdmision(props: {
         }
     };
 
-    if (formStatus === 'success') {
-        return (
-            <Card className="mx-auto max-w-md p-6">
-                <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                    <div className="rounded-full bg-green-100 p-3">
-                        <CheckCircle2 className="h-10 w-10 text-green-600" />
-                    </div>
-                    <h2 className="text-2xl font-bold">¡Solicitud enviada con éxito!</h2>
-                    <p className="text-muted-foreground">Tu solicitud ha sido recibida correctamente. Te hemos enviado un correo de confirmación.</p>
-                    <Button onClick={() => (window.location.href = '/')}>Volver al inicio</Button>
-                </div>
-            </Card>
-        );
-    }
+    // Función para cerrar el modal y mostrar la alerta persistente
+    const handleCloseSuccessModal = () => {
+        setShowSuccessModal(false);
+        setShowSuccessAlert(true);
+    };
+
+    // Función para cerrar la alerta persistente
+    const handleDismissAlert = () => {
+        setShowSuccessAlert(false);
+    };
 
     if (formStatus === 'error') {
         return (
@@ -251,11 +273,24 @@ export default function FormularioAdmision(props: {
                         onTabChange={setActiveTab}
                         erroresPorSeccion={erroresPorSeccion}
                         isLoading={isValidating}
+                        disabled={formStatus === 'success'}
                     />
                 }
             >
                 <div className="flex h-full flex-1 flex-col gap-6 p-4">
                     <div className="mx-auto w-full max-w-4xl">
+                        {/* Alerta de éxito persistente */}
+                        {showSuccessAlert && submissionData && (
+                            <div className="mb-6">
+                                <SuccessAlert
+                                    isVisible={showSuccessAlert}
+                                    onDismiss={handleDismissAlert}
+                                    submissionDate={submissionData.submissionDate}
+                                    studentName={`${submissionData.estudiante.primer_nombre} ${submissionData.estudiante.primer_apellido}`}
+                                />
+                            </div>
+                        )}
+
                         {/* Encabezado global - siempre visible */}
                         <div className="mb-6 text-start">
                             <h1 className="text-3xl font-bold tracking-tight">Postulación Jóvenes Talento</h1>
@@ -268,97 +303,128 @@ export default function FormularioAdmision(props: {
                             </p>
                         </div>
 
-                        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-                            {/* Contenido del formulario - cada sección con su propia Card */}
-                            <div>
-                                {activeTab === 'datos-personales' && <DatosPersonales />}
-                                {activeTab === 'datos-responsables' && <DatosResponsable />}
-                                {activeTab === 'direccion' && (
-                                    <Direccion departamentos={departamentos} municipios={municipios} distritos={distritos} />
-                                )}
-                                {activeTab === 'educacion' && (
-                                    <Educacion centros_educativos={centros_educativos} niveles_educativos={niveles_educativos} />
-                                )}
-                                {activeTab === 'resumen' && (
-                                    <ResumenSolicitud
-                                        departamentos={departamentos}
-                                        municipios={municipios}
-                                        distritos={distritos}
-                                        niveles_educativos={niveles_educativos}
-                                        centros_educativos={centros_educativos}
-                                        onNavigateToSection={setActiveTab}
-                                        onSaveManually={saveManually}
-                                    />
-                                )}
-                            </div>
+                        {/* Overlay para formulario bloqueado */}
+                        <div className={`relative ${formStatus === 'success' ? 'pointer-events-none' : ''}`}>
+                            {formStatus === 'success' && <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[1px]" />}
 
-                            {/* Captcha solo en el paso resumen */}
-                            {activeTab === 'resumen' && (
-                                <div className="space-y-6">
-                                    <Captcha onVerify={setCaptchaVerified} />
+                            <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
+                                {/* Contenido del formulario - cada sección con su propia Card */}
+                                <div>
+                                    {activeTab === 'datos-personales' && <DatosPersonales />}
+                                    {activeTab === 'datos-responsables' && <DatosResponsable />}
+                                    {activeTab === 'direccion' && (
+                                        <Direccion departamentos={departamentos} municipios={municipios} distritos={distritos} />
+                                    )}
+                                    {activeTab === 'educacion' && (
+                                        <Educacion centros_educativos={centros_educativos} niveles_educativos={niveles_educativos} />
+                                    )}
+                                    {activeTab === 'resumen' && (
+                                        <ResumenSolicitud
+                                            departamentos={departamentos}
+                                            municipios={municipios}
+                                            distritos={distritos}
+                                            niveles_educativos={niveles_educativos}
+                                            centros_educativos={centros_educativos}
+                                            onNavigateToSection={setActiveTab}
+                                            onSaveManually={saveManually}
+                                        />
+                                    )}
                                 </div>
-                            )}
 
-                            {/* Alertas de errores y estado */}
-                            {totalErrors > 0 && activeTab === 'resumen' && (
-                                <Alert variant="destructive">
-                                    <AlertCircle className="h-4 w-4" />
-                                    <AlertTitle>Error</AlertTitle>
-                                    <AlertDescription>
-                                        Hay {totalErrors} error(es) en el formulario. Por favor, revisa las secciones anteriores.
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            {isSubmitting && (
-                                <Alert>
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    <AlertTitle>Enviando...</AlertTitle>
-                                    <AlertDescription>Tu solicitud está siendo procesada.</AlertDescription>
-                                </Alert>
-                            )}
-
-                            {/* Botones de navegación - fuera de cualquier Card */}
-                            <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-background pt-6">
-                                {currentStepIndex > 0 && (
-                                    <Button type="button" variant="outline" onClick={handlePrevious} disabled={isSubmitting || isValidating}>
-                                        Anterior
-                                    </Button>
+                                {/* Captcha solo en el paso resumen */}
+                                {activeTab === 'resumen' && formStatus !== 'success' && (
+                                    <div className="space-y-6">
+                                        <Captcha onVerify={setCaptchaVerified} />
+                                    </div>
                                 )}
 
-                                {currentStepIndex === 0 && <div />}
-
-                                {activeTab !== 'resumen' ? (
-                                    <Button type="button" onClick={handleNext} disabled={isSubmitting || isValidating} className="min-w-[120px]">
-                                        {isValidating ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Validando...
-                                            </>
-                                        ) : (
-                                            'Siguiente'
-                                        )}
-                                    </Button>
-                                ) : (
-                                    <Button type="submit" disabled={isSubmitting || !captchaVerified || totalErrors > 0} className="min-w-[160px]">
-                                        {isSubmitting ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Enviando...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save className="mr-2 h-4 w-4" />
-                                                Enviar Solicitud
-                                            </>
-                                        )}
-                                    </Button>
+                                {/* Alertas de errores y estado */}
+                                {totalErrors > 0 && activeTab === 'resumen' && formStatus !== 'success' && (
+                                    <Alert variant="destructive">
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertTitle>Error</AlertTitle>
+                                        <AlertDescription>
+                                            Hay {totalErrors} error(es) en el formulario. Por favor, revisa las secciones anteriores.
+                                        </AlertDescription>
+                                    </Alert>
                                 )}
-                            </div>
-                        </form>
+
+                                {isSubmitting && (
+                                    <Alert>
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        <AlertTitle>Enviando...</AlertTitle>
+                                        <AlertDescription>Tu solicitud está siendo procesada.</AlertDescription>
+                                    </Alert>
+                                )}
+
+                                {/* Botones de navegación - fuera de cualquier Card */}
+                                {formStatus !== 'success' && (
+                                    <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-background pt-6">
+                                        {currentStepIndex > 0 && (
+                                            <Button type="button" variant="outline" onClick={handlePrevious} disabled={isSubmitting || isValidating}>
+                                                Anterior
+                                            </Button>
+                                        )}
+
+                                        {currentStepIndex === 0 && <div />}
+
+                                        {activeTab !== 'resumen' ? (
+                                            <Button
+                                                type="button"
+                                                onClick={handleNext}
+                                                disabled={isSubmitting || isValidating}
+                                                className="min-w-[120px]"
+                                            >
+                                                {isValidating ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Validando...
+                                                    </>
+                                                ) : (
+                                                    'Siguiente'
+                                                )}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="submit"
+                                                disabled={isSubmitting || !captchaVerified || totalErrors > 0}
+                                                className="min-w-[160px]"
+                                            >
+                                                {isSubmitting ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Enviando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Save className="mr-2 h-4 w-4" />
+                                                        Enviar Solicitud
+                                                    </>
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </form>
+                        </div>
                     </div>
                 </div>
             </AdmissionLayout>
+
+            {/* Modal de éxito */}
+            {submissionData && (
+                <SuccessModal
+                    isOpen={showSuccessModal}
+                    onClose={handleCloseSuccessModal}
+                    studentData={{
+                        nombre: `${submissionData.estudiante.primer_nombre} ${submissionData.estudiante.primer_apellido}`,
+                        codigo: submissionData.estudiante.codigo,
+                        email: submissionData.estudiante.email,
+                    }}
+                    submissionDate={submissionData.submissionDate}
+                />
+            )}
+
             <Toaster position="top-right" richColors />
         </FormProvider>
     );

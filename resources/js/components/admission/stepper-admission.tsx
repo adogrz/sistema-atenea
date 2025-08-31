@@ -7,6 +7,7 @@ interface StepperAdmisionProps {
     onTabChange: (tab: string) => void;
     erroresPorSeccion?: Record<string, number>;
     isLoading?: boolean;
+    disabled?: boolean;
 }
 
 const steps = [
@@ -42,12 +43,18 @@ const steps = [
     },
 ];
 
-export default function StepperAdmision({ activeTab, onTabChange, erroresPorSeccion = {}, isLoading = false }: StepperAdmisionProps) {
+export default function StepperAdmision({
+    activeTab,
+    onTabChange,
+    erroresPorSeccion = {},
+    isLoading = false,
+    disabled = false,
+}: StepperAdmisionProps) {
     const currentStep = steps.find((step) => step.id === activeTab)?.step || 1;
 
     const handleStepChange = (stepNumber: number) => {
-        // No permitir cambio de paso si está cargando
-        if (isLoading) return;
+        // No permitir cambio de paso si está cargando o deshabilitado
+        if (isLoading || disabled) return;
 
         const step = steps.find((s) => s.step === stepNumber);
         if (step) {
@@ -56,7 +63,7 @@ export default function StepperAdmision({ activeTab, onTabChange, erroresPorSecc
     };
 
     return (
-        <div className="w-full max-w-[256px] min-w-[256px] space-y-2">
+        <div className={`w-full max-w-[256px] min-w-[256px] space-y-2 ${disabled ? 'opacity-75' : ''}`}>
             {/* Fija ancho al del sidebar (16rem) para evitar encogimiento visual */}
             <Stepper value={currentStep} onValueChange={handleStepChange} orientation="vertical" className="w-full">
                 {/* Ancho completo del Stepper */}
@@ -68,12 +75,15 @@ export default function StepperAdmision({ activeTab, onTabChange, erroresPorSecc
                         loading={isLoading && step === currentStep}
                     >
                         {/* Ancho completo por ítem */}
-                        <StepperTrigger className="min-h-[56px] w-full items-start rounded pb-8 last:pb-0 disabled:opacity-100" disabled={isLoading}>
+                        <StepperTrigger
+                            className="min-h-[56px] w-full items-start rounded pb-8 last:pb-0 disabled:opacity-100"
+                            disabled={isLoading || disabled}
+                        >
                             {/* Altura mínima y opacidad estable cuando está disabled */}
                             <div className="relative">
                                 <StepperIndicator />
                                 {/* Indicador de errores - mejorado para visibilidad en ambos modos */}
-                                {erroresPorSeccion[id] > 0 && !isLoading && (
+                                {erroresPorSeccion[id] > 0 && !isLoading && !disabled && (
                                     <div className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full border border-red-600 bg-red-500 text-xs font-bold text-white shadow-md ring-2 ring-background dark:border-red-500 dark:bg-red-600">
                                         {erroresPorSeccion[id] > 9 ? '9+' : erroresPorSeccion[id]}
                                     </div>
@@ -84,7 +94,11 @@ export default function StepperAdmision({ activeTab, onTabChange, erroresPorSecc
                                     {title}
                                 </StepperTitle>
                                 <StepperDescription className="text-xs text-muted-foreground">
-                                    {isLoading && step === currentStep ? 'Validando...' : description}
+                                    {isLoading && step === currentStep
+                                        ? 'Validando...'
+                                        : disabled && step === currentStep
+                                          ? 'Completado'
+                                          : description}
                                 </StepperDescription>
                             </div>
                         </StepperTrigger>
