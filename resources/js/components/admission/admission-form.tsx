@@ -2,16 +2,18 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
-import { AlertCircle, CheckCircle2, Loader2, Save } from 'lucide-react';
-import { useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { AlertCircle, CheckCircle2, FileText, Loader2, Save, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { FieldValues, FormProvider, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Toaster, toast } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
+import { useAutoSave } from '@/hooks/useAutoSave';
 import { useStepValidation } from '@/hooks/useStepValidation';
 import AdmissionLayout from '@/layouts/admission/admission-layout';
 import { fullFormSchema, getErrorsBySection } from '@/lib/validations/admission-schemas';
@@ -88,10 +90,77 @@ export default function FormularioAdmision(props: {
         trigger,
         getValues,
         clearErrors,
+        setValue,
+        watch,
     } = methods;
 
     // Usar el hook personalizado para validación
     const { validateStep, isValidating } = useStepValidation({ getValues, trigger, clearErrors });
+
+    // Función para manejar borrador encontrado
+    const handleDraftFound = useCallback(
+        (draft: { data: FieldValues; timeAgo: string }) => {
+            toast.custom(
+                (t) => (
+                    <div className="relative flex w-full max-w-sm items-center space-x-3 rounded-md border border-border bg-background p-4 shadow-md">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+                            <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                            <p className="text-sm leading-none font-medium">Borrador encontrado</p>
+                            <p className="text-xs text-muted-foreground">Guardado {draft.timeAgo}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => {
+                                    Object.keys(draft.data).forEach((key) => {
+                                        const value = draft.data[key];
+                                        if (value !== '' && value !== null && value !== undefined) {
+                                            (setValue as (name: string, value: unknown) => void)(key, value);
+                                        }
+                                    });
+                                    toast.success('Borrador restaurado', {
+                                        duration: 2000,
+                                    });
+                                    toast.dismiss(t);
+                                }}
+                            >
+                                Restaurar
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0"
+                                onClick={() => {
+                                    localStorage.removeItem('admission_form_draft');
+                                    localStorage.removeItem('admission_form_draft_timestamp');
+                                    toast.dismiss(t);
+                                }}
+                            >
+                                <X className="h-3 w-3" />
+                                <span className="sr-only">Descartar</span>
+                            </Button>
+                        </div>
+                    </div>
+                ),
+                {
+                    duration: 12000,
+                    position: 'top-right',
+                },
+            );
+        },
+        [setValue],
+    );
+
+    // Usar el hook de auto guardado
+    const { saveManually, clearDraft } = useAutoSave({
+        getValues,
+        setValue,
+        watch,
+        onDraftFound: handleDraftFound,
+    });
 
     const steps = ['datos-personales', 'datos-responsables', 'direccion', 'educacion', 'resumen'];
     const currentStepIndex = steps.indexOf(activeTab);
@@ -123,6 +192,9 @@ export default function FormularioAdmision(props: {
                     Accept: 'application/json',
                 },
             });
+
+            // Limpiar borrador al enviar exitosamente
+            clearDraft();
 
             toast.success('Solicitud enviada ¡Tu postulación ha sido registrada correctamente!');
             setFormStatus('success');
@@ -172,7 +244,6 @@ export default function FormularioAdmision(props: {
 
     return (
         <FormProvider {...methods}>
-            <Toaster richColors />
             <AdmissionLayout
                 sidebar={
                     <AdmissionSidebar
@@ -216,6 +287,7 @@ export default function FormularioAdmision(props: {
                                         niveles_educativos={niveles_educativos}
                                         centros_educativos={centros_educativos}
                                         onNavigateToSection={setActiveTab}
+                                        onSaveManually={saveManually}
                                     />
                                 )}
                             </div>
@@ -287,6 +359,7 @@ export default function FormularioAdmision(props: {
                     </div>
                 </div>
             </AdmissionLayout>
+            <Toaster position="top-right" richColors />
         </FormProvider>
     );
 }
