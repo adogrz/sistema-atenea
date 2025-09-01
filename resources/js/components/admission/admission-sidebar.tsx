@@ -2,7 +2,7 @@
 
 import StepperAdmision from '@/components/admission/stepper-admission';
 import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
-import { GraduationCap } from 'lucide-react';
+import AppLogoIcon from '../app-logo-icon';
 
 interface AdmissionSidebarProps {
     activeTab: string;
@@ -27,13 +27,11 @@ export default function AdmissionSidebar({
         <>
             {/* Header del Sidebar */}
             <SidebarHeader className="border-b p-6">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                        <GraduationCap className="h-5 w-5 text-primary-foreground" />
-                    </div>
+                <div className="flex items-center justify-center gap-3">
+                    <AppLogoIcon className="size-12 fill-current text-sidebar-primary" />
                     <div className="flex flex-col">
-                        <h2 className="text-lg font-semibold">Postulación</h2>
-                        <p className="text-sm text-muted-foreground">Jóvenes Talento</p>
+                        <span className="text-lg font-bold tracking-tight">Sistema Atenea</span>
+                        <span className="text-xs text-muted-foreground">Admisiones</span>
                     </div>
                 </div>
             </SidebarHeader>
