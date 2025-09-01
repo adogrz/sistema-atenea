@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CentroEducativo, NivelEducativo } from '@/types/admission/education';
+import { GraduationCap } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import EducationCenterFinder from '../education-center-finder';
 
@@ -18,8 +19,15 @@ export default function Educacion({ centros_educativos, niveles_educativos }: Ed
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Educación</CardTitle>
-                <p className="text-sm text-muted-foreground">Información sobre tu centro educativo y nivel académico</p>
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <GraduationCap className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-xl">Información Educativa</CardTitle>
+                        <p className="text-sm text-muted-foreground">Centro educativo actual y nivel de estudios del aspirante</p>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-6">
@@ -36,7 +44,7 @@ export default function Educacion({ centros_educativos, niveles_educativos }: Ed
                                 <Select onValueChange={field.onChange} value={field.value || ''}>
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona tu nivel de estudios" />
+                                            <SelectValue placeholder="Selecciona el nivel de estudios del aspirante" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>

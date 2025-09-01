@@ -15,13 +15,13 @@ const steps = [
         step: 1,
         id: 'datos-personales',
         title: 'Datos Personales',
-        description: 'Información del estudiante.',
+        description: 'Información del aspirante.',
     },
     {
         step: 2,
         id: 'datos-responsables',
         title: 'Responsables',
-        description: 'Padres o tutores.',
+        description: 'Padres o tutores legales.',
     },
     {
         step: 3,
@@ -33,7 +33,7 @@ const steps = [
         step: 4,
         id: 'educacion',
         title: 'Educación',
-        description: 'Historial académico.',
+        description: 'Información académica.',
     },
     {
         step: 5,

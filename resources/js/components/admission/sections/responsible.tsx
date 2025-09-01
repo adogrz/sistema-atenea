@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowRight, HelpCircle, Minus } from 'lucide-react';
+import { ArrowRight, HelpCircle, Minus, Users } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
@@ -137,15 +137,22 @@ export default function DatosResponsables() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-xl">Responsables</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                    Información de contacto de los responsables del aspirante. Al menos un responsable es obligatorio.
-                </p>
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-xl">Información de Responsables</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                            Datos de contacto de los padres o responsables legales del aspirante. Es obligatorio proporcionar al menos un responsable.
+                        </p>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent className="space-y-8">
                 {/* RESPONSABLE 1 - OBLIGATORIO */}
                 <div className="space-y-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Información del responsable 1</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Responsable Principal (Obligatorio)</h3>
 
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         {/* Nombres y Apellidos */}

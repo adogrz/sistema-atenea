@@ -295,11 +295,11 @@ export default function FormularioAdmision(props: {
                         <div className="mb-6 text-start">
                             <h1 className="text-3xl font-bold tracking-tight">Postulación Jóvenes Talento</h1>
                             <p className="mt-2 text-base text-muted-foreground">
-                                {currentStepIndex + 1 === 1 && 'Paso 1 de 5: Ingresa tus datos personales'}
-                                {currentStepIndex + 1 === 2 && 'Paso 2 de 5: Ingresa los datos de los responsables'}
-                                {currentStepIndex + 1 === 3 && 'Paso 3 de 5: Ingresa tu dirección de residencia'}
-                                {currentStepIndex + 1 === 4 && 'Paso 4 de 5: Ingresa tu información académica'}
-                                {currentStepIndex + 1 === 5 && 'Paso 5 de 5: Revisa y envía tu solicitud'}
+                                {currentStepIndex + 1 === 1 && 'Paso 1 de 5: Ingresa los datos personales del aspirante'}
+                                {currentStepIndex + 1 === 2 && 'Paso 2 de 5: Proporciona los datos de contacto de los responsables'}
+                                {currentStepIndex + 1 === 3 && 'Paso 3 de 5: Ingresa la dirección de residencia del aspirante'}
+                                {currentStepIndex + 1 === 4 && 'Paso 4 de 5: Selecciona el centro educativo y nivel de estudios'}
+                                {currentStepIndex + 1 === 5 && 'Paso 5 de 5: Revisa toda la información y envía la solicitud'}
                             </p>
                         </div>
 

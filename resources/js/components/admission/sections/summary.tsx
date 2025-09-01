@@ -248,7 +248,7 @@ export default function ResumenSolicitud(props: ResumenProps) {
                         <div className="flex items-center gap-3 p-3">
                             <div className="flex items-center gap-2">
                                 <Icon className="h-5 w-5 text-primary" />
-                                <h3 className="text-left text-base font-semibold">{title}</h3>
+                                <h3 className="text-left text-lg font-medium text-gray-900 dark:text-gray-100">{title}</h3>
                             </div>
                             <StatusBadge sectionId={id} />
                         </div>
@@ -358,7 +358,7 @@ export default function ResumenSolicitud(props: ResumenProps) {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {/* Datos Personales */}
-                        <CollapsibleSection id="personal" title="Datos Personales" icon={User} navigationTarget="datos-personales">
+                        <CollapsibleSection id="personal" title="Datos Personales del Aspirante" icon={User} navigationTarget="datos-personales">
                             <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2 xl:grid-cols-3">
                                 <div className="space-y-1">
                                     <span className="font-semibold text-muted-foreground">Nombre completo</span>
