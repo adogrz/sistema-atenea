@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAsyncFieldValidation } from '@/hooks/useAsyncFieldValidation';
 import { useDebounce } from '@/hooks/useDebounce';
-import { HelpCircle, Loader2, MailIcon } from 'lucide-react';
+import { HelpCircle, Loader2, MailIcon, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -123,8 +123,15 @@ export default function DatosPersonales() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-xl">Datos personales</CardTitle>
-                <p className="text-sm text-muted-foreground">Ingresa tu información personal básica</p>
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-xl">Datos Personales del Aspirante</CardTitle>
+                        <p className="text-sm text-muted-foreground">Información personal del joven que aspira ingresar al programa</p>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent className="space-y-8">
                 {/* IDENTIDAD */}
@@ -142,7 +149,7 @@ export default function DatosPersonales() {
                                         Primer nombre <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ej. Juan" {...field} aria-label="Ingresa tu primer nombre" />
+                                        <Input placeholder="Ej. Juan" {...field} aria-label="Ingresa el primer nombre del aspirante" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -158,7 +165,7 @@ export default function DatosPersonales() {
                                         Segundo nombre <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ej. Antonio" {...field} aria-label="Ingresa tu segundo nombre" />
+                                        <Input placeholder="Ej. Antonio" {...field} aria-label="Ingresa el segundo nombre del aspirante" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -174,7 +181,7 @@ export default function DatosPersonales() {
                                         Primer apellido <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ej. Pérez" {...field} aria-label="Ingresa tu primer apellido" />
+                                        <Input placeholder="Ej. Pérez" {...field} aria-label="Ingresa el primer apellido del aspirante" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -190,7 +197,7 @@ export default function DatosPersonales() {
                                         Segundo apellido <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ej. González" {...field} aria-label="Ingresa tu segundo apellido" />
+                                        <Input placeholder="Ej. González" {...field} aria-label="Ingresa el segundo apellido del aspirante" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -208,7 +215,7 @@ export default function DatosPersonales() {
                                     </FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
-                                            <SelectTrigger aria-label="Selecciona tu sexo">
+                                            <SelectTrigger aria-label="Selecciona el sexo del aspirante">
                                                 <SelectValue placeholder="Seleccionar" />
                                             </SelectTrigger>
                                         </FormControl>
@@ -275,7 +282,7 @@ export default function DatosPersonales() {
 
                 {/* DATOS DE CONTACTO */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Datos de contacto</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Información de Contacto</h3>
 
                     <FormField
                         control={form.control}
@@ -294,7 +301,9 @@ export default function DatosPersonales() {
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p className="max-w-xs">Este correo será tu usuario de acceso a la plataforma</p>
+                                                <p className="max-w-xs">
+                                                    Este correo será utilizado para comunicaciones oficiales del programa y acceso a la plataforma
+                                                </p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
@@ -304,7 +313,7 @@ export default function DatosPersonales() {
                                         <Input
                                             className="peer pe-9"
                                             type="email"
-                                            placeholder="tu.correo@ejemplo.com"
+                                            placeholder="ejemplo@correo.com"
                                             {...field}
                                             onChange={(e) => handleEmailChange(e, field)}
                                             onBlur={() => {
@@ -322,7 +331,7 @@ export default function DatosPersonales() {
                                         </div>
                                     </div>
                                 </FormControl>
-                                <FormDescription>Recibirás notificaciones importantes en este correo</FormDescription>
+                                <FormDescription>En este correo recibirán notificaciones importantes sobre el proceso de admisión</FormDescription>
                                 {emailValidation.isDuplicate && (
                                     <p className="text-sm text-red-500">Este correo ya está registrado en nuestra plataforma.</p>
                                 )}
@@ -335,7 +344,7 @@ export default function DatosPersonales() {
 
                 {/* IDENTIFICACIÓN ESCOLAR */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Identificación escolar</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Identificación Estudiantil</h3>
 
                     <FormField
                         control={form.control}
@@ -381,7 +390,7 @@ export default function DatosPersonales() {
                                         )}
                                     </div>
                                 </FormControl>
-                                <FormDescription>Tu número de identificación estudiantil único (7-10 dígitos)</FormDescription>
+                                <FormDescription>Número de identificación estudiantil único asignado por el MINED (7-10 dígitos)</FormDescription>
                                 {nieValidation.isDuplicate && (
                                     <p className="text-sm text-red-500">Este NIE ya está registrado en nuestra plataforma.</p>
                                 )}

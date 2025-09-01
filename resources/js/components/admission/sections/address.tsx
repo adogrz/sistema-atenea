@@ -89,15 +89,22 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-xl">Dirección de Residencia</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                    Proporciona tu dirección actual. Esta información es crucial para el proceso de admisión.
-                </p>
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <MapPin className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-xl">Dirección de Residencia</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                            Ubicación actual de residencia del aspirante. Esta información es necesaria para el proceso de admisión y comunicaciones.
+                        </p>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent className="space-y-8">
                 {/* Contacto Telefónico */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Contacto telefónico</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Teléfono de Contacto</h3>
                     <FormField
                         control={form.control}
                         name="telefono_casa"
@@ -142,7 +149,7 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
 
                 {/* Ubicación Geográfica */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Ubicación geográfica</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Ubicación Geográfica</h3>
                     <div className="space-y-4">
                         <FormField
                             control={form.control}
@@ -162,7 +169,7 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
                                             Departamento <span className="text-red-500">*</span>
                                         </FormLabel>
                                         <Combobox
-                                            items={departamentos}
+                                            items={departamentos as unknown as Record<string, unknown>[]}
                                             value={selectedDeptName}
                                             onValueChange={handleComboboxChange}
                                             valueKey="nombre_departamento"
@@ -266,7 +273,7 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
 
                 {/* Dirección Específica */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Dirección específica</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Dirección Detallada</h3>
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         <FormField
                             control={form.control}

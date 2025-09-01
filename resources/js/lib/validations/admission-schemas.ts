@@ -32,11 +32,11 @@ export const personalDataSchema = z.object({
         }),
     sexo: z
         .string({
-            required_error: 'Por favor selecciona tu sexo',
+            required_error: 'Selecciona el sexo del aspirante',
         })
-        .min(1, 'Por favor selecciona tu sexo')
+        .min(1, 'Selecciona el sexo del aspirante')
         .refine((val) => ['H', 'M'].includes(val), {
-            message: 'Por favor selecciona tu sexo',
+            message: 'Selecciona el sexo del aspirante',
         }),
     fecha_nacimiento: z.string().refine(
         (val) => {
@@ -334,7 +334,7 @@ export const educationSchema = z.object({
         }),
     nivel_educativo: z
         .string()
-        .min(1, 'Selecciona tu nivel de estudios')
+        .min(1, 'Selecciona el nivel de estudios del aspirante')
         .refine((val) => ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7'].includes(val), {
             message: 'Selecciona un nivel educativo válido',
         }),
