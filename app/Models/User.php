@@ -60,6 +60,15 @@ class User extends Authenticatable
     }
 
     /**
+     * Devuelve el estudiante asociado al usuario
+     * @return Estudiante
+     */
+    public function estudiante()
+    {
+        return $this->hasOne(Estudiante::class, 'user_id', 'id');
+    }
+
+    /**
      * Devuelve la descripcion de la sede del usuario
      * @return BelongsTo
      */
@@ -132,6 +141,30 @@ class User extends Authenticatable
 
         // Limpiar caché de permisos para que los cambios surtan efecto inmediatamente
         $this->load('roles');
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions()
+    }
+  
+   /*********************************
+    * Relaciones entres modelos
+    ********************************/
+    
+    public function area()
+    {
+        return $this->belongsTo(Area::class, 'area_id');
+    }
+
+    public function olimpiada()
+    {
+        return $this->belongsTo(Olimpiada::class, 'olimpiada_id');
+    }
+
+    public function fase()
+    {
+        return $this->belongsTo(FaseOlimpiada::class, 'fase_id');
+    }
+
+    public function participante()
+    {
+        return $this->belongsTo(Estudiante::class, 'codigo_estudiante', 'codigo');
     }
 }

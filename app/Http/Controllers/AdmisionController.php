@@ -201,6 +201,8 @@ class AdmisionController extends Controller
             ]);
         }
 
+        $usuario->syncRoles(['estudiante']);
+
         $usuario->notify(new UserCredentialsNotification($passwordTemporal));
 
         return response()->json([
