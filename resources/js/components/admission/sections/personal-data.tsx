@@ -213,7 +213,14 @@ export default function DatosPersonales() {
                                     <FormLabel>
                                         Sexo <span className="text-red-500">*</span>
                                     </FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                                    <Select
+                                        onValueChange={(value) => {
+                                            field.onChange(value);
+                                            // Validar inmediatamente después del cambio
+                                            form.trigger('sexo');
+                                        }}
+                                        value={field.value}
+                                    >
                                         <FormControl>
                                             <SelectTrigger aria-label="Selecciona el sexo del aspirante">
                                                 <SelectValue placeholder="Seleccionar" />
@@ -263,6 +270,8 @@ export default function DatosPersonales() {
                                                 } else {
                                                     field.onChange('');
                                                 }
+                                                // Validar inmediatamente después del cambio
+                                                form.trigger('fecha_nacimiento');
                                             }}
                                             disableDates={(date) => {
                                                 // Deshabilitar fechas que no permitan edades entre 6 y 20 años
