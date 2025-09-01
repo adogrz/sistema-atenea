@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { AlertCircle, CheckCircle2, FileText, Loader2, Save, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FieldValues, FormProvider, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -45,6 +45,7 @@ export default function FormularioAdmision(props: {
     const [formStatus, setFormStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+    const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
     const [submissionData, setSubmissionData] = useState<{
         estudiante: {
             codigo: string;
@@ -175,13 +176,15 @@ export default function FormularioAdmision(props: {
         onDraftFound: handleDraftFound,
     });
 
-    const steps = ['datos-personales', 'datos-responsables', 'direccion', 'educacion', 'resumen'];
+    const steps = useMemo(() => ['datos-personales', 'datos-responsables', 'direccion', 'educacion', 'resumen'], []);
     const currentStepIndex = steps.indexOf(activeTab);
 
     // Función simplificada usando el hook
     const handleNext = async () => {
         const isValid = await validateStep(activeTab);
         if (isValid && currentStepIndex < steps.length - 1) {
+            // Marcar el paso actual como completado
+            setCompletedSteps((prev) => new Set(prev).add(activeTab));
             setActiveTab(steps[currentStepIndex + 1]);
         }
     };
@@ -190,6 +193,21 @@ export default function FormularioAdmision(props: {
         if (currentStepIndex > 0) {
             setActiveTab(steps[currentStepIndex - 1]);
         }
+    };
+
+    // Función de validación que se pasa al stepper
+    const handleValidateStep = async (stepId: string): Promise<boolean> => {
+        const isValid = await validateStep(stepId);
+        if (isValid) {
+            // Marcar el paso como completado si es válido
+            setCompletedSteps((prev) => new Set(prev).add(stepId));
+        }
+        return isValid;
+    };
+
+    // Función para manejar el cambio de tab desde el stepper
+    const handleTabChange = (newTab: string) => {
+        setActiveTab(newTab);
     };
 
     // Usar la función helper para calcular errores por sección
@@ -270,10 +288,12 @@ export default function FormularioAdmision(props: {
                 sidebar={
                     <AdmissionSidebar
                         activeTab={activeTab}
-                        onTabChange={setActiveTab}
+                        onTabChange={handleTabChange}
                         erroresPorSeccion={erroresPorSeccion}
                         isLoading={isValidating}
                         disabled={formStatus === 'success'}
+                        onValidateStep={handleValidateStep}
+                        completedSteps={completedSteps}
                     />
                 }
             >
