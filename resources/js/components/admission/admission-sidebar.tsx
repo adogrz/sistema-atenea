@@ -10,6 +10,8 @@ interface AdmissionSidebarProps {
     erroresPorSeccion?: Record<string, number>;
     isLoading?: boolean;
     disabled?: boolean;
+    onValidateStep?: (stepId: string) => Promise<boolean>;
+    completedSteps?: Set<string>;
 }
 
 export default function AdmissionSidebar({
@@ -18,6 +20,8 @@ export default function AdmissionSidebar({
     erroresPorSeccion = {},
     isLoading = false,
     disabled = false,
+    onValidateStep,
+    completedSteps = new Set(),
 }: AdmissionSidebarProps) {
     return (
         <>
@@ -42,6 +46,8 @@ export default function AdmissionSidebar({
                     erroresPorSeccion={erroresPorSeccion}
                     isLoading={isLoading}
                     disabled={disabled}
+                    onValidateStep={onValidateStep}
+                    completedSteps={completedSteps}
                 />
             </SidebarContent>
 
