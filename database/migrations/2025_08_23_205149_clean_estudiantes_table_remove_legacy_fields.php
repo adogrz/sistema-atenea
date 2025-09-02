@@ -12,17 +12,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('estudiantes', function (Blueprint $table) {
-            // Eliminar foreign key constraints primero
-            $table->dropForeign(['distrito']);
+            // Verificar qué columnas existen antes de eliminarlas
+            $columnsToCheck = ['direccion', 'distrito', 'calle', 'numero_casa', 'punto_referencia'];
+            $existingColumns = [];
 
-            // Eliminar campos legacy que ya no necesitamos
-            $table->dropColumn([
-                'direccion',      // Campo de dirección como texto
-                'distrito',       // Referencia directa a distritos (ahora va via direcciones)
-                'calle',          // Campos estructurados que ahora están en direcciones
-                'numero_casa',
-                'punto_referencia'
-            ]);
+            foreach ($columnsToCheck as $column) {
+                if (Schema::hasColumn('estudiantes', $column)) {
+                    $existingColumns[] = $column;
+                }
+            }
+
+            // Eliminar foreign key constraints si existe la columna distrito
+            if (in_array('distrito', $existingColumns)) {
+                $table->dropForeign(['distrito']);
+            }
+
+            // Eliminar solo las columnas que realmente existen
+            if (!empty($existingColumns)) {
+                $table->dropColumn($existingColumns);
+            }
 
             // Hacer direccion_id NOT NULL ya que es requerido
             $table->foreignId('direccion_id')->nullable(false)->change();
@@ -38,14 +46,11 @@ return new class extends Migration
             // Revertir cambios
             $table->foreignId('direccion_id')->nullable()->change();
 
-            // Recrear campos legacy
+            // Recrear solo los campos que existían originalmente según la tabla base
             $table->text('direccion')->nullable();
-            $table->string('calle', 100)->nullable();
-            $table->string('numero_casa', 20)->nullable();
-            $table->string('punto_referencia', 150)->nullable();
             $table->unsignedBigInteger('distrito')->nullable();
 
-            // Recrear foreign key
+            // Recrear foreign key para distrito
             $table->foreign('distrito')->references('id')->on('distritos');
         });
     }

@@ -4,12 +4,11 @@ namespace Database\Factories;
 
 use App\Models\Estudiante;
 use App\Models\User;
-use App\Models\Distrito;
+use App\Models\Direccion;
 use App\Models\NivelEducativo;
 use App\Models\CentroEducativo;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Estudiante>
@@ -28,9 +27,10 @@ class EstudianteFactory extends Factory
         // Asegura consistencia
         $centro = CentroEducativo::inRandomOrder()->first();
         $nivel = NivelEducativo::inRandomOrder()->first();
-        $distrito = Distrito::inRandomOrder()->first();
+        $direccion = Direccion::factory()->create();
         $usuario = User::factory()->create();
         $usuario->syncRoles(['estudiante']);
+
         return [
             'codigo'           => strtoupper(Str::random(8)),
             'user_id'          => $usuario->id,
@@ -44,8 +44,7 @@ class EstudianteFactory extends Factory
             'nie'              => strtoupper(Str::random(10)),
             'telefono_casa'    => $this->faker->phoneNumber,
             'email'            => $this->faker->unique()->safeEmail,
-            'direccion'        => $this->faker->address,
-            'distrito'         => $distrito->id,
+            'direccion_id'     => $direccion->id,
             'nivel_educativo'  => $nivel->codigo,
             'nivel'            => $nivel->nombre ?? 'media',
             'aprobado'         => $this->faker->boolean(70),

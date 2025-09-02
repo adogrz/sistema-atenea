@@ -5,8 +5,20 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 
-import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays } from 'lucide-react';
-import { ClipboardListIcon, HouseIcon, ShieldCheck, User, Calendar, Clock, BookOpen, GraduationCap, LayoutDashboard, Users, GraduationCapIcon } from 'lucide-react';
+import {
+    BookOpen,
+    Calendar,
+    CalendarDays,
+    ClipboardListIcon,
+    Clock,
+    GraduationCap,
+    GraduationCapIcon,
+    HouseIcon,
+    LayoutDashboard,
+    School,
+    ShieldCheck,
+    Users,
+} from 'lucide-react';
 
 import AppLogo from './app-logo';
 
@@ -39,19 +51,22 @@ export function AppSidebar() {
                     : []),
             ],
         },
-        ...(hasPermission('academic:view') ? [{
-            title: 'Académico',
-            icon: School,
-            items: [
-                { title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard },
-                { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
-                { title: 'Datos Aspirantes', href: '/dashboard/academico/aspirantes', icon: Clock },
-                { title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users },
-                { title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen },
-                { title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap },
-            ],
-        }] : []),
-        },
+        ...(hasPermission('academic:view')
+            ? [
+                  {
+                      title: 'Académico',
+                      icon: School,
+                      items: [
+                          { title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard },
+                          { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
+                          { title: 'Datos Aspirantes', href: '/dashboard/academico/aspirantes', icon: Clock },
+                          { title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users },
+                          { title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen },
+                          { title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap },
+                      ],
+                  },
+              ]
+            : []),
         {
             title: 'Estudiante',
             icon: GraduationCapIcon,

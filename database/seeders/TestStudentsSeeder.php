@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Direccion;
 
 class TestStudentsSeeder extends Seeder
 {
@@ -34,8 +35,12 @@ class TestStudentsSeeder extends Seeder
                 'sexo' => 'H',
                 'fecha_nacimiento' => '2005-03-15',
                 'centro_educativo' => '10001', // CENTRO ESCOLAR  "ISIDRO MENÉNDEZ"
-                'direccion' => 'Col. Escalón, Pasaje 3, Casa 25',
-                'distrito' => 1,
+                'direccion_data' => [
+                    'colonia' => 'Col. Escalón',
+                    'calle' => 'Pasaje 3',
+                    'numero_casa' => '25',
+                    'distrito_id' => 1,
+                ],
                 'nivel_educativo' => 'n6', // Primero de Bachillerato
             ],
             [
@@ -51,8 +56,12 @@ class TestStudentsSeeder extends Seeder
                 'sexo' => 'M',
                 'fecha_nacimiento' => '2006-07-22',
                 'centro_educativo' => '10002', // CENTRO ESCOLAR "ALFREDO ESPINO"
-                'direccion' => 'Col. Miramonte, Av. Principal 123',
-                'distrito' => 2,
+                'direccion_data' => [
+                    'colonia' => 'Col. Miramonte',
+                    'calle' => 'Av. Principal',
+                    'numero_casa' => '123',
+                    'distrito_id' => 2,
+                ],
                 'nivel_educativo' => 'n7', // Segundo de Bachillerato
             ],
             [
@@ -68,8 +77,12 @@ class TestStudentsSeeder extends Seeder
                 'sexo' => 'H',
                 'fecha_nacimiento' => '2005-11-08',
                 'centro_educativo' => '10003', // CENTRO ESCOLAR "ALEJANDRO DE HUMBOLDT"
-                'direccion' => 'Col. San Benito, Calle Los Naranjos 456',
-                'distrito' => 3,
+                'direccion_data' => [
+                    'colonia' => 'Col. San Benito',
+                    'calle' => 'Calle Los Naranjos',
+                    'numero_casa' => '456',
+                    'distrito_id' => 3,
+                ],
                 'nivel_educativo' => 'n5', // Noveno Grado
             ],
         ];
@@ -104,6 +117,9 @@ class TestStudentsSeeder extends Seeder
             // Generar código único para el estudiante
             $codigo = 'EST' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
 
+            // Crear dirección para el estudiante
+            $direccion = Direccion::create($studentData['direccion_data']);
+
             // Crear estudiante
             $estudianteId = DB::table('estudiantes')->insertGetId([
                 'codigo' => $codigo,
@@ -119,8 +135,7 @@ class TestStudentsSeeder extends Seeder
                 'telefono_estudiante' => $studentData['telefono_estudiante'],
                 'telefono_casa' => $studentData['telefono_casa'],
                 'email' => $studentData['email'],
-                'direccion' => $studentData['direccion'],
-                'distrito' => $studentData['distrito'],
+                'direccion_id' => $direccion->id,
                 'nivel_educativo' => $studentData['nivel_educativo'],
                 'created_at' => now(),
                 'updated_at' => now(),
