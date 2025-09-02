@@ -41,7 +41,7 @@ class TestStudentsSeeder extends Seeder
                     'numero_casa' => '25',
                     'distrito_id' => 1,
                 ],
-                'nivel_educativo' => 'n6', // Primero de Bachillerato
+                'nivel_educativo' => 7, // Primero de Bachillerato (código numérico)
             ],
             [
                 'email' => 'estudiante.test2@atenea.com',
@@ -62,7 +62,7 @@ class TestStudentsSeeder extends Seeder
                     'numero_casa' => '123',
                     'distrito_id' => 2,
                 ],
-                'nivel_educativo' => 'n7', // Segundo de Bachillerato
+                'nivel_educativo' => 8, // Segundo de Bachillerato
             ],
             [
                 'email' => 'estudiante.test3@atenea.com',
@@ -83,7 +83,7 @@ class TestStudentsSeeder extends Seeder
                     'numero_casa' => '456',
                     'distrito_id' => 3,
                 ],
-                'nivel_educativo' => 'n5', // Noveno Grado
+                'nivel_educativo' => 6, // Noveno Grado
             ],
         ];
 
@@ -117,8 +117,21 @@ class TestStudentsSeeder extends Seeder
             // Generar código único para el estudiante
             $codigo = 'EST' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
 
+            // Verificar que el distrito existe antes de crear la dirección
+            $distritoExists = DB::table('distritos')->where('id', $studentData['direccion_data']['distrito_id'])->exists();
+            if (!$distritoExists) {
+                echo "❌ Error: No existe el distrito con ID {$studentData['direccion_data']['distrito_id']}\n";
+                continue;
+            }
+
             // Crear dirección para el estudiante
-            $direccion = Direccion::create($studentData['direccion_data']);
+            try {
+                $direccion = Direccion::create($studentData['direccion_data']);
+                echo "✅ Dirección creada con ID: {$direccion->id}\n";
+            } catch (\Exception $e) {
+                echo "❌ Error creando dirección: " . $e->getMessage() . "\n";
+                continue;
+            }
 
             // Crear estudiante
             $estudianteId = DB::table('estudiantes')->insertGetId([
@@ -132,11 +145,13 @@ class TestStudentsSeeder extends Seeder
                 'fecha_nacimiento' => $studentData['fecha_nacimiento'],
                 'centro_educativo' => $studentData['centro_educativo'],
                 'nie' => $studentData['nie'],
-                'telefono_estudiante' => $studentData['telefono_estudiante'],
+                'telefono_estudiante' => $studentData['telefono_estudiante'], // Campo requerido que faltaba
                 'telefono_casa' => $studentData['telefono_casa'],
                 'email' => $studentData['email'],
                 'direccion_id' => $direccion->id,
                 'nivel_educativo' => $studentData['nivel_educativo'],
+                'nivel' => 'media', // Campo requerido con valor por defecto
+                'aprobado' => false, // Campo booleano con valor por defecto
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

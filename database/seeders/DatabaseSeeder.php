@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Estudiante;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -15,17 +14,15 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             SedeSeeder::class,
             AreaSeeder::class,
-            // USUARIOS
+            // Ususarios esenciales
             EssentialUserSeeder::class,
-            // CATALOGOS
+            // Catalogos
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
             DistritoSeeder::class,
             NivelEducativoSeeder::class,
             CentroEducativoSeeder::class,
 
-            
-            // TEST DATA
             OlimpiadaSeeder::class,
             FaseOlimpiadaSeeder::class,
             EstadoInscripcionSeeder::class,
@@ -34,9 +31,9 @@ class DatabaseSeeder extends Seeder
             ItemDefinidoSeeder::class,
             EvaluacionFaseSeeder::class,
             ItemEvaluadoSeeder::class,
-        ]);
 
-        // Crear estudiantes de prueba
-        Estudiante::factory(20)->create();
+            // Estudiantes de prueba
+            TestStudentsSeeder::class,
+        ]);
     }
 }
