@@ -138,19 +138,17 @@ class PermissionSeeder extends Seeder
             ],
             'admin-academico-sede' => [
                 'description' => 'Administrador Académico de Sede',
-                'groups' => ['general'],
+                'groups' => ['general', 'academic'],
                 'permissions' => [
                     'users:view-sede',
                     'users:list',
                     'roles:list',
                     'sedes:list',
                     'areas:list',
-                    'events:view',
-                    'events:create',
-                    'events:edit'
+                    'events:view'
                 ],
                 'inherits' => [],
-                'exclude_permissions' => []
+                'exclude_permissions' => ['events:delete', 'events:edit', 'events:create']
             ],
             'coordinador-area' => [
                 'description' => 'Coordinador de Área',
