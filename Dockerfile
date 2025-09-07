@@ -82,7 +82,8 @@ RUN mkdir -p storage/logs storage/framework/{cache,sessions,views} \
     && chown -R unit:unit storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Removed copying unit.json and supervisord.conf
+COPY unit.json /docker-entrypoint.d/
+
 # Dokploy handles Nginx/Unit configuration and process management.
 
 EXPOSE 8000
