@@ -47,6 +47,7 @@ export default function FormularioAdmision(props: {
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
     const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
     const [submissionData, setSubmissionData] = useState<{
         estudiante: {
@@ -277,6 +278,7 @@ export default function FormularioAdmision(props: {
             // Mostrar modal de éxito
             setShowSuccessModal(true);
             setFormStatus('success');
+            setValidationErrors({});
 
             console.log('Solicitud procesada exitosamente');
         } catch (error) {
@@ -301,8 +303,15 @@ export default function FormularioAdmision(props: {
                         errorMessage = 'Error de seguridad (CSRF). Por favor, recarga la página e intenta nuevamente.';
                         errorDetails = 'Token CSRF expirado o inválido';
                     } else if (error.response.status === 422) {
-                        errorMessage = 'Hay errores en los datos del formulario. Por favor revisa la información ingresada.';
-                        errorDetails = JSON.stringify(error.response.data.errors || error.response.data, null, 2);
+                        errorMessage = 'Hay errores en los datos del formulario. Por favor revisa la información marcada.';
+
+                        // Extraer errores de validación si están disponibles
+                        if (error.response.data.errors) {
+                            setValidationErrors(error.response.data.errors);
+                            errorDetails = `Errores encontrados en ${Object.keys(error.response.data.errors).length} campo(s)`;
+                        } else {
+                            errorDetails = JSON.stringify(error.response.data.errors || error.response.data, null, 2);
+                        }
                     } else if (error.response.status >= 500) {
                         errorMessage = 'Error interno del servidor. Por favor intenta más tarde.';
                         errorDetails = error.response.data.message || 'Error del servidor';
@@ -348,14 +357,77 @@ export default function FormularioAdmision(props: {
     const handleCloseErrorModal = () => {
         setShowErrorModal(false);
         setFormStatus('idle');
+        setValidationErrors({});
     };
 
     // Función para reintentar el envío
     const handleRetrySubmission = async () => {
         setShowErrorModal(false);
         setFormStatus('idle');
+        setValidationErrors({});
         // Intentar enviar nuevamente
         await methods.handleSubmit(onSubmit)();
+    };
+
+    // Función para navegar a un campo específico con error
+    const handleNavigateToField = (fieldName: string) => {
+        // Mapear campos a secciones
+        const fieldToSectionMap: Record<string, string> = {
+            primer_nombre: 'datos-personales',
+            segundo_nombre: 'datos-personales',
+            primer_apellido: 'datos-personales',
+            segundo_apellido: 'datos-personales',
+            sexo: 'datos-personales',
+            fecha_nacimiento: 'datos-personales',
+            nie: 'datos-personales',
+            telefono_estudiante: 'datos-personales',
+            email: 'datos-personales',
+            dui_responsable_1: 'datos-responsables',
+            nombres_responsable_1: 'datos-responsables',
+            apellidos_responsable_1: 'datos-responsables',
+            telefono_responsable_1: 'datos-responsables',
+            email_responsable_1: 'datos-responsables',
+            tipo_parentesco_1: 'datos-responsables',
+            dui_responsable_2: 'datos-responsables',
+            nombres_responsable_2: 'datos-responsables',
+            apellidos_responsable_2: 'datos-responsables',
+            telefono_responsable_2: 'datos-responsables',
+            email_responsable_2: 'datos-responsables',
+            tipo_parentesco_2: 'datos-responsables',
+            telefono_casa: 'direccion',
+            colonia: 'direccion',
+            calle: 'direccion',
+            numero_casa: 'direccion',
+            distrito: 'direccion',
+            departamento: 'direccion',
+            municipio: 'direccion',
+            centro_educativo: 'educacion',
+            nivel_educativo: 'educacion',
+        };
+
+        const targetSection = fieldToSectionMap[fieldName];
+        if (targetSection) {
+            setActiveTab(targetSection);
+
+            // Enfocar el campo después de cambiar la sección
+            setTimeout(() => {
+                const fieldElement =
+                    document.querySelector(`[name="${fieldName}"]`) ||
+                    document.querySelector(`#${fieldName}`) ||
+                    document.querySelector(`[data-field="${fieldName}"]`);
+
+                if (fieldElement && fieldElement instanceof HTMLElement) {
+                    fieldElement.focus();
+                    fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // Destacar temporalmente el campo
+                    fieldElement.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.5)';
+                    setTimeout(() => {
+                        fieldElement.style.boxShadow = '';
+                    }, 3000);
+                }
+            }, 100);
+        }
     };
 
     // Función para cerrar el modal y mostrar la alerta persistente
@@ -540,6 +612,8 @@ export default function FormularioAdmision(props: {
                 message={errorMessage}
                 onRetry={handleRetrySubmission}
                 showRetry={true}
+                errors={validationErrors}
+                onNavigateToField={handleNavigateToField}
             />
 
             <Toaster position="top-right" richColors />

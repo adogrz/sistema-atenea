@@ -126,11 +126,17 @@ class AdmisionController extends Controller
                     'name' => trim($validated['primer_nombre'] . ' ' . $validated['segundo_nombre'] . ' ' . $validated['primer_apellido'] . ' ' . $validated['segundo_apellido']),
                     'email' => $validated['email'],
                     'password' => bcrypt($passwordTemporal),
-                    'sede_name' => $nivelEducativo ? $nivelEducativo->id_sede : 'central',
+                    'sede_name' => 'central',  // Todos los estudiantes de admisión van a sede central
                     'status' => 'active',
                 ]
             );
             Log::info('✅ Usuario creado/encontrado', ['user_id' => $usuario->id, 'was_created' => $usuario->wasRecentlyCreated]);
+
+            // Asegurar que el usuario tenga asignada la sede central
+            if (empty($usuario->sede_name)) {
+                $usuario->update(['sede_name' => 'central']);
+                Log::info('✅ Sede central asignada al usuario existente', ['user_id' => $usuario->id]);
+            }
 
             // Asignar rol de estudiante al usuario (solo si es un usuario nuevo)
             if ($usuario->wasRecentlyCreated) {
@@ -253,9 +259,62 @@ class AdmisionController extends Controller
                 ],
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            // Personalizar mensajes de error para ser más amigables
+            $friendlyErrors = [];
+            foreach ($e->errors() as $field => $messages) {
+                $friendlyMessages = [];
+                foreach ($messages as $message) {
+                    // PRIORIDAD 1: Errores de duplicación (unique, taken)
+                    if (
+                        str_contains($message, 'unique') ||
+                        str_contains($message, 'The nie has already been taken') ||
+                        str_contains($message, 'The email has already been taken') ||
+                        (str_contains($message, 'taken') && ($field === 'nie' || $field === 'email'))
+                    ) {
+
+                        if ($field === 'nie') {
+                            $friendlyMessages[] = 'Este NIE ya está registrado en el sistema. Cada estudiante debe tener un NIE único.';
+                        } elseif ($field === 'email') {
+                            $friendlyMessages[] = 'Este correo electrónico ya está en uso. Por favor, usa una dirección de correo diferente.';
+                        } else {
+                            $friendlyMessages[] = 'Este valor ya está registrado en el sistema';
+                        }
+
+                        // PRIORIDAD 2: Campos requeridos
+                    } elseif (str_contains($message, 'required')) {
+                        $friendlyMessages[] = 'Este campo es obligatorio';
+
+                        // PRIORIDAD 3: Validaciones específicas de campo
+                    } elseif (str_contains($message, 'size') && str_contains($field, 'dui')) {
+                        $friendlyMessages[] = 'El DUI debe tener exactamente 9 dígitos';
+                    } elseif (str_contains($message, 'size') && str_contains($field, 'telefono')) {
+                        $friendlyMessages[] = 'El teléfono debe tener exactamente 8 dígitos';
+                    } elseif (str_contains($message, 'email') && !str_contains($message, 'unique') && !str_contains($message, 'taken')) {
+                        // Error de formato de email (solo si NO es duplicación)
+                        $friendlyMessages[] = 'El formato del correo electrónico no es válido. Ejemplo: usuario@dominio.com';
+                    } elseif (str_contains($message, 'date')) {
+                        $friendlyMessages[] = 'La fecha ingresada no es válida';
+                    } elseif (str_contains($message, 'exists')) {
+                        $friendlyMessages[] = 'El valor seleccionado no es válido';
+
+                        // PRIORIDAD 4: Validaciones generales (min, max, etc.)
+                    } elseif (str_contains($message, 'min')) {
+                        $friendlyMessages[] = 'Este campo es demasiado corto';
+                    } elseif (str_contains($message, 'max')) {
+                        $friendlyMessages[] = 'Este campo es demasiado largo';
+
+                        // PRIORIDAD 5: Usar método de traducción para casos no cubiertos
+                    } else {
+                        $translatedMessage = $this->translateCommonErrors($message, $field);
+                        $friendlyMessages[] = $translatedMessage;
+                    }
+                }
+                $friendlyErrors[$field] = $friendlyMessages;
+            }
+
             return response()->json([
-                'message' => 'Error de validación',
-                'errors' => $e->errors(),
+                'message' => 'Hay errores en el formulario que deben corregirse',
+                'errors' => $friendlyErrors,
             ], 422);
         } catch (\Exception $e) {
             Log::error('Error en admisión: ' . $e->getMessage(), [
@@ -311,5 +370,78 @@ class AdmisionController extends Controller
             'centros_educativos' => CentroEducativo::all(),
             'niveles_educativos' => NivelEducativo::all(),
         ]);
+    }
+
+    /**
+     * Traducir errores comunes de Laravel al español
+     */
+    private function translateCommonErrors(string $message, string $field): string
+    {
+        // Convertir a minúsculas para comparaciones más robustas
+        $lowerMessage = strtolower($message);
+
+        // Errores específicos de duplicación - múltiples variantes
+        if (
+            str_contains($lowerMessage, 'has already been taken') ||
+            str_contains($lowerMessage, 'already exists') ||
+            str_contains($lowerMessage, 'duplicate') ||
+            str_contains($message, 'unique')
+        ) {
+
+            if ($field === 'nie') {
+                return 'Este NIE ya está registrado en el sistema. Cada estudiante debe tener un NIE único.';
+            } elseif ($field === 'email') {
+                return 'Este correo electrónico ya está en uso. Por favor, usa una dirección de correo diferente.';
+            }
+            return 'Este valor ya está registrado en el sistema';
+        }
+
+        // Errores de validación comunes
+        if (str_contains($lowerMessage, 'validation.required') || str_contains($lowerMessage, 'required')) {
+            return 'Este campo es obligatorio';
+        }
+
+        if (
+            str_contains($lowerMessage, 'validation.email') ||
+            (str_contains($lowerMessage, 'email') && !str_contains($lowerMessage, 'taken') && !str_contains($lowerMessage, 'unique'))
+        ) {
+            return 'El formato del correo electrónico no es válido. Ejemplo: usuario@dominio.com';
+        }
+
+        if (str_contains($lowerMessage, 'validation.size') || str_contains($lowerMessage, 'size')) {
+            if (str_contains($field, 'dui')) {
+                return 'El DUI debe tener exactamente 9 dígitos';
+            } elseif (str_contains($field, 'telefono')) {
+                return 'El teléfono debe tener exactamente 8 dígitos';
+            }
+            return 'El tamaño del campo no es válido';
+        }
+
+        if (str_contains($lowerMessage, 'validation.min') || str_contains($lowerMessage, 'minimum')) {
+            return 'Este campo es demasiado corto';
+        }
+
+        if (str_contains($lowerMessage, 'validation.max') || str_contains($lowerMessage, 'maximum')) {
+            return 'Este campo es demasiado largo';
+        }
+
+        if (str_contains($lowerMessage, 'validation.integer') || str_contains($lowerMessage, 'integer')) {
+            return 'Este campo debe ser un número entero';
+        }
+
+        if (str_contains($lowerMessage, 'validation.string')) {
+            return 'Este campo debe ser un texto válido';
+        }
+
+        if (str_contains($lowerMessage, 'validation.exists') || str_contains($lowerMessage, 'exists')) {
+            return 'El valor seleccionado no es válido';
+        }
+
+        if (str_contains($lowerMessage, 'validation.date') || str_contains($lowerMessage, 'date')) {
+            return 'La fecha ingresada no es válida';
+        }
+
+        // Si no coincide con ningún patrón conocido, devolver el mensaje original
+        return $message;
     }
 }

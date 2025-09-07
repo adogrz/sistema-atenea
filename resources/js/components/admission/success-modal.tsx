@@ -76,61 +76,89 @@ export default function SuccessModal({ isOpen, onClose, studentData, submissionD
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md" aria-describedby="success-description">
-                <DialogHeader className="text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-                        <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <DialogContent className="text-center sm:max-w-lg" aria-describedby="success-description">
+                <DialogHeader className="space-y-4 text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                        <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                     </div>
-                    <DialogTitle className="text-xl font-semibold text-green-900 dark:text-green-100">¡Solicitud enviada con éxito!</DialogTitle>
-                    <DialogDescription id="success-description" className="text-center text-muted-foreground">
-                        Tu postulación ha sido registrada correctamente y será procesada por nuestro equipo.
-                    </DialogDescription>
+                    <div className="space-y-2 text-center">
+                        <DialogTitle className="mx-auto text-center text-2xl font-bold text-green-900 dark:text-green-100">
+                            ¡Solicitud enviada con éxito!
+                        </DialogTitle>
+                        <DialogDescription id="success-description" className="mx-auto text-center text-base text-muted-foreground">
+                            Tu postulación ha sido registrada correctamente y será procesada por nuestro equipo.
+                        </DialogDescription>
+                    </div>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
+                <div className="space-y-6 py-6">
                     {studentData && (
-                        <div className="space-y-2 rounded-lg border bg-muted/50 p-4">
-                            <h4 className="text-sm font-medium text-foreground">Detalles de tu solicitud:</h4>
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                                <p>
-                                    <span className="font-medium">Estudiante:</span> {studentData.nombre}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Código temporal:</span> {studentData.codigo}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Email:</span> {studentData.email}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Enviado:</span> {formatDate(submissionDate)}
-                                </p>
+                        <div className="space-y-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-6 dark:border-green-800 dark:from-green-900/20 dark:to-emerald-900/20">
+                            <h4 className="text-center text-base font-semibold text-green-900 dark:text-green-100">📋 Detalles de tu solicitud</h4>
+                            <div className="grid grid-cols-1 gap-3 text-sm">
+                                <div className="flex items-center justify-between rounded bg-white/80 px-3 py-2 dark:bg-gray-800/80">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Estudiante:</span>
+                                    <span className="font-semibold text-green-700 dark:text-green-300">{studentData.nombre}</span>
+                                </div>
+                                <div className="flex items-center justify-between rounded bg-white/80 px-3 py-2 dark:bg-gray-800/80">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Código temporal:</span>
+                                    <span className="font-mono font-semibold text-blue-700 dark:text-blue-300">{studentData.codigo}</span>
+                                </div>
+                                <div className="flex items-center justify-between rounded bg-white/80 px-3 py-2 dark:bg-gray-800/80">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span>
+                                    <span className="break-all text-gray-700 dark:text-gray-300">{studentData.email}</span>
+                                </div>
+                                <div className="flex items-center justify-between rounded bg-white/80 px-3 py-2 dark:bg-gray-800/80">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Fecha de envío:</span>
+                                    <span className="text-gray-700 dark:text-gray-300">{formatDate(submissionDate)}</span>
+                                </div>
                             </div>
                         </div>
                     )}
 
-                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-                        <div className="flex items-start space-x-3">
-                            <div className="flex-shrink-0">
-                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-800">
-                                    <span className="text-xs font-bold text-blue-600 dark:text-blue-300">i</span>
+                    <div className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 dark:border-blue-800 dark:from-blue-900/20 dark:to-indigo-900/20">
+                        <div className="space-y-4 text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-800">
+                                    <span className="text-sm font-bold text-blue-600 dark:text-blue-300">💡</span>
                                 </div>
+                                <p className="font-semibold text-blue-900 dark:text-blue-100">¿Qué sigue ahora?</p>
                             </div>
-                            <div className="flex-1 text-sm">
-                                <p className="font-medium text-blue-900 dark:text-blue-100">¿Qué sigue?</p>
-                                <p className="mt-1 text-blue-700 dark:text-blue-200">
-                                    Recibirás un correo electrónico con las credenciales de acceso y los próximos pasos del proceso de admisión.
-                                </p>
+                            <div className="space-y-3 text-sm text-blue-800 dark:text-blue-200">
+                                <div className="flex items-start space-x-3 text-left">
+                                    <span className="text-lg">📧</span>
+                                    <div>
+                                        <strong>Revisa tu correo:</strong> En los próximos minutos recibirás un email con las credenciales de acceso.
+                                    </div>
+                                </div>
+                                <div className="flex items-start space-x-3 text-left">
+                                    <span className="text-lg">🔐</span>
+                                    <div>
+                                        <strong>Accede a la plataforma:</strong> Usa las credenciales para ingresar y seguir el proceso.
+                                    </div>
+                                </div>
+                                <div className="flex items-start space-x-3 text-left">
+                                    <span className="text-lg">📞</span>
+                                    <div>
+                                        <strong>Mantente atento:</strong> Te contactaremos si necesitamos información adicional.
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-                    <Button type="button" variant="outline" onClick={handleDownloadPDF} className="w-full sm:w-auto">
+                <DialogFooter className="flex-col gap-3 border-t pt-4 sm:flex-row sm:justify-center">
+                    <Button type="button" variant="outline" onClick={handleDownloadPDF} className="w-full min-w-[140px] sm:w-auto">
                         <Download className="mr-2 h-4 w-4" />
                         Descargar PDF
                     </Button>
-                    <Button ref={primaryButtonRef} type="button" onClick={handleFinish} className="w-full sm:w-auto">
+                    <Button
+                        ref={primaryButtonRef}
+                        type="button"
+                        onClick={handleFinish}
+                        className="w-full min-w-[140px] bg-green-600 text-white hover:bg-green-700 sm:w-auto"
+                    >
                         <Home className="mr-2 h-4 w-4" />
                         Finalizar
                     </Button>
