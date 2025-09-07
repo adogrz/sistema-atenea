@@ -2,10 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\Direccion;
+use App\Models\Estudiante;
+use App\Models\Responsable;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Direccion;
+use Spatie\Permission\Models\Role;
 
 class TestStudentsSeeder extends Seeder
 {
@@ -15,9 +19,9 @@ class TestStudentsSeeder extends Seeder
     public function run(): void
     {
         // Verificar que el rol existe
-        $estudianteRole = DB::table('roles')->where('name', 'estudiante')->first();
+        $estudianteRole = Role::where('name', 'estudiante')->first();
         if (!$estudianteRole) {
-            echo "❌ Error: No existe el rol 'estudiante'. Ejecuta primero: php artisan db:seed --class=RoleSeeder\n";
+            $this->command->error("❌ Error: No existe el rol 'estudiante'. Ejecuta primero: php artisan db:seed --class=RoleSeeder");
             return;
         }
 
@@ -88,106 +92,84 @@ class TestStudentsSeeder extends Seeder
         ];
 
         foreach ($students as $index => $studentData) {
-            // Verificar si ya existe un usuario con este email (excluyendo soft-deleted)
-            $existingUser = DB::table('users')->where('email', $studentData['email'])->whereNull('deleted_at')->first();
-            if ($existingUser) {
-                echo "⚠️ Usuario ya existe: {$studentData['email']}, omitiendo...\n";
+            if (User::where('email', $studentData['email'])->exists()) {
+                $this->command->warn("⚠️ Usuario ya existe: {$studentData['email']}, omitiendo...");
                 continue;
             }
 
-            // Verificar si ya existe un estudiante con este NIE (excluyendo soft-deleted)
-            $existingStudent = DB::table('estudiantes')->where('nie', $studentData['nie'])->whereNull('deleted_at')->first();
-            if ($existingStudent) {
-                echo "⚠️ NIE ya existe: {$studentData['nie']}, omitiendo...\n";
+            if (Estudiante::where('nie', $studentData['nie'])->exists()) {
+                $this->command->warn("⚠️ NIE ya existe: {$studentData['nie']}, omitiendo...");
                 continue;
             }
 
-            // Crear usuario
-            $userId = DB::table('users')->insertGetId([
-                'name' => $studentData['name'],
-                'email' => $studentData['email'],
-                'password' => Hash::make('password123'), // Contraseña de prueba
-                'sede_name' => 'central', // Sede válida
-                'status' => 'active',
-                'email_verified_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Generar código único para el estudiante
-            $codigo = 'EST' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
-
-            // Verificar que el distrito existe antes de crear la dirección
             $distritoExists = DB::table('distritos')->where('id', $studentData['direccion_data']['distrito_id'])->exists();
             if (!$distritoExists) {
-                echo "❌ Error: No existe el distrito con ID {$studentData['direccion_data']['distrito_id']}\n";
+                $this->command->error("❌ Error: No existe el distrito con ID {$studentData['direccion_data']['distrito_id']}");
                 continue;
             }
 
-            // Crear dirección para el estudiante
-            try {
-                $direccion = Direccion::create($studentData['direccion_data']);
-                echo "✅ Dirección creada con ID: {$direccion->id}\n";
-            } catch (\Exception $e) {
-                echo "❌ Error creando dirección: " . $e->getMessage() . "\n";
-                continue;
-            }
-
-            // Crear estudiante
-            $estudianteId = DB::table('estudiantes')->insertGetId([
-                'codigo' => $codigo,
-                'user_id' => $userId,
-                'primer_nombre' => $studentData['primer_nombre'],
-                'segundo_nombre' => $studentData['segundo_nombre'],
-                'primer_apellido' => $studentData['primer_apellido'],
-                'segundo_apellido' => $studentData['segundo_apellido'],
-                'sexo' => $studentData['sexo'],
-                'fecha_nacimiento' => $studentData['fecha_nacimiento'],
-                'centro_educativo' => $studentData['centro_educativo'],
-                'nie' => $studentData['nie'],
-                'telefono_estudiante' => $studentData['telefono_estudiante'], // Campo requerido que faltaba
-                'telefono_casa' => $studentData['telefono_casa'],
-                'email' => $studentData['email'],
-                'direccion_id' => $direccion->id,
-                'nivel_educativo' => $studentData['nivel_educativo'],
-                'nivel' => 'media', // Campo requerido con valor por defecto
-                'aprobado' => false, // Campo booleano con valor por defecto
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Asignar rol de estudiante al usuario
-            if ($estudianteRole) {
-                DB::table('model_has_roles')->insert([
-                    'role_id' => $estudianteRole->id,
-                    'model_type' => 'App\Models\User',
-                    'model_id' => $userId,
+            // Usar una transacción para asegurar la integridad de los datos
+            DB::transaction(function () use ($studentData, $index, $estudianteRole) {
+                // 1. Crear Usuario
+                $user = User::create([
+                    'name' => $studentData['name'],
+                    'email' => $studentData['email'],
+                    'password' => Hash::make('password123'),
+                    'sede_name' => 'central',
+                    'status' => 'active',
+                    'email_verified_at' => now(),
                 ]);
-                echo "✅ Rol 'estudiante' asignado al usuario ID: {$userId}\n";
-            } else {
-                echo "⚠️ No se encontró el rol 'estudiante'\n";
-            }
 
-            // Crear responsable para el estudiante
-            DB::table('responsables')->insert([
-                'dui' => '000000000', // DUI genérico para pruebas
-                'codigo_estudiante' => $codigo,
-                'nombres_responsable' => 'Responsable de',
-                'apellidos_responsable' => $studentData['primer_nombre'],
-                'telefono_responsable' => '7000' . str_pad($index + 1000, 4, '0', STR_PAD_LEFT),
-                'email_responsable' => 'responsable' . ($index + 1) . '@test.com',
-                'tipo_parentesco' => 'Padre',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                // 2. Asignar Rol
+                $user->syncRolesWithExpiration([
+                    [
+                        'name' => $estudianteRole->name,
+                        'is_primary' => true,
+                        'expires_at' => null
+                    ]
+                ]);
+                $this->command->info("✅ Rol '{$estudianteRole->name}' asignado al usuario: {$user->email}");
 
-            echo "✅ Estudiante creado: {$studentData['name']} (NIE: {$studentData['nie']}, User ID: {$userId})\n";
+                // 3. Crear Dirección
+                $direccion = Direccion::create($studentData['direccion_data']);
+
+                // 4. Crear Estudiante
+                $codigo = 'EST' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
+                $estudiante = Estudiante::create([
+                    'codigo' => $codigo,
+                    'user_id' => $user->id,
+                    'primer_nombre' => $studentData['primer_nombre'],
+                    'segundo_nombre' => $studentData['segundo_nombre'],
+                    'primer_apellido' => $studentData['primer_apellido'],
+                    'segundo_apellido' => $studentData['segundo_apellido'],
+                    'sexo' => $studentData['sexo'],
+                    'fecha_nacimiento' => $studentData['fecha_nacimiento'],
+                    'centro_educativo' => $studentData['centro_educativo'],
+                    'nie' => $studentData['nie'],
+                    'telefono_estudiante' => $studentData['telefono_estudiante'],
+                    'telefono_casa' => $studentData['telefono_casa'],
+                    'email' => $studentData['email'],
+                    'direccion_id' => $direccion->id,
+                    'nivel_educativo' => $studentData['nivel_educativo'],
+                    'aprobado' => false,
+                ]);
+
+                // 5. Crear Responsable
+                Responsable::create([
+                    'dui' => '00000000' . ($index + 1), // DUI único para pruebas
+                    'codigo_estudiante' => $estudiante->codigo,
+                    'nombres_responsable' => 'Responsable de',
+                    'apellidos_responsable' => $studentData['primer_nombre'],
+                    'telefono_responsable' => '7000' . str_pad($index + 1000, 4, '0', STR_PAD_LEFT),
+                    'email_responsable' => 'responsable' . ($index + 1) . '@test.com',
+                    'tipo_parentesco' => 'Padre',
+                ]);
+
+                $this->command->info("✅ Estudiante creado: {$studentData['name']} (NIE: {$studentData['nie']}, User ID: {$user->id})");
+            });
         }
 
-        echo "\n🎉 Se han creado 3 estudiantes de prueba con los siguientes NIEs:\n";
-        echo "- 12345678 (Juan Carlos Pérez López)\n";
-        echo "- 87654321 (María Elena Rodríguez García)\n";
-        echo "- 11223344 (Luis Alberto Martínez Flores)\n";
-        echo "\nTodos tienen la contraseña: password123\n";
+        $this->command->info("\n🎉 Se han procesado los estudiantes de prueba.");
+        $this->command->info("Todos los usuarios creados tienen la contraseña: password123");
     }
 }

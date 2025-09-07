@@ -109,6 +109,20 @@ export default function DatosPersonales() {
         setPreviousEmail(currentEmail); // Actualizar valor anterior
     };
 
+    const formatTelefono = (value: string) => {
+        const cleaned = value.replace(/\D/g, '');
+        if (cleaned.length <= 4) return cleaned;
+        return `${cleaned.substring(0, 4)}-${cleaned.substring(4, 8)}`;
+    };
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, field: { onChange: (value: string) => void }) => {
+        const value = e.target.value.replace(/\D/g, '');
+        if (value.length <= 8) {
+            field.onChange(value);
+            if (value.length === 8) form.trigger('telefono_estudiante');
+        }
+    };
+
     // Actualizar el estado global cuando cambie el estado de duplicados
     useEffect(() => {
         const hasDuplicates = emailValidation.isDuplicate || nieValidation.isDuplicate;
@@ -345,6 +359,48 @@ export default function DatosPersonales() {
                                     <p className="text-sm text-red-500">Este correo ya está registrado en nuestra plataforma.</p>
                                 )}
                                 {emailValidation.error && <p className="text-sm text-red-500">{emailValidation.error}</p>}
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Teléfono del estudiante */}
+                    <FormField
+                        control={form.control}
+                        name="telefono_estudiante"
+                        render={({ field }) => (
+                            <FormItem>
+                                <div className="flex items-center justify-between gap-1">
+                                    <FormLabel>Teléfono del estudiante</FormLabel>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-sm text-muted-foreground">Opcional</span>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-4 w-4">
+                                                        <HelpCircle className="h-3 w-3" />
+                                                        <span className="sr-only">Ayuda</span>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Número de teléfono móvil personal del aspirante.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                </div>
+                                <FormControl>
+                                    <Input
+                                        type="tel"
+                                        placeholder="7234-5678"
+                                        pattern="[267]\d{7}"
+                                        {...field}
+                                        value={field.value ? formatTelefono(field.value) : ''}
+                                        onChange={(e) => handlePhoneChange(e, field)}
+                                        maxLength={9}
+                                    />
+                                </FormControl>
+                                <FormDescription>Número de 8 dígitos que inicie con 2, 6 o 7.</FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}

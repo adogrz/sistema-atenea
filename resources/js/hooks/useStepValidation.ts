@@ -61,6 +61,7 @@ export function useStepValidation({ getValues, trigger, clearErrors }: UseStepVa
                             'sexo',
                             'fecha_nacimiento',
                             'nie',
+                            'telefono_estudiante',
                             'email',
                         ],
                         'datos-responsables': [
@@ -96,7 +97,7 @@ export function useStepValidation({ getValues, trigger, clearErrors }: UseStepVa
 
                 // Disparar validación para mostrar errores en el formulario
                 const fieldsMap: Record<string, (keyof FormData)[]> = {
-                    'datos-personales': ['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'sexo', 'fecha_nacimiento', 'nie', 'email'],
+                    'datos-personales': ['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'sexo', 'fecha_nacimiento', 'nie', 'telefono_estudiante', 'email'],
                     'datos-responsables': [
                         'dui_responsable_1',
                         'nombres_responsable_1',

@@ -41,7 +41,10 @@ export default function Educacion({ centros_educativos, niveles_educativos }: Ed
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Nivel de estudios</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <Select
+                                    onValueChange={(value) => field.onChange(parseInt(value))}
+                                    value={field.value !== undefined ? field.value.toString() : ''}
+                                >
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecciona el nivel de estudios del aspirante" />
@@ -50,7 +53,7 @@ export default function Educacion({ centros_educativos, niveles_educativos }: Ed
                                     <SelectContent>
                                         {niveles_educativos && Array.isArray(niveles_educativos) && niveles_educativos.length > 0 ? (
                                             niveles_educativos.map((nivel) => (
-                                                <SelectItem key={nivel.codigo} value={nivel.codigo}>
+                                                <SelectItem key={nivel.codigo} value={nivel.codigo.toString()}>
                                                     {nivel.descripcion}
                                                 </SelectItem>
                                             ))

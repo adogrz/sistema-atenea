@@ -92,7 +92,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         ->middleware('permission:users:view-all');
     // Rutas para gestión de eventos académicos
     Route::middleware(['auth', 'permission:academic:view'])->group(function () {
-        
+
         Route::get('/dashboard/calendario', function () {
             $events = Evento::orderBy('fecha_inicio', 'asc')->get()->map(function ($evento) {
                 return [
@@ -110,7 +110,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
                     'updated_at' => $evento->updated_at,
                 ];
             });
-            
+
             return Inertia::render('academic-forms/calendar', [
                 'events' => $events,
             ]);
@@ -133,7 +133,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
                     'updated_at' => $evento->updated_at,
                 ];
             });
-            
+
             return Inertia::render('dashboard-academico', [
                 'events' => $events,
             ]);
@@ -183,8 +183,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     });
 });
 
-Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {
-});
+Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {});
 
 Route::middleware(['web'])->group(function () {
     // Página que contiene el formulario de carga

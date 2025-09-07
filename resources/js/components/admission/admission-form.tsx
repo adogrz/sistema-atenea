@@ -9,7 +9,6 @@ import { z } from 'zod';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 
@@ -21,6 +20,7 @@ import { Departamento, Distrito, Municipio } from '@/types/admission/address';
 import { CentroEducativo, NivelEducativo } from '@/types/admission/education';
 import AdmissionSidebar from './admission-sidebar';
 import Captcha from './captcha';
+import ErrorModal from './error-modal';
 import Direccion from './sections/address';
 import Educacion from './sections/education';
 import DatosPersonales from './sections/personal-data';
@@ -45,6 +45,8 @@ export default function FormularioAdmision(props: {
     const [formStatus, setFormStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
     const [submissionData, setSubmissionData] = useState<{
         estudiante: {
@@ -66,6 +68,7 @@ export default function FormularioAdmision(props: {
             sexo: '',
             fecha_nacimiento: '',
             nie: '',
+            telefono_estudiante: '',
             email: '',
             telefono_casa: '',
             colonia: '',
@@ -80,7 +83,7 @@ export default function FormularioAdmision(props: {
             sector: 'PÚBLICO',
             zona: 'Rural',
             internacional: 'NO',
-            nivel_educativo: '',
+            nivel_educativo: undefined,
             dui_responsable_1: '',
             nombres_responsable_1: '',
             apellidos_responsable_1: '',
@@ -218,20 +221,50 @@ export default function FormularioAdmision(props: {
     const onSubmit = async (data: FormData) => {
         setIsSubmitting(true);
         try {
+            console.log('=== INICIO DEL ENVÍO ===');
+            console.log('Datos del formulario a enviar:', data);
+
             const response = await axios.post('/admision', data, {
                 headers: {
                     Accept: 'application/json',
+                    'Content-Type': 'application/json',
                 },
             });
 
-            // Limpiar borrador al enviar exitosamente
-            clearDraft();
+            console.log('=== RESPUESTA COMPLETA ===');
+            console.log('Status:', response.status);
+            console.log('Headers:', response.headers);
+            console.log('Data:', response.data);
+            console.log('========================');
 
-            // Configurar datos de la respuesta
+            // Verificar que la respuesta sea exitosa
+            if (response.status < 200 || response.status >= 300) {
+                throw new Error(`Status HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            // Verificar que tenemos los datos necesarios
+            if (!response.data || !response.data.estudiante) {
+                throw new Error('Respuesta del servidor incompleta - falta información del estudiante');
+            }
+
+            console.log('Procesando respuesta exitosa...');
+
+            // Limpiar borrador al enviar exitosamente
+            try {
+                clearDraft();
+                console.log('Borrador limpiado exitosamente');
+            } catch (draftError) {
+                console.warn('Error al limpiar borrador:', draftError);
+                // No es crítico, continuar
+            }
+
+            // Configurar datos de la respuesta de manera más robusta
             const submissionDate = new Date();
+            const estudianteData = response.data.estudiante;
+
             setSubmissionData({
                 estudiante: {
-                    codigo: response.data.estudiante?.codigo || 'N/A',
+                    codigo: estudianteData?.codigo || 'N/A',
                     primer_nombre: data.primer_nombre,
                     primer_apellido: data.primer_apellido,
                     email: data.email,
@@ -239,16 +272,90 @@ export default function FormularioAdmision(props: {
                 submissionDate,
             });
 
+            console.log('Datos de envío configurados, mostrando modal de éxito...');
+
             // Mostrar modal de éxito
             setShowSuccessModal(true);
             setFormStatus('success');
+
+            console.log('Solicitud procesada exitosamente');
         } catch (error) {
-            console.error('Error al enviar:', error);
-            toast.error('No se pudo procesar tu solicitud! Intenta nuevamente más tarde.');
+            console.error('=== ERROR DETALLADO ===');
+            console.error('Error completo:', error);
+
+            // Análisis más detallado del error
+            let errorMessage = 'No se pudo procesar tu solicitud. Intenta nuevamente más tarde.';
+            let errorDetails = '';
+
+            if (axios.isAxiosError(error)) {
+                console.error('Es un error de Axios');
+
+                if (error.response) {
+                    // Error de respuesta del servidor
+                    console.error('Error de respuesta del servidor:');
+                    console.error('- Status:', error.response.status);
+                    console.error('- Data:', error.response.data);
+                    console.error('- Headers:', error.response.headers);
+
+                    if (error.response.status === 419) {
+                        errorMessage = 'Error de seguridad (CSRF). Por favor, recarga la página e intenta nuevamente.';
+                        errorDetails = 'Token CSRF expirado o inválido';
+                    } else if (error.response.status === 422) {
+                        errorMessage = 'Hay errores en los datos del formulario. Por favor revisa la información ingresada.';
+                        errorDetails = JSON.stringify(error.response.data.errors || error.response.data, null, 2);
+                    } else if (error.response.status >= 500) {
+                        errorMessage = 'Error interno del servidor. Por favor intenta más tarde.';
+                        errorDetails = error.response.data.message || 'Error del servidor';
+                    } else if (error.response.status === 404) {
+                        errorMessage = 'La ruta del formulario no fue encontrada. Contacta al administrador.';
+                        errorDetails = 'Ruta /admision no encontrada';
+                    } else {
+                        errorMessage = `Error del servidor (${error.response.status}). Por favor intenta más tarde.`;
+                        errorDetails = error.response.statusText;
+                    }
+                } else if (error.request) {
+                    // Error de red/conexión
+                    console.error('Error de conexión:', error.request);
+                    errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+                    errorDetails = 'Sin respuesta del servidor';
+                } else {
+                    // Error de configuración
+                    console.error('Error de configuración:', error.message);
+                    errorMessage = 'Error en la configuración de la petición.';
+                    errorDetails = error.message;
+                }
+            } else if (error instanceof Error) {
+                // Error personalizado que lanzamos
+                console.error('Error personalizado:', error.message);
+                errorMessage = error.message;
+                errorDetails = error.stack || '';
+            }
+
+            console.error('Mensaje de error final:', errorMessage);
+            console.error('Detalles del error:', errorDetails);
+            console.error('====================');
+
+            toast.error(errorMessage);
+            setErrorMessage(errorMessage + (errorDetails ? '\n\nDetalles técnicos:\n' + errorDetails : ''));
+            setShowErrorModal(true);
             setFormStatus('error');
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // Función para cerrar el modal de error y volver al formulario
+    const handleCloseErrorModal = () => {
+        setShowErrorModal(false);
+        setFormStatus('idle');
+    };
+
+    // Función para reintentar el envío
+    const handleRetrySubmission = async () => {
+        setShowErrorModal(false);
+        setFormStatus('idle');
+        // Intentar enviar nuevamente
+        await methods.handleSubmit(onSubmit)();
     };
 
     // Función para cerrar el modal y mostrar la alerta persistente
@@ -261,26 +368,6 @@ export default function FormularioAdmision(props: {
     const handleDismissAlert = () => {
         setShowSuccessAlert(false);
     };
-
-    if (formStatus === 'error') {
-        return (
-            <Card className="mx-auto max-w-md p-6">
-                <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                    <div className="rounded-full bg-red-100 p-3">
-                        <AlertCircle className="h-10 w-10 text-red-600" />
-                    </div>
-                    <h2 className="text-2xl font-bold">Error al enviar la solicitud</h2>
-                    <p className="text-muted-foreground">Ocurrió un problema al enviar tu solicitud. Por favor inténtalo de nuevo más tarde.</p>
-                    <div className="flex gap-4">
-                        <Button variant="outline" onClick={() => setFormStatus('idle')}>
-                            Volver al formulario
-                        </Button>
-                        <Button onClick={() => window.location.reload()}>Reintentar</Button>
-                    </div>
-                </div>
-            </Card>
-        );
-    }
 
     return (
         <FormProvider {...methods}>
@@ -444,6 +531,16 @@ export default function FormularioAdmision(props: {
                     submissionDate={submissionData.submissionDate}
                 />
             )}
+
+            {/* Modal de error */}
+            <ErrorModal
+                isOpen={showErrorModal}
+                onClose={handleCloseErrorModal}
+                title="Error al procesar la solicitud"
+                message={errorMessage}
+                onRetry={handleRetrySubmission}
+                showRetry={true}
+            />
 
             <Toaster position="top-right" richColors />
         </FormProvider>

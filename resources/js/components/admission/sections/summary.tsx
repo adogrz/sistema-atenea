@@ -243,26 +243,32 @@ export default function ResumenSolicitud(props: ResumenProps) {
 
         return (
             <Collapsible open={isOpen} onOpenChange={() => toggleSection(id)}>
-                <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="h-auto w-full justify-between rounded-lg p-0 transition-colors hover:bg-muted/30">
-                        <div className="flex items-center gap-3 p-3">
-                            <div className="flex items-center gap-2">
-                                <Icon className="h-5 w-5 text-primary" />
-                                <h3 className="text-left text-lg font-medium text-gray-900 dark:text-gray-100">{title}</h3>
-                            </div>
-                            <StatusBadge sectionId={id} />
-                        </div>
-                        <div className="flex items-center gap-2 p-3">
+                <div className="rounded-lg border border-muted transition-colors hover:bg-muted/30">
+                    <div className="flex items-center justify-between">
+                        <CollapsibleTrigger asChild>
+                            <button className="flex flex-1 items-center gap-3 p-3 text-left hover:bg-transparent" type="button">
+                                <div className="flex items-center gap-2">
+                                    <Icon className="h-5 w-5 text-primary" />
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{title}</h3>
+                                </div>
+                                <StatusBadge sectionId={id} />
+                                <div className="ml-auto">
+                                    {isOpen ? (
+                                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
+                                    ) : (
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
+                                    )}
+                                </div>
+                            </button>
+                        </CollapsibleTrigger>
+                        <div className="p-3">
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         className="h-7 px-2"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleNavigateToSection(navigationTarget);
-                                        }}
+                                        onClick={() => handleNavigateToSection(navigationTarget)}
                                     >
                                         <Edit className="mr-1 h-3 w-3" />
                                         Editar
@@ -270,14 +276,9 @@ export default function ResumenSolicitud(props: ResumenProps) {
                                 </TooltipTrigger>
                                 <TooltipContent>Ir a la sección {title} para editar</TooltipContent>
                             </Tooltip>
-                            {isOpen ? (
-                                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
-                            ) : (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
-                            )}
                         </div>
-                    </Button>
-                </CollapsibleTrigger>
+                    </div>
+                </div>
                 <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden">
                     <Separator className="my-3" />
                     <div className="space-y-3 px-3 pb-3">{children}</div>
@@ -383,6 +384,10 @@ export default function ResumenSolicitud(props: ResumenProps) {
                                 <div className="space-y-1">
                                     <span className="font-semibold text-muted-foreground">Email</span>
                                     <p className="text-foreground">{showValue(values.email)}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <span className="font-semibold text-muted-foreground">Teléfono del estudiante</span>
+                                    <p className="text-foreground">{showValue(values.telefono_estudiante)}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <span className="font-semibold text-muted-foreground">Teléfono de casa</span>

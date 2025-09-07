@@ -60,6 +60,18 @@ export const personalDataSchema = z.object({
     nie: z.string().regex(/^\d{7,10}$/, {
         message: 'El NIE debe tener entre 7 y 10 dígitos',
     }),
+    telefono_estudiante: z
+        .string()
+        .optional()
+        .refine(
+            (val) => {
+                if (!val || val.trim() === '') return true; // Permite que el campo sea opcional
+                return /^[267]\d{7}$/.test(val);
+            },
+            {
+                message: 'El teléfono debe tener 8 dígitos y empezar con 2, 6 o 7',
+            },
+        ),
     email: z.string().email('Ingresa un correo electrónico válido'),
 });
 
@@ -333,11 +345,15 @@ export const educationSchema = z.object({
             message: 'Internacional debe ser SI o NO',
         }),
     nivel_educativo: z
-        .string()
-        .min(1, 'Selecciona el nivel de estudios del aspirante')
-        .refine((val) => ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7'].includes(val), {
-            message: 'Selecciona un nivel educativo válido',
-        }),
+        .number({
+            required_error: 'Selecciona el nivel de estudios del aspirante',
+            invalid_type_error: 'Selecciona el nivel de estudios del aspirante',
+        })
+        .int('Debe ser un número entero')
+        .min(0, 'Nivel educativo no válido')
+        .max(8, 'Nivel educativo no válido')
+        .optional()
+        .refine((val) => val !== undefined && val >= 0, { message: 'Selecciona el nivel de estudios del aspirante' }),
 });
 
 // Esquema completo que combina todos los esquemas individuales
@@ -361,7 +377,7 @@ export function validateSection(sectionName: string, data: Record<string, unknow
 
 // Función helper para obtener errores por sección
 export function getErrorsBySection(errors: Record<string, unknown>) {
-    const personalDataFields = ['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'sexo', 'fecha_nacimiento', 'nie', 'email'];
+    const personalDataFields = ['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'sexo', 'fecha_nacimiento', 'nie', 'telefono_estudiante', 'email'];
     const responsableFields = [
         'dui_responsable_1',
         'nombres_responsable_1',
