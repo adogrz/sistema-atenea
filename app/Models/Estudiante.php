@@ -40,12 +40,12 @@ class Estudiante extends Model
         'segundo_apellido',
         'sexo',
         'fecha_nacimiento',
-        'centro_educativo_codigo',
+        'centro_educativo',
         'nie',
+        'telefono_estudiante',
         'telefono_casa',
         'email',
-        'direccion',
-        'distrito',
+        'direccion_id',
         'nivel_educativo',
         'aprobado',
     ];
@@ -90,5 +90,21 @@ class Estudiante extends Model
     public function distrito(): BelongsTo
     {
         return $this->belongsTo(Distrito::class, 'distrito', 'id');
+    }
+
+    /**
+     * Relación con la dirección normalizada
+     */
+    public function direccion(): BelongsTo
+    {
+        return $this->belongsTo(Direccion::class, 'direccion_id');
+    }
+
+    /**
+     * Obtener la dirección completa formateada
+     */
+    public function getDireccionCompleta(): string
+    {
+        return $this->direccion?->getDireccionFormateadaAttribute() ?? 'Sin dirección';
     }
 }

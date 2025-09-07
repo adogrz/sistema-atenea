@@ -1,8 +1,13 @@
-import { useTheme } from "@/hooks/use-theme"
+import { useAppearance } from "@/hooks/use-appearance"
 import { Toaster as Sonner, ToasterProps } from "sonner"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const { appearance } = useAppearance()
+
+  // Convertir 'system' al valor real del tema
+  const theme = appearance === 'system'
+    ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : appearance
 
   return (
     <Sonner

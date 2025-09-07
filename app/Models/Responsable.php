@@ -30,6 +30,7 @@ class Responsable extends Model
         'telefono_responsable',
         'telefono_opcional',
         'tipo_parentesco',
+        'otro_parentesco',
     ];
 
     public function estudiante(): BelongsTo

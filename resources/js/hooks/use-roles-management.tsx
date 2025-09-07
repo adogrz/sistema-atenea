@@ -38,8 +38,35 @@ export default function useRolesManagement(roles: Role[] = [], onRolesChange: (r
     }, [roles, primaryRoleIndex, handleSetPrimaryRole]);
 
     const parseLocalDate = (dateString: string): Date => {
-        const [year, month, day] = dateString.split('-').map((num) => parseInt(num, 10));
-        return new Date(year, month - 1, day);
+        try {
+            // Intentar diferentes formatos de fecha
+            let date: Date;
+
+            if (dateString.includes('-')) {
+                // Formato ISO: YYYY-MM-DD
+                if (dateString.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                    const [year, month, day] = dateString.split('-').map((num) => parseInt(num, 10));
+                    date = new Date(year, month - 1, day);
+                } else {
+                    // Otros formatos con guiones
+                    date = new Date(dateString);
+                }
+            } else {
+                // Formato estándar
+                date = new Date(dateString);
+            }
+
+            // Verificar si la fecha es válida
+            if (isNaN(date.getTime())) {
+                console.warn('Invalid date string:', dateString);
+                return new Date(); // Retornar fecha actual como fallback
+            }
+
+            return date;
+        } catch (error) {
+            console.warn('Error parsing date:', dateString, error);
+            return new Date(); // Retornar fecha actual como fallback
+        }
     };
 
     const handleAddRole = (roleName: string) => {
