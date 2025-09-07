@@ -195,14 +195,14 @@ export default function ErrorModal({
                                 {getFriendlyErrors().map(({ field, label, message }, index) => (
                                     <div
                                         key={`${field}-${index}`}
-                                        className="group flex cursor-pointer items-start justify-between gap-3 rounded-md bg-white/80 p-3 transition-colors hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800"
+                                        className="group flex cursor-pointer items-start justify-between gap-3 rounded-md bg-white/90 p-3 transition-colors hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800"
                                         onClick={() => handleFieldNavigation(field)}
                                     >
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-medium text-red-700 dark:text-red-300">{label}</p>
-                                            <p className="mt-1 text-xs text-red-600 dark:text-red-400">{message}</p>
+                                            <p className="truncate text-sm font-medium text-red-800 dark:text-red-200">{label}</p>
+                                            <p className="mt-1 text-xs text-red-700 dark:text-red-300">{message}</p>
                                         </div>
-                                        <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500 group-hover:text-red-600" />
+                                        <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600 group-hover:text-red-700 dark:text-red-400 dark:group-hover:text-red-300" />
                                     </div>
                                 ))}
                             </div>

@@ -333,7 +333,6 @@ export default function DatosResponsables() {
                                     <FormControl>
                                         <Input type="email" placeholder="responsable@ejemplo.com" {...field} />
                                     </FormControl>
-                                    <FormDescription>Te enviaremos actualizaciones importantes del proceso de admisión</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}

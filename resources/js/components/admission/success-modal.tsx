@@ -85,7 +85,7 @@ export default function SuccessModal({ isOpen, onClose, studentData, submissionD
                         <DialogTitle className="mx-auto text-center text-2xl font-bold text-green-900 dark:text-green-100">
                             ¡Solicitud enviada con éxito!
                         </DialogTitle>
-                        <DialogDescription id="success-description" className="mx-auto text-center text-base text-muted-foreground">
+                        <DialogDescription id="success-description" className="mx-auto text-center text-base text-gray-700 dark:text-gray-300">
                             Tu postulación ha sido registrada correctamente y será procesada por nuestro equipo.
                         </DialogDescription>
                     </div>
@@ -96,21 +96,21 @@ export default function SuccessModal({ isOpen, onClose, studentData, submissionD
                         <div className="space-y-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-6 dark:border-green-800 dark:from-green-900/20 dark:to-emerald-900/20">
                             <h4 className="text-center text-base font-semibold text-green-900 dark:text-green-100">📋 Detalles de tu solicitud</h4>
                             <div className="grid grid-cols-1 gap-3 text-sm">
-                                <div className="flex items-center justify-between rounded bg-white/80 px-3 py-2 dark:bg-gray-800/80">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Estudiante:</span>
-                                    <span className="font-semibold text-green-700 dark:text-green-300">{studentData.nombre}</span>
+                                <div className="flex items-center justify-between rounded bg-white/90 px-3 py-2 dark:bg-gray-800/90">
+                                    <span className="font-medium text-gray-800 dark:text-gray-200">Estudiante:</span>
+                                    <span className="font-semibold text-green-800 dark:text-green-200">{studentData.nombre}</span>
                                 </div>
-                                <div className="flex items-center justify-between rounded bg-white/80 px-3 py-2 dark:bg-gray-800/80">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Código temporal:</span>
-                                    <span className="font-mono font-semibold text-blue-700 dark:text-blue-300">{studentData.codigo}</span>
+                                <div className="flex items-center justify-between rounded bg-white/90 px-3 py-2 dark:bg-gray-800/90">
+                                    <span className="font-medium text-gray-800 dark:text-gray-200">Código temporal:</span>
+                                    <span className="font-mono font-semibold text-blue-800 dark:text-blue-200">{studentData.codigo}</span>
                                 </div>
-                                <div className="flex items-center justify-between rounded bg-white/80 px-3 py-2 dark:bg-gray-800/80">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span>
-                                    <span className="break-all text-gray-700 dark:text-gray-300">{studentData.email}</span>
+                                <div className="flex items-center justify-between rounded bg-white/90 px-3 py-2 dark:bg-gray-800/90">
+                                    <span className="font-medium text-gray-800 dark:text-gray-200">Email:</span>
+                                    <span className="break-all text-gray-800 dark:text-gray-200">{studentData.email}</span>
                                 </div>
-                                <div className="flex items-center justify-between rounded bg-white/80 px-3 py-2 dark:bg-gray-800/80">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Fecha de envío:</span>
-                                    <span className="text-gray-700 dark:text-gray-300">{formatDate(submissionDate)}</span>
+                                <div className="flex items-center justify-between rounded bg-white/90 px-3 py-2 dark:bg-gray-800/90">
+                                    <span className="font-medium text-gray-800 dark:text-gray-200">Fecha de envío:</span>
+                                    <span className="text-gray-800 dark:text-gray-200">{formatDate(submissionDate)}</span>
                                 </div>
                             </div>
                         </div>

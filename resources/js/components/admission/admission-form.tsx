@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
-import { AlertCircle, CheckCircle2, FileText, Loader2, Save, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileText, Loader2, Send, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { FieldValues, FormProvider, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -42,6 +42,13 @@ export default function FormularioAdmision(props: {
     const [activeTab, setActiveTab] = useState('datos-personales');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [captchaVerified, setCaptchaVerified] = useState(false);
+    const [captchaKey, setCaptchaKey] = useState(0);
+
+    // Función para manejar cambios en el estado del captcha
+    const handleCaptchaVerification = useCallback((verified: boolean) => {
+        setCaptchaVerified(verified);
+    }, []);
+
     const [formStatus, setFormStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
@@ -126,7 +133,7 @@ export default function FormularioAdmision(props: {
                         </div>
                         <div className="flex-1 space-y-1">
                             <p className="text-sm leading-none font-medium">Borrador encontrado</p>
-                            <p className="text-xs text-muted-foreground">Guardado {draft.timeAgo}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Guardado {draft.timeAgo}</p>
                         </div>
                         <div className="flex items-center space-x-2">
                             <Button
@@ -211,6 +218,11 @@ export default function FormularioAdmision(props: {
 
     // Función para manejar el cambio de tab desde el stepper
     const handleTabChange = (newTab: string) => {
+        // Si el usuario sale del resumen y regresa, resetear captcha para mayor seguridad
+        if (activeTab !== 'resumen' && newTab === 'resumen') {
+            setCaptchaVerified(false);
+            setCaptchaKey((prev) => prev + 1);
+        }
         setActiveTab(newTab);
     };
 
@@ -358,6 +370,9 @@ export default function FormularioAdmision(props: {
         setShowErrorModal(false);
         setFormStatus('idle');
         setValidationErrors({});
+        // Resetear captcha cuando se cierra el modal de error
+        setCaptchaVerified(false);
+        setCaptchaKey((prev) => prev + 1); // Forzar recreación del componente
     };
 
     // Función para reintentar el envío
@@ -365,6 +380,9 @@ export default function FormularioAdmision(props: {
         setShowErrorModal(false);
         setFormStatus('idle');
         setValidationErrors({});
+        // Resetear captcha cuando se reintenta el envío
+        setCaptchaVerified(false);
+        setCaptchaKey((prev) => prev + 1); // Forzar recreación del componente
         // Intentar enviar nuevamente
         await methods.handleSubmit(onSubmit)();
     };
@@ -513,7 +531,7 @@ export default function FormularioAdmision(props: {
                                 {/* Captcha solo en el paso resumen */}
                                 {activeTab === 'resumen' && formStatus !== 'success' && (
                                     <div className="space-y-6">
-                                        <Captcha onVerify={setCaptchaVerified} />
+                                        <Captcha key={captchaKey} onVerify={handleCaptchaVerification} />
                                     </div>
                                 )}
 
@@ -576,7 +594,7 @@ export default function FormularioAdmision(props: {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Save className="mr-2 h-4 w-4" />
+                                                        <Send className="mr-2 h-4 w-4" />
                                                         Enviar Solicitud
                                                     </>
                                                 )}

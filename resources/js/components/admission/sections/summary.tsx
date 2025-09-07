@@ -206,7 +206,7 @@ export default function ResumenSolicitud(props: ResumenProps) {
             return (
                 <Badge
                     variant="default"
-                    className="border-green-300 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400"
+                    className="border-green-300 bg-green-100 text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-200"
                 >
                     <CheckCircle className="mr-1 h-3 w-3" />
                     Completo
@@ -217,7 +217,7 @@ export default function ResumenSolicitud(props: ResumenProps) {
         return (
             <Badge
                 variant="secondary"
-                className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+                className="border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200"
             >
                 <AlertCircle className="mr-1 h-3 w-3" />
                 {filledFields}/{totalFields}

@@ -155,7 +155,7 @@ export default function StepperAdmision({
                             <StepperTrigger
                                 className={`min-h-[56px] w-full items-start rounded pb-8 last:pb-0 ${
                                     canNavigate && !isLoading && !disabled ? 'cursor-pointer' : 'cursor-default'
-                                } ${!canNavigate && stepStatus === 'pending' ? 'opacity-60' : 'opacity-100'}`}
+                                }`}
                                 disabled={!canNavigate || isLoading || disabled}
                             >
                                 {/* Altura mínima y opacidad estable cuando está disabled */}
@@ -199,9 +199,9 @@ export default function StepperAdmision({
                                                     ? 'text-green-700 dark:text-green-400'
                                                     : stepStatus === 'current'
                                                       ? 'text-primary'
-                                                      : !canNavigate
-                                                        ? 'text-muted-foreground'
-                                                        : ''
+                                                      : !canNavigate && stepStatus === 'pending'
+                                                        ? 'text-gray-600 dark:text-gray-300'
+                                                        : 'text-foreground'
                                         }`}
                                     >
                                         {title}
@@ -212,7 +212,9 @@ export default function StepperAdmision({
                                                 ? 'text-red-600 dark:text-red-500'
                                                 : completedSteps.has(id) && erroresPorSeccion[id] === 0
                                                   ? 'text-green-600 dark:text-green-500'
-                                                  : 'text-muted-foreground'
+                                                  : !canNavigate && stepStatus === 'pending'
+                                                    ? 'text-gray-600 dark:text-gray-300'
+                                                    : 'text-muted-foreground'
                                         }`}
                                     >
                                         {isLoading && step === currentStep

@@ -31,7 +31,7 @@ export default function AdmissionSidebar({
                     <AppLogoIcon className="size-12 fill-current text-sidebar-primary" />
                     <div className="flex flex-col">
                         <span className="text-lg font-bold tracking-tight">Sistema Atenea</span>
-                        <span className="text-xs text-muted-foreground">Admisiones</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Admisiones</span>
                     </div>
                 </div>
             </SidebarHeader>
@@ -51,7 +51,7 @@ export default function AdmissionSidebar({
 
             {/* Footer con indicador de progreso */}
             <SidebarFooter className="border-t bg-muted/30 p-4">
-                <div className="text-center text-sm text-muted-foreground">
+                <div className="text-center text-sm font-medium text-gray-700 dark:text-gray-300">
                     {disabled ? '✅ Solicitud enviada' : activeTab === 'resumen' ? '✓ Listo para enviar' : 'Completa todos los pasos'}
                 </div>
             </SidebarFooter>

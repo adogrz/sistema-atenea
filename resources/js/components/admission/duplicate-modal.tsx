@@ -38,7 +38,7 @@ export function DuplicateModal({ isOpen, onClose, field, value, onDismiss }: Dup
                         <AlertCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                     </div>
                     <DialogTitle className="text-lg font-semibold">Este {fieldName} ya está registrado</DialogTitle>
-                    <DialogDescription id="duplicate-description" className="space-y-2 text-sm text-muted-foreground">
+                    <DialogDescription id="duplicate-description" className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                         <p>
                             Encontramos una cuenta con&nbsp;
                             <span className="rounded bg-muted px-2 py-0.5 text-sm font-medium">{value}</span>.
