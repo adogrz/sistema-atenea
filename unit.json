@@ -1,7 +1,10 @@
 {
     "listeners": {
         "*:8000": {
-            "pass": "routes"
+            "pass": "routes",
+            "forwarded": {
+                "protocol": "X-Forwarded-Proto"
+            }
         }
     },
     "routes": [
@@ -24,15 +27,6 @@
             "script": "index.php",
             "user": "unit",
             "group": "unit"
-        }
-    },
-    "settings": {
-        "http": {
-            "log_stream": "stderr" 
-        },
-        "php": {
-            "log_errors": true,
-            "error_log": "stderr" 
         }
     }
 }
