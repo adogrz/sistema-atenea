@@ -28,16 +28,17 @@ const useLocation = (departamentos: Departamento[], municipios: Municipio[], dis
     const municipiosFiltrados = departamentoId ? municipios.filter((m) => m.id_departamento === departamentoId) : [];
     const distritosFiltrados = municipioId ? distritos.filter((d) => d.id_municipio === municipioId) : [];
 
-    const handleLocationChange = (field: { onChange: (value: string) => void }, level: 'departamento' | 'municipio') => (value: string) => {
-        field.onChange(value);
-        if (level === 'departamento') {
-            form.setValue('municipio', '', { shouldValidate: false });
-            form.setValue('distrito', '', { shouldValidate: false });
-        } else if (level === 'municipio') {
-            form.setValue('distrito', '', { shouldValidate: false });
-        }
-        form.trigger(level);
-    };
+    const handleLocationChange =
+        (field: { onChange: (value: string) => void }, level: 'departamento' | 'municipio' | 'distrito') => (value: string) => {
+            field.onChange(value);
+            if (level === 'departamento') {
+                form.setValue('municipio', '', { shouldValidate: false });
+                form.setValue('distrito', '', { shouldValidate: false });
+            } else if (level === 'municipio') {
+                form.setValue('distrito', '', { shouldValidate: false });
+            }
+            form.trigger(level);
+        };
 
     const nombreDepartamento = departamentos.find((d) => d.id === departamentoId)?.nombre_departamento;
     const nombreMunicipio = municipios.find((m) => m.id === municipioId)?.nombre_municipio;
@@ -232,7 +233,11 @@ export default function Direccion({ departamentos, municipios, distritos }: Dire
                                         <FormLabel>
                                             Distrito <span className="text-red-500">*</span>
                                         </FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value} disabled={distritosFiltrados.length === 0}>
+                                        <Select
+                                            onValueChange={handleLocationChange(field, 'distrito')}
+                                            value={field.value}
+                                            disabled={distritosFiltrados.length === 0}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue
