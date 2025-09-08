@@ -1,8 +1,9 @@
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
+import { getLocalTimeZone, parseDate } from "@internationalized/date";
 import {
   Button,
-  DatePicker as AriaDatePicker,
+  DatePicker as ReactAriaDatePicker,
   Dialog,
   Group,
   Label,
@@ -10,141 +11,186 @@ import {
   type DateValue,
 } from "react-aria-components";
 import { Calendar } from "@/components/ui/calendar-rac";
+import { Calendar as ShadcnCalendar } from "@/components/ui/calendar-improved";
 import { DateInput } from "@/components/ui/datefield-rac";
-import { parseDate } from "@internationalized/date";
+import { Button as ShadcnButton } from "@/components/ui/button";
+import { Popover as ShadcnPopover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { type PropsBase } from "react-day-picker";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export interface DatePickerProps {
   value?: Date;
   onChange?: (date?: Date) => void;
   label?: string;
-  placeholder?: string; // Para compatibilidad API - no se usa internamente
+  placeholder?: string;
   disabled?: boolean;
   disableDates?: (date: Date) => boolean;
   className?: string;
   buttonClassName?: string;
-  align?: "start" | "center" | "end"; // Para compatibilidad API - no se usa internamente
-  captionLayout?: PropsBase["captionLayout"]; // Para compatibilidad API - no se usa internamente
-  format?: (date: Date) => string; // Para compatibilidad API - no se usa internamente
+  align?: "start" | "center" | "end";
+  captionLayout?: PropsBase["captionLayout"]; // "label" o "dropdown"
+  format?: (date: Date) => string;
   icon?: React.ReactNode;
-  locale?: unknown; // Para compatibilidad API - no se usa internamente
+  locale?: unknown;
+  calendarType?: "aria" | "shadcn"; // Tipo de calendario a usar
 }
 
-// Función para convertir Date a DateValue (React Aria format)
-function dateToDateValue(date: Date): DateValue {
+// Función mejorada para convertir Date a DateValue - usando getLocalTimeZone()
+function dateToDateValue(date: Date): DateValue | null {
   try {
-    // Validar que sea una instancia válida de Date
-    if (!(date instanceof Date)) {
-      throw new Error('Not a Date instance');
-    }
-
-    // Verificar que sea una fecha válida en general
-    if (date.toString() === 'Invalid Date' || isNaN(date.getTime())) {
-      throw new Error('Invalid Date object');
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return null;
     }
 
     const year = date.getFullYear();
     const month = date.getMonth() + 1; // Los meses en DateValue son 1-based
     const day = date.getDate();
 
-    // Validar que la fecha tenga valores válidos
-    if (isNaN(year) || isNaN(month) || isNaN(day)) {
-      throw new Error('Invalid date values');
+    // Validar rangos
+    if (year < 1000 || year > 9999 || month < 1 || month > 12 || day < 1 || day > 31) {
+      return null;
     }
 
-    // Validar rangos razonables para evitar fechas con años incorrectos
-    if (year < 1000 || year > 9999) {
-      throw new Error('Year out of reasonable range');
-    }
-
-    if (month < 1 || month > 12) {
-      throw new Error('Month out of valid range');
-    }
-
-    if (day < 1 || day > 31) {
-      throw new Error('Day out of valid range');
-    }
-
-    const dateString = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-
-    try {
-      return parseDate(dateString);
-    } catch {
-      // Si parseDate falla con el formato ISO, usar fecha actual
-      throw new Error('Parse date failed');
-    }
+    // Crear la fecha usando el formato ISO
+    const isoString = `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    return parseDate(isoString);
   } catch {
-    // Retornar fecha actual como fallback sin mostrar advertencias
-    // para evitar spam en la consola durante la escritura
-    const today = new Date();
-    const fallbackString = today.toISOString().split('T')[0];
-    return parseDate(fallbackString);
+    return null;
   }
 }
 
-// Función para convertir DateValue a Date
+// Función mejorada para convertir DateValue a Date
 function dateValueToDate(dateValue: DateValue): Date {
-  // Usar timezone local en lugar de UTC para evitar desfase de días
-  const localDate = new Date(dateValue.year, dateValue.month - 1, dateValue.day);
-  return localDate;
+  // Usar getLocalTimeZone para evitar problemas de zona horaria
+  return dateValue.toDate(getLocalTimeZone());
 }
 
-export function DatePicker({
+function ShadcnDatePicker({
   value,
   onChange,
   label,
-  placeholder, // eslint-disable-line @typescript-eslint/no-unused-vars
+  placeholder = "Seleccionar fecha",
   disabled = false,
   disableDates,
   className = "",
   buttonClassName = "",
-  align = "start", // eslint-disable-line @typescript-eslint/no-unused-vars
-  captionLayout = "dropdown", // eslint-disable-line @typescript-eslint/no-unused-vars
-  format, // eslint-disable-line @typescript-eslint/no-unused-vars
-  icon,
-  locale, // eslint-disable-line @typescript-eslint/no-unused-vars
+  captionLayout = "dropdown",
 }: DatePickerProps) {
-  // Convertir el valor de Date a DateValue si existe
+  const [open, setOpen] = React.useState(false);
+
+  const formatDisplayValue = React.useCallback((date: Date | undefined) => {
+    if (!date) return placeholder;
+    try {
+      return format(date, "dd/MM/yyyy", { locale: es });
+    } catch {
+      return placeholder;
+    }
+  }, [placeholder]);
+
+  const handleSelect = React.useCallback((selectedDate: Date | undefined) => {
+    if (onChange) {
+      onChange(selectedDate);
+    }
+    setOpen(false);
+  }, [onChange]);
+
+  const isDateDisabled = React.useCallback((date: Date) => {
+    if (!disableDates) return false;
+    return disableDates(date);
+  }, [disableDates]);
+
+  // Determinar el mes inicial para mostrar en el calendario
+  const defaultMonth = React.useMemo(() => {
+    // Si hay una fecha seleccionada, mostrar ese mes
+    if (value && value instanceof Date && !isNaN(value.getTime())) {
+      return value;
+    }
+    // Si no hay fecha seleccionada, mostrar el mes actual
+    return new Date();
+  }, [value]);
+
+  return (
+    <div className={className}>
+      {label && (
+        <Label className="text-foreground text-sm font-medium px-1 mb-2 block">
+          {label}
+        </Label>
+      )}
+      <ShadcnPopover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <ShadcnButton
+            variant="outline"
+            className={`w-full justify-between font-normal ${buttonClassName}`}
+            disabled={disabled}
+          >
+            {formatDisplayValue(value)}
+            <CalendarIcon className="ml-2 h-4 w-4" />
+          </ShadcnButton>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <ShadcnCalendar
+            mode="single"
+            selected={value}
+            onSelect={handleSelect}
+            captionLayout={captionLayout}
+            disabled={isDateDisabled}
+            defaultMonth={defaultMonth} // Enfocar automáticamente en el mes de la fecha seleccionada
+            initialFocus
+          />
+        </PopoverContent>
+      </ShadcnPopover>
+    </div>
+  );
+}
+
+function AriaDatePickerComponent({
+  value,
+  onChange,
+  label,
+  disabled = false,
+  disableDates,
+  className = "",
+  buttonClassName = "",
+  icon,
+}: DatePickerProps) {
+  // Convertir el valor de Date a DateValue - mejorado
   const ariaValue = React.useMemo(() => {
-    // Si no hay valor, retornar undefined de manera consistente
-    if (!value) return undefined;
-
-    // Validar que sea una fecha válida antes de convertir
-    if (!(value instanceof Date) || isNaN(value.getTime()) || value.toString() === 'Invalid Date') {
-      return undefined; // Mantener undefined para fechas inválidas
-    }
-
-    // Validar que el año esté en un rango razonable
-    const year = value.getFullYear();
-    if (year < 1000 || year > 9999) {
-      return undefined; // Mantener undefined para años fuera de rango
-    }
-
+    if (!value) return null;
     return dateToDateValue(value);
   }, [value]);
 
-  // Handler para cambios desde React Aria
+  // Handler para cambios - simplificado y corregido
   const handleChange = React.useCallback((newValue: DateValue | null) => {
     if (!onChange) return;
 
     if (!newValue) {
       onChange(undefined);
     } else {
-      onChange(dateValueToDate(newValue));
+      try {
+        const jsDate = dateValueToDate(newValue);
+        onChange(jsDate);
+      } catch (error) {
+        console.warn('Error converting date value:', error);
+      }
     }
   }, [onChange]);
 
-  // Función para validar fechas deshabilitadas
+  // Función para validar fechas deshabilitadas - mejorada siguiendo el patrón del ejemplo
   const isDateUnavailable = React.useCallback((date: DateValue) => {
     if (!disableDates) return false;
-    const jsDate = dateValueToDate(date);
-    return disableDates(jsDate);
+    try {
+      const jsDate = dateValueToDate(date);
+      return disableDates(jsDate);
+    } catch {
+      return true;
+    }
   }, [disableDates]);
 
   return (
-    <AriaDatePicker
+    <ReactAriaDatePicker
       className={`*:not-first:mt-2 ${className}`}
-      value={ariaValue || null}
+      value={ariaValue}
       onChange={handleChange}
       isDisabled={disabled}
       isDateUnavailable={isDateUnavailable}
@@ -172,6 +218,16 @@ export function DatePicker({
           <Calendar />
         </Dialog>
       </Popover>
-    </AriaDatePicker>
+    </ReactAriaDatePicker>
   );
+}
+
+export function DatePicker(props: DatePickerProps) {
+  const { calendarType = "aria", ...rest } = props;
+
+  if (calendarType === "shadcn") {
+    return <ShadcnDatePicker {...rest} />;
+  }
+
+  return <AriaDatePickerComponent {...rest} />;
 }

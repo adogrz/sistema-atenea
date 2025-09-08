@@ -261,13 +261,47 @@ export default function DatosPersonales() {
                                     </FormLabel>
                                     <FormControl>
                                         <DatePicker
+                                            calendarType="shadcn" // Usar shadcn para tener selección de año con dropdowns
+                                            captionLayout="dropdown" // Habilitar dropdowns para año y mes
                                             value={
                                                 field.value
                                                     ? (() => {
                                                           try {
-                                                              // Intentar parsear la fecha, manejando diferentes formatos
-                                                              const date = new Date(field.value);
-                                                              return isNaN(date.getTime()) ? undefined : date;
+                                                              // Si es string, convertir a Date
+                                                              if (typeof field.value === 'string') {
+                                                                  // Manejo mejorado de parsing de fecha
+                                                                  const parts = field.value.split('-');
+                                                                  if (parts.length === 3) {
+                                                                      const year = parseInt(parts[0], 10);
+                                                                      const month = parseInt(parts[1], 10) - 1; // Los meses en Date son 0-based
+                                                                      const day = parseInt(parts[2], 10);
+
+                                                                      // Validar que los valores sean números válidos
+                                                                      if (isNaN(year) || isNaN(month) || isNaN(day)) {
+                                                                          return undefined;
+                                                                      }
+
+                                                                      const date = new Date(year, month, day);
+
+                                                                      // Verificar que la fecha sea válida y corresponda a los valores dados
+                                                                      if (
+                                                                          isNaN(date.getTime()) ||
+                                                                          date.getFullYear() !== year ||
+                                                                          date.getMonth() !== month ||
+                                                                          date.getDate() !== day
+                                                                      ) {
+                                                                          return undefined;
+                                                                      }
+
+                                                                      return date;
+                                                                  }
+                                                                  return undefined;
+                                                              }
+                                                              // Si ya es Date, usarla directamente
+                                                              if (field.value instanceof Date && !isNaN(field.value.getTime())) {
+                                                                  return field.value;
+                                                              }
+                                                              return undefined;
                                                           } catch {
                                                               return undefined;
                                                           }
@@ -276,23 +310,17 @@ export default function DatosPersonales() {
                                             }
                                             onChange={(date) => {
                                                 // Convertir la fecha a string en formato ISO (YYYY-MM-DD)
-                                                if (date) {
+                                                if (date && date instanceof Date && !isNaN(date.getTime())) {
                                                     const year = date.getFullYear();
                                                     const month = String(date.getMonth() + 1).padStart(2, '0');
                                                     const day = String(date.getDate()).padStart(2, '0');
-                                                    field.onChange(`${year}-${month}-${day}`);
+                                                    const dateString = `${year}-${month}-${day}`;
+                                                    field.onChange(dateString);
                                                 } else {
                                                     field.onChange('');
                                                 }
                                                 // Validar inmediatamente después del cambio
                                                 form.trigger('fecha_nacimiento');
-                                            }}
-                                            disableDates={(date) => {
-                                                // Deshabilitar fechas que no permitan edades entre 6 y 20 años
-                                                const today = new Date();
-                                                const minDate = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate());
-                                                const maxDate = new Date(today.getFullYear() - 6, today.getMonth(), today.getDate());
-                                                return date < minDate || date > maxDate;
                                             }}
                                         />
                                     </FormControl>
