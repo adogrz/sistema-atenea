@@ -132,15 +132,15 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::get('/dashboard/academic-forms/{event}/edit', function (Evento $event) {
             $mappedEvent = [
                 'id' => $event->id,
-                'name' => $event->nombre,
-                'type' => $event->clasificacion,
-                'start_date' => $event->fecha_inicio,
-                'end_date' => $event->fecha_fin,
-                'start_time' => $event->hora_inicio,
-                'end_time' => $event->hora_fin,
-                'description' => $event->descripcion,
-                'location' => $event->ubicacion,
-                'status' => $event->estado,
+                'nombre' => $event->nombre,             
+                'clasificacion' => $event->clasificacion, 
+                'fecha_inicio' => $event->fecha_inicio ? $event->fecha_inicio->format('Y-m-d') : null, // ✅ Corregido
+                'fecha_fin' => $event->fecha_fin ? $event->fecha_fin->format('Y-m-d') : null,         // ✅ Corregido
+                'hora_inicio' => $event->hora_inicio,    
+                'hora_fin' => $event->hora_fin,          
+                'descripcion' => $event->descripcion,   
+                'ubicacion' => $event->ubicacion,      
+                'estado' => $event->estado,            
                 'created_at' => $event->created_at,
                 'updated_at' => $event->updated_at,
             ];

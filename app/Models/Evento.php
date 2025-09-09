@@ -21,10 +21,33 @@ class Evento extends Model
     ];
 
     protected $casts = [
-        'fecha_inicio' => 'date:Y-m-d',
-        'fecha_fin' => 'date:Y-m-d', 
-
+        'fecha_inicio' => 'date',
+        'fecha_fin' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+    // Método para obtener el datetime completo de inicio
+    public function getFechaHoraInicioAttribute()
+    {
+        $fecha = Carbon::parse($this->fecha_inicio);
+        if ($this->hora_inicio) {
+            $hora = Carbon::createFromFormat('H:i', $this->hora_inicio);
+            return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(0);
+        }
+        return $fecha->startOfDay(); // 00:00:00 si no hay hora específica
+    }
+
+    // Método para obtener el datetime completo de fin
+    public function getFechaHoraFinAttribute()
+    {
+        $fecha = Carbon::parse($this->fecha_fin);
+        if ($this->hora_fin) {
+            $hora = Carbon::createFromFormat('H:i', $this->hora_fin);
+            return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(59);
+        }
+        return $fecha->endOfDay(); // 23:59:59 si no hay hora específica
+    }
 
     //Definición de los tipos como constantes
     public const CLASIFICACION_REGISTRO = 'registro-aspirantes';
