@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EvaluacionFase;
+use App\Models\Evaluacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 
-class EvaluacionFaseController extends Controller
+class EvaluacionController extends Controller
 {
     protected array $guard = ['id','created_at','updated_at'];
 
     protected function fillableFromRequest(Request $request): array
     {
-        $columns = Schema::getColumnListing('evaluaciones_fase');
+        $columns = Schema::getColumnListing('evaluaciones');
         $allowed = array_values(array_diff($columns, $this->guard));
         return $request->only($allowed);
     }
@@ -20,9 +20,9 @@ class EvaluacionFaseController extends Controller
     public function index(Request $request)
     {
         $perPage = (int) ($request->integer('per_page') ?: 15);
-        $columns = Schema::getColumnListing('evaluaciones_fase');
+        $columns = Schema::getColumnListing('evaluaciones');
 
-        $q = EvaluacionFase::query();
+        $q = Evaluacion::query();
 
         if ($search = $request->string('q')->toString()) {
             $q->where(function ($qq) use ($columns, $search) {
@@ -42,28 +42,28 @@ class EvaluacionFaseController extends Controller
         return response()->json($q->paginate($perPage));
     }
 
-    public function show(EvaluacionFase $evaluacionFase)
+    public function show(Evaluacion $evaluacion)
     {
-        return response()->json($evaluacionFase);
+        return response()->json($evaluacion);
     }
 
     public function store(Request $request)
     {
         $data = $this->fillableFromRequest($request);
-        $ev = EvaluacionFase::create($data);
+        $ev = Evaluacion::create($data);
         return response()->json($ev, 201);
     }
 
-    public function update(Request $request, EvaluacionFase $evaluacionFase)
+    public function update(Request $request, Evaluacion $evaluacion)
     {
         $data = $this->fillableFromRequest($request);
-        $evaluacionFase->fill($data)->save();
-        return response()->json($evaluacionFase);
+        $evaluacion->fill($data)->save();
+        return response()->json($evaluacion);
     }
 
-    public function destroy(EvaluacionFase $evaluacionFase)
+    public function destroy(Evaluacion $evaluacion)
     {
-        $evaluacionFase->delete();
+        $evaluacion->delete();
         return response()->json(['deleted' => true]);
     }
 }

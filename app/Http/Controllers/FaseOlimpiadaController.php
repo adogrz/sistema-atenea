@@ -2,68 +2,108 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DefinicionEvaluacion;
 use App\Models\FaseOlimpiada;
+use App\Models\Olimpiada;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
+use Inertia\Inertia;
+
+use Illuminate\Support\Facades\DB;
 
 class FaseOlimpiadaController extends Controller
 {
-    protected array $guard = ['id','created_at','updated_at'];
-
-    protected function fillableFromRequest(Request $request): array
+    
+    public function store(Request $request, Olimpiada $olimpiada)
     {
-        $columns = Schema::getColumnListing('fases_olimpiadas');
-        $allowed = array_values(array_diff($columns, $this->guard));
-        return $request->only($allowed);
-    }
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:120'],
+            'orden' => ['required', 'integer', 'min:1'],
+            'fecha_inicio' => ['nullable', 'date'],
+            'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
+            'estado' => ['required', 'string', 'in:programada,en_proceso,finalizada,anulada'],
+            'activa' => ['required', 'boolean'],
+            'observaciones' => ['nullable', 'string'],
+            'definicion_evaluacion_id' => ['nullable', 'integer', 'exists:definiciones_evaluacion,id'],
+        ]);
 
-    public function index(Request $request)
-    {
-        $perPage = (int) ($request->integer('per_page') ?: 15);
-        $columns = Schema::getColumnListing('fases_olimpiadas');
+        // Check for unique order within the same olympiad
+        $exists = $olimpiada->fases()->where('orden', $validated['orden'])->exists();
 
-        $q = FaseOlimpiada::query();
-
-        if ($search = $request->string('q')->toString()) {
-            $q->where(function ($qq) use ($columns, $search) {
-                foreach ($columns as $col) {
-                    $qq->orWhere($col, 'LIKE', '%'.$search.'%');
-                }
-            });
+        if ($exists) {
+            return back()->withErrors(['orden' => 'El número de orden ya existe para esta olimpiada.'])->withInput();
         }
 
-        foreach ($request->all() as $key => $val) {
-            if (in_array($key, $columns, true) && $val !== null && $key !== 'q' && $key !== 'per_page') {
-                $q->where($key, $val);
+        $olimpiada->fases()->create($validated);
+
+        return redirect()->back()->with('success', 'Fase creada exitosamente.');
+    }
+
+    public function update(Request $request, FaseOlimpiada $fase)
+    {
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:120'],
+            'orden' => ['required', 'integer', 'min:1'],
+            'fecha_inicio' => ['nullable', 'date'],
+            'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
+            'estado' => ['required', 'string', 'in:programada,en_proceso,finalizada,anulada'],
+            'activa' => ['required', 'boolean'],
+            'observaciones' => ['nullable', 'string'],
+            'definicion_evaluacion_id' => ['nullable', 'integer', 'exists:definiciones_evaluacion,id'],
+        ]);
+
+        // Check for unique order within the same olympiad, excluding the current phase
+        $exists = FaseOlimpiada::where('olimpiada_id', $fase->olimpiada_id)
+            ->where('orden', $validated['orden'])
+            ->where('id', '!=', $fase->id)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['orden' => 'El número de orden ya existe para esta olimpiada.'])->withInput();
+        }
+
+        $fase->update($validated);
+
+        return redirect()->back()->with('success', 'Fase actualizada exitosamente.');
+    }
+
+    public function destroy(FaseOlimpiada $fase)
+    {
+        try {
+            $fase->delete();
+            return redirect()->back()->with('success', 'Fase eliminada exitosamente.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->back()->with('error', 'No se puede eliminar la fase porque tiene registros asociados.');
+        }
+    }
+
+    public function reorder(Request $request, FaseOlimpiada $fase)
+    {
+        $request->validate([
+            'direction' => ['required', 'string', 'in:up,down'],
+        ]);
+
+        $direction = $request->input('direction');
+        $currentOrder = $fase->orden;
+
+        DB::transaction(function () use ($fase, $direction, $currentOrder) {
+            if ($direction === 'up') {
+                $other = FaseOlimpiada::where('olimpiada_id', $fase->olimpiada_id)
+                    ->where('orden', '<', $currentOrder)
+                    ->orderBy('orden', 'desc')
+                    ->first();
+            } else { // down
+                $other = FaseOlimpiada::where('olimpiada_id', $fase->olimpiada_id)
+                    ->where('orden', '>', $currentOrder)
+                    ->orderBy('orden', 'asc')
+                    ->first();
             }
-        }
 
-        $q->orderBy($request->get('order_by', 'id'), $request->get('order_dir', 'desc'));
-        return response()->json($q->paginate($perPage));
-    }
+            if ($other) {
+                $fase->update(['orden' => $other->orden]);
+                $other->update(['orden' => $currentOrder]);
+            }
+        });
 
-    public function show(FaseOlimpiada $faseOlimpiada)
-    {
-        return response()->json($faseOlimpiada);
-    }
-
-    public function store(Request $request)
-    {
-        $data = $this->fillableFromRequest($request);
-        $fase = FaseOlimpiada::create($data);
-        return response()->json($fase, 201);
-    }
-
-    public function update(Request $request, FaseOlimpiada $faseOlimpiada)
-    {
-        $data = $this->fillableFromRequest($request);
-        $faseOlimpiada->fill($data)->save();
-        return response()->json($faseOlimpiada);
-    }
-
-    public function destroy(FaseOlimpiada $faseOlimpiada)
-    {
-        $faseOlimpiada->delete();
-        return response()->json(['deleted' => true]);
+        return redirect()->back()->with('success', 'Fase reordenada exitosamente.');
     }
 }

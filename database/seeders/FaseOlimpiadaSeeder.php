@@ -27,6 +27,7 @@ class FaseOlimpiadaSeeder extends Seeder
                 'fecha_inicio' => Carbon::now(),
                 'fecha_fin' => Carbon::now()->addDays(14),
                 'activa' => true,
+                'definicion_evaluacion_id' => 1, // Link to the seeded evaluation definition
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -38,6 +39,7 @@ class FaseOlimpiadaSeeder extends Seeder
                 'fecha_inicio' => Carbon::now(),
                 'fecha_fin' => Carbon::now()->addDays(28),
                 'activa' => true,
+                'definicion_evaluacion_id' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -49,6 +51,7 @@ class FaseOlimpiadaSeeder extends Seeder
                 'fecha_inicio' => Carbon::now(),
                 'fecha_fin' => Carbon::now()->addDays(42),
                 'activa' => true,
+                'definicion_evaluacion_id' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

@@ -5,7 +5,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 
-import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays, GraduationCapIcon} from 'lucide-react';
+import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays, GraduationCapIcon, Trophy} from 'lucide-react';
 
 import AppLogo from './app-logo';
 
@@ -36,6 +36,15 @@ export function AppSidebar() {
                           },
                       ]
                     : []),
+            ],
+        },
+        {
+            title: 'Olimpiadas',
+            icon: Trophy,
+            items: [
+                { title: 'Olimpiadas y Fases', href: route('olimpiadas.index'), icon: GraduationCap },
+                { title: 'Dashboard de Calificador', href: route('calificaciones.olimpiadas.index'), icon: ClipboardListIcon },
+                { title: 'Asignación de Evaluadores', href: route('gestion-evaluacion.index'), icon: ShieldCheck },
             ],
         },
         ...(hasPermission('academic:view') ? [{

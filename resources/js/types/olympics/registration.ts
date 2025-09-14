@@ -29,6 +29,7 @@ export interface Estudiante {
     segundo_nombre: string;
     primer_apellido: string;
     segundo_apellido: string;
+    nombre_completo: string;
     sexo: string;
     fecha_nacimiento: string;
     centro_educativo: string;
@@ -42,34 +43,70 @@ export interface Estudiante {
     aprobado: boolean;
 }
 
-export interface FaseOlimpiada {
-    numero_fase: number;
+// Updated and new interfaces
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    email_verified_at: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Area {
+    id: number; // Changed to number for consistency with foreign keys
+    name: string;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}
+
+export interface DefinicionEvaluacion {
     id: number;
     nombre: string;
-    fecha_inicio: Date;
-    fecha_fin: Date;
+    descripcion: string | null;
+    creada_por: number; // Assuming this is a user ID
+    estado: string;
+    bloqueada: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Olimpiada {
+    id: number;
+    nombre: string;
+    descripcion: string | null;
+    fecha_inicio: string; // YYYY-MM-DD format
+    fecha_fin: string;   // YYYY-MM-DD format
+    area_id: number;
     activa: boolean;
-    descripcion: string;
-    olimpiada: {
-        nombre: string;
-        area: Area;
-        descripcion: string;
-        fecha_inicio: Date;
-        fecha_fin: Date;
-        activa: boolean;
-    }
+    created_at: string;
+    updated_at: string;
+    area?: Area; // Eager loaded relationship
+    fases?: FaseOlimpiada[]; // Eager loaded relationship
+}
+
+export interface FaseOlimpiada {
+    id: number;
+    olimpiada_id: number;
+    nombre: string;
+    orden: number;
+    estado: 'programada' | 'en_proceso' | 'finalizada' | 'anulada';
+    fecha_inicio: string | null; // YYYY-MM-DD HH:MM:SS format
+    fecha_fin: string | null;   // YYYY-MM-DD HH:MM:SS format
+    activa: boolean;
+    observaciones: string | null;
+    definicion_evaluacion_id: number | null;
+    created_at: string;
+    updated_at: string;
+    definicion_evaluacion?: DefinicionEvaluacion; // Eager loaded relationship
 }
 
 export interface Inscripcion {
     id: number;
-    estado: any;
+    estado: any; // Consider defining a more specific type for estado
     codigo_estudiante: string;
     fase_id: number;
     fecha_inscripcion: Date;
-}
-
-export interface Area {
-    id: string | number;
-    name: string;
-    description: string;
 }

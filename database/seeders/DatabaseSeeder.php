@@ -11,32 +11,28 @@ class DatabaseSeeder extends Seeder
     {
         // Generar datos de prueba
         $this->call([
-            // No modificar orden de carga
+            // --- ESTRUCTURA BASE ---
             PermissionSeeder::class,
             SedeSeeder::class,
             AreaSeeder::class,
-            // USUARIOS
-            EssentialUserSeeder::class,
-            // CATALOGOS
+            EssentialUserSeeder::class, // Includes admins and calificadores
+
+            // --- CATÁLOGOS ---
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
             DistritoSeeder::class,
             NivelEducativoSeeder::class,
             CentroEducativoSeeder::class,
-
-            
-            // TEST DATA
-            OlimpiadaSeeder::class,
-            FaseOlimpiadaSeeder::class,
             EstadoInscripcionSeeder::class,
-            DefinicionEvaluacionSeeder::class,
-            InscripcionOlimpiadaSeeder::class,
-            ItemDefinidoSeeder::class,
-            EvaluacionFaseSeeder::class,
-            ItemEvaluadoSeeder::class,
-        ]);
 
-        // Crear estudiantes de prueba
-        Estudiante::factory(20)->create();
+            // --- DATOS DE OLIMPIADA BASE ---
+            OlimpiadaSeeder::class,
+            DefinicionEvaluacionSeeder::class, // Defines the rubric
+            ItemDefinidoSeeder::class, // Defines the items for the rubric
+            FaseOlimpiadaSeeder::class, // Creates phases and links them to the rubric
+
+            // --- DATOS DE PRUEBA INTERCONECTADOS ---
+            TestDataSeeder::class, // Creates students, enrollments, evaluations, and assignments
+        ]);
     }
 }

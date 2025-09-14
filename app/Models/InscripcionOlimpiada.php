@@ -35,7 +35,7 @@ class InscripcionOlimpiada extends Model
 
     public function evaluacionesFase()
     {
-        return $this->hasMany(EvaluacionFase::class, 'inscripcion_id');
+        return $this->hasMany(Evaluacion::class, 'inscripcion_id');
     }
 
     public function bitacoras()
@@ -64,7 +64,7 @@ class InscripcionOlimpiada extends Model
     }
     public function evaluaciones()
     {
-        return $this->hasMany(EvaluacionFase::class, 'inscripcion_id');
+        return $this->hasMany(Evaluacion::class, 'inscripcion_id');
     }
 
     /**

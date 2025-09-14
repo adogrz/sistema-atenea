@@ -2,22 +2,29 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ItemEvaluado extends Model
 {
+    use HasFactory;
+
     protected $table = 'items_evaluados';
+
     protected $fillable = [
-        'evaluacion_fase_id', 'item_definido_id', 'puntaje', 'observacion',
-        'calificado_por', 'calificado_en'
+        'evaluacion_id',
+        'item_definido_id',
+        'puntaje',
+        'observacion',
     ];
 
-    public function evaluacionFase()
+    public function evaluacion(): BelongsTo
     {
-        return $this->belongsTo(EvaluacionFase::class, 'evaluacion_fase_id');
+        return $this->belongsTo(Evaluacion::class, 'evaluacion_id');
     }
 
-    public function itemDefinido()
+    public function itemDefinido(): BelongsTo
     {
         return $this->belongsTo(ItemDefinido::class, 'item_definido_id');
     }

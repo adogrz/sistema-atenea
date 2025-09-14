@@ -11,6 +11,7 @@ use App\Http\Controllers\AdmisionController;
 use App\Models\Evento;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CalificacionOlimpiadaController;
+use App\Http\Controllers\FaseOlimpiadaController;
 use App\Http\Controllers\InscripcionOlimpiadaController;
 use App\Http\Controllers\OlimpiadaController;
 
@@ -64,6 +65,12 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             Route::delete('/{olimpiada}', [OlimpiadaController::class, 'destroy'])->name('destroy');
         });
 
+        // Fases de Olimpiadas
+        Route::prefix('fases')->name('fases.')->group(function () {
+            Route::get('/', [FaseOlimpiadaController::class, 'index'])->name('index');
+            Route::get('/crear', [FaseOlimpiadaController::class, 'create'])->name('create');
+        });
+        
         // Inscripciones
         Route::prefix('inscripciones')->name('inscripciones.')->group(function () {
             Route::get('/', [InscripcionOlimpiadaController::class, 'index'])->name('index');
@@ -89,16 +96,13 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             Route::prefix('olimpiadas')->name('olimpiadas.')->controller(CalificacionOlimpiadaController::class)->group(function () {
                 // Dashboard del calificador (lista reclamadas/finalizadas/disponibles + filtros)
                 Route::get('/', 'index')->name('index');
-
-                Route::get('/{inscripcion}/edit', 'edit')->name('edit');
-                Route::match(['put', 'patch'], '/{inscripcion}', 'update')->name('update');
-
-                // Mini-endpoints de concurrencia (claims)
-                Route::post('/{inscripcion}/claim', 'claim')->name('claim');
-                Route::post('/{inscripcion}/heartbeat', 'heartbeat')->name('heartbeat');
-                Route::post('/{inscripcion}/release', 'release')->name('release');
+                Route::get('evaluacion/{evaluacion}', 'edit')->name('edit');
+                Route::put('evaluacion/{evaluacion}', 'update')->name('update');
             });
         });
+
+        Route::post('fases/{fase}/reorder', [FaseOlimpiadaController::class, 'reorder'])->name('fases.reorder');
+        Route::get('gestion-evaluacion', [OlimpiadaController::class, 'showGestionEvaluacion'])->name('gestion-evaluacion.index');
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])

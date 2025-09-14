@@ -91,4 +91,14 @@ class Estudiante extends Model
     {
         return $this->belongsTo(Distrito::class, 'distrito', 'id');
     }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function getNombreCompletoAttribute(): string
+    {
+        return trim("{$this->primer_nombre} {$this->segundo_nombre} {$this->primer_apellido} {$this->segundo_apellido}");
+    }
 }

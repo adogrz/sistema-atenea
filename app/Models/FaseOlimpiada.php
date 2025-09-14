@@ -30,7 +30,16 @@ class FaseOlimpiada extends Model
         'fecha_fin',
         'activa',
         'descripcion',
+        'definicion_evaluacion_id',
     ];
+
+    /**
+     * Relación: pertenece a una definicion de evaluacion
+     */
+    public function definicionEvaluacion(): BelongsTo
+    {
+        return $this->belongsTo(DefinicionEvaluacion::class, 'definicion_evaluacion_id');
+    }
 
     /**
      * The attributes that should be cast to native types.
@@ -69,5 +78,10 @@ class FaseOlimpiada extends Model
         return $query->where('activa', true)
             ->whereDate('fecha_inicio', '<=', $hoy)
             ->whereDate('fecha_fin', '>=', $hoy);
+    }
+
+    public function itemsDefinidos(): HasMany
+    {
+        return $this->hasMany(ItemDefinido::class, 'fase_olimpiada_id');
     }
 }

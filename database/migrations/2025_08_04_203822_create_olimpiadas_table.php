@@ -18,7 +18,6 @@ return new class extends Migration
             $table->date('fecha_inicio');
             $table->date('fecha_fin');
             $table->foreignId('area_id')->constrained('areas');
-
             $table->boolean('activa')->default(true); // Control de visibilidad
             $table->timestamps();
         });

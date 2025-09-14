@@ -29,6 +29,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        InscripcionOlimpiada::observe(InscripcionOlimpiadaObserver::class);
+        //
     }
 }

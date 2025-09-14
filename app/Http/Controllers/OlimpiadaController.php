@@ -2,72 +2,90 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Area;
 use App\Models\Olimpiada;
+use App\Models\DefinicionEvaluacion;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\ValidationException;
+use App\Models\User;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class OlimpiadaController extends Controller
 {
-    protected array $guard = ['id','created_at','updated_at'];
-
-    protected function fillableFromRequest(Request $request): array
+    public function index(Request $request): Response
     {
-        $columns = Schema::getColumnListing('olimpiadas');
-        $allowed = array_values(array_diff($columns, $this->guard));
-        return $request->only($allowed);
+        $olimpiadas = Olimpiada::with([
+            'area',
+            'fases' => function ($query) {
+                $query->orderBy('orden', 'asc');
+            },
+            'fases.definicionEvaluacion'
+        ])
+            ->orderBy('fecha_inicio', 'desc')
+            ->get();
+
+        return Inertia::render('olympics/index', [
+            'olimpiadas' => $olimpiadas,
+            'areas' => Area::all(),
+            'definiciones_evaluacion' => DefinicionEvaluacion::all(),
+        ]);
     }
 
-    public function index(Request $request)
+    public function showGestionEvaluacion(): Response
     {
-        $perPage = (int) ($request->integer('per_page') ?: 15);
-        $columns = Schema::getColumnListing('olimpiadas');
-
-        $q = Olimpiada::query();
-
-        // Simple "q" search across string columns
-        if ($search = $request->string('q')->toString()) {
-            $q->where(function ($qq) use ($columns, $search) {
-                foreach ($columns as $col) {
-                    $qq->orWhere($col, 'LIKE', '%'.$search.'%');
-                }
-            });
-        }
-
-        // Column-based filters
-        foreach ($request->all() as $key => $val) {
-            if (in_array($key, $columns, true) && $val !== null && $key !== 'q' && $key !== 'per_page') {
-                $q->where($key, $val);
+        $olimpiadas = Olimpiada::with([
+            'fases.itemsDefinidos.calificadores' => function ($query) {
+                $query->select('users.id', 'users.name'); // Select only needed fields
             }
-        }
+        ])->orderBy('nombre')->get();
 
-        $q->orderBy($request->get('order_by', 'id'), $request->get('order_dir', 'desc'));
+        $calificadores = User::role('calificador')->orderBy('name')->get(['id', 'name']);
 
-        return response()->json($q->paginate($perPage));
-    }
-
-    public function show(Olimpiada $olimpiada)
-    {
-        return response()->json($olimpiada);
+        return Inertia::render('Olimpiadas/GestionEvaluacion', [
+            'olimpiadas' => $olimpiadas,
+            'calificadores' => $calificadores,
+        ]);
     }
 
     public function store(Request $request)
     {
-        $data = $this->fillableFromRequest($request);
-        $olimpiada = Olimpiada::create($data);
-        return response()->json($olimpiada, 201);
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'descripcion' => ['nullable', 'string'],
+            'fecha_inicio' => ['required', 'date'],
+            'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
+            'area_id' => ['required', 'integer', 'exists:areas,id'],
+            'activa' => ['required', 'boolean'],
+        ]);
+
+        Olimpiada::create($validated);
+
+        return redirect()->route('olimpiadas.index')->with('success', 'Olimpiada creada exitosamente.');
     }
 
     public function update(Request $request, Olimpiada $olimpiada)
     {
-        $data = $this->fillableFromRequest($request);
-        $olimpiada->fill($data)->save();
-        return response()->json($olimpiada);
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'descripcion' => ['nullable', 'string'],
+            'fecha_inicio' => ['required', 'date'],
+            'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
+            'area_id' => ['required', 'integer', 'exists:areas,id'],
+            'activa' => ['required', 'boolean'],
+        ]);
+
+        $olimpiada->update($validated);
+
+        return redirect()->back()->with('success', 'Olimpiada actualizada exitosamente.');
     }
 
     public function destroy(Olimpiada $olimpiada)
     {
-        $olimpiada->delete();
-        return response()->json(['deleted' => true]);
+        try {
+            $olimpiada->delete();
+            return redirect()->back()->with('success', 'Olimpiada eliminada exitosamente.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->back()->with('error', 'No se puede eliminar la olimpiada porque tiene fases u otros registros asociados.');
+        }
     }
 }

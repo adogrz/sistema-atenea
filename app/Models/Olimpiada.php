@@ -44,4 +44,9 @@ class Olimpiada extends Model
     {
         return $query->where('area_id', $area);
     }
+
+    public function inscripciones(): HasMany
+    {
+        return $this->hasMany(InscripcionOlimpiada::class, 'olimpiada_id');
+    }
 }

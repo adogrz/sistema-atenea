@@ -10,7 +10,7 @@ class DefinicionEvaluacion extends Model
     protected $fillable = ['nombre', 'descripcion', 'creada_por', 'estado', 'bloqueada'];
 
     public function itemsDefinidos()
-    {
-        return $this->hasMany(ItemDefinido::class, 'definicion_id');
-    }
+        {
+            return $this->hasMany(ItemDefinido::class, 'definicion_evaluacion_id');
+        }
 }
