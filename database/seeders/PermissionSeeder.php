@@ -55,22 +55,57 @@ class PermissionSeeder extends Seeder
                 'areas:delete',
                 'areas:assign'
             ],
+            'clinical-assignments' => [
+                'assignments:manage-medical', // Gestionar asignaciones de estudiantes a doctores
+                'assignments:manage-psychological', // Gestionar asignaciones de estudiantes a psicólogos
+            ],
+            'medical-records' => [
+                'medical-records:view',         // Ver la información general y lista de consultas de un expediente
+                'medical-records:create',       // Crear el expediente de un estudiante por primera vez
+                'medical-records:edit',         // Editar la información general (antecedentes) de un expediente
+                'medical-records:view-all',     // Permiso de supervisor para ver cualquier expediente médico
+            ],
+            'medical-consultations' => [
+                'medical-consultations:create',     // Añadir una nueva consulta a un expediente existente
+                'medical-consultations:edit-own',   // Editar una consulta que el propio doctor creó
+                'medical-consultations:delete-own', // Eliminar una consulta que el propio doctor creó
+                'medical-consultations:generate-report', // Generar un reporte PDF del historial de consultas
+            ],
+            'psychological-records' => [
+                'psychological-records:view',
+                'psychological-records:create',
+                'psychological-records:edit',
+                'psychological-records:view-all',
+            ],
+            'psychological-sessions' => [
+                'psychological-sessions:create',
+                'psychological-sessions:edit-own',
+                'psychological-sessions:delete-own',
+                'psychological-sessions:generate-report',
+            ],
+            'consent-forms' => [
+                'consent-forms:create',
+                'consent-forms:view',
+                'consent-forms:manage', // Para adjuntar/validar documentos
+            ],
             'auditing' => [
                 'audit:view',
                 'logs:view',
                 'logs:export',
+                'audit:medical-view',   // Ver SOLO los logs relacionados al módulo médico
+                'audit:psychological-view', // Ver SOLO los logs relacionados al módulo psicológico
             ],
             'events' => [
-            'events:view',
-            'events:create',
-            'events:edit',
-            'events:delete',
-            'events:export',
+                'events:view',
+                'events:create',
+                'events:edit',
+                'events:delete',
+                'events:export',
             ],
             'academic' => [
-            'academic:view',
-            'academic:manage',
-        ],
+                'academic:view',
+                'academic:manage',
+            ],
         ];
     }
 
@@ -155,49 +190,87 @@ class PermissionSeeder extends Seeder
             'coordinador-area' => [
                 'description' => 'Coordinador de Área',
                 'groups' => ['general'],
-                'permissions' => ['users:view-sede', 'users:view-area', 'users:list',
-                                  'users:create', 'users:edit', 'roles:assign'],
-                'inherits' => [],
-                'exclude_permissions' => []
-            ],
-            'jefe-psicologia' => [
-                'description' => 'Jefe de Psicología',
-                'groups' => ['general'],
                 'permissions' => [
                     'users:view-sede',
+                    'users:view-area',
                     'users:list',
                     'users:create',
                     'users:edit',
                     'roles:assign'
                 ],
-                'inherits' => ['psicologo'],
+                'inherits' => [],
                 'exclude_permissions' => []
             ],
             'psicologo' => [
                 'description' => 'Psicólogo',
-                'groups' => ['general'],
-                'permissions' => ['users:view-sede', 'users:list'],
-                'inherits' => [],
-                'exclude_permissions' => []
-            ],
-            'jefe-medicina' => [
-                'description' => 'Jefe de Medicina',
-                'groups' => ['general'],
+                'groups' => ['general', 'psychological-sessions'],
                 'permissions' => [
                     'users:view-sede',
                     'users:list',
+                    // Permisos para expedientes psicológicos
+                    'psychological-records:view',
+                    'psychological-records:create',
+                    // Permisos básicos de consentimiento informado
+                    'consent-forms:create',
+                    'consent-forms:view',
+                ],
+                'inherits' => [],
+                'exclude_permissions' => [
+                    // Por seguridad no puede borrar sesiones por defecto
+                    'psychological-sessions:delete-own'
+                ]
+            ],
+            'jefe-psicologia' => [
+                'description' => 'Jefe de Psicología',
+                'groups' => [],
+                'permissions' => [
                     'users:create',
                     'users:edit',
-                    'roles:assign'
+                    'roles:assign',
+                    'assignments:manage-psychological',
+                    'psychological-records:view-all', // Puede ver todos los expedientes
+                    'psychological-records:edit',     // Puede editar la info general de cualquier expediente
+                    'psychological-sessions:delete-own', // Anula la exclusión heredada
+                    'consent-forms:manage',           // Puede gestionar los documentos adjuntos
+                    'audit:psychological-view'
                 ],
-                'inherits' => ['doctor'],
+                'inherits' => ['psicologo'],
                 'exclude_permissions' => []
             ],
             'doctor' => [
                 'description' => 'Doctor',
-                'groups' => ['general'],
-                'permissions' => ['users:view-sede', 'users:list'],
+                'groups' => ['general', 'medical-consultations'],
+                'permissions' => [
+                    'users:view-sede',
+                    'users:list',
+                    // Permisos para expedientes médicos
+                    'medical-records:view',
+                    'medical-records:create',
+                    // Permisos básicos de consentimiento informado
+                    'consent-forms:create',
+                    'consent-forms:view',
+                ],
                 'inherits' => [],
+                'exclude_permissions' => [
+                    // Por seguridad no puede borrar consultas por defecto
+                    'medical-consultations:delete-own'
+                ]
+            ],
+            'jefe-medicina' => [
+                'description' => 'Jefe de Medicina',
+                'groups' => [],
+                'permissions' => [
+                    'users:create',
+                    'users:edit',
+                    'roles:assign',
+                    'assignments:manage-medical',
+                    'medical-records:view-all',
+                    'medical-records:edit',
+                    'medical-consultations:delete-own', // Anula la exclusión heredada
+                    'consent-forms:manage',           // Puede gestionar los documentos adjuntos
+                    'audit:medical-view'
+                ],
+                'inherits' => ['doctor'],
                 'exclude_permissions' => []
             ],
             'mentor' => [
