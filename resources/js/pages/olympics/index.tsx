@@ -15,12 +15,18 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from 'sonner';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
+import { BreadcrumbItem } from '@/types';
 
 interface OlimpiadasIndexProps extends PageProps {
     olimpiadas: Olimpiada[];
     areas: Area[];
     definiciones_evaluacion: DefinicionEvaluacion[];
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { label: 'Inicio', href: '/' },
+    { label: 'Olimpiadas', href: '/olympics' },
+];
 
 const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, definiciones_evaluacion }) => {
     const { flash } = usePage().props as any;
@@ -154,11 +160,11 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, definiciones
     ], []);
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de Olimpiadas" />
 
             <div className="p-4 md:p-8">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 mt-4">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">Gestión de Olimpiadas</h2>
                         <p className="text-muted-foreground">

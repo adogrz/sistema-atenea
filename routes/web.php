@@ -8,12 +8,15 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
+use App\Http\Controllers\AsignacionCalificadorController;
 use App\Models\Evento;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CalificacionOlimpiadaController;
+use App\Http\Controllers\DefinicionEvaluacionController;
 use App\Http\Controllers\FaseOlimpiadaController;
 use App\Http\Controllers\InscripcionOlimpiadaController;
 use App\Http\Controllers\OlimpiadaController;
+use Illuminate\Container\Attributes\Auth;
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -103,6 +106,17 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
 
         Route::post('fases/{fase}/reorder', [FaseOlimpiadaController::class, 'reorder'])->name('fases.reorder');
         Route::get('gestion-evaluacion', [OlimpiadaController::class, 'showGestionEvaluacion'])->name('gestion-evaluacion.index');
+        Route::post('asignaciones/sync-for-item', [AsignacionCalificadorController::class, 'syncForItem'])->name('asignaciones.syncForItem');
+
+        // Definiciones de Evaluación
+        Route::prefix('definiciones-evaluacion')->name('definiciones-evaluacion.')->group(function () {
+            Route::get('/', [DefinicionEvaluacionController::class, 'index'])->name('index');
+            Route::get('/crear', [DefinicionEvaluacionController::class, 'create'])->name('create');
+            Route::post('/', [DefinicionEvaluacionController::class, 'store'])->name('store');
+            Route::get('/{definicionEvaluacion}/editar', [DefinicionEvaluacionController::class, 'edit'])->name('edit');
+            Route::put('/{definicionEvaluacion}', [DefinicionEvaluacionController::class, 'update'])->name('update');
+            Route::delete('/{definicionEvaluacion}', [DefinicionEvaluacionController::class, 'destroy'])->name('destroy');
+        });
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])

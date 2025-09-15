@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { BreadcrumbItem } from '@/types';
 
 const GestionEvaluacion = ({ olimpiadas, calificadores }) => {
     const [selectedOlimpiadaId, setSelectedOlimpiadaId] = useState<string | undefined>();
@@ -49,8 +50,13 @@ const GestionEvaluacion = ({ olimpiadas, calificadores }) => {
         });
     };
 
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Olimpiadas', href: '/dashboard/olimpiadas' },
+        { title: 'Gestión de Evaluación', href: '/dashboard/olimpiadas/gestion-evaluacion' }
+    ];
+
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de Evaluación" />
             <div className="p-4 md:p-8">
                 <div className="mb-6">
@@ -138,9 +144,8 @@ const GestionEvaluacion = ({ olimpiadas, calificadores }) => {
                                                 }}
                                             >
                                                 <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary ${data.calificador_ids.includes(calificador.id) ? 'bg-primary text-primary-foreground' : 'opacity-50 [&_svg]:invisible'}`}>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                                                 </div>
-                                                {calificador.name}
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>
@@ -159,3 +164,4 @@ const GestionEvaluacion = ({ olimpiadas, calificadores }) => {
 };
 
 export default GestionEvaluacion;
+;

@@ -66,4 +66,10 @@ export interface SharedData {
     [key: string]: unknown;
 }
 
-export type PageProps = SharedData;
+import { DefinicionEvaluacion, ItemDefinido } from './olympics';
+
+export type PageProps = SharedData & {
+    definicionEvaluacion?: DefinicionEvaluacion;
+    definiciones?: DefinicionEvaluacion[];
+    itemDefinido?: ItemDefinido;
+};

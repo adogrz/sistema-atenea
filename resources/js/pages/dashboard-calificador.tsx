@@ -5,13 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { BreadcrumbItem } from '@/types';
 
 const DashboardCalificador = ({ evaluaciones }) => {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Inicio', href: route('dashboard') },
+        { title: 'Olimpiadas', href: route('olimpiadas.index') }, // Placeholder route
+        { title: 'Dashboard de Calificador', href: route('calificaciones.olimpiadas.index') },
+    ];
+
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard del Calificador" />
             <div className="p-4 md:p-8">
-                <Card>
+                <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Evaluaciones Pendientes</CardTitle>
                         <CardDescription>

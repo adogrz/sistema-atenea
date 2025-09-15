@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { BreadcrumbItem } from '@/type';
+import { title } from 'process';
 
 const ScoreEntry = ({ evaluacion, itemsEvaluados, assignedItemIds }) => {
     const { data, setData, put, processing, errors } = useForm({
@@ -38,8 +40,14 @@ const ScoreEntry = ({ evaluacion, itemsEvaluados, assignedItemIds }) => {
     const assignedItems = itemsEvaluados.filter(item => assignedItemIds.includes(item.item_definido_id));
     const otherItems = itemsEvaluados.filter(item => !assignedItemIds.includes(item.item_definido_id));
 
+    // Define breadcrumbs for navigation
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Olimpiadas', href: route('dashboard.calificaciones.olimpiadas.index') },
+        { title: `Calificar a ${evaluacion.inscripcion.estudiante.nombre_completo}` }
+    ];
+
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Calificar a ${evaluacion.inscripcion.estudiante.nombre_completo}`} />
             <div className="p-4 md:p-8">
                 <Card>

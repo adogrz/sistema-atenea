@@ -45,6 +45,7 @@ export function AppSidebar() {
                 { title: 'Olimpiadas y Fases', href: route('olimpiadas.index'), icon: GraduationCap },
                 { title: 'Dashboard de Calificador', href: route('calificaciones.olimpiadas.index'), icon: ClipboardListIcon },
                 { title: 'Asignación de Evaluadores', href: route('gestion-evaluacion.index'), icon: ShieldCheck },
+                { title: 'Definiciones de Evaluación', href: route('definiciones-evaluacion.index'), icon: ClipboardListIcon },
             ],
         },
         ...(hasPermission('academic:view') ? [{
