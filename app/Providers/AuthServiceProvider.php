@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Assignment;
 use App\Models\User;
+use App\Policies\AssignmentPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -16,6 +18,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         // Aquí es donde registramos nuestras políticas
         User::class => UserPolicy::class,
+        Assignment::class => AssignmentPolicy::class,
     ];
 
     /**
