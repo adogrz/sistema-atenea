@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Estudiante extends Model
@@ -106,5 +107,13 @@ class Estudiante extends Model
     public function getDireccionCompleta(): string
     {
         return $this->direccion?->getDireccionFormateadaAttribute() ?? 'Sin dirección';
+    }
+
+    /**
+     * Asignaciones clinicas del estudiante
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(Assignment::class, 'student_nie', 'nie');
     }
 }

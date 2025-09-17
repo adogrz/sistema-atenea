@@ -168,4 +168,28 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Estudiante::class, 'codigo_estudiante', 'codigo');
     }
+
+    /**
+     * Asignaciones como profesional
+     */
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class, 'professional_id');
+    }
+
+    /**
+     * Asignaciones médicas activas
+     */
+    public function medicalAssignments()
+    {
+        return $this->assignments()->medical()->active();
+    }
+
+    /**
+     * Asignaciones psicológicas activas
+     */
+    public function psychologicalAssignments()
+    {
+        return $this->assignments()->psychological()->active();
+    }
 }

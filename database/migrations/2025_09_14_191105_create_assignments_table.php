@@ -15,12 +15,20 @@ return new class extends Migration
             $table->id();
             $table->string('student_nie');
             $table->foreignId('professional_id')->constrained('users');
-            $table->string('type'); // 'clinico' o 'psicologico'
+            $table->enum('type', ['medical', 'psychological']);
             $table->boolean('is_active')->default(true);
+            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('student_nie')->references('nie')->on('estudiantes');
-            $table->unique(['student_nie', 'professional_id', 'type']);
+
+            // Index para optimizacion de consultas
+            $table->index(['professional_id', 'is_active']);
+            $table->index(['student_nie', 'type']);
+            $table->index(['type', 'is_active']);
+
+            // Constraint único: Un estudiante no puede tener duplicados activos del mismo tipo
+            $table->index(['student_nie', 'type', 'is_active', 'deleted_at'], 'idx_unique_check');
         });
     }
 
