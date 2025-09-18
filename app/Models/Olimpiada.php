@@ -13,15 +13,11 @@ class Olimpiada extends Model
     protected $fillable = [
         'nombre',
         'descripcion',
-        'fecha_inicio',
-        'fecha_fin',
         'area_id', // Relación con el área académica
         'activa',
     ];
 
     protected $casts = [
-        'fecha_inicio' => 'date',
-        'fecha_fin' => 'date',
         'activa' => 'boolean',
     ];
 

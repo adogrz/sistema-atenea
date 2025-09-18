@@ -24,13 +24,15 @@ class FaseOlimpiada extends Model
      */
     protected $fillable = [
         'olimpiada_id',
-        'numero_fase',
         'nombre',
-        'fecha_inicio',
-        'fecha_fin',
-        'activa',
         'descripcion',
         'definicion_evaluacion_id',
+        'cupos',
+        'nota_minima_aprobacion',
+        'fecha_inicio_inscripcion',
+        'fecha_fin_inscripcion',
+        'resultados_publicados',
+        'orden',
     ];
 
     /**
@@ -48,8 +50,11 @@ class FaseOlimpiada extends Model
      */
     protected $casts = [
         'activa' => 'boolean',
-        'fecha_inicio' => 'date',
-        'fecha_fin' => 'date',
+        'cupos' => 'integer',
+        'nota_minima_aprobacion' => 'float',
+        'fecha_inicio_inscripcion' => 'datetime',
+        'fecha_fin_inscripcion' => 'datetime',
+        'resultados_publicados' => 'boolean',
     ];
 
     /**
@@ -68,17 +73,7 @@ class FaseOlimpiada extends Model
         return $this->hasMany(InscripcionOlimpiada::class, 'fase_id');
     }
 
-    /**
-     * Scope: fases vigentes (activas y dentro del rango de fechas)
-     */
-    public function scopeVigentes(Builder $query): Builder
-    {
-        $hoy = Carbon::today();
-
-        return $query->where('activa', true)
-            ->whereDate('fecha_inicio', '<=', $hoy)
-            ->whereDate('fecha_fin', '>=', $hoy);
-    }
+    
 
     public function itemsDefinidos(): HasMany
     {

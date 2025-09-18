@@ -21,7 +21,7 @@ class OlimpiadaController extends Controller
             },
             'fases.definicionEvaluacion'
         ])
-            ->orderBy('fecha_inicio', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('olympics/index', [
@@ -52,8 +52,6 @@ class OlimpiadaController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'descripcion' => ['nullable', 'string'],
-            'fecha_inicio' => ['required', 'date'],
-            'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
             'area_id' => ['required', 'integer', 'exists:areas,id'],
             'activa' => ['required', 'boolean'],
         ]);
@@ -68,8 +66,6 @@ class OlimpiadaController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'descripcion' => ['nullable', 'string'],
-            'fecha_inicio' => ['required', 'date'],
-            'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
             'area_id' => ['required', 'integer', 'exists:areas,id'],
             'activa' => ['required', 'boolean'],
         ]);

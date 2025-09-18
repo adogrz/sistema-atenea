@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');               // Ej: Olimpiada Matemática 2025
             $table->text('descripcion')->nullable();  // Detalles generales
-            $table->date('fecha_inicio');
-            $table->date('fecha_fin');
             $table->foreignId('area_id')->constrained('areas');
             $table->boolean('activa')->default(true); // Control de visibilidad
             $table->timestamps();

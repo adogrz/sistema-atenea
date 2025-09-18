@@ -14,7 +14,9 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\CalificacionOlimpiadaController;
 use App\Http\Controllers\DefinicionEvaluacionController;
 use App\Http\Controllers\FaseOlimpiadaController;
+use App\Http\Controllers\FaseGestionController;
 use App\Http\Controllers\InscripcionOlimpiadaController;
+use App\Http\Controllers\AreaDashboardController;
 use App\Http\Controllers\OlimpiadaController;
 use Illuminate\Container\Attributes\Auth;
 
@@ -72,6 +74,8 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::prefix('fases')->name('fases.')->group(function () {
             Route::get('/', [FaseOlimpiadaController::class, 'index'])->name('index');
             Route::get('/crear', [FaseOlimpiadaController::class, 'create'])->name('create');
+            Route::put('/{fase}/gestion', [FaseGestionController::class, 'update'])->name('gestion.update');
+            Route::post('/{fase}/publish-results', [FaseGestionController::class, 'publishResults'])->name('gestion.publishResults');
         });
         
         // Inscripciones
@@ -83,6 +87,10 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             Route::put('/{inscripcion}', [InscripcionOlimpiadaController::class, 'update'])->name('update');
             Route::delete('/{inscripcion}', [InscripcionOlimpiadaController::class, 'destroy'])->name('destroy');
         });
+
+        Route::get('/area', [AreaDashboardController::class, 'index'])
+            ->name('area.dashboard')
+            ->middleware('role:coordinador-area');
 
         /**
          * Calificaciones (dashboard del calificador + flujo de edición)

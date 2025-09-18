@@ -39,8 +39,6 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, definiciones
     const { data, setData, post, put, delete: destroy, processing, errors, reset } = useForm({
         nombre: '',
         descripcion: '',
-        fecha_inicio: '',
-        fecha_fin: '',
         area_id: '',
         activa: true,
     });
@@ -65,8 +63,6 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, definiciones
         setData({
             nombre: olimpiada.nombre,
             descripcion: olimpiada.descripcion || '',
-            fecha_inicio: olimpiada.fecha_inicio,
-            fecha_fin: olimpiada.fecha_fin,
             area_id: String(olimpiada.area_id),
             activa: olimpiada.activa,
         });
@@ -122,8 +118,6 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, definiciones
     const columns: ColumnDef<Olimpiada>[] = useMemo(() => [
         { accessorKey: 'nombre', header: 'Nombre' },
         { accessorKey: 'area.name', header: 'Área' },
-        { accessorKey: 'fecha_inicio', header: 'Fecha de Inicio' },
-        { accessorKey: 'fecha_fin', header: 'Fecha de Fin' },
         {
             accessorKey: 'activa',
             header: 'Activa',
@@ -207,20 +201,6 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, definiciones
                                 value={data.descripcion}
                                 onChange={(e) => setData('descripcion', e.target.value)}
                                 error={errors.descripcion}
-                            />
-                            <Input
-                                type="date"
-                                label="Fecha de Inicio"
-                                value={data.fecha_inicio}
-                                onChange={(e) => setData('fecha_inicio', e.target.value)}
-                                error={errors.fecha_inicio}
-                            />
-                            <Input
-                                type="date"
-                                label="Fecha de Fin"
-                                value={data.fecha_fin}
-                                onChange={(e) => setData('fecha_fin', e.target.value)}
-                                error={errors.fecha_fin}
                             />
                             <Select
                                 value={String(data.area_id)}
