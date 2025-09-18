@@ -192,4 +192,12 @@ class User extends Authenticatable
     {
         return $this->assignments()->psychological()->active();
     }
+
+    /**
+     * Expedientes médicos creados por el usuario
+     */
+    public function medicalRecords()
+    {
+        return $this->hasMany(MedicalRecord::class, 'created_by');
+    }
 }

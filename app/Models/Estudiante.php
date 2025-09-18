@@ -116,4 +116,12 @@ class Estudiante extends Model
     {
         return $this->hasMany(Assignment::class, 'student_nie', 'nie');
     }
+
+    /**
+     * Expediente médico del estudiante
+     */
+    public function medicalRecord(): HasOne
+    {
+        return $this->hasOne(MedicalRecord::class, 'student_nie', 'nie');
+    }
 }

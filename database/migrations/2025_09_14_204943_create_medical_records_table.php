@@ -16,9 +16,12 @@ return new class extends Migration
             $table->string('student_nie')->unique();
             $table->text('general_background')->nullable(); // Para antecedentes, alergias, etc.
             $table->foreignId('created_by')->constrained('users');
+            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('student_nie')->references('nie')->on('estudiantes');
+
+            $table->index('created_by');
         });
     }
 

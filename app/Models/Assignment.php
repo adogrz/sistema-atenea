@@ -16,6 +16,13 @@ class Assignment extends Model
     public const TYPE_PSYCHOLOGICAL = 'psychological';
 
     /**
+     * The relationships that should always be loaded.
+     *
+     * @var array<int, string>
+     */
+    protected $with = ['student', 'professional'];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
