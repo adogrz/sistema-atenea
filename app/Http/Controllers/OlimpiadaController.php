@@ -14,13 +14,7 @@ class OlimpiadaController extends Controller
 {
     public function index(Request $request): Response
     {
-        $olimpiadas = Olimpiada::with([
-            'area',
-            'fases' => function ($query) {
-                $query->orderBy('orden', 'asc');
-            },
-            'fases.definicionEvaluacion'
-        ])
+        $olimpiadas = Olimpiada::with('area')
             ->orderBy('created_at', 'desc')
             ->get();
 

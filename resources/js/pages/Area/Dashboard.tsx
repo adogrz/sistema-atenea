@@ -1,125 +1,174 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head, usePage, router, useForm } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { Olimpiada, FaseOlimpiada } from '@/types/olympics';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-interface AreaDashboardProps extends PageProps {
-    olimpiadas: Olimpiada[];
-    selectedFase: FaseOlimpiada | null;
-    faseDetails: any;
+interface PhaseStat {
+    id: number;
+    nombre: string;
+    total_inscripciones: number;
+    evaluaciones_completadas: number;
+    progreso: number;
 }
 
-const AreaDashboard: React.FC<AreaDashboardProps> = ({ olimpiadas, selectedFase, faseDetails }) => {
-    const [selectedOlimpiadaId, setSelectedOlimpiadaId] = useState<number | null>(null);
+interface OlimpiadaWithStats {
+    id: number;
+    nombre: string;
+    year: number;
+    fases: PhaseStat[];
+}
 
-    const { data, setData, put, processing, errors } = useForm({
-        cupos: selectedFase?.cupos || '',
-        nota_minima_aprobacion: selectedFase?.nota_minima_aprobacion || '',
-        fecha_inicio_inscripcion: selectedFase?.fecha_inicio_inscripcion || '',
-        fecha_fin_inscripcion: selectedFase?.fecha_fin_inscripcion || '',
-    });
+interface AreaDashboardProps extends PageProps {
+    olimpiadasWithStats: OlimpiadaWithStats[];
+    availableYears: number[];
+}
 
-    useEffect(() => {
-        if (selectedFase) {
-            setData({
-                cupos: selectedFase.cupos || '',
-                nota_minima_aprobacion: selectedFase.nota_minima_aprobacion || '',
-                fecha_inicio_inscripcion: selectedFase.fecha_inicio_inscripcion || '',
-                fecha_fin_inscripcion: selectedFase.fecha_fin_inscripcion || '',
+const COLORS = ['#0088FE', '#FFBB28', '#FF8042'];
+
+const AreaDashboard: React.FC<AreaDashboardProps> = ({ olimpiadasWithStats, availableYears }) => {
+    const [selectedYear, setSelectedYear] = useState<string>('all');
+    const [selectedYear, setSelectedYear] = useState<string>('all');
+    const [selectedOlimpiadaId, setSelectedOlimpiadaId] = useState<string>('all');
+
+    const filteredOlimpiadas = useMemo(() => {
+        if (selectedYear === 'all') {
+            return olimpiadasWithStats;
+        }
+        return olimpiadasWithStats.filter(o => o.year === parseInt(selectedYear));
+    }, [selectedYear, olimpiadasWithStats]);
+
+    const filteredPhases = useMemo(() => {
+        let phases = filteredOlimpiadas.flatMap(o => o.fases.map(f => ({ ...f, olimpiada_nombre: o.nombre })));
+
+        if (selectedOlimpiadaId !== 'all') {
+            const numericOlimpiadaId = parseInt(selectedOlimpiadaId);
+            phases = phases.filter(p => {
+                const parentOlimpiada = filteredOlimpiadas.find(o => o.fases.some(f => f.id === p.id));
+                return parentOlimpiada?.id === numericOlimpiadaId;
             });
         }
-    }, [selectedFase]);
+        return phases;
+    }, [selectedOlimpiadaId, filteredOlimpiadas]);
 
-    const handleFaseSelect = (faseId: number) => {
-        router.get(route('area.dashboard', { fase_id: faseId }), {}, { preserveState: true });
-    };
+    const chartData = useMemo(() => {
+        return filteredPhases.map(phase => ({
+            name: phase.nombre,
+            uv: phase.total_inscripciones,
+        }));
+    }, [filteredPhases]);
 
-    const handleUpdateFase = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (selectedFase) {
-            put(route('fases.gestion.update', selectedFase.id));
-        }
-    };
-
-    const handlePublishResults = () => {
-        if (selectedFase) {
-            if (confirm('¿Está seguro de que desea publicar los resultados? Esta acción es irreversible.')) {
-                router.post(route('fases.gestion.publishResults', selectedFase.id));
-            }
-        }
-    };
-
-    const selectedOlimpiada = olimpiadas.find(o => o.id === selectedOlimpiadaId);
+    const pieData = useMemo(() => {
+        const totalEvaluaciones = filteredPhases.reduce((acc, phase) => acc + phase.total_inscripciones, 0);
+        const totalCompletadas = filteredPhases.reduce((acc, phase) => acc + phase.evaluaciones_completadas, 0);
+        return [
+            { name: 'Completadas', value: totalCompletadas },
+            { name: 'Pendientes', value: totalEvaluaciones - totalCompletadas },
+        ];
+    }, [filteredPhases]);
 
     return (
         <AppLayout>
             <Head title="Dashboard de Área" />
             <div className="p-4 md:p-8">
-                <h2 className="text-2xl font-bold tracking-tight mb-4">Centro de Control de Fases</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="col-span-1">
-                        <h3 className="text-lg font-semibold mb-2">Olimpiadas</h3>
-                        <div className="space-y-2">
-                            {olimpiadas.map((olimpiada) => (
-                                <div key={olimpiada.id}>
-                                    <h4 className="font-semibold p-2 rounded-lg cursor-pointer" onClick={() => setSelectedOlimpiadaId(olimpiada.id)}>{olimpiada.nombre}</h4>
-                                    {selectedOlimpiadaId === olimpiada.id && (
-                                        <div className="ml-4 space-y-1">
-                                            {olimpiada.fases.map((fase) => (
-                                                <div key={fase.id}
-                                                     className={`p-2 rounded-lg cursor-pointer ${selectedFase?.id === fase.id ? 'bg-gray-200' : 'bg-gray-100'}`}
-                                                     onClick={() => handleFaseSelect(fase.id)}>
-                                                    <p>{fase.nombre}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold tracking-tight">Resumen del Área</h2>
+                    <div className="flex items-center space-x-2">
+                        <Select value={selectedYear} onValueChange={setSelectedYear}>
+                            <SelectTrigger className="w-40">
+                                <SelectValue placeholder="Filtrar por año..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los Años</SelectItem>
+                                {availableYears.map(y => (
+                                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={selectedOlimpiadaId} onValueChange={setSelectedOlimpiadaId}>
+                            <SelectTrigger className="w-64">
+                                <SelectValue placeholder="Filtrar por olimpiada..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas las Olimpiadas</SelectItem>
+                                {filteredOlimpiadas.map(o => (
+                                    <SelectItem key={o.id} value={String(o.id)}>{o.nombre}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <div className="col-span-2">
-                        {selectedFase && (
-                            <div>
-                                <h3 className="text-lg font-semibold mb-2">Detalles de {selectedFase.nombre}</h3>
-                                
-                                <div className="mb-4 p-4 bg-white rounded-lg shadow">
-                                    <h4 className="font-semibold mb-2">Progreso de Calificación</h4>
-                                    <p>{faseDetails.evaluaciones_completadas} / {faseDetails.total_inscripciones} Evaluaciones Completadas</p>
-                                </div>
+                </div>
 
-                                <form onSubmit={handleUpdateFase} className="mb-4 p-4 bg-white rounded-lg shadow">
-                                    <h4 className="font-semibold mb-2">Actualizar Parámetros de la Fase</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <Input label="Cupos" type="number" value={data.cupos} onChange={e => setData('cupos', e.target.value)} error={errors.cupos} />
-                                        <Input label="Nota Mínima de Aprobación" type="number" value={data.nota_minima_aprobacion} onChange={e => setData('nota_minima_aprobacion', e.target.value)} error={errors.nota_minima_aprobacion} />
-                                        <Input label="Fecha Inicio Inscripción" type="datetime-local" value={data.fecha_inicio_inscripcion} onChange={e => setData('fecha_inicio_inscripcion', e.target.value)} error={errors.fecha_inicio_inscripcion} />
-                                        <Input label="Fecha Fin Inscripción" type="datetime-local" value={data.fecha_fin_inscripcion} onChange={e => setData('fecha_fin_inscripcion', e.target.value)} error={errors.fecha_fin_inscripcion} />
-                                    </div>
-                                    <Button type="submit" className="mt-4" disabled={processing}>Actualizar Fase</Button>
-                                </form>
-
-                                <div className="p-4 bg-white rounded-lg shadow">
-                                    <h4 className="font-semibold mb-2">Publicar Resultados</h4>
-                                    <Button onClick={handlePublishResults} disabled={selectedFase.resultados_publicados}>
-                                        {selectedFase.resultados_publicados ? 'Resultados Publicados' : 'Publicar Resultados'}
-                                    </Button>
-                                </div>
-
-                                <div className="mt-4 p-4 bg-white rounded-lg shadow">
-                                    <h4 className="font-semibold mb-2">Inscripciones</h4>
-                                    <ul>
-                                        {faseDetails.inscripciones.map((inscripcion: any) => (
-                                            <li key={inscripcion.id}>{inscripcion.estudiante.nombre}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Columna Principal - Lista de Fases */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {filteredPhases.length > 0 ? (
+                            filteredPhases.map(phase => (
+                                <Card key={phase.id}>
+                                    <CardHeader>
+                                        <CardTitle>{phase.nombre}</CardTitle>
+                                        <CardDescription>Olimpiada: {phase.olimpiada_nombre}</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-sm font-medium">Progreso de Calificación</span>
+                                            <span className="text-sm font-bold">{phase.evaluaciones_completadas} / {phase.total_inscripciones}</span>
+                                        </div>
+                                        <Progress value={phase.progreso} />
+                                    </CardContent>
+                                </Card>
+                            ))
+                        ) : (
+                            <Card className="flex items-center justify-center h-64">
+                                <CardContent className="text-center">
+                                    <p className="text-muted-foreground">No hay fases para los filtros seleccionados.</p>
+                                </CardContent>
+                            </Card>
                         )}
+                    </div>
+
+                    {/* Columna Lateral - Gráficos */}
+                    <div className="lg:col-span-1 space-y-6">
+                        <h3 className="text-xl font-semibold">Estadísticas Clave</h3>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Inscripciones por Fase</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Legend />
+                                        <Bar dataKey="uv" fill="#8884d8" name="Participantes" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Estado General de Evaluaciones</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <PieChart>
+                                        <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                                            {pieData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>

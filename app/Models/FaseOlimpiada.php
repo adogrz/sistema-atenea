@@ -66,11 +66,11 @@ class FaseOlimpiada extends Model
     }
 
     /**
-     * Relación: tiene muchas inscripciones
+     * Relación: tiene muchas evaluaciones, que representan los participantes en esta fase.
      */
-    public function inscripciones(): HasMany
+    public function evaluaciones(): HasMany
     {
-        return $this->hasMany(InscripcionOlimpiada::class, 'fase_id');
+        return $this->hasMany(Evaluacion::class, 'fase_olimpiada_id');
     }
 
     
