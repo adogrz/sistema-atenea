@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface PhaseStat {
@@ -13,6 +15,7 @@ interface PhaseStat {
     total_inscripciones: number;
     evaluaciones_completadas: number;
     progreso: number;
+    resultados_publicados: boolean;
 }
 
 interface OlimpiadaWithStats {
@@ -30,7 +33,6 @@ interface AreaDashboardProps extends PageProps {
 const COLORS = ['#0088FE', '#FFBB28', '#FF8042'];
 
 const AreaDashboard: React.FC<AreaDashboardProps> = ({ olimpiadasWithStats, availableYears }) => {
-    const [selectedYear, setSelectedYear] = useState<string>('all');
     const [selectedYear, setSelectedYear] = useState<string>('all');
     const [selectedOlimpiadaId, setSelectedOlimpiadaId] = useState<string>('all');
 
@@ -69,6 +71,18 @@ const AreaDashboard: React.FC<AreaDashboardProps> = ({ olimpiadasWithStats, avai
             { name: 'Pendientes', value: totalEvaluaciones - totalCompletadas },
         ];
     }, [filteredPhases]);
+
+    const publicarNotas = (phaseId: number) => {
+        router.post(`/fases/${phaseId}/publish-results`, {}, {
+            onSuccess: () => {
+                toast.success('¡Notas publicadas exitosamente!');
+            },
+            onError: () => {
+                toast.error('Error al publicar las notas. Inténtalo de nuevo.');
+            },
+            preserveScroll: true,
+        });
+    };
 
     return (
         <AppLayout>
@@ -117,7 +131,19 @@ const AreaDashboard: React.FC<AreaDashboardProps> = ({ olimpiadasWithStats, avai
                                             <span className="text-sm font-medium">Progreso de Calificación</span>
                                             <span className="text-sm font-bold">{phase.evaluaciones_completadas} / {phase.total_inscripciones}</span>
                                         </div>
-                                        <Progress value={phase.progreso} />
+                                        <Progress value={phase.progreso} className="mb-4" />
+
+                                        {phase.resultados_publicados ? (
+                                            <p className="text-sm font-semibold text-green-600 text-center">Notas publicadas</p>
+                                        ) : (
+                                            <Button
+                                                onClick={() => publicarNotas(phase.id)}
+                                                disabled={phase.progreso < 100 || phase.total_inscripciones === 0}
+                                                className="w-full"
+                                            >
+                                                Publicar Notas
+                                            </Button>
+                                        )}
                                     </CardContent>
                                 </Card>
                             ))

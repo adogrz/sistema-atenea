@@ -51,6 +51,7 @@ class AreaDashboardController extends Controller
                     'total_inscripciones' => $totalParticipantes,
                     'evaluaciones_completadas' => $evaluacionesCompletadas,
                     'progreso' => $totalParticipantes > 0 ? round(($evaluacionesCompletadas / $totalParticipantes) * 100) : 0,
+                    'resultados_publicados' => $fase->resultados_publicados,
                 ];
             });
 
