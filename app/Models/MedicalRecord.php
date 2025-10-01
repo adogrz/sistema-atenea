@@ -47,6 +47,14 @@ class MedicalRecord extends Model
     }
 
     /**
+     * Consultas médicas asociadas a este expediente.
+     */
+    public function medicalConsultations()
+    {
+        return $this->hasMany(MedicalConsultation::class, 'medical_record_id');
+    }
+
+    /**
      * Scope para filtrar por estudiante.
      */
     public function scopeForStudent(Builder $query, string $studentNie): Builder

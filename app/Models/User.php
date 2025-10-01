@@ -202,6 +202,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Consultas médicas realizadas por el profesional
+     */
+    public function medicalConsultations()
+    {
+        return $this->hasMany(MedicalConsultation::class, 'doctor_id');
+    }
+
+    /**
      * Consentimientos registrados por el profesional
      */
     public function consentForms()

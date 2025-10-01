@@ -20,7 +20,12 @@ return new class extends Migration
             $table->text('diagnosis');
             $table->text('treatment')->nullable();
             $table->text('observations')->nullable();
+            $table->softDeletes();
             $table->timestamps();
+
+            $table->index('consultation_date');
+            $table->index(['medical_record_id', 'consultation_date']);
+            $table->index(['doctor_id', 'consultation_date']);
         });
     }
 

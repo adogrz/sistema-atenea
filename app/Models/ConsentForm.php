@@ -71,6 +71,14 @@ class ConsentForm extends Model
     }
 
     /**
+     * Consultas médicas asociadas a este consentimiento.
+     */
+    public function medicalConsultations()
+    {
+        return $this->hasMany(MedicalConsultation::class, 'consent_form_id');
+    }
+
+    /**
      * Scope para filtrar por tipo de consentimiento.
      */
     public function scopeByType(Builder $query, string $type): Builder
