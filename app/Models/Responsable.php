@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Responsable extends Model
 {
@@ -36,5 +37,13 @@ class Responsable extends Model
     public function estudiante(): BelongsTo
     {
         return $this->belongsTo(Estudiante::class, 'codigo_estudiante', 'codigo');
+    }
+
+    /**
+     * Tiene consentimientos del estudiante
+     */
+    public function consentForms(): HasMany
+    {
+        return $this->hasMany(ConsentForm::class, 'responsible_id');
     }
 }

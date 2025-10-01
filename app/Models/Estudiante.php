@@ -124,4 +124,12 @@ class Estudiante extends Model
     {
         return $this->hasOne(MedicalRecord::class, 'student_nie', 'nie');
     }
+
+    /**
+     * Consentimientos del estudiante
+     */
+    public function consentForms(): HasMany
+    {
+        return $this->hasMany(ConsentForm::class, 'student_nie', 'nie');
+    }
 }

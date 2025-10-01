@@ -200,4 +200,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(MedicalRecord::class, 'created_by');
     }
+
+    /**
+     * Consentimientos registrados por el profesional
+     */
+    public function consentForms()
+    {
+        return $this->hasMany(ConsentForm::class, 'professional_id');
+    }
 }

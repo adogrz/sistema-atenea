@@ -16,13 +16,17 @@ return new class extends Migration
             $table->string('student_nie');
             $table->foreignId('responsible_id')->constrained('responsables');
             $table->foreignId('professional_id')->constrained('users');
-            $table->string('type'); // 'medical' o 'psychological'
+            $table->enum('type', ['medical', 'psychological']);
             $table->date('granted_at');
-            $table->string('file_path'); // Ruta al archivo almacenado en `storage`
+            $table->string('file_path');
             $table->text('observations')->nullable();
+            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('student_nie')->references('nie')->on('estudiantes');
+
+            $table->index(['student_nie', 'type', 'granted_at']);
+            $table->index('type');
         });
     }
 
