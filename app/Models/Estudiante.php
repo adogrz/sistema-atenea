@@ -126,6 +126,14 @@ class Estudiante extends Model
     }
 
     /**
+     * Expediente psicológico del estudiante
+     */
+    public function psychologicalRecord(): HasOne
+    {
+        return $this->hasOne(PsychologicalRecord::class, 'student_nie', 'nie');
+    }
+
+    /**
      * Consentimientos del estudiante
      */
     public function consentForms(): HasMany

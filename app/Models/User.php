@@ -202,6 +202,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Expedientes psicológicos creados por el usuario
+     */
+    public function psychologicalRecords()
+    {
+        return $this->hasMany(PsychologicalRecord::class, 'created_by');
+    }
+
+    /**
      * Consultas médicas realizadas por el profesional
      */
     public function medicalConsultations()
