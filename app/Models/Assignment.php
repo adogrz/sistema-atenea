@@ -60,16 +60,6 @@ class Assignment extends Model
     }
 
     /**
-     * Verifica si la asignación está activa.
-     *
-     * @return bool
-     */
-    public function isActive()
-    {
-        return $this->is_active;
-    }
-
-    /**
      * Scope para obtener solo asignaciones activas.
      */
     public function scopeActive(Builder $query): Builder
@@ -117,12 +107,62 @@ class Assignment extends Model
         return $query->where('type', self::TYPE_PSYCHOLOGICAL);
     }
 
+    /**
+     * Verifica si la asignación está activa
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    /**
+     * Obtiene el tipo de asignación en español
+     */
+    public function getTypeLabel(): string
+    {
+        return $this->type === self::TYPE_MEDICAL ? 'Médica' : 'Psicológica';
+    }
+
+    /**
+     * Obtiene información resumida de la asignación
+     */
+    public function getSummary(): array
+    {
+        return [
+            'student' => $this->student->primer_nombre . ' ' . $this->student->primer_apellido,
+            'nie' => $this->student_nie,
+            'professional' => $this->professional->name,
+            'type_label' => $this->getTypeLabel(),
+            'is_active' => $this->isActive(),
+            'assigned_at' => $this->created_at->format('d/m/Y'),
+        ];
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logOnly(['student_nie', 'professional_id', 'type', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->useLogName('assignment');
+            ->useLogName('assignment')
+            ->setDescriptionForEvent(fn(string $eventName) => "Asignación {$eventName}")
+            ->dontLogIfAttributesChangedOnly(['updated_at']);
+    }
+
+    /**
+     * Personaliza la descripción del evento para los logs de actividad.
+     */
+    public function getDescriptionForEvent(string $eventName): string
+    {
+        $studentName = $this->student->primer_nombre ?? 'N/A';
+        $professionalName = $this->professional->name ?? 'N/A';
+        $typeLabel = $this->getTypeLabel();
+
+        return match ($eventName) {
+            'created' => "Asignación {$typeLabel} creada: {$studentName} → {$professionalName}",
+            'updated' => "Asignación {$typeLabel} de {$studentName} actualizada",
+            'deleted' => "Asignación {$typeLabel} de {$studentName} eliminada",
+            default => "Asignación {$typeLabel} de {$studentName} {$eventName}",
+        };
     }
 }
