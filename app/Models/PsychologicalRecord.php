@@ -47,6 +47,14 @@ class PsychologicalRecord extends Model
     }
 
     /**
+     * Sesiones psicológicas asociadas a este expediente.
+     */
+    public function psychologicalSessions()
+    {
+        return $this->hasMany(PsychologicalSession::class, 'psychological_record_id');
+    }
+
+    /**
      * Scope para filtrar por estudiante.
      */
     public function scopeForStudent(Builder $query, string $studentNie): Builder

@@ -20,7 +20,12 @@ return new class extends Migration
             $table->text('session_content');
             $table->text('test_results')->nullable(); // Resultados de pruebas psicológicas
             $table->text('observations')->nullable();
+            $table->softDeletes();
             $table->timestamps();
+
+            $table->index('session_date');
+            $table->index(['psychological_record_id', 'session_date']);
+            $table->index(['psychologist_id', 'session_date']);
         });
     }
 

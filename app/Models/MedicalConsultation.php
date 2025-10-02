@@ -64,7 +64,7 @@ class MedicalConsultation extends Model
      */
     public function consentForm()
     {
-        return $this->belongsTo(ConsentForm::class);
+        return $this->belongsTo(ConsentForm::class, 'consent_form_id');
     }
 
     /**
@@ -148,6 +148,9 @@ class MedicalConsultation extends Model
         ];
     }
 
+    /**
+     * Configuración para el logging de actividades
+     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

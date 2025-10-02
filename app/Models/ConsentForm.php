@@ -79,6 +79,14 @@ class ConsentForm extends Model
     }
 
     /**
+     * Sesiones psicológicas asociadas a este consentimiento.
+     */
+    public function psychologicalSessions()
+    {
+        return $this->hasMany(PsychologicalSession::class, 'consent_form_id');
+    }
+
+    /**
      * Scope para filtrar por tipo de consentimiento.
      */
     public function scopeByType(Builder $query, string $type): Builder

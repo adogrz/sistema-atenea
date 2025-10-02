@@ -194,7 +194,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Expedientes médicos creados por el usuario
+     * Expedientes médicos creados por el profesional
      */
     public function medicalRecords()
     {
@@ -202,7 +202,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Expedientes psicológicos creados por el usuario
+     * Expedientes psicológicos creados por el profesional
      */
     public function psychologicalRecords()
     {
@@ -215,6 +215,14 @@ class User extends Authenticatable
     public function medicalConsultations()
     {
         return $this->hasMany(MedicalConsultation::class, 'doctor_id');
+    }
+
+    /**
+     * Sesiones psicológicas realizadas por el profesional
+     */
+    public function psychologicalSessions()
+    {
+        return $this->hasMany(PsychologicalSession::class, 'psychologist_id');
     }
 
     /**
