@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('professional_id')->constrained('users');
             $table->enum('type', ['medical', 'psychological']);
             $table->boolean('is_active')->default(true);
+            $table->text('change_justification')->nullable();
             $table->softDeletes();
             $table->timestamps();
 

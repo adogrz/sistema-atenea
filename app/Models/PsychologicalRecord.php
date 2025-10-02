@@ -28,6 +28,7 @@ class PsychologicalRecord extends Model
         'student_nie',
         'initial_assessment',
         'created_by',
+        'change_justification',
     ];
 
     /**
@@ -90,7 +91,7 @@ class PsychologicalRecord extends Model
      * Verifca si el expediente tiene una evaluación inicial.
      */
     public function hasInitialAssessment(): bool
-    {   
+    {
         return !empty($this->initial_assessment);
     }
 
@@ -114,7 +115,7 @@ class PsychologicalRecord extends Model
     public function getActivitylogOptions()
     {
         return LogOptions::defaults()
-        ->logOnly(['student_nie', 'initial_assessment'])
+        ->logOnly(['student_nie', 'initial_assessment', 'change_justification'])
         ->logOnlyDirty()
         ->dontSubmitEmptyLogs()
         ->useLogName('psychological_record')
@@ -130,11 +131,18 @@ class PsychologicalRecord extends Model
         $studentName = $this->student->primer_nombre ?? 'N/A';
         $creatorName = $this->creator->name ?? 'N/A';
 
-        return match ($eventName) {
+        $description = match ($eventName) {
             'created' => "Expediente psicológico creado para {$studentName} por {$creatorName}",
             'updated' => "Expediente psicológico de {$studentName} actualizado",
             'deleted' => "Expediente psicológico de {$studentName} eliminado",
             default => "Expediente psicológico de {$studentName} {$eventName}",
         };
+
+        // Agregar justificación si existe
+        if (!empty($this->change_justification)) {
+            $description .= " | Justificación: {$this->change_justification}";
+        }
+
+        return $description;
     }
 }

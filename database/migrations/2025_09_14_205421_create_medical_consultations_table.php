@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('diagnosis');
             $table->text('treatment')->nullable();
             $table->text('observations')->nullable();
+            $table->text('change_justification')->nullable();
             $table->softDeletes();
             $table->timestamps();
 

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('granted_at');
             $table->string('file_path');
             $table->text('observations')->nullable();
+            $table->text('change_justification')->nullable(); // Justificación de cambios críticos (auditoría)
             $table->softDeletes();
             $table->timestamps();
 

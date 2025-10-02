@@ -32,6 +32,7 @@ class MedicalConsultation extends Model
         'diagnosis',
         'treatment',
         'observations',
+        'change_justification',
     ];
 
     /**
@@ -154,7 +155,7 @@ class MedicalConsultation extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['medical_record_id', 'doctor_id', 'consultation_date', 'diagnosis', 'treatment'])
+            ->logOnly(['medical_record_id', 'doctor_id', 'consultation_date', 'diagnosis', 'treatment', 'change_justification'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('medical_consultation')
@@ -171,11 +172,18 @@ class MedicalConsultation extends Model
         $doctorName = $this->doctor->name ?? 'N/A';
         $date = $this->consultation_date->format('d/m/Y');
 
-        return match ($eventName) {
+        $description = match ($eventName) {
             'created' => "Consulta médica creada para {$studentName} por Dr. {$doctorName} el {$date}",
             'updated' => "Consulta médica de {$studentName} actualizada por Dr. {$doctorName}",
             'deleted' => "Consulta médica de {$studentName} eliminada",
             default => "Consulta médica de {$studentName} {$eventName}",
         };
+
+        // Agregar justificación si existe
+        if (!empty($this->change_justification)) {
+            $description .= " | Justificación: {$this->change_justification}";
+        }
+
+        return $description;
     }
 }

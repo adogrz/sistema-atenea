@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('session_content');
             $table->text('test_results')->nullable(); // Resultados de pruebas psicológicas
             $table->text('observations')->nullable();
+            $table->text('change_justification')->nullable(); // Justificación de cambios críticos (auditoría)
             $table->softDeletes();
             $table->timestamps();
 

@@ -32,6 +32,7 @@ class Assignment extends Model
         'professional_id',
         'type',
         'is_active',
+        'change_justification',
     ];
 
     /**
@@ -141,7 +142,7 @@ class Assignment extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['student_nie', 'professional_id', 'type', 'is_active'])
+            ->logOnly(['student_nie', 'professional_id', 'type', 'is_active', 'change_justification'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('assignment')
@@ -158,11 +159,18 @@ class Assignment extends Model
         $professionalName = $this->professional->name ?? 'N/A';
         $typeLabel = $this->getTypeLabel();
 
-        return match ($eventName) {
+        $description = match ($eventName) {
             'created' => "Asignación {$typeLabel} creada: {$studentName} → {$professionalName}",
             'updated' => "Asignación {$typeLabel} de {$studentName} actualizada",
             'deleted' => "Asignación {$typeLabel} de {$studentName} eliminada",
             default => "Asignación {$typeLabel} de {$studentName} {$eventName}",
         };
+
+        // Agregar justificación si existe
+        if (!empty($this->change_justification)) {
+            $description .= " | Justificación: {$this->change_justification}";
+        }
+
+        return $description;
     }
 }

@@ -32,6 +32,7 @@ class PsychologicalSession extends Model
         'session_content',
         'test_results',
         'observations',
+        'change_justification',
     ];
 
     /**
@@ -135,7 +136,7 @@ class PsychologicalSession extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['psychological_record_id', 'psychologist_id', 'session_date', 'session_content'])
+            ->logOnly(['psychological_record_id', 'psychologist_id', 'session_date', 'session_content', 'change_justification'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('psychological_session')
@@ -152,11 +153,18 @@ class PsychologicalSession extends Model
         $psychologistName = $this->psychologist->name ?? 'N/A';
         $date = $this->session_date->format('d/m/Y');
 
-        return match ($eventName) {
+        $description = match ($eventName) {
             'created' => "Sesión psicológica creada para {$studentName} por {$psychologistName} el {$date}",
             'updated' => "Sesión psicológica de {$studentName} actualizada por {$psychologistName}",
             'deleted' => "Sesión psicológica de {$studentName} eliminada",
             default => "Sesión psicológica de {$studentName} {$eventName}",
         };
+
+        // Agregar justificación si existe
+        if (!empty($this->change_justification)) {
+            $description .= " | Justificación: {$this->change_justification}";
+        }
+
+        return $description;
     }
 }

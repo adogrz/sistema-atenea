@@ -35,6 +35,7 @@ class ConsentForm extends Model
         'granted_at',
         'file_path',
         'observations',
+        'change_justification',
     ];
 
     /**
@@ -182,7 +183,7 @@ class ConsentForm extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['student_nie', 'responsible_id', 'professional_id', 'type', 'granted_at', 'file_path'])
+            ->logOnly(['student_nie', 'responsible_id', 'professional_id', 'type', 'granted_at', 'file_path', 'change_justification'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('consent_form')
@@ -199,11 +200,18 @@ class ConsentForm extends Model
         $responsibleName = $this->responsible->nombres_responsable ?? 'N/A';
         $typeLabel = $this->type === self::TYPE_MEDICAL ? 'médico' : 'psicológico';
 
-        return match ($eventName) {
+        $description = match ($eventName) {
             'created' => "Consentimiento {$typeLabel} creado para {$studentName} por {$responsibleName}",
             'updated' => "Consentimiento {$typeLabel} de {$studentName} actualizado",
             'deleted' => "Consentimiento {$typeLabel} de {$studentName} eliminado",
             default => "Consentimiento {$typeLabel} de {$studentName} {$eventName}",
         };
+
+        // Agregar justificación si existe
+        if (!empty($this->change_justification)) {
+            $description .= " | Justificación: {$this->change_justification}";
+        }
+
+        return $description;
     }
 }

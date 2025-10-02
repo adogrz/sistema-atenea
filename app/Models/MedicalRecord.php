@@ -28,6 +28,7 @@ class MedicalRecord extends Model
         'student_nie',
         'general_background',
         'created_by',
+        'change_justification',
     ];
 
     /**
@@ -115,7 +116,7 @@ class MedicalRecord extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['student_nie', 'general_background'])
+            ->logOnly(['student_nie', 'general_background', 'change_justification'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('medical_record')
@@ -131,11 +132,18 @@ class MedicalRecord extends Model
         $studentName = $this->student->primer_nombre ?? 'N/A';
         $creatorName = $this->creator->name ?? 'N/A';
 
-        return match ($eventName) {
+        $description = match ($eventName) {
             'created' => "Expediente médico creado para {$studentName} por {$creatorName}",
             'updated' => "Expediente médico de {$studentName} actualizado",
             'deleted' => "Expediente médico de {$studentName} eliminado",
             default => "Expediente médico de {$studentName} {$eventName}",
         };
+
+        // Agregar justificación si existe
+        if (!empty($this->change_justification)) {
+            $description .= " | Justificación: {$this->change_justification}";
+        }
+
+        return $description;
     }
 }
