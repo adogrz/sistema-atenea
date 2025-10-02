@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\Assignment;
+use App\Models\User;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,13 +27,21 @@ class AssignmentRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         $rules = [
             'student_nie' => ['required', 'string', 'exists:estudiantes,nie'],
-            'professional_id' => ['required', 'exists:users,id'],
+            'professional_id' => [
+                'required', 
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    if (!$this->validateProfessionalPermissions($value)) {
+                        $fail('El profesional seleccionado no tiene los permisos necesarios para este tipo de asignación.');
+                    }
+                },
+            ],
             'type' => ['required', Rule::in([Assignment::TYPE_MEDICAL, Assignment::TYPE_PSYCHOLOGICAL])],
             'is_active' => ['sometimes', 'boolean'],
         ];
@@ -57,6 +67,29 @@ class AssignmentRequest extends FormRequest
     }
 
     /**
+     * Valida que el profesional tenga los permisos necesarios según el tipo de asignación.
+     *
+     * @param int $professionalId
+     * @return bool
+     */
+    protected function validateProfessionalPermissions(int $professionalId): bool
+    {
+        $professional = User::find($professionalId);
+        
+        if (!$professional) {
+            return false;
+        }
+
+        $type = $this->input('type');
+        
+        return match ($type) {
+            Assignment::TYPE_MEDICAL => $professional->can('medical-records:view'),
+            Assignment::TYPE_PSYCHOLOGICAL => $professional->can('psychological-records:view'),
+            default => false,
+        };
+    }
+
+    /**
      * Get custom messages for validator errors.
      *
      * @return array<string, string>
@@ -71,6 +104,7 @@ class AssignmentRequest extends FormRequest
             'professional_id.exists' => 'El profesional seleccionado no existe.',
             'type.required' => 'Debe especificar el tipo de asignación.',
             'type.in' => 'El tipo de asignación debe ser medical o psychological.',
+            'is_active.boolean' => 'El estado activo debe ser verdadero o falso.',
         ];
     }
 }
