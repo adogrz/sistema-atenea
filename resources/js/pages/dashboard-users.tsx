@@ -232,6 +232,7 @@ export default function DashboardUsers() {
                             className="flex items-center gap-2"
                             onClick={() => setShowResetConfirm(true)}
                             disabled={!selectedUserId || !canResetUserPassword}
+                            id="reset-password-button"
                         >
                             <MailCheck className="size-4" />
                             <span>Enviar enlace de recuperación</span>
@@ -242,6 +243,7 @@ export default function DashboardUsers() {
                             className="flex items-center gap-2"
                             disabled={!canCreateUser}
                             onClick={() => canCreateUser && router.visit('/dashboard/users/create')}
+                            id='add-user-button'
                         >
                             <UserPlus className="size-4" />
                             <span>Agregar</span>
@@ -252,6 +254,7 @@ export default function DashboardUsers() {
                             onClick={() => router.visit(`/dashboard/users/${selectedUserId}/edit`)}
                             disabled={!selectedUser?.can_be_edited}
                             className="flex items-center gap-2"
+                            id='edit-user-button'
                         >
                             <Edit className="size-4" /> Editar
                         </Button>
@@ -262,6 +265,7 @@ export default function DashboardUsers() {
                                     size="sm"
                                     className="flex items-center gap-2 text-red-600 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
                                     disabled={!selectedUser?.can_be_deleted}
+                                    id="delete-user-button"
                                 >
                                     <Trash2 className="size-4" />
                                     <span>Eliminar</span>
