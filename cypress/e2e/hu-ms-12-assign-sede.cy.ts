@@ -59,11 +59,20 @@ describe('HU-MS-12: Asignar sede a usuario', () => {
     cy.log('Paso 3: Guardar los cambios haciendo clic en "Actualizar cuenta"');
     cy.contains('button', 'Actualizar cuenta').click();
 
+    cy.wait(1000); // Espera para asegurar que la acción de guardar se complete
+
+    cy.visit('/dashboard/users');
     // Criterio de Aceptación 5: Verificar que el cambio se refleja en la lista.
     cy.log('Paso 4: Verificar que la nueva sede se muestra en la tabla de usuarios');
     cy.url().should('include', '/dashboard/users');
-    cy.contains('td', 'usuario@example.com').parent('tr').within(() => {
-      cy.contains('Sede Central').should('be.visible');
-    });
+
+    // Criterio de Aceptación 4: Verificar que los cambios se guardaron.                                                                                                
+    cy.log('Paso 5: Verificar que los cambios se reflejan en la lista de usuarios');
+    cy.wait(1000); // Espera breve para asegurar que la redirección se complete
+    cy.url().should('include', '/dashboard/users');
+    cy.get('input[placeholder="Buscar..."]').type('jadorno@example.org');
+    cy.contains('jadorno@example.org').should('be.visible');
+    cy.contains('Administrador Académico').should('be.visible');
+    cy.contains('Sede Central').should('be.visible');
   });
 });

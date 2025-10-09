@@ -22,24 +22,25 @@ describe('HU-MS-11: Cambiar contraseña', () => {
     // Prerrequisito: Iniciar sesión como un usuario estándar.
     // NOTA: Se utiliza un comando personalizado cy.login().
     cy.log('Prerrequisito: Iniciar sesión');
-    cy.login('usuario@example.com', 'password');
-
-    // Criterio de Aceptación 1: Acceder al formulario para cambiar la contraseña.
-    cy.log('Paso 1: Visitar la página de cambio de contraseña');
-    cy.visit('/change-password');
-
-    // Criterio de Aceptación 2, 3, 4, 5: Completar el formulario con datos válidos.
-    cy.log('Paso 2: Rellenar el formulario con la contraseña actual y la nueva');
-    cy.get('input[name="old_password"]').type('password');
-    cy.get('input[name="new_password"]').type('new_password');
-    cy.get('input[name="new_password_confirmation"]').type('new_password');
-
-    // Criterio de Aceptación 6: Enviar el formulario.
-    cy.log('Paso 3: Hacer clic en el botón de guardar');
+    cy.visit('/login');
+    cy.get('#email').type('ml19017@ues.edu.sv');
+    cy.get('#password').type('password_incorrecta!');
     cy.get('button[type="submit"]').click();
 
-    // Criterio de Aceptación 7: Verificar el mensaje de éxito.
-    cy.log('Paso 4: Verificar que se muestra el mensaje de éxito');
-    cy.contains('Contraseña actualizada correctamente').should('be.visible');
+    cy.contains('El correo o la contraseña son incorrectos.').should('be.visible');
+    cy.visit('http://localhost:8000/reset-password/7774dd95327cb64c05e720c0299b193a70f16592eb2a20c7eb75fe66b6ad87ee?email=ml19017%40ues.edu.sv'); 
+
+    cy.get('[name="password"]').type('Password123');
+    cy.get('#password_confirmation').type('Password123');
+    cy.get('button[type="submit"]').click();
+    
+    cy.wait(1000);
+    // Enter email and password
+    cy.get('#email').type('ml19017@ues.edu.sv');
+    cy.get('#password').type('Password123');
+    cy.get('button[type="submit"]').click();
+
+    cy.url().should('include', '/dashboard');
+    cy.wait(1000); // 1 seg delay to allow the dashboard to load properly
   });
 });

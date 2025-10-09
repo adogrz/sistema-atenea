@@ -25,9 +25,11 @@ describe('HU-MS-04: Restablecer contraseña', () => {
 
     // Criterio de Aceptación 3: Al enviar el formulario con un correo válido, el sistema procesa la solicitud.
     cy.log('Paso 3: Ingresar el correo y enviar el formulario');
-    cy.get('input[name="email"]').type('usuario@example.com');
-    cy.get('button[type="submit"]').click();
+    cy.get('input[name="email"]').type('ml19017@ues.edu.sv');
+    cy.contains('Enviar enlace').click();
 
+    cy.wait(1000);
+    cy.contains('Se ha enviado un enlace para restablecer la contraseña a su correo electrónico.').should('be.visible');
     // La aserción final está comentada porque la respuesta del backend (envío de correo) no se puede verificar fácilmente en Cypress sin una infraestructura de prueba de correo.
     // cy.contains('Se ha enviado un enlace para restablecer la contraseña a su correo electrónico.').should('be.visible');
   });

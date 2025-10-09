@@ -34,27 +34,45 @@ describe('HU-MS-08: Crear cuentas de usuario', () => {
 
     // Criterio de Aceptación 2: Completar los campos requeridos.
     cy.log('Paso 2: Rellenar el formulario con los datos del nuevo usuario');
-    cy.get('input#name').type('Nuevo Usuario de Prueba');
-    cy.get('input#email').type('nuevo_usuario_prueba@example.com');
-    cy.get('input[placeholder="Contraseña"]').type('Password123!');
-    cy.get('input[placeholder="••••••••"]').type('Password123!');
+    cy.get('input#name').type('Cristian Mejia');
+    cy.get('input#email').type('ml19017@ues.edu.sv');
 
     cy.log('Paso 2a: Seleccionar Sede');
-    cy.get('div.space-y-2:has(label:contains("Sede"))').find('button').click();
-    cy.contains('[data-slot="select-item"]', 'Sede Central').click();
+    cy.contains('label', 'Sede')
+      .parent()
+      .find('[data-slot="select-trigger"]')
+      .should('be.visible')
+      .click({ force: true });
+    // Espera a que aparezcan las opciones del select
+    cy.get('[data-slot="select-content"]', { timeout: 5000 })
+      .should('be.visible');
+    // Selecciona la opción "Sede Central"
+    cy.contains('[data-slot="select-item"]', 'Sede Central')
+      .click({ force: true });
+    // Verifica que el texto del trigger cambió correctamente
+    cy.get('[data-slot="select-trigger"]').should('contain', 'Sede Central');
 
-    cy.log('Paso 2b: Seleccionar Rol');
-    cy.get('div.flex:has(button:contains("Agregar"))').find('button[role="combobox"]').click();
-    cy.get('input[placeholder="Buscar rol..."]').type('Estudiante');
-    cy.contains('[role="option"]', 'Estudiante').click({force: true});
-    cy.contains('button', 'Agregar').click();
+    cy.log('Paso 2a: Asignar un nuevo rol (Estudiante)');
+    cy.contains('label', 'Roles').parent().find('button[role="combobox"]').should('be.visible').click();
+    cy.get('input[placeholder="Buscar rol..."]').should('be.visible').type('Estudiante');
+    cy.contains('[role="option"]', 'Estudiante').should('be.visible').click();
+    cy.contains('button', 'Agregar').should('be.visible').click();
+
+    // Rellena los campos de contraseña y confirmación
+    cy.get('input[placeholder="Contraseña"]').type('Password123!');
+    cy.get('input[placeholder="••••••••"]').type('Password123!');
 
     // Criterio de Aceptación 3: Enviar el formulario.
     cy.log('Paso 3: Hacer clic en el botón para crear la cuenta');
     cy.contains('button', 'Crear cuenta').click();
-
+    cy.wait(1000); // Espera para asegurar que la acción de guardar se complete
     // Criterio de Aceptación 4: Verificar que el nuevo usuario aparece en la lista.
     cy.log('Paso 4: Verificar que el usuario aparece en la tabla de usuarios');
-    cy.contains('tr', 'nuevo_usuario_prueba@example.com').should('be.visible');
+    cy.wait(1000); // Espera breve para asegurar que la redirección se complete
+    cy.url().should('include', '/dashboard/users');
+    cy.get('input[placeholder="Buscar..."]').type('ml19017@ues.edu.sv');
+    cy.contains('ml19017@ues.edu.sv').should('be.visible');
+    cy.contains('Estudiante').should('be.visible');
+    
   });
 });

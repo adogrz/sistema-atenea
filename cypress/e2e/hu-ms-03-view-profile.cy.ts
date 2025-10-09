@@ -19,6 +19,11 @@ describe('HU-MS-03: Ver información de perfil de usuario', () => {
     cy.get('#password').type('password123');
     cy.get('button[type="submit"]').contains('Iniciar sesión').click();
     cy.url().should('include', '/dashboard');
+    // Verificar que el usuario ha iniciado sesión correctamente
+    cy.contains('Nombre').should('be.visible');
+    cy.contains('Email').should('be.visible');
+    cy.contains('Sede').should('be.visible');
+    cy.contains('Rol').should('be.visible');
 
     // Criterio de Aceptación 1: Un usuario autenticado puede navegar a la página de su perfil.
     cy.log('Paso 1: Navegar a la página de perfil');
