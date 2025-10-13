@@ -8,36 +8,36 @@ use App\Models\User;
 class AssignmentPolicy
 {
     /**
-     * Verificar si el usuario puede gestionar cualquier tipo de asignación.
-     * 
-     * @param User $user
-     * @return bool
+     * Verificar si el usuario puede gestionar un tipo específico de asignación.
      */
-    private function canManageAny(User $user): bool
+    private function canManageType(User $user, string $type): bool
     {
-        return $user->can('assignments:manage-medical') || $user->can('assignments:manage-psychological');
-    }
-
-    /**
-     * Verificar si el usuario puede gestionar una asignación específica.
-     * Valida tanto el permiso por tipo como la sede del profesional.
-     * 
-     * @param User $user
-     * @param Assignment $assignment
-     * @return bool
-     */
-    private function canManage(User $user, Assignment $assignment): bool
-    {
-        $hasPermission = match ($assignment->type) {
+        return match ($type) {
             Assignment::TYPE_MEDICAL => $user->can('assignments:manage-medical'),
             Assignment::TYPE_PSYCHOLOGICAL => $user->can('assignments:manage-psychological'),
             default => false,
         };
+    }
 
-        // Verificar que el profesional pertenezca a la misma sede
-        $sameSede = $user->sede_name === $assignment->professional->sede_name;
+    /**
+     * Verificar si el usuario pertenece a la misma sede que el profesional.
+     */
+    private function isSameSede(User $user, User $professional): bool
+    {
+        // Si el usuario no tiene sede asignada, puede ver todas (caso admin)
+        if (!$user->sede_name) {
+            return true;
+        }
 
-        return $hasPermission && $sameSede;
+        return $user->sede_name === $professional->sede_name;
+    }
+
+    /**
+     * Verificar si el usuario es el profesional asignado (para doctores/psicólogos).
+     */
+    private function isAssignedProfessional(User $user, Assignment $assignment): bool
+    {
+        return $user->id === $assignment->professional_id;
     }
 
     /**
@@ -45,7 +45,10 @@ class AssignmentPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $this->canManageAny($user);
+        return $user->can('assignments:manage-medical')
+            || $user->can('assignments:manage-psychological')
+            || $user->can('medical-records:view')
+            || $user->can('psychological-records:view');
     }
 
     /**
@@ -53,31 +56,45 @@ class AssignmentPolicy
      */
     public function view(User $user, Assignment $assignment): bool
     {
-        return $this->canManage($user, $assignment);
+        // Si es jefe, verificar tipo y sede
+        if ($this->canManageType($user, $assignment->type)) {
+            return $this->isSameSede($user, $assignment->professional);
+        }
+
+        // Si es doctor/psicólogo, solo puede ver sus propias asignaciones
+        return $this->isAssignedProfessional($user, $assignment);
     }
 
     /**
      * Determinar si el usuario puede crear asignaciones.
+     * Solo jefes pueden crear asignaciones.
      */
     public function create(User $user): bool
     {
-        return $this->canManageAny($user);
+        return $user->can('assignments:manage-medical')
+            || $user->can('assignments:manage-psychological');
     }
 
     /**
      * Determinar si el usuario puede actualizar una asignación.
+     * Solo jefes pueden actualizar.
      */
     public function update(User $user, Assignment $assignment): bool
     {
-        return $this->canManage($user, $assignment);
+        if (!$this->canManageType($user, $assignment->type)) {
+            return false;
+        }
+
+        return $this->isSameSede($user, $assignment->professional);
     }
 
     /**
-     * Determinar si el usuario puede eliminar (soft delete) una asignación.
+     * Determinar si el usuario puede eliminar una asignación.
+     * Solo jefes pueden eliminar.
      */
     public function delete(User $user, Assignment $assignment): bool
     {
-        return $this->canManage($user, $assignment);
+        return $this->update($user, $assignment);
     }
 
     /**
@@ -85,15 +102,14 @@ class AssignmentPolicy
      */
     public function restore(User $user, Assignment $assignment): bool
     {
-        return $this->canManage($user, $assignment);
+        return $this->update($user, $assignment);
     }
 
     /**
      * Determinar si el usuario puede eliminar permanentemente una asignación.
-     * Bloqueado para preservar historial médico.
      */
     public function forceDelete(User $user, Assignment $assignment): bool
     {
-        return false; // Nadie puede eliminar permanentemente asignaciones
+        return false; // Preservar historial médico
     }
 }
