@@ -134,8 +134,8 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
                 'id' => $event->id,
                 'nombre' => $event->nombre,             
                 'clasificacion' => $event->clasificacion, 
-                'fecha_inicio' => $event->fecha_inicio ? $event->fecha_inicio->format('Y-m-d') : null, // ✅ Corregido
-                'fecha_fin' => $event->fecha_fin ? $event->fecha_fin->format('Y-m-d') : null,         // ✅ Corregido
+                'fecha_inicio' => $event->fecha_inicio ? $event->fecha_inicio->format('Y-m-d') : null,
+                'fecha_fin' => $event->fecha_fin ? $event->fecha_fin->format('Y-m-d') : null, 
                 'hora_inicio' => $event->hora_inicio,    
                 'hora_fin' => $event->hora_fin,          
                 'descripcion' => $event->descripcion,   

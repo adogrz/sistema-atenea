@@ -27,6 +27,16 @@ class Evento extends Model
         'updated_at' => 'datetime',
     ];
 
+    // Constantes para clasificaciones
+    public const CLASIFICACION_REGISTRO = 'registro-aspirantes';
+    public const CLASIFICACION_INSCRIPCION = 'inscripcion';
+    public const CLASIFICACION_ACADEMIA_SABATINA = 'academia-sabatina';
+    public const CLASIFICACION_FIN_DE_MES = 'fin-de-mes';
+    public const CLASIFICACION_FDTC = 'fdtc';
+    public const CLASIFICACION_FIN_DE_SEMANA = 'fin-de-semana';
+    public const CLASIFICACION_EXAMEN = 'examen';
+    public const CLASIFICACION_GRADUACION = 'graduacion';
+
     // Método para obtener el datetime completo de inicio
     public function getFechaHoraInicioAttribute()
     {
@@ -35,7 +45,7 @@ class Evento extends Model
             $hora = Carbon::createFromFormat('H:i', $this->hora_inicio);
             return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(0);
         }
-        return $fecha->startOfDay(); // 00:00:00 si no hay hora específica
+        return $fecha->startOfDay();
     }
 
     // Método para obtener el datetime completo de fin
@@ -46,18 +56,22 @@ class Evento extends Model
             $hora = Carbon::createFromFormat('H:i', $this->hora_fin);
             return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(59);
         }
-        return $fecha->endOfDay(); // 23:59:59 si no hay hora específica
+        return $fecha->endOfDay();
     }
 
-    //Definición de los tipos como constantes
-    public const CLASIFICACION_REGISTRO = 'registro-aspirantes';
-    public const CLASIFICACION_INSCRIPCION = 'inscripcion';
-    public const CLASIFICACION_ACADEMIA_SABATINA = 'academia-sabatina';
-    public const CLASIFICACION_FIN_DE_MES = 'fin-de-mes';
-    public const CLASIFICACION_FDTC = 'fdtc';
-    public const CLASIFICACION_FIN_DE_SEMANA = 'fin-de-semana';
-    public const CLASIFICACION_EXAMEN = 'examen';
-    public const CLASIFICACION_GRADUACION = 'graduacion';
+    // Método centralizado para verificar si el evento está activo
+    public function isActive(): bool
+    {
+        $ahora = Carbon::now();
+        return $ahora->between($this->fecha_hora_inicio, $this->fecha_hora_fin) 
+               && ($this->estado ?? 'activo') === 'activo';
+    }
+
+    // Método para verificar si el evento está activo hoy específicamente
+    public function isActiveToday(): bool
+    {
+        return $this->isActive();
+    }
 
     public static function getClasificaciones(): array
     {
@@ -73,21 +87,26 @@ class Evento extends Model
         ];
     }
 
+    public static function getClasificacionLabels(): array
+    {
+        return [
+            self::CLASIFICACION_REGISTRO => 'Registro de Aspirantes',
+            self::CLASIFICACION_INSCRIPCION => 'Inscripción',
+            self::CLASIFICACION_ACADEMIA_SABATINA => 'Academia Sabatina',
+            self::CLASIFICACION_FIN_DE_MES => 'Fin de Mes',
+            self::CLASIFICACION_FDTC => 'FDTC',
+            self::CLASIFICACION_FIN_DE_SEMANA => 'Fin de Semana',
+            self::CLASIFICACION_EXAMEN => 'Examen',
+            self::CLASIFICACION_GRADUACION => 'Graduación',
+        ];
+    }
+
     public function getClasificacionLabelAttribute(): string
     {
         return self::getClasificacionLabels()[$this->clasificacion] ?? $this->clasificacion;
     }
 
-    public function isActive(): bool
-    {
-        $ahora = Carbon::now();
-        $inicio = Carbon::parse($this->fecha_inicio . ' ' . ($this->hora_inicio ?? '00:00:00'));
-        $fin = Carbon::parse($this->fecha_fin . ' ' . ($this->hora_fin ?? '23:59:59'));
-
-        return $ahora->between($inicio, $fin) && ($this->estado ?? 'activo') === 'activo';
-    }
-
-    // Scopes para tipos de eventos
+    // Scopes
     public function scopeOfType($query, $type)
     {
         return $query->where('clasificacion', $type);
@@ -98,7 +117,7 @@ class Evento extends Model
         return $query->where('estado', 'activo')->orWhereNull('estado');
     }
 
-    // MÉTODOS ESTÁTICOS PARA VERIFICAR PERIODOS
+    // Métodos estáticos para verificar períodos específicos
     public static function isRegistrationOpen(): bool
     {
         return self::ofType(self::CLASIFICACION_REGISTRO)->active()->get()
@@ -117,54 +136,23 @@ class Evento extends Model
             ->contains(fn($event) => $event->isActive());
     }
 
-    // ACCESSOS PARA COMPATIBILIDAD CON EL FRONTEND
-    public function getNameAttribute()
+    // Método para mapear a array (usado en múltiples controladores)
+    public function toEventArray(): array
     {
-        return $this->attributes['nombre'] ?? $this->descripcion;
+        return [
+            'id' => $this->id,
+            'nombre' => $this->nombre,
+            'clasificacion' => $this->clasificacion,
+            'fecha_inicio' => $this->fecha_inicio?->format('Y-m-d'),
+            'fecha_fin' => $this->fecha_fin?->format('Y-m-d'),
+            'hora_inicio' => $this->hora_inicio,
+            'hora_fin' => $this->hora_fin,
+            'descripcion' => $this->descripcion,
+            'ubicacion' => $this->ubicacion,
+            'estado' => $this->estado,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
 
-    public function getTypeAttribute()
-    {
-        return $this->attributes['clasificacion'] ?? $this->tipo;
-    }
-
-    public function getStartDateAttribute()
-    {
-        return $this->fecha_inicio ? $this->fecha_inicio->format('Y-m-d') : null;
-    }
-
-    public function getEndDateAttribute()
-    {
-        return $this->fecha_fin ? $this->fecha_fin->format('Y-m-d') : null;
-    }
-
-    public function getStartTimeAttribute()
-    {
-        return $this->hora_inicio;
-    }
-
-    public function getEndTimeAttribute()
-    {
-        return $this->hora_fin;
-    }
-
-    public function getLocationAttribute()
-    {
-        return $this->ubicacion;
-    }
-
-    public function getStatusAttribute()
-    {
-        return $this->estado;
-    }
-
-    public function getDescriptionAttribute()
-    {
-        return $this->descripcion;
-    }
-
-    public function getCreatedAtAttribute($value)
-    {
-        return $this->attributes['created_at'];
-    }
 }
