@@ -15,7 +15,7 @@ use App\Http\Controllers\ClinicalRecord\AssignmentController;
 
 Route::middleware(['auth', 'verified', 'check.status'])
     ->prefix('dashboard/clinical-records')
-    ->name('clinical-records')
+    ->name('clinical-records.')
     ->group(function () {
 
         // Rutas de Asignaciones (Assignments)

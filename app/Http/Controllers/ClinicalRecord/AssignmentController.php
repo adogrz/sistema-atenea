@@ -3,142 +3,66 @@
 namespace App\Http\Controllers\ClinicalRecord;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ClinicalRecord\ListAssignmentsRequest;
 use App\Models\Assignment;
+use App\Services\ClinicalRecord\AssignmentFilter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AssignmentController extends Controller
 {
+    public function __construct(
+        private AssignmentFilter $filter
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): Response
+    public function index(ListAssignmentsRequest $request): Response
     {
-        // Autorización usando la policy
         $this->authorize('viewAny', Assignment::class);
 
-        // Validar parámetros de búsqueda/filtrado
-        $validated = $request->validate([
-            'student_nie' => 'nullable|string|exists:estudiantes,nie',
-            'professional_id' => 'nullable|integer|exists:users,id',
-            'type' => 'nullable|in:' . Assignment::TYPE_MEDICAL . ',' . Assignment::TYPE_PSYCHOLOGICAL,
-            'is_active' => 'nullable|boolean',
-            'search' => 'nullable|string|max:100',
-            'per_page' => 'nullable|integer|min:1|max:100',
-            'sort_by' => 'nullable|in:created_at,updated_at,student_nie,type',
-            'sort_order' => 'nullable|in:asc,desc',
-        ]);
-
         $user = $request->user();
+        $filters = $request->getFilters();
 
-        // Construir query base
+        // Construir query con relaciones optimizadas
         $query = Assignment::query()
-            ->with(['student', 'professional.sede']);
+            ->with(['student:nie,primer_nombre,segundo_nombre,primer_apellido,segundo_apellido', 
+                    'professional:id,name,sede_name']);
 
-        // Aplicar filtros según el rol
-        $query = $this->applyRoleFilters($query, $user);
-
-        // Aplicar filtros del request
-        $this->applyRequestFilters($query, $validated);
-
-        // Búsqueda general
-        if (!empty($validated['search'])) {
-            $this->applySearch($query, $validated['search']);
+        // Aplicar filtros
+        $query = $this->filter->applyRoleFilters($query, $user);
+        $query = $this->filter->applyRequestFilters($query, $filters);
+        
+        if ($filters['search']) {
+            $query = $this->filter->applySearch($query, $filters['search']);
         }
 
-        // Ordenamiento
-        $sortBy = $validated['sort_by'] ?? 'created_at';
-        $sortOrder = $validated['sort_order'] ?? 'desc';
-        $query->orderBy($sortBy, $sortOrder);
-
-        // Paginación
-        $perPage = $validated['per_page'] ?? 15;
-        $assignments = $query->paginate($perPage)->withQueryString();
-
-        $canManageMedical = $user->can('assignments:manage-medical');
-        $canManagePsychological = $user->can('assignments:manage-psychological');
-        $isManager = $canManageMedical || $canManagePsychological;
+        // Ordenamiento y paginación
+        $assignments = $query
+            ->orderBy($filters['sort_by'], $filters['sort_order'])
+            ->paginate($filters['per_page'])
+            ->withQueryString();
 
         return Inertia::render('clinical-records/assignments/dashboard-assignments', [
             'assignments' => $assignments,
-            'filters' => $validated,
-            'permissions' => [
-                'canManageMedical' => $canManageMedical,
-                'canManagePsychological' => $canManagePsychological,
-                'canCreate' => $user->can('create', Assignment::class),
-                'isManager' => $isManager,
-            ],
+            'filters' => $filters,
+            'permissions' => $this->getUserPermissions($user),
         ]);
     }
 
     /**
-     * Aplicar filtros según el rol del usuario.
+     * Obtener permisos del usuario de forma centralizada.
      */
-    private function applyRoleFilters($query, $user)
+    private function getUserPermissions($user): array
     {
-        $canManageMedical = $user->can('assignments:manage-medical');
-        $canManagePsychological = $user->can('assignments:manage-psychological');
-
-        // Si es profesional (no jefe), solo sus asignaciones
-        if (!$canManageMedical && !$canManagePsychological) {
-            return $query->forProfessional($user->id);
-        }
-
-        // Si es jefe, filtrar por sede
-        if ($user->sede_name) {
-            $query->whereHas('professional', function ($q) use ($user) {
-                $q->where('sede_name', $user->sede_name);
-            });
-        }
-
-        // Si solo maneja un tipo, filtrar por ese tipo
-        if ($canManageMedical && !$canManagePsychological) {
-            $query->medical();
-        } elseif ($canManagePsychological && !$canManageMedical) {
-            $query->psychological();
-        }
-
-        return $query;
-    }
-
-    /**
-     * Aplicar filtros del request.
-     */
-    private function applyRequestFilters($query, array $filters): void
-    {
-        if (!empty($filters['student_nie'])) {
-            $query->forStudent($filters['student_nie']);
-        }
-
-        if (!empty($filters['professional_id'])) {
-            $query->forProfessional($filters['professional_id']);
-        }
-
-        if (isset($filters['type'])) {
-            $query->byType($filters['type']);
-        }
-
-        if (isset($filters['is_active'])) {
-            $filters['is_active'] ? $query->active() : $query->where('is_active', false);
-        }
-    }
-
-    /**
-     * Aplicar búsqueda general.
-     */
-    private function applySearch($query, string $search): void
-    {
-        $query->where(function ($q) use ($search) {
-            $q->where('student_nie', 'like', "%{$search}%")
-                ->orWhereHas('student', function ($sq) use ($search) {
-                    $sq->whereRaw("CONCAT(primer_nombre, ' ', primer_apellido) like ?", ["%{$search}%"])
-                        ->orWhereRaw("CONCAT(segundo_nombre, ' ', segundo_apellido) like ?", ["%{$search}%"]);
-                })
-                ->orWhereHas('professional', function ($pq) use ($search) {
-                    $pq->where('name', 'like', "%{$search}%");
-                });
-        });
+        return [
+            'canManageMedical' => $user->can('assignments:manage-medical'),
+            'canManagePsychological' => $user->can('assignments:manage-psychological'),
+            'canCreate' => $user->can('create', Assignment::class),
+            'isManager' => $user->canManageAssignments(),
+        ];
     }
 
     /**

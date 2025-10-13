@@ -232,4 +232,44 @@ class User extends Authenticatable
     {
         return $this->hasMany(ConsentForm::class, 'professional_id');
     }
+
+    // ==========================================
+    // Helpers para Permisos de Asignaciones
+    // ==========================================
+
+    /**
+     * Verifica si el usuario puede gestionar asignaciones (médicas o psicológicas).
+     */
+    public function canManageAssignments(): bool
+    {
+        return $this->can('assignments:manage-medical') 
+            || $this->can('assignments:manage-psychological');
+    }
+
+    /**
+     * Verifica si el usuario solo puede gestionar asignaciones médicas.
+     */
+    public function managesOnlyMedical(): bool
+    {
+        return $this->can('assignments:manage-medical') 
+            && !$this->can('assignments:manage-psychological');
+    }
+
+    /**
+     * Verifica si el usuario solo puede gestionar asignaciones psicológicas.
+     */
+    public function managesOnlyPsychological(): bool
+    {
+        return $this->can('assignments:manage-psychological') 
+            && !$this->can('assignments:manage-medical');
+    }
+
+    /**
+     * Verifica si el usuario puede gestionar ambos tipos de asignaciones.
+     */
+    public function managesBothTypes(): bool
+    {
+        return $this->can('assignments:manage-medical') 
+            && $this->can('assignments:manage-psychological');
+    }
 }

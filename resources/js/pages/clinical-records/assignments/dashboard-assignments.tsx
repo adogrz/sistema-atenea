@@ -12,7 +12,7 @@ import { type PaginatedData } from '@/types/pagination';
 import { Head, router } from '@inertiajs/react';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { CirclePlus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
@@ -31,10 +31,14 @@ interface Props {
     };
 }
 
-function DashboardAssignmentsContent({ assignments, permissions }: Props) {
+function DashboardAssignmentsContent({ assignments, filters, permissions }: Props) {
     const pageTitle = permissions.isManager ? 'Gestión de Asignaciones' : 'Mis Estudiantes Asignados';
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [search, setSearch] = useState(filters.search || '');
     const { setOpen } = useAssignments();
+
+    // Ref para el timeout del debounce (evita memory leaks)
+    const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
     // Determinar qué columnas usar según el rol
     const columns = useMemo(() => {
@@ -52,9 +56,56 @@ function DashboardAssignmentsContent({ assignments, permissions }: Props) {
     }, [permissions.canManageMedical, permissions.canManagePsychological]);
 
     // Función para recargar los datos desde Inertia
-    const handleRefresh = () => {
+    const handleRefresh = useCallback(() => {
         router.reload({ only: ['assignments'] });
-    };
+    }, []);
+
+    // Realizar búsqueda en el servidor
+    const performSearch = useCallback(
+        (searchValue: string) => {
+            router.get(
+                route('clinical-records.assignments.index'),
+                {
+                    ...filters,
+                    search: searchValue,
+                },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    only: ['assignments'],
+                },
+            );
+        },
+        [filters],
+    );
+
+    // Manejar búsqueda con debounce del lado del servidor
+    const handleSearch = useCallback(
+        (value: string) => {
+            // Actualizar el estado local inmediatamente para feedback visual
+            setSearch(value);
+
+            // Limpiar el timeout anterior
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+
+            // Crear nuevo timeout para la petición al servidor
+            searchTimeoutRef.current = setTimeout(() => {
+                performSearch(value);
+            }, 500);
+        },
+        [performSearch],
+    );
+
+    // Cleanup: limpiar timeout al desmontar el componente
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
@@ -71,7 +122,15 @@ function DashboardAssignmentsContent({ assignments, permissions }: Props) {
                         )}
                     </div>
                 </div>
-                <DataTable columns={columns} data={assignments.data} columnFilters={columnFilters} setColumnFilters={setColumnFilters} />
+                <DataTable
+                    columns={columns}
+                    data={assignments.data}
+                    columnFilters={columnFilters}
+                    setColumnFilters={setColumnFilters}
+                    globalFilter={search}
+                    onGlobalFilterChange={handleSearch}
+                    searchPlaceholder="Buscar por estudiante, NIE o profesional..."
+                />
                 <AssignmentsDialogs onRefresh={handleRefresh} assignmentType={assignmentType} />
             </div>
         </AppLayout>

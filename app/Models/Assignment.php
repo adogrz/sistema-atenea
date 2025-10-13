@@ -109,6 +109,24 @@ class Assignment extends Model
     }
 
     /**
+     * Scope para asignaciones inactivas.
+     */
+    public function scopeInactive(Builder $query): Builder
+    {
+        return $query->where('is_active', false);
+    }
+
+    /**
+     * Scope para filtrar por sede del profesional.
+     */
+    public function scopeBySede(Builder $query, string $sedeName): Builder
+    {
+        return $query->whereHas('professional', function ($q) use ($sedeName) {
+            $q->where('sede_name', $sedeName);
+        });
+    }
+
+    /**
      * Verifica si la asignación está activa
      */
     public function isActive(): bool

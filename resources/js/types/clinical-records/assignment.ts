@@ -29,6 +29,9 @@ export interface AssignmentFilters {
     type?: RecordType;
     is_active?: boolean;
     search?: string;
+    per_page?: number;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
 }
 
 /**
