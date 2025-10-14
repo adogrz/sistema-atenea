@@ -20,6 +20,13 @@ Route::middleware(['auth', 'verified', 'check.status'])
 
         // Rutas de Asignaciones (Assignments)
         Route::prefix('assignments')->name('assignments.')->group(function () {
+            // Búsqueda de entidades para asignaciones (ANTES de las rutas con parámetros)
+            Route::get('/search/students', [AssignmentController::class, 'searchStudents'])
+                ->name('search.students');
+
+            Route::get('/search/professionals', [AssignmentController::class, 'searchProfessionals'])
+                ->name('search.professionals');
+
             // Listar asignaciones
             Route::get('/', [AssignmentController::class, 'index'])
                 ->name('index');

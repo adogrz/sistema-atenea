@@ -1,10 +1,8 @@
 'use client';
 
 import { getManagerColumns, getProfessionalColumns } from '@/components/clinical-records/assignments/assignments-columns';
-import { AssignmentsDialogs } from '@/components/clinical-records/assignments/assignments-dialogs';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { AssignmentsProvider, useAssignments } from '@/contexts/clinical-records/assignments/assignmets-context';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type AssignmentFilters, type AssignmentWithRelations } from '@/types/clinical-records';
@@ -31,11 +29,10 @@ interface Props {
     };
 }
 
-function DashboardAssignmentsContent({ assignments, filters, permissions }: Props) {
+export default function DashboardAssignments({ assignments, filters, permissions }: Props) {
     const pageTitle = permissions.isManager ? 'Gestión de Asignaciones' : 'Mis Estudiantes Asignados';
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [search, setSearch] = useState(filters.search || '');
-    const { setOpen } = useAssignments();
 
     // Ref para el timeout del debounce (evita memory leaks)
     const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -44,21 +41,6 @@ function DashboardAssignmentsContent({ assignments, filters, permissions }: Prop
     const columns = useMemo(() => {
         return permissions.isManager ? getManagerColumns() : getProfessionalColumns();
     }, [permissions.isManager]);
-
-    // Determinar el tipo de asignación según los permisos del jefe
-    const assignmentType = useMemo(() => {
-        if (permissions.canManageMedical && !permissions.canManagePsychological) {
-            return 'medical' as const;
-        } else if (permissions.canManagePsychological && !permissions.canManageMedical) {
-            return 'psychological' as const;
-        }
-        return 'medical' as const; // Por defecto
-    }, [permissions.canManageMedical, permissions.canManagePsychological]);
-
-    // Función para recargar los datos desde Inertia
-    const handleRefresh = useCallback(() => {
-        router.reload({ only: ['assignments'] });
-    }, []);
 
     // Realizar búsqueda en el servidor
     const performSearch = useCallback(
@@ -107,6 +89,10 @@ function DashboardAssignmentsContent({ assignments, filters, permissions }: Prop
         };
     }, []);
 
+    const handleCreateAssignment = () => {
+        router.visit(route('clinical-records.assignments.create'));
+    };
+
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
             <Head title={pageTitle} />
@@ -115,7 +101,7 @@ function DashboardAssignmentsContent({ assignments, filters, permissions }: Prop
                     <h2 className="text-2xl font-bold tracking-tight">{pageTitle}</h2>
                     <div>
                         {permissions.canCreate && (
-                            <Button className="cursor-pointer space-x-1" onClick={() => setOpen('add')}>
+                            <Button className="cursor-pointer space-x-1" onClick={handleCreateAssignment}>
                                 <CirclePlus />
                                 <span>Nueva Asignación</span>
                             </Button>
@@ -131,16 +117,7 @@ function DashboardAssignmentsContent({ assignments, filters, permissions }: Prop
                     onGlobalFilterChange={handleSearch}
                     searchPlaceholder="Buscar por estudiante, NIE o profesional..."
                 />
-                <AssignmentsDialogs onRefresh={handleRefresh} assignmentType={assignmentType} />
             </div>
         </AppLayout>
-    );
-}
-
-export default function DashboardAssignments(props: Props) {
-    return (
-        <AssignmentsProvider>
-            <DashboardAssignmentsContent {...props} />
-        </AssignmentsProvider>
     );
 }

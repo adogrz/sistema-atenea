@@ -10,9 +10,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAssignments } from '@/contexts/clinical-records/assignments/assignmets-context';
 import { cn } from '@/lib/utils';
 import { AssignmentWithRelations } from '@/types/clinical-records';
+import { router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -110,17 +110,14 @@ export const getManagerColumns = (): ColumnDef<AssignmentWithRelations>[] => [
         enableHiding: false,
         cell: ({ row }) => {
             const assignment = row.original;
-            // eslint-disable-next-line react-hooks/rules-of-hooks
-            const { setOpen, setCurrentAssignment } = useAssignments();
 
             const handleEdit = () => {
-                setCurrentAssignment(assignment);
-                setOpen('edit');
+                router.visit(route('clinical-records.assignments.edit', assignment.id));
             };
 
             const handleToggleStatus = () => {
-                setCurrentAssignment(assignment);
-                setOpen('delete');
+                // TODO: Implementar diálogo de confirmación para activar/desactivar
+                console.log('Toggle status:', assignment.id);
             };
 
             return (
