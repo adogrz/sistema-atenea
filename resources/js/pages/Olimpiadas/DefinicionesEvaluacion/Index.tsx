@@ -46,6 +46,7 @@ const Index: React.FC<DefinicionesEvaluacionIndexProps> = ({ definiciones }) => 
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Nombre</TableHead>
+                                        <TableHead>Versión</TableHead>
                                         <TableHead>Descripción</TableHead>
                                         <TableHead>Estado</TableHead>
                                         <TableHead>Bloqueada</TableHead>
@@ -57,10 +58,11 @@ const Index: React.FC<DefinicionesEvaluacionIndexProps> = ({ definiciones }) => 
                                     {definiciones.map((def) => (
                                         <TableRow key={def.id}>
                                             <TableCell className="font-medium">{def.nombre}</TableCell>
+                                            <TableCell>{def.version}</TableCell>
                                             <TableCell>{def.descripcion}</TableCell>
                                             <TableCell>
-                                                <Badge variant={def.estado ? 'default' : 'destructive'}>
-                                                    {def.estado ? 'Activa' : 'Inactiva'}
+                                                <Badge variant={def.estado === 'publicada' ? 'default' : (def.estado === 'borrador' ? 'secondary' : 'destructive')}>
+                                                    {def.estado}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>

@@ -15,11 +15,17 @@ class Olimpiada extends Model
         'descripcion',
         'area_id', // Relación con el área académica
         'activa',
+        'nivel_educativo_id',
     ];
 
     protected $casts = [
         'activa' => 'boolean',
     ];
+
+    public function nivelEducativo(): BelongsTo
+    {
+        return $this->belongsTo(NivelEducativo::class, 'nivel_educativo_id', 'codigo');
+    }
 
     public function area(): BelongsTo
     {

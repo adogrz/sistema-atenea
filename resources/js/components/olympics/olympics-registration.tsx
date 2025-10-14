@@ -216,7 +216,7 @@ export default function InscripcionOlimpiada({
                     <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-gray-200 dark:bg-gray-700" />
 
                     {fases.map((fase) => {
-                      const inscripcion = inscripcionesOlimpiada.find(i => i.fase_id === fase.id)
+                      const inscripcion = inscripcionesOlimpiada.find(i => i.fase_olimpiada_id === fase.id)
                       const puedeInscribirseEnFase = !inscripcion && puede && !isProfileIncomplete
                       const isLocked = !inscripcion && (!puede || isProfileIncomplete)
 

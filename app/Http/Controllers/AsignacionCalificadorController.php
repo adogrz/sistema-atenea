@@ -8,20 +8,26 @@ use App\Models\FaseOlimpiada;
 use App\Models\Olimpiada;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Models\DefinicionEvaluacion;
 use Inertia\Inertia;
 
 class AsignacionCalificadorController extends Controller
 {
     public function index()
     {
-        $calificadores = User::role('calificador')->orderBy('name')->get();
-        $olimpiadas = Olimpiada::with('fases.itemsDefinidos')->orderBy('nombre')->get();
-        $asignaciones = CalificadorItemAsignado::all()->groupBy('calificador_id');
+        $olimpiadas = Olimpiada::with([
+            'fases.definicionEvaluacion.itemsDefinidos.calificadores' => function ($query) {
+                $query->select('users.id', 'users.name'); // Select only needed fields
+            }
+        ])->orderBy('nombre')->get();
 
-        return response()->json([
-            'calificadores' => $calificadores,
+        $calificadores = User::role('calificador')->orderBy('name')->get(['id', 'name']);
+        $definicionesEvaluacion = DefinicionEvaluacion::all();
+
+        return Inertia::render('Olimpiadas/GestionEvaluacion', [
             'olimpiadas' => $olimpiadas,
-            'asignaciones' => $asignaciones,
+            'calificadores' => $calificadores,
+            'definicionesEvaluacion' => $definicionesEvaluacion,
         ]);
     }
 

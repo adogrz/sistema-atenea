@@ -76,6 +76,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             Route::get('/crear', [FaseOlimpiadaController::class, 'create'])->name('create');
             Route::put('/{fase}/gestion', [FaseGestionController::class, 'update'])->name('gestion.update');
             Route::post('/{fase}/publish-results', [FaseGestionController::class, 'publishResults'])->name('gestion.publishResults');
+        Route::post('/{fase}/assign-evaluation', [FaseOlimpiadaController::class, 'assignEvaluation'])->name('gestion.assignEvaluation');
         });
         
         // Inscripciones
@@ -113,7 +114,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         });
 
         Route::post('fases/{fase}/reorder', [FaseOlimpiadaController::class, 'reorder'])->name('fases.reorder');
-        Route::get('gestion-evaluacion', [OlimpiadaController::class, 'showGestionEvaluacion'])->name('gestion-evaluacion.index');
+        Route::get('gestion-evaluacion', [AsignacionCalificadorController::class, 'index'])->name('gestion-evaluacion.index');
         Route::post('asignaciones/sync-for-item', [AsignacionCalificadorController::class, 'syncForItem'])->name('asignaciones.syncForItem');
 
         // Definiciones de Evaluación

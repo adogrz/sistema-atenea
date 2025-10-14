@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { DefinicionEvaluacion, ItemDefinido } from '@/types/olympics';
 import { PlusCircle, Trash2, GripVertical } from 'lucide-react';
@@ -86,7 +87,8 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
     const { data, setData, post, put, processing, errors } = useForm({
         nombre: definicionEvaluacion?.nombre || '',
         descripcion: definicionEvaluacion?.descripcion || '',
-        estado: definicionEvaluacion?.estado ?? true,
+        version: definicionEvaluacion?.version || 1,
+        estado: definicionEvaluacion?.estado || 'borrador',
         bloqueada: definicionEvaluacion?.bloqueada ?? false,
         items: definicionEvaluacion?.items_definidos?.map(item => ({ ...item, local_id: item.id ? String(item.id) : `new-${Math.random()}` })) || [],
     });
@@ -103,7 +105,8 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
             setData({
                 nombre: definicionEvaluacion.nombre,
                 descripcion: definicionEvaluacion.descripcion || '',
-                estado: definicionEvaluacion.estado,
+                version: definicionEvaluacion.version || 1,
+                estado: definicionEvaluacion.estado || 'borrador',
                 bloqueada: definicionEvaluacion.bloqueada,
                 items: definicionEvaluacion.items_definidos?.map(item => ({ ...item, local_id: item.id ? String(item.id) : `new-${Math.random()}` })) || [],
             });
@@ -205,6 +208,17 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
                                 {errors.nombre && <p className="text-destructive text-sm mt-1">{errors.nombre}</p>}
                             </div>
                             <div>
+                                <Label htmlFor="version">Versión</Label>
+                                <Input
+                                    id="version"
+                                    type="number"
+                                    value={data.version}
+                                    onChange={(e) => setData('version', parseInt(e.target.value))}
+                                    className={errors.version ? 'border-destructive' : ''}
+                                />
+                                {errors.version && <p className="text-destructive text-sm mt-1">{errors.version}</p>}
+                            </div>
+                            <div>
                                 <Label htmlFor="descripcion">Descripción</Label>
                                 <Textarea
                                     id="descripcion"
@@ -214,13 +228,22 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
                                 />
                                 {errors.descripcion && <p className="text-destructive text-sm mt-1">{errors.descripcion}</p>}
                             </div>
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="estado"
-                                    checked={data.estado}
-                                    onCheckedChange={(checked) => setData('estado', checked)}
-                                />
-                                <Label htmlFor="estado">Activa</Label>
+                            <div>
+                                <Label htmlFor="estado">Estado</Label>
+                                <Select
+                                    value={data.estado}
+                                    onValueChange={(value) => setData('estado', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona un estado" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="borrador">Borrador</SelectItem>
+                                        <SelectItem value="publicada">Publicada</SelectItem>
+                                        <SelectItem value="archivada">Archivada</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {errors.estado && <p className="text-destructive text-sm mt-1">{errors.estado}</p>}
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Switch

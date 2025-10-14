@@ -31,7 +31,7 @@ class InscripcionOlimpiadaController extends Controller
 
         $estudiante->loadMissing(['centroEducativo', 'nivelEducativo']);
 
-        $fasesVigentes    = $this->olimpiadaService->fasesVigentesAgrupadas();
+        $fasesVigentes    = $this->olimpiadaService->fasesVigentesAgrupadas($estudiante->nivel_educativo);
         $inscripciones    = $this->olimpiadaService->inscripcionesPorEstudiante($estudiante->codigo);
         $puedeInscribirse = $this->olimpiadaService->puedeInscribirse($fasesVigentes, $inscripciones);
 
@@ -53,7 +53,7 @@ class InscripcionOlimpiadaController extends Controller
     {
         $estudiante = Auth::user()?->estudiante;
 
-        $fasesVigentes    = $this->olimpiadaService->fasesVigentesAgrupadas();
+        $fasesVigentes    = $this->olimpiadaService->fasesVigentesAgrupadas($estudiante?->nivel_educativo);
         $inscripciones    = $estudiante
             ? $this->olimpiadaService->inscripcionesPorEstudiante($estudiante->codigo)
             : collect();

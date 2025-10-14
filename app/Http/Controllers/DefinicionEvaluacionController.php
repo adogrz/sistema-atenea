@@ -28,7 +28,8 @@ class DefinicionEvaluacionController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'estado' => 'required|boolean',
+            'version' => 'required|integer|min:1',
+            'estado' => 'required|in:borrador,publicada,archivada',
             'bloqueada' => 'required|boolean',
             'items' => 'nullable|array',
             'items.*.nombre' => 'required|string|max:255',
@@ -44,13 +45,16 @@ class DefinicionEvaluacionController extends Controller
             $definicion = DefinicionEvaluacion::create([
                 'nombre' => $request->nombre,
                 'descripcion' => $request->descripcion,
+                'version' => $request->version,
                 'creada_por' => auth()->id(),
                 'estado' => $request->estado,
                 'bloqueada' => $request->bloqueada,
             ]);
 
-            foreach ($request->items as $itemData) {
-                $definicion->itemsDefinidos()->create($itemData);
+            if ($request->has('items')) {
+                foreach ($request->items as $itemData) {
+                    $definicion->itemsDefinidos()->create($itemData);
+                }
             }
 
             DB::commit();
@@ -75,7 +79,8 @@ class DefinicionEvaluacionController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'estado' => 'required|boolean',
+            'version' => 'required|integer|min:1',
+            'estado' => 'required|in:borrador,publicada,archivada',
             'bloqueada' => 'required|boolean',
             'items' => 'nullable|array',
             'items.*.id' => 'nullable|exists:items_definidos,id',
@@ -92,6 +97,7 @@ class DefinicionEvaluacionController extends Controller
             $definicionEvaluacion->update([
                 'nombre' => $request->nombre,
                 'descripcion' => $request->descripcion,
+                'version' => $request->version,
                 'estado' => $request->estado,
                 'bloqueada' => $request->bloqueada,
             ]);

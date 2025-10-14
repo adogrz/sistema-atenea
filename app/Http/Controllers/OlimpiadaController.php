@@ -7,6 +7,7 @@ use App\Models\Olimpiada;
 use App\Models\DefinicionEvaluacion;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\NivelEducativo;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,32 +15,19 @@ class OlimpiadaController extends Controller
 {
     public function index(Request $request): Response
     {
-        $olimpiadas = Olimpiada::with('area')
+        $olimpiadas = Olimpiada::with('area', 'nivelEducativo')
             ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('olympics/index', [
             'olimpiadas' => $olimpiadas,
             'areas' => Area::all(),
+            'nivelesEducativos' => NivelEducativo::all(),
             'definiciones_evaluacion' => DefinicionEvaluacion::all(),
         ]);
     }
 
-    public function showGestionEvaluacion(): Response
-    {
-        $olimpiadas = Olimpiada::with([
-            'fases.itemsDefinidos.calificadores' => function ($query) {
-                $query->select('users.id', 'users.name'); // Select only needed fields
-            }
-        ])->orderBy('nombre')->get();
 
-        $calificadores = User::role('calificador')->orderBy('name')->get(['id', 'name']);
-
-        return Inertia::render('Olimpiadas/GestionEvaluacion', [
-            'olimpiadas' => $olimpiadas,
-            'calificadores' => $calificadores,
-        ]);
-    }
 
     public function store(Request $request)
     {
@@ -48,6 +36,7 @@ class OlimpiadaController extends Controller
             'descripcion' => ['nullable', 'string'],
             'area_id' => ['required', 'integer', 'exists:areas,id'],
             'activa' => ['required', 'boolean'],
+            'nivel_educativo_id' => ['nullable', 'integer', 'exists:niveles_educativos,codigo'],
         ]);
 
         Olimpiada::create($validated);
@@ -62,6 +51,7 @@ class OlimpiadaController extends Controller
             'descripcion' => ['nullable', 'string'],
             'area_id' => ['required', 'integer', 'exists:areas,id'],
             'activa' => ['required', 'boolean'],
+            'nivel_educativo_id' => ['nullable', 'integer', 'exists:niveles_educativos,codigo'],
         ]);
 
         $olimpiada->update($validated);

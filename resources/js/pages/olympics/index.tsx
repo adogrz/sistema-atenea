@@ -20,6 +20,7 @@ import { BreadcrumbItem } from '@/types';
 interface OlimpiadasIndexProps extends PageProps {
     olimpiadas: Olimpiada[];
     areas: Area[];
+    nivelesEducativos: NivelEducativo[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -27,7 +28,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { label: 'Olimpiadas', href: '/olympics' },
 ];
 
-const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas }) => {
+const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEducativos }) => {
     const { flash } = usePage().props as any;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,6 +40,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas }) => {
         descripcion: '',
         area_id: '',
         activa: true,
+        nivel_educativo_id: '',
     });
 
     useEffect(() => {
@@ -63,6 +65,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas }) => {
             descripcion: olimpiada.descripcion || '',
             area_id: String(olimpiada.area_id),
             activa: olimpiada.activa,
+            nivel_educativo_id: String(olimpiada.nivel_educativo_id || ''),
         });
         setIsModalOpen(true);
     };
@@ -113,6 +116,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas }) => {
     const columns: ColumnDef<Olimpiada>[] = useMemo(() => [
         { accessorKey: 'nombre', header: 'Nombre' },
         { accessorKey: 'area.name', header: 'Área' },
+        { accessorKey: 'nivelEducativo.descripcion', header: 'Nivel Educativo' },
         {
             accessorKey: 'activa',
             header: 'Activa',
@@ -196,6 +200,21 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas }) => {
                                     {areas.map((area) => (
                                         <SelectItem key={area.id} value={String(area.id)}>
                                             {area.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Select
+                                value={String(data.nivel_educativo_id)}
+                                onValueChange={(value) => setData('nivel_educativo_id', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un nivel educativo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {nivelesEducativos.map((nivel) => (
+                                        <SelectItem key={nivel.codigo} value={String(nivel.codigo)}>
+                                            {nivel.descripcion}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

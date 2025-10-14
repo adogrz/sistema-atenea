@@ -106,4 +106,15 @@ class FaseOlimpiadaController extends Controller
 
         return redirect()->back()->with('success', 'Fase reordenada exitosamente.');
     }
+
+    public function assignEvaluation(Request $request, FaseOlimpiada $fase)
+    {
+        $validated = $request->validate([
+            'definicion_evaluacion_id' => ['required', 'integer', 'exists:definiciones_evaluacion,id'],
+        ]);
+
+        $fase->update($validated);
+
+        return redirect()->back()->with('success', 'Evaluación asignada exitosamente.');
+    }
 }

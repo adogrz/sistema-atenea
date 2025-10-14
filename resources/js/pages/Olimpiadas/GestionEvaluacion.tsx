@@ -11,11 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { BreadcrumbItem } from '@/types';
 
-const GestionEvaluacion = ({ olimpiadas, calificadores }) => {
+const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion }) => {
     const [selectedOlimpiadaId, setSelectedOlimpiadaId] = useState<string | undefined>();
     const [selectedFaseId, setSelectedFaseId] = useState<string | undefined>();
     const [isAssignModalOpen, setAssignModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<any>(null);
+    const [isAssignEvaluationModalOpen, setAssignEvaluationModalOpen] = useState(false);
+    const [selectedPhaseForEvaluation, setSelectedPhaseForEvaluation] = useState<any>(null);
 
     const selectedOlimpiada = useMemo(() => olimpiadas.find(o => o.id === Number(selectedOlimpiadaId)), [olimpiadas, selectedOlimpiadaId]);
     const selectedFase = useMemo(() => selectedOlimpiada?.fases.find(f => f.id === Number(selectedFaseId)), [selectedOlimpiada, selectedFaseId]);
@@ -38,13 +40,31 @@ const GestionEvaluacion = ({ olimpiadas, calificadores }) => {
 
     const handleAssignmentSubmit = (e) => {
         e.preventDefault();
-        post(route('dashboard.asignaciones.syncForItem'), {
+        post(route('asignaciones.syncForItem'), {
             onSuccess: () => {
                 toast.success('Asignación guardada exitosamente.');
                 setAssignModalOpen(false);
             },
             onError: (err) => {
                 toast.error('Error al guardar la asignación.');
+                console.error(err);
+            },
+        });
+    };
+
+    const { data: assignEvaluationData, setData: setAssignEvaluationData, post: postAssignEvaluation, processing: processingAssignEvaluation, errors: errorsAssignEvaluation } = useForm({
+        definicion_evaluacion_id: '',
+    });
+
+    const handleAssignEvaluationSubmit = (e) => {
+        e.preventDefault();
+        postAssignEvaluation(route('fases.gestion.assignEvaluation', { fase: selectedPhaseForEvaluation.id }), {
+            onSuccess: () => {
+                toast.success('Evaluación asignada exitosamente.');
+                setAssignEvaluationModalOpen(false);
+            },
+            onError: (err) => {
+                toast.error('Error al asignar la evaluación.');
                 console.error(err);
             },
         });
@@ -94,21 +114,31 @@ const GestionEvaluacion = ({ olimpiadas, calificadores }) => {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {selectedFase.items_definidos.map(item => (
-                                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                        <div>
-                                            <p className="font-semibold">{item.nombre}</p>
-                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                {item.calificadores.length > 0 ? (
-                                                    item.calificadores.map(c => <Badge key={c.id} variant="secondary">{c.name}</Badge>)
-                                                ) : (
-                                                    <Badge variant="outline">Sin asignar</Badge>
-                                                )}
+                                {selectedFase.definicion_evaluacion ? (
+                                    selectedFase.definicion_evaluacion.items_definidos.map(item => (
+                                        <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                            <div>
+                                                <p className="font-semibold">{item.nombre}</p>
+                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                    {item.calificadores.length > 0 ? (
+                                                        item.calificadores.map(c => <Badge key={c.id} variant="secondary">{c.name}</Badge>)
+                                                    ) : (
+                                                        <Badge variant="outline">Sin asignar</Badge>
+                                                    )}
+                                                </div>
                                             </div>
+                                            <Button variant="outline" onClick={() => openAssignModal(item)}>Asignar Calificadores</Button>
                                         </div>
-                                        <Button variant="outline" onClick={() => openAssignModal(item)}>Asignar</Button>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-12 text-muted-foreground">
+                                        <p>Esta fase no tiene una evaluación asignada.</p>
+                                        <Button variant="outline" onClick={() => {
+                                            setSelectedPhaseForEvaluation(selectedFase);
+                                            setAssignEvaluationModalOpen(true);
+                                        }}>Asignar Evaluación</Button>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -118,6 +148,32 @@ const GestionEvaluacion = ({ olimpiadas, calificadores }) => {
                     </div>
                 )}
             </div>
+
+            <Dialog open={isAssignEvaluationModalOpen} onOpenChange={setAssignEvaluationModalOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Asignar Evaluación a: {selectedPhaseForEvaluation?.nombre}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleAssignEvaluationSubmit}>
+                        <div className="p-4">
+                            <Select
+                                onValueChange={(value) => setAssignEvaluationData('definicion_evaluacion_id', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona una evaluación" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {definicionesEvaluacion.map(def => <SelectItem key={def.id} value={String(def.id)}>{def.nombre}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setAssignEvaluationModalOpen(false)}>Cancelar</Button>
+                            <Button type="submit" disabled={processingAssignEvaluation}>Guardar Asignación</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={isAssignModalOpen} onOpenChange={setAssignModalOpen}>
                 <DialogContent className="sm:max-w-lg">
@@ -146,6 +202,7 @@ const GestionEvaluacion = ({ olimpiadas, calificadores }) => {
                                                 <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary ${data.calificador_ids.includes(calificador.id) ? 'bg-primary text-primary-foreground' : 'opacity-50 [&_svg]:invisible'}`}>
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                                                 </div>
+                                                <span>{calificador.name}</span>
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>

@@ -21,4 +21,9 @@ class ItemDefinido extends Model
     {
         return $this->belongsTo(FaseOlimpiada::class, 'fase_olimpiada_id');
     }
+
+    public function calificadores()
+    {
+        return $this->belongsToMany(User::class, 'calificador_item_asignado', 'item_definido_id', 'calificador_id');
+    }
 }
