@@ -1,59 +1,66 @@
 # Stage 1: Builder
-# Esta etapa instalará todas las dependencias, compilará los assets y preparará la aplicación.
+# This stage installs all dependencies, compiles assets, and prepares the application.
 FROM unit:1.34.1-php8.3 AS builder
 
-# Instalar dependencias del sistema y de PHP
+# Install system and PHP dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl unzip git libicu-dev libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libssl-dev \
     postgresql-client libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure pgsql --with-pgsql=/usr/local/pgsql \
     && docker-php-ext-install -j$(nproc) pcntl opcache pdo pdo_pgsql pgsql intl zip gd exif ftp bcmath \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Node.js (LTS)
+# Install Node.js (LTS)
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Composer
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /var/www/html
 
-# Instalar dependencias de Composer
+RUN git config --global --add safe.directory /var/www/html
+
+# Install Composer dependencies
 COPY composer.json composer.lock ./
 RUN composer install --no-interaction --no-plugins --no-scripts --no-dev --prefer-dist
 
-# Instalar dependencias de NPM
+# Install NPM dependencies and build assets
 COPY package.json package-lock.json ./
 RUN npm ci
-
-# Copiar el resto de la aplicación y construir assets
 COPY . .
 RUN npm run build
 
-# Optimizar Laravel para producción
-RUN composer install --optimize-autoloader --no-dev --prefer-dist
+# Optimize Laravel for production
+RUN composer install --optimize-autoloader --no-dev --prefer-dist \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
 # ---
 
 # Stage 2: Final Image
-# Esta es la imagen final, optimizada y ligera que irá a producción.
 FROM unit:1.34.1-php8.3
 
-# Instalar solo las extensiones de PHP necesarias para ejecutar la aplicación
+# Install only necessary runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libpq-dev \
+    # Removed supervisor as Dokploy can manage processes
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure pgsql --with-pgsql=/usr/local/pgsql \
     && docker-php-ext-install -j$(nproc) pdo pdo_pgsql pgsql intl zip gd exif ftp bcmath \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Configuración de PHP para producción
+# PHP production configuration
 RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/custom.ini \
     && echo "opcache.jit=tracing" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "opcache.jit_buffer_size=256M" >> /usr/local/etc/php/conf.d/custom.ini \
@@ -63,24 +70,27 @@ RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/custom.ini \
 
 WORKDIR /var/www/html
 
-# Copiar los artefactos construidos desde la etapa 'builder'
+# Copy built artifacts from the 'builder' stage
 COPY --from=builder /var/www/html/vendor ./vendor
 COPY --from=builder /var/www/html/public ./public
 COPY --from=builder /var/www/html/bootstrap/cache ./bootstrap/cache
-# Copiamos el resto de la aplicación
 COPY --from=builder /var/www/html .
 
-# Crear directorios necesarios y establecer permisos
+# Create necessary directories and set permissions
+# No need to create bootstrap/cache as it's copied from the builder
 RUN mkdir -p storage/logs storage/framework/{cache,sessions,views} \
     && chown -R unit:unit storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Copiar la configuración de Nginx Unit
-COPY unit.json /docker-entrypoint.d/unit.json
+COPY unit.json /docker-entrypoint.d/
+
+# Dokploy handles Nginx/Unit configuration and process management.
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/up || exit 1
+#HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+#    CMD curl -f http://localhost:8000/up || exit 1
 
-CMD ["unitd", "--no-daemon"]
+# Dokploy will manage the entrypoint and process.
+# We set the default command to run Nginx Unit directly.
+CMD ["unitd", "--no-daemon", "--control", "unix:/var/run/unit/control.sock"]

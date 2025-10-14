@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -57,6 +58,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Devuelve el estudiante asociado al usuario
+     * @return Estudiante
+     */
+    public function estudiante()
+    {
+        return $this->hasOne(Estudiante::class, 'user_id', 'id');
     }
 
     /**
@@ -132,6 +142,30 @@ class User extends Authenticatable
 
         // Limpiar caché de permisos para que los cambios surtan efecto inmediatamente
         $this->load('roles');
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    /*********************************
+     * Relaciones entres modelos
+     ********************************/
+
+    public function area()
+    {
+        return $this->belongsTo(Area::class, 'area_id');
+    }
+
+    public function olimpiada()
+    {
+        return $this->belongsTo(Olimpiada::class, 'olimpiada_id');
+    }
+
+    public function fase()
+    {
+        return $this->belongsTo(FaseOlimpiada::class, 'fase_id');
+    }
+
+    public function participante()
+    {
+        return $this->belongsTo(Estudiante::class, 'codigo_estudiante', 'codigo');
     }
 }

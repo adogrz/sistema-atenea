@@ -10,6 +10,9 @@ use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
 use App\Models\Evento;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\CalificacionInscripcionController;
+use App\Http\Controllers\InscripcionOlimpiadaController;
+use App\Http\Controllers\OlimpiadaController;
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -39,15 +42,44 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         ]);
     })->name('dashboard.audit')->middleware('permission:audit:view');
 
-    // Rutas para gestión de usuarios
+    // Dashboard
     Route::prefix('dashboard')->group(function () {
+
+        // Rutas para gestión de usuarios
         Route::get('users', [UserController::class, 'index'])->name('users.index')->middleware('permission:users:list');
         Route::get('users/create', [UserController::class, 'create'])->name('users.create')->middleware('permission:users:create');
         Route::post('users', [UserController::class, 'store'])->name('users.store')->middleware('permission:users:create');
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('permission:users:edit');
-        Route::match(['PUT', 'PATCH'], 'users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
+        Route::patch('users/{user}', [UserController::class, 'update'])->middleware('permission:users:edit');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users:delete');
         Route::post('users/{id}/restore', [UserController::class, 'restore'])->name('users.restore')->middleware('permission:users:delete');
+        // Olimpiadas
+        Route::prefix('olimpiadas')->name('olimpiadas.')->group(function () {
+            Route::get('/', [OlimpiadaController::class, 'index'])->name('index');
+            Route::get('/crear', [OlimpiadaController::class, 'create'])->name('create');
+            Route::post('/', [OlimpiadaController::class, 'store'])->name('store');
+            Route::get('/{olimpiada}', [OlimpiadaController::class, 'show'])->name('show');
+            Route::put('/{olimpiada}', [OlimpiadaController::class, 'update'])->name('update');
+            Route::delete('/{olimpiada}', [OlimpiadaController::class, 'destroy'])->name('destroy');
+        });
+
+        // Inscripciones
+        Route::prefix('inscripciones')->name('inscripciones.')->group(function () {
+            Route::get('/', [InscripcionOlimpiadaController::class, 'index'])->name('index');
+            Route::get('/crear', [InscripcionOlimpiadaController::class, 'create'])->name('create');
+            Route::post('/', [InscripcionOlimpiadaController::class, 'store'])->name('store');
+            Route::get('/{inscripcion}', [InscripcionOlimpiadaController::class, 'show'])->name('show');
+            Route::put('/{inscripcion}', [InscripcionOlimpiadaController::class, 'update'])->name('update');
+            Route::delete('/{inscripcion}', [InscripcionOlimpiadaController::class, 'destroy'])->name('destroy');
+        });
+
+        // Calificar Inscripciones
+        Route::prefix('calificar-inscripciones')->name('calificar-inscripciones.')->group(function () {
+            Route::get('/', [CalificacionInscripcionController::class, 'index'])->name('index');
+            Route::get('/{inscripcion}', [CalificacionInscripcionController::class, 'show'])->name('show');
+            Route::put('/{inscripcion}', [CalificacionInscripcionController::class, 'update'])->name('update');
+        });
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])
@@ -79,7 +111,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
                     'updated_at' => $evento->updated_at,
                 ];
             });
-            
+
             return Inertia::render('academic-forms/calendar', [
                 'events' => $events,
             ]);
@@ -103,6 +135,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
                 ];
             });
             
+
             return Inertia::render('dashboard-academico', [
                 'events' => $events,
             ]);
@@ -166,9 +199,67 @@ Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->gr
     Route::post('/admision', [AdmisionController::class, 'store'])->name('admision.store');
 });
 
-Route::get('/up', function () {
-    return response('OK', 200);
-});
+Route::get('/dashboard/academico', function () {
+    // Datos de ejemplo para mostrar en la vista
+    $sampleEvents = [
+        [
+            'id' => 1,
+            'name' => 'Registro de Aspirantes 2025',
+            'type' => 'registro-aspirantes',
+            'start_date' => '2025-01-15',
+            'end_date' => '2025-01-30',
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'description' => 'Periodo de registro para nuevos aspirantes',
+            'location' => 'Campus Principal',
+            'status' => 'activo',
+            'created_at' => '2025-01-01 10:00:00',
+        ],
+        [
+            'id' => 2,
+            'name' => 'Academia Sabatina',
+            'type' => 'academia-sabatina',
+            'start_date' => '2025-02-01',
+            'end_date' => '2025-02-28',
+            'start_time' => '08:00',
+            'end_time' => '12:00',
+            'description' => 'Clases de fin de semana',
+            'location' => 'Aula 101',
+            'status' => 'activo',
+            'created_at' => '2025-01-02 14:30:00',
+        ],
+        [
+            'id' => 3,
+            'name' => 'Examen Final FDTC',
+            'type' => 'examen',
+            'start_date' => '2025-03-15',
+            'end_date' => '2025-03-15',
+            'start_time' => '10:00',
+            'end_time' => '12:00',
+            'description' => 'Examen final del programa FDTC',
+            'location' => 'Auditorio Principal',
+            'status' => 'inactivo',
+            'created_at' => '2025-01-03 16:45:00',
+        ],
+        [
+            'id' => 4,
+            'name' => 'Graduación 2025',
+            'type' => 'graduacion',
+            'start_date' => '2025-04-20',
+            'end_date' => '2025-04-20',
+            'start_time' => '18:00',
+            'end_time' => '21:00',
+            'description' => 'Ceremonia de graduación',
+            'location' => 'Teatro Municipal',
+            'status' => 'completado',
+            'created_at' => '2025-01-04 12:15:00',
+        ],
+    ];
+
+    return Inertia::render('dashboard-academico', [
+        'events' => $sampleEvents,
+    ]);
+})->name('dashboard_academico');
 
 Route::get('/health', function () {
     try {
@@ -187,6 +278,11 @@ Route::get('/health', function () {
             ],
         ], 503);
     }
+});
+
+// Rutas de API públicas para el formulario de admisión (sin CSRF)
+Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
+    Route::post('api/check-duplicate', [App\Http\Controllers\Api\DuplicateCheckController::class, 'checkDuplicate']);
 });
 
 require __DIR__ . '/auth.php';

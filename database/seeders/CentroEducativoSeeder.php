@@ -1,0 +1,188 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class CentroEducativoSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        DB::table('centros_educativos')->insert([
+            [
+                'codigo' => '10001',
+                'nombre' => 'CENTRO ESCOLAR "ISIDRO MENÉNDEZ"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Urbana',
+                'direccion' => '2A. AV.SUR Y CALLE SANTA LUISA DE MARILLAC, AHUACHAPÁN',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10002',
+                'nombre' => 'CENTRO ESCOLAR "ALFREDO ESPINO"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Urbana',
+                'direccion' => '10ª CALLE PONIENTE FRENTE AL MERCADO Nº1, AHUACHAPÁN, AHUACHAPÁN',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10003',
+                'nombre' => 'CENTRO ESCOLAR "ALEJANDRO DE HUMBOLDT"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Urbana',
+                'direccion' => 'FINAL 6 CALLE PONIENTE Y AVENIDA MORAZAN',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10004',
+                'nombre' => 'CENTRO ESCOLAR "1° DE JULIO DE 1823"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Urbana',
+                'direccion' => '5a. CALLE ORIENTE Y 3a. AVENIDA SUR',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10006',
+                'nombre' => 'CENTRO ESCOLAR "RICARDO TRIGUEROS DE LEÓN"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Urbana',
+                'direccion' => 'COLONIA LLANOS DEL ESPINO',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10007',
+                'nombre' => 'CENTRO ESCOLAR "CARLOTA LEÓN VIUDA DE TRIGUEROS"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Urbana',
+                'direccion' => 'FINAL CALLE SAN ANTONIO, COLONIA EL NOPAL',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10008',
+                'nombre' => 'ESCUELA DE EDUCACIÓN PARVULARIA "MARÍA SALAZAR VIUDA DE MAGAÑA"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Urbana',
+                'direccion' => 'CALLE GERARDO BARRIOS PONIENTE CONTIGUO A PARQUE LA FAMILIA',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10010',
+                'nombre' => 'CENTRO ESCOLAR "CASERIO PUERTAS NEGRAS"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CASERIO PUERTAS NEGRAS, C/ LA MONTAÑITA',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10011',
+                'nombre' => 'CENTRO ESCOLAR "CANTON LOS HUATALES"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CANTON LOS HUATALES',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10012',
+                'nombre' => 'CENTRO ESCOLAR "BERNARDINO E. ZAMORA"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CANTON EL BARRO',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10013',
+                'nombre' => 'COMPLEJO EDUCATIVO "GENERAL FABIO MORÁN"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CANTON LAS CHINAMAS',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10014',
+                'nombre' => 'COMPLEJO EDUCATIVO "ISABEL CARRILLO DE BOLAÑOS"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CASERIO LOS HORCONES, CANTÓN EL TIGRE',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10015',
+                'nombre' => 'CENTRO ESCOLAR "PROFESOR RICARDO ARGUETA LINARES"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CANTON LLANO DE DOÑA MARIA',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10016',
+                'nombre' => 'CENTRO ESCOLAR "CANTON EL ROBLE"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CALLE PRINCIPAL, CANTON EL ROBLE',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10017',
+                'nombre' => 'CENTRO ESCOLAR "CANTON EL JUNQUILLO"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CANTON EL JUNQUILLO',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10019',
+                'nombre' => 'CENTRO ESCOLAR "CANTON ASHAPUCO"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CANTON ASHAPUCO',
+                'internacional' => 'NO',
+            ],
+            [
+                'codigo' => '10020',
+                'nombre' => 'CENTRO ESCOLAR "CANTÓN LA COYOTERA"',
+                'departamento' => 'AHUACHAPAN',
+                'distrito' => 'AHUACHAPAN',
+                'sector' => 'PÚBLICO',
+                'zona' => 'Rural',
+                'direccion' => 'CANTON LA COYOTERA',
+                'internacional' => 'NO',
+            ]
+        ]);
+    }
+}

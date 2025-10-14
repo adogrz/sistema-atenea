@@ -6,6 +6,7 @@ use App\Events\AcademicPeriodChanged;
 use App\Models\Evento;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+
 use Carbon\Carbon;
 
 class CheckAcademicPeriods extends Command

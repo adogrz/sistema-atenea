@@ -308,7 +308,7 @@ export default function RegisterUserPage() {
                                         <Checkbox
                                             id="send_credentials_email"
                                             checked={data.send_credentials_email}
-                                            onCheckedChange={(checked) => setData('send_credentials_email', !!checked)}
+                                            onCheckedChange={(checked) => setData('send_credentials_email', !!checked as true)}
                                         />
                                         <label
                                             htmlFor="send_credentials_email"

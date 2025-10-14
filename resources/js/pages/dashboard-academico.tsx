@@ -123,8 +123,10 @@ export default function DashboardAcademico() {
                             disabled={!canCreateEvent}
                             title={!canCreateEvent ? "No tienes permisos para crear eventos" : "Crear nuevo evento"}
                         >
-                            <Plus className="h-4 w-4" />
-                            <span>Agregar Evento</span>
+                            <Link href="/dashboard/academic-forms/create-event">
+                                <Plus className="h-4 w-4" />
+                                <span>Agregar Evento</span>
+                            </Link>
                         </Button>
                         
                         <Button 

@@ -14,14 +14,15 @@ class NivelEducativoSeeder extends Seeder
     public function run(): void
     {
         DB::table('niveles_educativos')->insert([
-            ['id_sede' => 'central', 'nivel' => 'Nivel 0', 'descripcion' => 'Cuarto Grado', 'codigo' => 'n0'],
-            ['id_sede' => 'central', 'nivel' => 'Nivel 1', 'descripcion' => 'Quinto Grado', 'codigo' => 'n1'],
-            ['id_sede' => 'central', 'nivel' => 'Nivel 2', 'descripcion' => 'Sexto Grado', 'codigo' => 'n2'],
-            ['id_sede' => 'occidental', 'nivel' => 'Nivel 3', 'descripcion' => 'Séptimo Grado', 'codigo' => 'n3'],
-            ['id_sede' => 'occidental', 'nivel' => 'Nivel 4', 'descripcion' => 'Octavo Grado', 'codigo' => 'n4'],
-            ['id_sede' => 'oriental', 'nivel' => 'Nivel 5', 'descripcion' => 'Noveno Grado', 'codigo' => 'n5'],
-            ['id_sede' => 'oriental', 'nivel' => 'Nivel 6', 'descripcion' => 'Primero de Bachillerato', 'codigo' => 'n6'],
-            ['id_sede' => 'oriental', 'nivel' => 'Nivel 7', 'descripcion' => 'Segundo de Bachillerato', 'codigo' => 'n7'],
+            ['id_sede' => 'central', 'nivel' => 'Nivel 0', 'descripcion' => 'Tercer Grado', 'codigo' => 0],
+            ['id_sede' => 'central', 'nivel' => 'Nivel 1', 'descripcion' => 'Cuarto Grado', 'codigo' => 1],
+            ['id_sede' => 'central', 'nivel' => 'Nivel 2', 'descripcion' => 'Quinto Grado', 'codigo' => 2],
+            ['id_sede' => 'central', 'nivel' => 'Nivel 3', 'descripcion' => 'Sexto Grado', 'codigo' => 3],
+            ['id_sede' => 'occidental', 'nivel' => 'Nivel 4', 'descripcion' => 'Séptimo Grado', 'codigo' => 4],
+            ['id_sede' => 'occidental', 'nivel' => 'Nivel 5', 'descripcion' => 'Octavo Grado', 'codigo' => 5],
+            ['id_sede' => 'oriental', 'nivel' => 'Nivel 6', 'descripcion' => 'Noveno Grado', 'codigo' => 6],
+            ['id_sede' => 'oriental', 'nivel' => 'Nivel 7', 'descripcion' => 'Primero de Bachillerato', 'codigo' => 7],
+            ['id_sede' => 'oriental', 'nivel' => 'Nivel 8', 'descripcion' => 'Segundo de Bachillerato', 'codigo' => 8],
         ]);
     }
 }
