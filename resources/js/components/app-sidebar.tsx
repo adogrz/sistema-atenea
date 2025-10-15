@@ -42,12 +42,15 @@ export function AppSidebar() {
             items: [
                 { title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard },
                 { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
-                { title: 'Datos Aspirantes', href: '/dashboard/academico/aspirantes', icon: Clock },
-                { title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users },
-                { title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen },
-                { title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap },
             ],
         }] : []),
+        {
+            title: 'FDTC',
+            icon: ShieldCheck,
+            items: [
+                ...(hasPermission('users:list') ? [{ title: 'Seleccion FDTC', href: '/dashboard/internado-fdtc', icon: Users }] : []),
+            ],
+        },
     ];
 
     const mainNavItems = navStructure
