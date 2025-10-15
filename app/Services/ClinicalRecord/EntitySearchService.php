@@ -60,12 +60,17 @@ class EntitySearchService
 
         $normalizedSearch = $this->normalizeSearchTerm($search);
 
+        // Determinar el permiso requerido según el tipo
+        $requiredPermission = $type === 'medical'
+            ? 'medical-records:view'
+            : 'psychological-records:view';
+
         return User::query()
             ->select('id', 'name', 'sede_name')
             ->whereHas('roles', function (Builder $query) use ($type) {
                 // Filtrar por rol según el tipo de asignación
                 if ($type === 'medical') {
-                    $query->where('name', 'medico');
+                    $query->where('name', 'doctor');
                 } elseif ($type === 'psychological') {
                     $query->where('name', 'psicologo');
                 }
@@ -83,13 +88,18 @@ class EntitySearchService
             })
             ->limit($limit)
             ->get()
+            ->filter(function (User $professional) use ($requiredPermission) {
+                // Filtrar solo usuarios con el permiso requerido
+                return $professional->can($requiredPermission);
+            })
             ->map(function (User $professional) {
                 return [
                     'value' => (string) $professional->id,
                     'label' => $professional->name,
                     'sublabel' => $professional->sede_name ? "Sede: {$professional->sede_name}" : null,
                 ];
-            });
+            })
+            ->values(); // Reiniciar las claves del array
     }
 
     /**

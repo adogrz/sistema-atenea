@@ -41,9 +41,18 @@ class AssignmentFilter
             ->when($filters['student_nie'] ?? null, fn($q, $nie) => $q->forStudent($nie))
             ->when($filters['professional_id'] ?? null, fn($q, $id) => $q->forProfessional($id))
             ->when($filters['type'] ?? null, fn($q, $type) => $q->byType($type))
-            ->when(isset($filters['is_active']), fn($q) => 
-                $filters['is_active'] ? $q->active() : $q->inactive()
-            );
+            ->when($filters['is_active'] ?? null, function($q, $value) {
+                // Si es 'active' o true, mostrar solo activas
+                if ($value === 'active' || $value === true || $value === '1' || $value === 1) {
+                    return $q->active();
+                }
+                // Si es 'inactive' o false, mostrar solo inactivas
+                if ($value === 'inactive' || $value === false || $value === '0' || $value === 0) {
+                    return $q->inactive();
+                }
+                // Si es 'all', no aplicar filtro (mostrar todas)
+                return $q;
+            });
     }
 
     /**
@@ -71,7 +80,7 @@ class AssignmentFilter
     {
         $query->whereRaw(
             "LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-                CONCAT(COALESCE(primer_nombre, ''), ' ', COALESCE(segundo_nombre, ''), ' ', 
+                CONCAT(COALESCE(primer_nombre, ''), ' ', COALESCE(segundo_nombre, ''), ' ',
                        COALESCE(primer_apellido, ''), ' ', COALESCE(segundo_apellido, ''))
             , 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u')) LIKE ?",
             ["%{$normalizedSearch}%"]
@@ -95,13 +104,13 @@ class AssignmentFilter
     private function normalizeSearchTerm(string $term): string
     {
         $term = mb_strtolower($term, 'UTF-8');
-        
+
         $replacements = [
             'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u',
             'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u',
             'ñ' => 'n', 'Ñ' => 'n', 'ü' => 'u', 'Ü' => 'u',
         ];
-        
+
         return str_replace(array_keys($replacements), array_values($replacements), $term);
     }
 }

@@ -32,8 +32,8 @@ export function AssignmentForm({ currentAssignment, assignmentType, onCancel }: 
     } = useAssignmentForm({ currentAssignment, assignmentType });
 
     return (
-        <Card className="mx-auto max-w-3xl">
-            <CardContent>
+        <Card className="mx-auto w-full max-w-3xl">
+            <CardContent className="pt-6">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         {/* Estudiante */}
@@ -115,7 +115,11 @@ export function AssignmentForm({ currentAssignment, assignmentType, onCancel }: 
                                                     </FormDescription>
                                                 </div>
                                                 <FormControl>
-                                                    <Switch checked={field.value} onCheckedChange={field.onChange} aria-label="Activar o desactivar asignación" />
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                        aria-label="Activar o desactivar asignación"
+                                                    />
                                                 </FormControl>
                                             </div>
                                         </FormItem>
@@ -138,6 +142,11 @@ export function AssignmentForm({ currentAssignment, assignmentType, onCancel }: 
                                                         placeholder="Explica el motivo del cambio en la asignación..."
                                                         className="min-h-[100px] resize-none text-sm focus-visible:ring-2"
                                                         {...field}
+                                                        onChange={(e) => {
+                                                            field.onChange(e);
+                                                            // Validar en tiempo real
+                                                            form.trigger('change_justification');
+                                                        }}
                                                     />
                                                 </FormControl>
                                                 <FormDescription className="text-xs text-muted-foreground/70">
@@ -155,12 +164,18 @@ export function AssignmentForm({ currentAssignment, assignmentType, onCancel }: 
 
                         {/* Botones de acción */}
                         <div className="flex justify-end gap-3 pt-6">
-                            <Button type="button" variant="outline" onClick={onCancel} disabled={form.formState.isSubmitting} className="min-w-[100px]">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onCancel}
+                                disabled={form.formState.isSubmitting}
+                                className="min-w-[100px]"
+                            >
                                 Cancelar
                             </Button>
                             <Button type="submit" disabled={isSubmitDisabled()} className="min-w-[100px]">
                                 {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {isEdit ? 'Actualizar Asignación' : 'Crear Asignación'}
+                                {isEdit ? 'Guardar cambios' : 'Crear Asignación'}
                             </Button>
                         </div>
                     </form>

@@ -209,7 +209,8 @@ class AssignmentController extends Controller
         $type = $request->input('type', 'medical');
         $limit = $request->input('limit', 10);
 
-        // Filtrar por sede si el usuario tiene sede asignada
+        // Filtrar por sede del jefe - solo mostrar profesionales de su misma sede
+        // Esto previene asignaciones cross-sede que causarían que las asignaciones desaparezcan del dashboard
         $sedeName = $user->sede_name;
 
         $results = $this->searchService->searchProfessionals($search, $type, $sedeName, $limit);

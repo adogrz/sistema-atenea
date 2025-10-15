@@ -41,6 +41,7 @@ class ListAssignmentsRequest extends FormRequest
             'student_nie' => $this->input('student_nie'),
             'professional_id' => $this->input('professional_id'),
             'type' => $this->input('type'),
+            // Por defecto mostrar todas las asignaciones (activas e inactivas)
             'is_active' => $this->input('is_active'),
             'search' => $this->input('search'),
             'per_page' => $this->input('per_page', 15),

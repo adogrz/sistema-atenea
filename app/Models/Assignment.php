@@ -173,7 +173,11 @@ class Assignment extends Model
      */
     public function getDescriptionForEvent(string $eventName): string
     {
-        $studentName = $this->student->primer_nombre ?? 'N/A';
+        $studentName = ($this->student->primer_nombre ?? '') . ' ' .
+                   ($this->student->segundo_nombre ?? '') . ' ' .
+                   ($this->student->primer_apellido ?? '') . ' ' .
+                   ($this->student->segundo_apellido ?? '');
+        $studentName = trim(preg_replace('/\s+/', ' ', $studentName)) ?: 'N/A';
         $professionalName = $this->professional->name ?? 'N/A';
         $typeLabel = $this->getTypeLabel();
 

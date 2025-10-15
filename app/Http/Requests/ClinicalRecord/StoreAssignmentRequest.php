@@ -3,6 +3,7 @@
 namespace App\Http\Requests\ClinicalRecord;
 
 use App\Models\Assignment;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -70,5 +71,28 @@ class StoreAssignmentRequest extends FormRequest
         if (!$this->has('is_active')) {
             $this->merge(['is_active' => true]);
         }
+    }    /**
+     * Configure the validator instance.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            // Validar que el profesional tenga los permisos correctos según el tipo
+            $professionalId = $this->input('professional_id');
+            $professional = User::find($professionalId);
+
+            if ($professional) {
+                $type = $this->input('type');
+
+                // Validar que el profesional pueda ver expedientes del tipo correcto
+                if ($type === Assignment::TYPE_MEDICAL && !$professional->can('medical-records:view')) {
+                    $validator->errors()->add('professional_id', 'El profesional seleccionado no tiene permisos para ver expedientes médicos.');
+                }
+
+                if ($type === Assignment::TYPE_PSYCHOLOGICAL && !$professional->can('psychological-records:view')) {
+                    $validator->errors()->add('professional_id', 'El profesional seleccionado no tiene permisos para ver expedientes psicológicos.');
+                }
+            }
+        });
     }
 }

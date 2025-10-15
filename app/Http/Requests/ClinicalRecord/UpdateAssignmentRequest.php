@@ -3,6 +3,7 @@
 namespace App\Http\Requests\ClinicalRecord;
 
 use App\Models\Assignment;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -69,17 +70,48 @@ class UpdateAssignmentRequest extends FormRequest
 
             // Validar que el profesional tenga los permisos correctos según el tipo
             $professionalId = $this->input('professional_id');
-            $professional = \App\Models\User::find($professionalId);
+            $professional = User::find($professionalId);
 
             if ($professional) {
-                if ($assignment->type === Assignment::TYPE_MEDICAL && !$professional->can('assignments:manage-medical')) {
-                    $validator->errors()->add('professional_id', 'El profesional seleccionado no tiene permisos para asignaciones médicas.');
+                // Validar que el profesional pueda ver expedientes del tipo correcto
+                if ($assignment->type === Assignment::TYPE_MEDICAL && !$professional->can('medical-records:view')) {
+                    $validator->errors()->add('professional_id', 'El profesional seleccionado no tiene permisos para ver expedientes médicos.');
                 }
 
-                if ($assignment->type === Assignment::TYPE_PSYCHOLOGICAL && !$professional->can('assignments:manage-psychological')) {
-                    $validator->errors()->add('professional_id', 'El profesional seleccionado no tiene permisos para asignaciones psicológicas.');
+                if ($assignment->type === Assignment::TYPE_PSYCHOLOGICAL && !$professional->can('psychological-records:view')) {
+                    $validator->errors()->add('professional_id', 'El profesional seleccionado no tiene permisos para ver expedientes psicológicos.');
+                }
+            }
+
+            // Validar justificación si hay cambios críticos
+            $hasChanges = $this->hasCriticalChanges($assignment);
+            if ($hasChanges) {
+                $justification = $this->input('change_justification');
+
+                if (empty($justification) || trim($justification) === '') {
+                    $validator->errors()->add('change_justification', 'Debe proporcionar una justificación para este cambio.');
+                } elseif (strlen(trim($justification)) < 10) {
+                    $validator->errors()->add('change_justification', 'La justificación debe tener al menos 10 caracteres.');
                 }
             }
         });
+    }
+
+    /**
+     * Verificar si hay cambios críticos que requieren justificación.
+     */
+    protected function hasCriticalChanges(Assignment $assignment): bool
+    {
+        // Cambió el profesional asignado
+        if ($this->input('professional_id') != $assignment->professional_id) {
+            return true;
+        }
+
+        // Se desactivó la asignación
+        if ($this->input('is_active') === false && $assignment->is_active) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -6,6 +6,9 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
+// Variable para almacenar los valores originales y usarlos en la validación
+let originalValuesForValidation: { professional_id: string; is_active: boolean } | null = null;
+
 const formSchema = z
     .object({
         student_nie: z.string().min(1, 'El NIE del estudiante es requerido'),
@@ -14,22 +17,43 @@ const formSchema = z
         change_justification: z.string().optional(),
     })
     .superRefine((data, ctx) => {
-        if (!data.is_active && (!data.change_justification || data.change_justification.trim().length === 0)) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Debe proporcionar una justificación para desactivar esta asignación.',
-                path: ['change_justification'],
-            });
+        // Verificar si hay cambios críticos
+        let hasCriticalChanges = false;
+
+        if (originalValuesForValidation) {
+            // Cambió el profesional
+            if (data.professional_id !== originalValuesForValidation.professional_id) {
+                hasCriticalChanges = true;
+            }
+            // Se desactivó la asignación
+            if (!data.is_active && originalValuesForValidation.is_active) {
+                hasCriticalChanges = true;
+            }
+        } else {
+            // Si no hay valores originales, solo validar al desactivar
+            if (!data.is_active) {
+                hasCriticalChanges = true;
+            }
         }
 
-        if (data.change_justification && data.change_justification.trim().length > 0 && data.change_justification.trim().length < 10) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'La justificación debe tener al menos 10 caracteres.',
-                path: ['change_justification'],
-            });
+        // Si hay cambios críticos, la justificación es obligatoria
+        if (hasCriticalChanges) {
+            if (!data.change_justification || data.change_justification.trim().length === 0) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Debe proporcionar una justificación para este cambio.',
+                    path: ['change_justification'],
+                });
+            } else if (data.change_justification.trim().length < 10) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'La justificación debe tener al menos 10 caracteres.',
+                    path: ['change_justification'],
+                });
+            }
         }
 
+        // Validar longitud máxima
         if (data.change_justification && data.change_justification.length > 1000) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -76,6 +100,12 @@ export function useAssignmentForm({ currentAssignment, assignmentType }: UseAssi
             form.reset(initialValues);
             setOriginalValues(initialValues);
 
+            // Actualizar valores originales para validación
+            originalValuesForValidation = {
+                professional_id: initialValues.professional_id,
+                is_active: initialValues.is_active,
+            };
+
             if (currentAssignment.student) {
                 const fullName = [
                     currentAssignment.student.primer_nombre,
@@ -100,6 +130,9 @@ export function useAssignmentForm({ currentAssignment, assignmentType }: UseAssi
             }
 
             setHasChanges(false);
+        } else {
+            // Limpiar valores originales si no hay asignación actual
+            originalValuesForValidation = null;
         }
     }, [currentAssignment, form]);
 
@@ -112,11 +145,27 @@ export function useAssignmentForm({ currentAssignment, assignmentType }: UseAssi
 
         const subscription = form.watch((values) => {
             const changed = values.professional_id !== originalValues.professional_id || values.is_active !== originalValues.is_active;
-            setHasChanges(changed);
+
+            // Solo actualizar si el estado de hasChanges realmente cambió
+            if (changed !== hasChanges) {
+                setHasChanges(changed);
+            }
         });
 
         return () => subscription.unsubscribe();
-    }, [form, isEdit, originalValues]);
+    }, [form, isEdit, originalValues, hasChanges]);
+
+    // Revalidar justificación cuando hasChanges cambia
+    useEffect(() => {
+        if (isEdit && hasChanges) {
+            // Usar setTimeout para evitar loop infinito
+            const timeoutId = setTimeout(() => {
+                form.trigger('change_justification');
+            }, 0);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [hasChanges, isEdit, form]);
 
     // Handlers para selección de entidades
     const handleStudentSelect = (item: EntityItem) => {
@@ -150,10 +199,23 @@ export function useAssignmentForm({ currentAssignment, assignmentType }: UseAssi
         if (form.formState.isSubmitting) return true;
 
         if (isEdit) {
-            return !hasChanges;
+            // Si no hay cambios, deshabilitar
+            if (!hasChanges) return true;
+
+            // Si hay errores de validación, deshabilitar
+            if (Object.keys(form.formState.errors).length > 0) return true;
+
+            return false;
         } else {
             const values = form.getValues();
-            return !values.student_nie || !values.professional_id;
+
+            // Si faltan campos requeridos, deshabilitar
+            if (!values.student_nie || !values.professional_id) return true;
+
+            // Si hay errores de validación, deshabilitar
+            if (Object.keys(form.formState.errors).length > 0) return true;
+
+            return false;
         }
     };
 
