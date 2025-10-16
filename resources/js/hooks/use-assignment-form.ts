@@ -1,7 +1,6 @@
 import { EntityItem } from '@/components/ui/entity-finder';
 import { AssignmentWithRelations, RecordType } from '@/types/clinical-records';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -219,34 +218,6 @@ export function useAssignmentForm({ currentAssignment, assignmentType }: UseAssi
         }
     };
 
-    // Submit handler
-    const onSubmit = async (data: AssignmentFormValues) => {
-        const submitData = {
-            ...data,
-            type: currentAssignment?.type || assignmentType,
-        };
-
-        if (isEdit && currentAssignment) {
-            router.put(route('clinical-records.assignments.update', currentAssignment.id), submitData, {
-                onSuccess: () => {
-                    router.visit(route('clinical-records.assignments.index'));
-                },
-                onError: (errors) => {
-                    console.error('Error updating assignment:', errors);
-                },
-            });
-        } else {
-            router.post(route('clinical-records.assignments.store'), submitData, {
-                onSuccess: () => {
-                    router.visit(route('clinical-records.assignments.index'));
-                },
-                onError: (errors) => {
-                    console.error('Error creating assignment:', errors);
-                },
-            });
-        }
-    };
-
     return {
         form,
         isEdit,
@@ -258,6 +229,5 @@ export function useAssignmentForm({ currentAssignment, assignmentType }: UseAssi
         handleProfessionalSelect,
         handleProfessionalClear,
         isSubmitDisabled,
-        onSubmit,
     };
 }

@@ -7,10 +7,11 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type AssignmentFilters, type AssignmentWithRelations } from '@/types/clinical-records';
 import { type PaginatedData } from '@/types/pagination';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { CirclePlus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
@@ -88,6 +89,13 @@ export default function DashboardAssignments({ assignments, filters, permissions
             }
         };
     }, []);
+
+    // Mostrar toasts de mensajes flash (éxito/error)
+    const { props: pageProps } = usePage<{ flash?: { success?: string | null; error?: string | null } }>();
+    useEffect(() => {
+        if (pageProps.flash?.success) toast.success(pageProps.flash.success);
+        if (pageProps.flash?.error) toast.error(pageProps.flash.error);
+    }, [pageProps.flash?.success, pageProps.flash?.error]);
 
     const handleCreateAssignment = () => {
         router.visit(route('clinical-records.assignments.create'));

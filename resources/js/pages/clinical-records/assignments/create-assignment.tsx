@@ -5,9 +5,10 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { RecordType } from '@/types/clinical-records';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Activity, Stethoscope } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
@@ -36,6 +37,13 @@ export default function CreateAssignment({ permissions }: Props) {
         return 'medical'; // Por defecto
     }, [permissions.canManageMedical, permissions.canManagePsychological]);
 
+    // Mostrar toasts por mensajes flash
+    const { props: pageProps } = usePage<{ flash?: { success?: string | null; error?: string | null } }>();
+    useEffect(() => {
+        if (pageProps.flash?.success) toast.success(pageProps.flash.success);
+        if (pageProps.flash?.error) toast.error(pageProps.flash.error);
+    }, [pageProps.flash?.success, pageProps.flash?.error]);
+
     const handleCancel = () => {
         router.visit(route('clinical-records.assignments.index'));
     };
@@ -48,7 +56,7 @@ export default function CreateAssignment({ permissions }: Props) {
                     <div
                         className={cn(
                             'flex h-12 w-12 items-center justify-center rounded-lg',
-                            assignmentType === 'medical' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-purple-100 dark:bg-purple-900/30'
+                            assignmentType === 'medical' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-purple-100 dark:bg-purple-900/30',
                         )}
                     >
                         {assignmentType === 'medical' ? (

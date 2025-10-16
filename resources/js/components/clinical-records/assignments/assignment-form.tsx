@@ -8,7 +8,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useAssignmentForm } from '@/hooks/use-assignment-form';
 import { AssignmentWithRelations, RecordType } from '@/types/clinical-records';
+import { router } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AssignmentFormProps {
     currentAssignment?: AssignmentWithRelations;
@@ -28,14 +30,41 @@ export function AssignmentForm({ currentAssignment, assignmentType, onCancel }: 
         handleProfessionalSelect,
         handleProfessionalClear,
         isSubmitDisabled,
-        onSubmit,
     } = useAssignmentForm({ currentAssignment, assignmentType });
+
+    // Interceptar el submit para mostrar toasts usando los callbacks de Inertia
+    const handleSubmit = form.handleSubmit(async (values) => {
+        const submitData = { ...values, type: currentAssignment?.type || assignmentType };
+        if (isEdit && currentAssignment) {
+            await new Promise<void>((resolve) => {
+                router.put(route('clinical-records.assignments.update', currentAssignment.id), submitData, {
+                    // Éxito: no tostar aquí para evitar duplicados; el dashboard mostrará el flash
+                    onError: (errors: Record<string, string>) => {
+                        const first = Object.values(errors)[0];
+                        toast.error(first || 'Ocurrió un error al actualizar la asignación.');
+                    },
+                    onFinish: () => resolve(),
+                });
+            });
+        } else {
+            await new Promise<void>((resolve) => {
+                router.post(route('clinical-records.assignments.store'), submitData, {
+                    // Éxito: no tostar aquí para evitar duplicados; el dashboard mostrará el flash
+                    onError: (errors: Record<string, string>) => {
+                        const first = Object.values(errors)[0];
+                        toast.error(first || 'Ocurrió un error al crear la asignación.');
+                    },
+                    onFinish: () => resolve(),
+                });
+            });
+        }
+    });
 
     return (
         <Card className="mx-auto w-full max-w-3xl">
             <CardContent className="pt-6">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Estudiante */}
                         <FormField
                             control={form.control}

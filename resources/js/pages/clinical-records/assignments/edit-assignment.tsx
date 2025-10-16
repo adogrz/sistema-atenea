@@ -5,8 +5,10 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { AssignmentWithRelations } from '@/types/clinical-records';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Activity, Stethoscope } from 'lucide-react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface Props {
     assignment: AssignmentWithRelations;
@@ -26,8 +28,22 @@ export default function EditAssignment({ assignment }: Props) {
 
     // Obtener nombre completo del estudiante
     const studentFullName = assignment.student
-        ? [assignment.student.primer_nombre, assignment.student.segundo_nombre, assignment.student.primer_apellido, assignment.student.segundo_apellido].filter(Boolean).join(' ')
+        ? [
+              assignment.student.primer_nombre,
+              assignment.student.segundo_nombre,
+              assignment.student.primer_apellido,
+              assignment.student.segundo_apellido,
+          ]
+              .filter(Boolean)
+              .join(' ')
         : 'Estudiante';
+
+    // Mostrar toasts por mensajes flash
+    const { props: pageProps } = usePage<{ flash?: { success?: string | null; error?: string | null } }>();
+    useEffect(() => {
+        if (pageProps.flash?.success) toast.success(pageProps.flash.success);
+        if (pageProps.flash?.error) toast.error(pageProps.flash.error);
+    }, [pageProps.flash?.success, pageProps.flash?.error]);
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
@@ -37,7 +53,7 @@ export default function EditAssignment({ assignment }: Props) {
                     <div
                         className={cn(
                             'flex h-12 w-12 items-center justify-center rounded-lg',
-                            assignment.type === 'medical' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-purple-100 dark:bg-purple-900/30'
+                            assignment.type === 'medical' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-purple-100 dark:bg-purple-900/30',
                         )}
                     >
                         {assignment.type === 'medical' ? (
