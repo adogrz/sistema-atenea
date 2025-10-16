@@ -17,6 +17,9 @@ import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Eye, MoreHorizontal, Pencil, Power, PowerOff } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import AssignmentsStatusDialog from './assignments-status-dialog';
 
 /**
  * Formatea el nombre completo del estudiante
@@ -61,6 +64,83 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => {
         </Badge>
     );
 };
+
+/**
+ * Componente para las acciones de la asignación
+ */
+function ActionsCell({ assignment }: { assignment: AssignmentWithRelations }) {
+    const [openDialog, setOpenDialog] = useState(false);
+
+    const handleEdit = () => {
+        router.visit(route('clinical-records.assignments.edit', assignment.id));
+    };
+
+    const handleToggleStatusClick = () => setOpenDialog(true);
+
+    const onConfirm = async (justification: string) => {
+        await new Promise<void>((resolve) => {
+            router.patch(
+                route('clinical-records.assignments.patch', assignment.id),
+                {
+                    is_active: !assignment.is_active,
+                    change_justification: justification,
+                    professional_id: assignment.professional_id,
+                    type: assignment.type,
+                },
+                {
+                    onSuccess: () => {
+                        const msg = !assignment.is_active ? 'Asignación activada correctamente.' : 'Asignación desactivada correctamente.';
+                        toast.success(msg);
+                    },
+                    onError: (errors: Record<string, string>) => {
+                        const firstError = Object.values(errors)[0];
+                        toast.error(firstError || 'No se pudo actualizar el estado de la asignación.');
+                    },
+                    onFinish: () => resolve(),
+                    preserveState: true,
+                    preserveScroll: true,
+                    only: ['assignments'],
+                },
+            );
+        });
+    };
+
+    return (
+        <>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="size-8 p-0">
+                        <span className="sr-only">Abrir menú</span>
+                        <MoreHorizontal className="size-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
+                        <Pencil className="mr-2 size-4" />
+                        Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleToggleStatusClick} className="cursor-pointer">
+                        {assignment.is_active ? (
+                            <>
+                                <PowerOff className="mr-2 size-4" />
+                                Desactivar
+                            </>
+                        ) : (
+                            <>
+                                <Power className="mr-2 size-4" />
+                                Activar
+                            </>
+                        )}
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <AssignmentsStatusDialog currentAssignment={assignment} open={openDialog} onOpenChange={setOpenDialog} onConfirm={onConfirm} />
+        </>
+    );
+}
 
 /**
  * Columnas para el rol de Jefe (puede gestionar asignaciones)
@@ -108,50 +188,7 @@ export const getManagerColumns = (): ColumnDef<AssignmentWithRelations>[] => [
     {
         id: 'actions',
         enableHiding: false,
-        cell: ({ row }) => {
-            const assignment = row.original;
-
-            const handleEdit = () => {
-                router.visit(route('clinical-records.assignments.edit', assignment.id));
-            };
-
-            const handleToggleStatus = () => {
-                // TODO: Implementar diálogo de confirmación para activar/desactivar
-                console.log('Toggle status:', assignment.id);
-            };
-
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="size-8 p-0">
-                            <span className="sr-only">Abrir menú</span>
-                            <MoreHorizontal className="size-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
-                            <Pencil className="mr-2 size-4" />
-                            Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleToggleStatus} className="cursor-pointer">
-                            {assignment.is_active ? (
-                                <>
-                                    <PowerOff className="mr-2 size-4" />
-                                    Desactivar
-                                </>
-                            ) : (
-                                <>
-                                    <Power className="mr-2 size-4" />
-                                    Activar
-                                </>
-                            )}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            );
-        },
+        cell: ({ row }) => <ActionsCell assignment={row.original} />,
     },
 ];
 
