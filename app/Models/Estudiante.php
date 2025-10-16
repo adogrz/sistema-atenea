@@ -61,6 +61,14 @@ class Estudiante extends Model
     ];
 
     /**
+     * Relación con el usuario asociado al estudiante
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * Relación con el modelo Responsable
      */
     public function responsable(): HasOne

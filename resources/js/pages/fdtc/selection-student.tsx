@@ -26,8 +26,9 @@ interface Materia {
     nota: number;
 }
 
-interface Estudiante {
-    id: number;
+export interface Estudiante {
+    id: string;
+    codigo: string;
     nombre: string;
     email: string;
     sede_name: string;
@@ -41,11 +42,6 @@ interface Estudiante {
 interface FlashMessages {
     success?: string;
     error?: string;
-}
-
-interface NotaFilter {
-    min: number | null;
-    max: number | null;
 }
 
 const BREADCRUMBS: BreadcrumbItem[] = [
@@ -73,7 +69,7 @@ export default function DashboardInternadoFDTC() {
     const canManageInternado = hasPermission('internado:manage');
 
     // Estados
-    const [selectedEstudiantesIds, setSelectedEstudiantesIds] = useState<number[]>([]);
+    const [selectedEstudiantesIds, setSelectedEstudiantesIds] = useState<string[]>([]);
     const [showAddConfirm, setShowAddConfirm] = useState(false);
     const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -256,9 +252,9 @@ export default function DashboardInternadoFDTC() {
                         <DataTableMultiSelect
                             columns={columns}
                             data={estudiantes}
-                            selectedRowIds={selectedEstudiantesIds}
-                            onRowSelectionChange={setSelectedEstudiantesIds}
-                            getRowId={(estudiante) => estudiante.id}
+                            selectedRowIds={selectedEstudiantesIds}  
+                            onRowSelectionChange={setSelectedEstudiantesIds}  
+                            getRowId={(estudiante) => estudiante.id}  
                             columnFilters={columnFilters}
                             setColumnFilters={setColumnFilters}
                         />

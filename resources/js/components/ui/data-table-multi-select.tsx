@@ -8,118 +8,88 @@ import {
     getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
-    VisibilityState,
-    RowSelectionState
 } from '@tanstack/react-table';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import * as React from 'react';
+import { Button } from '@/components/ui/button';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { DataTablePagination } from './data-table-pagination';
-import { DataTableViewOptions } from './data-table-view-options';
-
-interface DataTableMultiSelectProps<TData, TValue> {
+interface DataTableMultiSelectProps<TData, TValue, TRowId = number> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
-    getRowId?: (row: TData) => string | number;
-    columnFilters: ColumnFiltersState;
-    setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
-    selectedRowIds: number[];
-    onRowSelectionChange: Dispatch<SetStateAction<number[]>>;
+    selectedRowIds: TRowId[];
+    onRowSelectionChange: React.Dispatch<React.SetStateAction<TRowId[]>>;
+    getRowId?: (row: TData) => TRowId;
+    columnFilters?: ColumnFiltersState;
+    setColumnFilters?: React.Dispatch<React.SetStateAction<ColumnFiltersState>>;
 }
 
-export function DataTableMultiSelect<TData, TValue>({
+export function DataTableMultiSelect<TData, TValue, TRowId = number>({
     columns,
     data,
-    getRowId = (row: TData) => (row as { id: string | number }).id,
-    columnFilters,
-    setColumnFilters,
     selectedRowIds,
-    onRowSelectionChange
-}: DataTableMultiSelectProps<TData, TValue>) {
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [globalFilter, setGlobalFilter] = useState('');
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-    const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+    onRowSelectionChange,
+    getRowId,
+    columnFilters = [],
+    setColumnFilters,
+}: DataTableMultiSelectProps<TData, TValue, TRowId>) {
+    const [sorting, setSorting] = React.useState<SortingState>([]);
 
-    // Sincronizar rowSelection con selectedRowIds al montar y cuando cambian
-    useEffect(() => {
-        const newSelection: RowSelectionState = {};
-        selectedRowIds.forEach(id => {
-            newSelection[id.toString()] = true;
+    const rowSelection = React.useMemo(() => {
+        const selection: Record<string, boolean> = {};
+        selectedRowIds.forEach((id) => {
+            selection[String(id)] = true;
         });
-        setRowSelection(newSelection);
+        return selection;
     }, [selectedRowIds]);
-
-    // Notificar cambios de selección al componente padre
-    useEffect(() => {
-        const selectedIds = Object.keys(rowSelection)
-            .filter(key => rowSelection[key])
-            .map(key => Number(key));
-        
-        // Solo actualizar si hay cambios reales para evitar loops infinitos
-        const currentSorted = [...selectedRowIds].sort((a, b) => a - b);
-        const newSorted = [...selectedIds].sort((a, b) => a - b);
-        
-        if (JSON.stringify(currentSorted) !== JSON.stringify(newSorted)) {
-            onRowSelectionChange(selectedIds);
-        }
-    }, [rowSelection]);
 
     const table = useReactTable({
         data,
         columns,
-        state: {
-            sorting,
-            globalFilter,
-            columnFilters,
-            columnVisibility,
-            rowSelection
-        },
-        onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
-        onGlobalFilterChange: setGlobalFilter,
-        onColumnFiltersChange: setColumnFilters,
-        onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: setRowSelection,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        state: {
+            sorting,
+            columnFilters,
+            rowSelection,
+        },
         enableRowSelection: true,
-        getRowId: (row) => getRowId(row).toString()
+        onRowSelectionChange: (updater) => {
+            const newSelection = typeof updater === 'function' ? updater(rowSelection) : updater;
+            const newSelectedIds = Object.keys(newSelection)
+                .filter((key) => newSelection[key])
+                .map((key) => {
+                    const parsedId = getRowId
+                        ? (key as TRowId)
+                        : (isNaN(Number(key)) ? key : Number(key)) as TRowId;
+                    return parsedId;
+                });
+            onRowSelectionChange(newSelectedIds as TRowId[]);
+        },
+        getRowId: getRowId ? (row) => String(getRowId(row)) : undefined,
+        initialState: {
+            pagination: {
+                pageSize: 10,
+            },
+        }
     });
 
     const handleRowClick = (row: any, event: React.MouseEvent) => {
-        // Evitar toggle si se hizo clic en un botón, link o checkbox
-        const target = event.target as HTMLElement;
-        if (
-            target.closest('button') || 
-            target.closest('a') || 
-            target.closest('input[type="checkbox"]') ||
-            target.closest('[data-no-select]')
-        ) {
+        // No hacer nada si el clic fue en un elemento con data-no-select
+        if ((event.target as HTMLElement).closest('[data-no-select]')) {
             return;
         }
-
-        // Toggle de selección
+        
+        // Toggle la selección de la fila
         row.toggleSelected();
     };
 
     return (
-        <div>
-            {/* Búsqueda Global */}
-            <div className="flex items-center py-4">
-                <Input
-                    type="search"
-                    placeholder="Buscar..."
-                    value={globalFilter ?? ''}
-                    onChange={(event) => setGlobalFilter(event.target.value)}
-                    className="max-w-sm"
-                />
-                <DataTableViewOptions table={table} />
-            </div>
-
-            {/* Tabla */}
+        <div className="space-y-4">
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -131,9 +101,9 @@ export function DataTableMultiSelect<TData, TValue>({
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext()
-                                                )}
+                                                      header.column.columnDef.header,
+                                                      header.getContext(),
+                                                  )}
                                         </TableHead>
                                     );
                                 })}
@@ -141,11 +111,11 @@ export function DataTableMultiSelect<TData, TValue>({
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows.length ? (
+                        {table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
-                                    data-state={row.getIsSelected() ? 'selected' : undefined}
+                                    data-state={row.getIsSelected() && 'selected'}
                                     onClick={(e) => handleRowClick(row, e)}
                                     className="cursor-pointer"
                                 >
@@ -159,7 +129,7 @@ export function DataTableMultiSelect<TData, TValue>({
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    No se encontraron resultados.
+                                    No hay resultados.
                                 </TableCell>
                             </TableRow>
                         )}
@@ -168,8 +138,33 @@ export function DataTableMultiSelect<TData, TValue>({
             </div>
 
             {/* Paginación */}
-            <div className="mt-2">
-                <DataTablePagination table={table} />
+            <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                    {selectedRowIds.length} de {table.getFilteredRowModel().rows.length} fila(s) seleccionada(s).
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        Anterior
+                    </Button>
+                    <div className="text-sm">
+                        Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                    >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );

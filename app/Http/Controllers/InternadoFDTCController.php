@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\User;
+use App\Models\Estudiante;
 
 class InternadoFDTCController extends Controller
 {
@@ -14,22 +14,31 @@ class InternadoFDTCController extends Controller
      */
     public function index(): Response
     {
-        $estudiantes = User::with(['roles', 'sede', 'areas'])
-            ->whereHas('roles', function ($query) {
-                $query->where('name', 'estudiante');
+        $estudiantes = Estudiante::with(['user.sede'])
+            ->whereHas('user', function ($query) {
+                $query->whereHas('roles', function ($q) {
+                    $q->where('name', 'estudiante');
+                });
             })
             ->get()
-            ->map(function ($user) {
+            ->map(function ($estudiante) {
+                $nombreCompleto = trim(
+                    ($estudiante->primer_nombre ?? '') . ' ' .
+                    ($estudiante->segundo_nombre ?? '') . ' ' .
+                    ($estudiante->primer_apellido ?? '') . ' ' .
+                    ($estudiante->segundo_apellido ?? '')
+                );
+
                 return [
-                    'id' => $user->id,
-                    'nombre' => $user->name,
-                    'email' => $user->email,
-                    'sede_name' => $user->sede->name ?? 'Sin sede',
-                    'sede_description' => $user->sede->description ?? 'Sin sede',
-                    'promedio_general' => 0,
-                    'materias' => [],
-                    'status' => $user->status,
-                    'en_internado' => false,
+                    'id' => $estudiante->codigo,
+                    'codigo' => $estudiante->codigo,
+                    'nombre' => $nombreCompleto ?: $estudiante->user->name ?? 'N/A',
+                    'email' => $estudiante->email ?? $estudiante->user->email ?? 'N/A',
+                    'sede_name' => $estudiante->user->sede->name ?? 'Sin sede',
+                    'sede_description' => $estudiante->user->sede->description ?? 'Sin sede',
+                    'promedio_general' => 0, // TODO: Calcular cuando tengamos las notas
+                    'materias' => [], // TODO: Agregar cuando tengamos las materias
+                    'status' => $estudiante->user->status ?? 'inactive',
                 ];
             });
 

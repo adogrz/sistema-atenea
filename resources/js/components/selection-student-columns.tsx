@@ -9,24 +9,7 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-interface Materia {
-    id: number;
-    nombre: string;
-    nota: number;
-}
-
-interface Estudiante {
-    id: number;
-    nombre: string;
-    email: string;
-    sede_name: string;
-    sede_description?: string;
-    promedio_general: number;
-    materias: Materia[];
-    status: string;
-    en_internado: boolean;
-}
+import type { Estudiante } from '@/pages/fdtc/selection-student';
 
 export const getInternadoColumns = (
     estudiantes: Estudiante[],
@@ -111,6 +94,16 @@ export const getInternadoColumns = (
             ),
             enableSorting: false,
             enableHiding: false,
+        },
+        {
+            accessorKey: 'codigo',
+            header: 'Código',
+            cell: ({ row }) => (
+                <span className="font-mono font-medium text-sm">
+                    {row.getValue('codigo')}
+                </span>
+            ),
+            enableSorting: false,
         },
         {
             accessorKey: 'nombre',
