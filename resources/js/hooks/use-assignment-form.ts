@@ -69,7 +69,7 @@ interface UseAssignmentFormProps {
     assignmentType: RecordType;
 }
 
-export function useAssignmentForm({ currentAssignment, assignmentType }: UseAssignmentFormProps) {
+export function useAssignmentForm({ currentAssignment }: UseAssignmentFormProps) {
     const isEdit = !!currentAssignment;
     const [selectedStudentInfo, setSelectedStudentInfo] = useState<{ title: string; subtitle: string } | null>(null);
     const [selectedProfessionalInfo, setSelectedProfessionalInfo] = useState<{ title: string; subtitle?: string } | null>(null);

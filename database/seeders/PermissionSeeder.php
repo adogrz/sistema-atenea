@@ -55,8 +55,13 @@ class PermissionSeeder extends Seeder
                 'areas:delete',
                 'areas:assign'
             ],
+            'clinical-records' => [
+                'clinical-records:view-module', // Ver el módulo de expediente clínico
+            ],
             'clinical-assignments' => [
+                'assignments:view-medical',
                 'assignments:manage-medical', // Gestionar asignaciones de estudiantes a doctores
+                'assignments:view-psychological',
                 'assignments:manage-psychological', // Gestionar asignaciones de estudiantes a psicólogos
             ],
             'medical-records' => [
@@ -207,6 +212,8 @@ class PermissionSeeder extends Seeder
                 'permissions' => [
                     'users:view-sede',
                     'users:list',
+                    'clinical-records:view-module',
+                    'assignments:view-psychological',
                     // Permisos para expedientes psicológicos
                     'psychological-records:view',
                     'psychological-records:create',
@@ -243,6 +250,8 @@ class PermissionSeeder extends Seeder
                 'permissions' => [
                     'users:view-sede',
                     'users:list',
+                    'clinical-records:view-module',
+                    'assignments:view-medical',
                     // Permisos para expedientes médicos
                     'medical-records:view',
                     'medical-records:create',
