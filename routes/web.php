@@ -1,18 +1,18 @@
 <?php
 
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Route;
-use Spatie\Activitylog\Models\Activity;
-use Illuminate\Support\Facades\DB;
-
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\CentroEducativoController;
+use App\Http\Controllers\AcademiaSabatinaController;
 use App\Http\Controllers\AdmisionController;
-use App\Models\Evento;
-use App\Http\Controllers\EventController;
 use App\Http\Controllers\CalificacionInscripcionController;
+use App\Http\Controllers\CentroEducativoController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\InscripcionOlimpiadaController;
 use App\Http\Controllers\OlimpiadaController;
+use App\Http\Controllers\UserController;
+use App\Models\Evento;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Spatie\Activitylog\Models\Activity;
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -33,10 +33,11 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
 
     Route::get('/dashboard/audit', static function () {
         // Solo usuarios con permiso pueden ver esto.
-        if (!auth()->user()->hasPermissionTo('audit:view')) {
+        if (! auth()->user()->hasPermissionTo('audit:view')) {
             abort(403);
         }
         $logs = Activity::with('causer')->latest()->get();
+
         return Inertia::render('dashboard-audit', [
             'logs' => $logs,
         ]);
@@ -181,6 +182,13 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             ]);
         })->name('academic-forms.edit');
     });
+
+    // Rutas para la Academia Sabatina
+    Route::middleware(['auth', 'permission:instructor:edit'])->group(function () {
+
+        Route::get('/planificacion/academia-sabatina', [AcademiaSabatinaController::class, 'getPlanificacion']);
+    });
+
 });
 
 Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {});
@@ -264,6 +272,7 @@ Route::get('/dashboard/academico', function () {
 Route::get('/health', function () {
     try {
         DB::connection()->getPdo();
+
         return response()->json([
             'status' => 'ok',
             'services' => [
@@ -285,5 +294,5 @@ Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken:
     Route::post('api/check-duplicate', [App\Http\Controllers\Api\DuplicateCheckController::class, 'checkDuplicate']);
 });
 
-require __DIR__ . '/auth.php';
-require __DIR__ . '/settings.php';
+require __DIR__.'/auth.php';
+require __DIR__.'/settings.php';

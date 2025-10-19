@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('descripcion');
             $table->string('nivel');
             $table->string('id_sede');
+            $table->integer('anio');
             $table->foreign('id_sede')->references('name')->on('sedes')->onDelete('cascade');
         });
     }

@@ -11,6 +11,7 @@ import {
     CalendarDays,
     ClipboardListIcon,
     Clock,
+    DraftingCompass,
     GraduationCap,
     GraduationCapIcon,
     HouseIcon,
@@ -76,6 +77,11 @@ export function AppSidebar() {
                 ...(hasPermission('profile:view') ? [{ title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap }] : []),
             ],
         },
+        ...(hasPermission('instructor:view')
+            ? [{ title: 'Planificación', href: '/planificacion/academia-sabatina', icon: DraftingCompass }]
+            : []),
+            
+        
     ];
 
     const mainNavItems = navStructure

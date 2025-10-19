@@ -48,6 +48,10 @@ class PermissionSeeder extends Seeder
                 'sedes:delete',
                 'sedes:assign'
             ],
+            'instructor' => [
+                'instructor:view',
+                'instructor:edit',
+            ],
             'areas' => [
                 'areas:list',
                 'areas:create',
@@ -210,7 +214,7 @@ class PermissionSeeder extends Seeder
             'instructor' => [
                 'description' => 'Instructor',
                 'groups' => ['general'],
-                'permissions' => ['users:view-sede', 'users:view-area', 'users:list'],
+                'permissions' => ['users:view-sede', 'users:view-area', 'users:list','instructor:view', 'instructor:edit'],
                 'inherits' => [],
                 'exclude_permissions' => []
             ],
