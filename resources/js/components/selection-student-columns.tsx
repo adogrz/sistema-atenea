@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ColumnDef } from '@tanstack/react-table';
 import { Filter } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import type { Estudiante } from '@/pages/fdtc/selection-student';
 
 export const getInternadoColumns = (
@@ -157,57 +157,26 @@ export const getInternadoColumns = (
             enableSorting: false,
         },
         {
-            id: 'status',
-            accessorKey: 'status',
-            header: ({ column }) => (
-                <div className="flex items-center gap-2">
-                    <span>Estado</span>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" data-no-select>
-                                <Filter className={`h-4 w-4 ${selectedStatus.length > 0 ? 'text-primary' : ''}`} />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                            <DropdownMenuCheckboxItem
-                                checked={selectedStatus.includes('active')}
-                                onCheckedChange={(checked) => {
-                                    setSelectedStatus(
-                                        checked
-                                            ? [...selectedStatus, 'active']
-                                            : selectedStatus.filter((s) => s !== 'active'),
-                                    );
-                                }}
-                            >
-                                Activo
-                            </DropdownMenuCheckboxItem>
-                            <DropdownMenuCheckboxItem
-                                checked={selectedStatus.includes('inactive')}
-                                onCheckedChange={(checked) => {
-                                    setSelectedStatus(
-                                        checked
-                                            ? [...selectedStatus, 'inactive']
-                                            : selectedStatus.filter((s) => s !== 'inactive'),
-                                    );
-                                }}
-                            >
-                                Inactivo
-                            </DropdownMenuCheckboxItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            ),
+            id:'en_internado',
+            accessorKey: 'en_internado',
+            header: 'Estado Internado',
             cell: ({ row }) => {
-                const status = row.getValue('status') as string;
-                return (
-                    <Badge variant={status === 'active' ? 'default' : 'destructive'}>
-                        {status === 'active' ? 'Activo' : 'Inactivo'}
+                const enInternado = row.getValue('en_internado') as boolean;
+
+                if (enInternado) {
+                    return (
+                        <div className="flex flex-col gap-1">
+                            <Badge variant="default" className='w-fit bg-green-600 hover:bg-green-700'>
+                                En Internado
+                            </Badge>
+                        </div>
+                    );
+                }
+                return(
+                    <Badge variant="outline" className='w-fit'>
+                        No Registrado
                     </Badge>
                 );
-            },
-            filterFn: (row, id, filterValue: string[]) => {
-                if (filterValue.length === 0) return true;
-                return filterValue.includes(row.getValue(id));
             },
             enableSorting: false,
         },

@@ -9,16 +9,18 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { DataTableMultiSelect } from '@/components/ui/data-table-multi-select';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ColumnFiltersState } from '@tanstack/react-table';
-import { UserPlus, X, Download } from 'lucide-react';
+import { UserPlus, X, Download, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { getInternadoColumns } from '@/components/selection-student-columns';
+import { fi } from 'date-fns/locale';
 
 interface Materia {
     id: number;
@@ -37,6 +39,8 @@ export interface Estudiante {
     materias: Materia[];
     status: string;
     en_internado: boolean;
+    estado_internado?: string;
+    fecha_ingreso?: string;
 }
 
 interface FlashMessages {
@@ -71,11 +75,25 @@ export default function DashboardInternadoFDTC() {
     // Estados
     const [selectedEstudiantesIds, setSelectedEstudiantesIds] = useState<string[]>([]);
     const [showAddConfirm, setShowAddConfirm] = useState(false);
-    const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [selectedSedes, setSelectedSedes] = useState<string[]>([]);
     const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
     const [notaFilters, setNotaFilters] = useState<Record<string, number[]>>({});
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Filtrar estudiantes por búsqueda
+    const filteredEstudiantes = useMemo(() => {
+        if (!searchTerm.trim()) return estudiantes;
+        
+        const search = searchTerm.toLowerCase();
+        return estudiantes.filter((estudiante) => {
+            return (
+                estudiante.nombre.toLowerCase().includes(search) ||
+                estudiante.codigo.toLowerCase().includes(search) ||
+                estudiante.email.toLowerCase().includes(search)
+            );
+        });
+    }, [estudiantes, searchTerm]);
 
     // Obtener lista única de materias
     const materiasUnicas = useMemo(() => {
@@ -89,7 +107,7 @@ export default function DashboardInternadoFDTC() {
     const columns = useMemo(
     () =>
         getInternadoColumns(
-            estudiantes,
+            filteredEstudiantes,
             selectedSedes,
             setSelectedSedes,
             selectedStatus,
@@ -98,7 +116,7 @@ export default function DashboardInternadoFDTC() {
             notaFilters,
             setNotaFilters,
         ),
-    [estudiantes, selectedSedes, selectedStatus, materiasUnicas, notaFilters],
+    [filteredEstudiantes, selectedSedes, selectedStatus, materiasUnicas, notaFilters],
 );
 
     // Aplicar filtros automáticamente cuando cambien las selecciones
@@ -130,6 +148,25 @@ export default function DashboardInternadoFDTC() {
             return;
         }
 
+        const yaenInternado = selectedEstudiantesIds.filter((id) => {
+            const estudiante = estudiantes.find((e) => e.id === id);
+            return estudiante?.en_internado;
+        });
+
+        if (yaenInternado.length > 0) {
+            toast.info(`${yaenInternado.length} estudiante(s) ya están en el internado`);
+            return;
+        }
+
+        if (yaenInternado.length === selectedEstudiantesIds.length) {
+            toast.error('Todos los estudiantes seleccionados ya están en el internado');
+            return;
+        }
+
+        setShowAddConfirm(true);
+    };
+
+    const confirmarAgregar = () => {
         router.post(
             route('internado-fdtc.add'),
             { estudiantes_ids: selectedEstudiantesIds },
@@ -137,40 +174,24 @@ export default function DashboardInternadoFDTC() {
                 onSuccess: () => {
                     setShowAddConfirm(false);
                     setSelectedEstudiantesIds([]);
-                },
-                onError: (errors) => {
-                    console.error('Error al agregar:', errors);
-                },
-            },
-        );
-    };
+                }
+            }
+        )
+    }
 
-    const handleRemoveFromInternado = () => {
-        if (selectedEstudiantesIds.length === 0) {
-            toast.error('Debe seleccionar al menos un estudiante');
-            return;
-        }
-
-        router.post(
-            route('internado-fdtc.remove'),
-            { estudiantes_ids: selectedEstudiantesIds },
-            {
-                onSuccess: () => {
-                    setShowRemoveConfirm(false);
-                    setSelectedEstudiantesIds([]);
-                },
-                onError: (errors) => {
-                    console.error('Error al remover:', errors);
-                },
-            },
-        );
-    };
+    const validosParaAgregar = useMemo(() => {
+        return selectedEstudiantesIds.filter((id) => {
+            const estudiante = estudiantes.find((e) => e.id === id);
+            return !estudiante?.en_internado;
+        }).length;
+    }, [selectedEstudiantesIds, estudiantes]);
 
     const handleClearAllFilters = () => {
         setSelectedSedes([]);
         setSelectedStatus([]);
         setNotaFilters({});
         setColumnFilters([]);
+        setSearchTerm('');
     };
 
     const handleExportSelected = () => {
@@ -181,15 +202,27 @@ export default function DashboardInternadoFDTC() {
         router.get(route('internado-fdtc.export', { estudiantes_ids: selectedEstudiantesIds }));
     };
 
+    // Actualizar las estadísticas basadas en estudiantes filtrados
+    const enInternadoCount = filteredEstudiantes.filter((e) => e.en_internado).length;
     const selectedCount = selectedEstudiantesIds.length;
-    const enInternadoCount = estudiantes.filter((e) => e.en_internado).length;
-    const hasActiveFilters = selectedSedes.length > 0 || selectedStatus.length > 0 || Object.keys(notaFilters).length > 0;
+    const hasActiveFilters = 
+        selectedSedes.length > 0 || 
+        selectedStatus.length > 0 || 
+        Object.keys(notaFilters).length > 0 ||
+        searchTerm.trim() !== '';
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
             <Head title="Internado FDTC" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="admin-panel">
+                    {/* Header */}
+                    <div className="mb-6">
+                        <h1 className="text-3xl font-bold">Selección de Estudiantes - Internado FDTC</h1>
+                        <p className="text-muted-foreground">
+                            Selecciona estudiantes para agregar al programa de internado
+                        </p>
+                    </div>
                     {/* Información general */}
                     <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="rounded-lg border bg-card p-4">
@@ -203,27 +236,38 @@ export default function DashboardInternadoFDTC() {
                     </div>
 
                     {/* Barra de herramientas */}
-                    <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-background p-2">
+                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-2">
+                        <div className="relative w-80">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Buscar por nombre, código o correo..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 text-base"
+                            />
+                            {searchTerm && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-2 top-1/2 h-7 -translate-y-1/2"
+                                    onClick={() => setSearchTerm('')}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
                         <Button
-                            variant="ghost"
+                            variant="default"
                             size="sm"
-                            className="flex items-center gap-2"
-                            onClick={() => setShowAddConfirm(true)}
+                            onClick={handleAddToInternado}
                             disabled={!canManageInternado || selectedCount === 0}
                         >
-                            <UserPlus className="size-4" />
-                            <span>Agregar al Internado ({selectedCount})</span>
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Agregar al Internado ({selectedCount})
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2 text-red-600 hover:text-red-600"
-                            onClick={() => setShowRemoveConfirm(true)}
-                            disabled={!canManageInternado || selectedCount === 0}
-                        >
-                            <X className="size-4" />
-                            <span>Remover del Internado ({selectedCount})</span>
-                        </Button>
+
+                        <div className='h-6 w-px bg-border'/>
+
                         <Button
                             variant="ghost"
                             size="sm"
@@ -238,20 +282,19 @@ export default function DashboardInternadoFDTC() {
                             <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="flex items-center gap-2" 
                                 onClick={handleClearAllFilters}
                             >
-                                <X className="size-4" />
-                                <span>Limpiar Filtros</span>
+                                <X className="mr-2 h-4 w-4" />
+                                Limpiar Filtros
                             </Button>
                         )}
                     </div>
 
                     {/* Tabla de estudiantes */}
-                    <div>
+                    <div className='rounded-lg border bg-card'>
                         <DataTableMultiSelect
                             columns={columns}
-                            data={estudiantes}
+                            data={filteredEstudiantes}
                             selectedRowIds={selectedEstudiantesIds}  
                             onRowSelectionChange={setSelectedEstudiantesIds}  
                             getRowId={(estudiante) => estudiante.id}  
@@ -264,36 +307,21 @@ export default function DashboardInternadoFDTC() {
                     <AlertDialog open={showAddConfirm} onOpenChange={setShowAddConfirm}>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>¿Agregar estudiantes al Internado FDTC?</AlertDialogTitle>
+                                <AlertDialogTitle>¿Agregar estudiantes al internado?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Está a punto de agregar {selectedCount} estudiante(s) al programa de Internado FDTC.
-                                    Esta acción se puede revertir posteriormente.
+                                    Está a punto de agregar {validosParaAgregar} estudiante(s) al programa de
+                                    internado FDTC.
+                                    {selectedCount !== validosParaAgregar && (
+                                        <span className="mt-2 block text-yellow-600">
+                                            Nota: {selectedCount - validosParaAgregar} estudiante(s) ya está(n) registrado(s).
+                                        </span>
+                                    )}
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleAddToInternado}>Confirmar</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-
-                    {/* Modal de confirmación para remover */}
-                    <AlertDialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>¿Remover estudiantes del Internado FDTC?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Está a punto de remover {selectedCount} estudiante(s) del programa de Internado FDTC.
-                                    Esta acción se puede revertir posteriormente.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={handleRemoveFromInternado}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                    Remover
+                                <AlertDialogAction onClick={confirmarAgregar} disabled={validosParaAgregar === 0}>
+                                    Confirmar
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>

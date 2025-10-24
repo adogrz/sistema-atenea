@@ -61,16 +61,20 @@ class PermissionSeeder extends Seeder
                 'logs:export',
             ],
             'events' => [
-            'events:view',
-            'events:create',
-            'events:edit',
-            'events:delete',
-            'events:export',
+                'events:view',
+                'events:create',
+                'events:edit',
+                'events:delete',
+                'events:export',
             ],
             'academic' => [
-            'academic:view',
-            'academic:manage',
-        ],
+                'academic:view',
+                'academic:manage',
+            ],
+            'internado' => [
+                'internado:view',
+                'internado:manage',
+            ],
         ];
     }
 
@@ -124,7 +128,7 @@ class PermissionSeeder extends Seeder
             ],
             'admin-ti' => [
                 'description' => 'Administrador de TI',
-                'groups' => ['general', 'users', 'roles', 'sedes', 'areas', 'auditing'],
+                'groups' => ['general', 'users', 'roles', 'sedes', 'areas', 'auditing', 'internado'],
                 'permissions' => ['users:view-all', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []

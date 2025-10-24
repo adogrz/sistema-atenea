@@ -14,6 +14,7 @@ use App\Http\Controllers\CalificacionInscripcionController;
 use App\Http\Controllers\InscripcionOlimpiadaController;
 use App\Http\Controllers\OlimpiadaController;
 use App\Http\Controllers\InternadoFDTCController;
+use App\Http\Controllers\InternadoParticipanteController;
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -185,14 +186,29 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         })->name('academic-forms.edit');
     });
 
-    Route::prefix('dashboard/internado-fdtc')->name('internado-fdtc.')->group(function () {
-        Route::get('/', [InternadoFDTCController::class, 'index'])->name('index');
-        Route::post('/add', [InternadoFDTCController::class, 'add'])->name('add');
-        Route::post('/remove', [InternadoFDTCController::class, 'remove'])->name('remove');
-        Route::get('/export', [InternadoFDTCController::class, 'export'])->name('export');
-    });
+Route::middleware(['auth', 'permission:internado:view'])->group(function () {
+    
+    Route::get('/dashboard/internado-fdtc/seleccion', [InternadoFDTCController::class, 'selection_list'])
+        ->name('internado-fdtc.selection_list');
 
+    Route::get('/dashboard/internado-fdtc/participantes', [InternadoParticipanteController::class, 'participants_list'])
+        ->name('internado-fdtc.participantes');
+
+    Route::get('/dashboard/internado-fdtc/participantes/{codigo}/progreso', [InternadoParticipanteController::class, 'showProgreso'])
+        ->name('internado-fdtc.participantes.progreso');
+
+    Route::middleware('permission:internado:manage')->group(function () {
+        Route::post('/dashboard/internado-fdtc/add', [InternadoFDTCController::class, 'add'])
+            ->name('internado-fdtc.add');
+
+        Route::post('/dashboard/internado-fdtc/participantes/cambiar-estado', [InternadoParticipanteController::class, 'cambiarEstado'])
+            ->name('internado-fdtc.participantes.cambiar-estado');
+
+        Route::post('/dashboard/internado-fdtc/participantes/remover', [InternadoParticipanteController::class, 'remover'])
+            ->name('internado-fdtc.participantes.remover');
+    });
 });
+}); // close outer middleware group
 
 Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {
     // Página que contiene el formulario de carga

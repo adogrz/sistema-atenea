@@ -4,7 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays } from 'lucide-react';
+import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays, UserPlus } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -44,13 +44,14 @@ export function AppSidebar() {
                 { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
             ],
         }] : []),
-        {
+        ...(hasPermission('internado:view') ? [{
             title: 'FDTC',
             icon: ShieldCheck,
             items: [
-                ...(hasPermission('users:list') ? [{ title: 'Seleccion FDTC', href: '/dashboard/internado-fdtc', icon: Users }] : []),
+                { title: 'Selección FDTC', href: '/dashboard/internado-fdtc/seleccion', icon: UserPlus },
+                { title: 'Participantes', href: '/dashboard/internado-fdtc/participantes', icon: Users },
             ],
-        },
+        }] : []),
     ];
 
     const mainNavItems = navStructure

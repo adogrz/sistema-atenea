@@ -115,4 +115,23 @@ class Estudiante extends Model
     {
         return $this->direccion?->getDireccionFormateadaAttribute() ?? 'Sin dirección';
     }
+
+    /**
+     * Relación con el internado FDTC
+     */
+    public function internadoParticipante(): HasOne
+    {
+        return $this->hasOne(InternadoParticipante::class, 'estudiante_codigo', 'codigo')
+            ->whereNull('deleted_at');
+    }
+
+    /**
+     * Verificar si está en el internado
+     */
+    public function estaEnInternado(): bool
+    {
+        return $this->internadoParticipante()
+            ->where('estado', 'activo')
+            ->exists();
+    }
 }
