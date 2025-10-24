@@ -24,9 +24,10 @@ interface SortableItemProps {
     item: ItemDefinido;
     onRemove: (id: string) => void;
     onChange: (id: string, field: keyof ItemDefinido, value: any) => void;
+    isBlocked: boolean;
 }
 
-const SortableItem: React.FC<SortableItemProps> = ({ item, onRemove, onChange }) => {
+const SortableItem: React.FC<SortableItemProps> = ({ item, onRemove, onChange, isBlocked }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.local_id! });
 
     const style = {
@@ -35,39 +36,33 @@ const SortableItem: React.FC<SortableItemProps> = ({ item, onRemove, onChange })
     };
 
     return (
-        <div ref={setNodeRef} style={style} className="flex items-center space-x-2 border p-3 rounded-md bg-card shadow-sm mb-2">
-            <div {...listeners} {...attributes} className="cursor-grab text-muted-foreground">
+        <div ref={setNodeRef} style={style} className="flex items-center space-x-4 border p-4 rounded-lg bg-card shadow-sm mb-3">
+            <div {...listeners} {...attributes} className={`cursor-grab text-muted-foreground ${isBlocked ? 'cursor-not-allowed' : ''}`}>
                 <GripVertical className="h-5 w-5" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-2 flex-grow">
-                <Input
-                    placeholder="Nombre del Ítem"
-                    value={item.nombre}
-                    onChange={(e) => onChange(item.local_id!, 'nombre', e.target.value)}
-                    className="col-span-2"
-                />
-                <Input
-                    type="number"
-                    placeholder="Ponderación"
-                    value={item.ponderacion}
-                    onChange={(e) => onChange(item.local_id!, 'ponderacion', parseFloat(e.target.value))}
-                />
-                <Input
-                    type="number"
-                    placeholder="Puntaje Máximo"
-                    value={item.puntaje_maximo}
-                    onChange={(e) => onChange(item.local_id!, 'puntaje_maximo', parseFloat(e.target.value))}
-                />
-                <div className="flex items-center space-x-2">
-                    <Switch
-                        id={`obligatorio-${item.local_id}`}
-                        checked={item.obligatorio}
-                        onCheckedChange={(checked) => onChange(item.local_id!, 'obligatorio', checked)}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 flex-grow">
+                <div className="col-span-2">
+                    <Label htmlFor={`nombre-${item.local_id}`} className="mb-2 block">Nombre del Ítem</Label>
+                    <Input
+                        id={`nombre-${item.local_id}`}
+                        placeholder="Nombre del Ítem"
+                        value={item.nombre}
+                        onChange={(e) => onChange(item.local_id!, 'nombre', e.target.value)}
+                        disabled={isBlocked}
                     />
-                    <Label htmlFor={`obligatorio-${item.local_id}`}>Obligatorio</Label>
+                </div>
+                <div>
+                    <Label htmlFor={`puntos_maximos-${item.local_id}`} className="mb-2 block">Puntos Máximos</Label>
+                    <Input
+                        id={`puntos_maximos-${item.local_id}`}
+                        type="number"
+                        value={item.puntos_maximos}
+                        onChange={(e) => onChange(item.local_id!, 'puntos_maximos', parseFloat(e.target.value))}
+                        disabled={isBlocked}
+                    />
                 </div>
             </div>
-            <Button variant="destructive" size="icon" onClick={() => onRemove(item.local_id!)}>
+            <Button variant="destructive" size="icon" onClick={() => onRemove(item.local_id!)} disabled={isBlocked}>
                 <Trash2 className="h-4 w-4" />
             </Button>
         </div>
@@ -119,9 +114,11 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
             nombre: '',
             descripcion: '',
             orden: data.items.length + 1,
-            obligatorio: false,
-            ponderacion: 0,
-            puntaje_maximo: 0,
+            puntos_maximos: 0,
+            id: 0,
+            definicion_evaluacion_id: 0,
+            created_at: '',
+            updated_at: ''
         }]);
     };
 
@@ -149,39 +146,53 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (isEditMode && definicionEvaluacion?.bloqueada) {
+            toast.error('Esta definición está bloqueada y no puede ser modificada.');
+            return;
+        }
+
         const itemsForSubmission = data.items.map(({ local_id, ...item }) => item);
+
+        const commonOptions = {
+            onSuccess: () => toast.success(isEditMode ? 'Rúbrica actualizada exitosamente.' : 'Rúbrica creada exitosamente.'),
+            onError: (err: any) => {
+                console.error(err);
+                if (err && Object.keys(err).length > 0) {
+                    toast.error('Error de validación. Por favor, corrige los campos marcados.');
+                } else {
+                    toast.error('Error al procesar la solicitud. Inténtalo de nuevo.');
+                }
+            },
+        };
 
         if (isEditMode) {
             put(route('definiciones-evaluacion.update', definicionEvaluacion!.id), {
+                ...commonOptions,
                 data: { ...data, items: itemsForSubmission },
-                onSuccess: () => toast.success('Definición de evaluación actualizada.'),
-                onError: (err) => {
-                    console.error(err);
-                    toast.error('Error al actualizar la definición.');
-                },
             });
         } else {
             post(route('definiciones-evaluacion.store'), {
+                ...commonOptions,
                 data: { ...data, items: itemsForSubmission },
-                onSuccess: () => toast.success('Definición de evaluación creada.'),
-                onError: (err) => {
-                    console.error(err);
-                    toast.error('Error al crear la definición.');
-                },
             });
         }
     };
 
+    const totalPuntosMaximos = React.useMemo(() => {
+        return data.items.reduce((sum, item) => sum + (parseFloat(item.puntos_maximos as any) || 0), 0);
+    }, [data.items]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={isEditMode ? "Editar Definición de Evaluación" : "Crear Definición de Evaluación"} />
-            <div className="p-4 md:p-8">
-                <div className="flex items-center justify-between mb-6">
+            <div className="p-4 md:p-8 max-w-5xl mx-auto">
+                <div className="flex items-center justify-between mb-8">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">
                             {isEditMode ? "Editar Definición de Evaluación" : "Crear Nueva Definición de Evaluación"}
                         </h2>
-                        <p className="text-muted-foreground">
+                        <p className="text-muted-foreground mt-1">
                             {isEditMode ? "Modifica los detalles y los ítems de esta definición." : "Define una nueva plantilla de evaluación y sus ítems asociados."}
                         </p>
                     </div>
@@ -191,48 +202,52 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <Card className="mb-6">
+                    <Card className="mb-8">
                         <CardHeader>
                             <CardTitle>Detalles de la Definición</CardTitle>
                             <CardDescription>Información general de la plantilla de evaluación.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-6">
                             <div>
-                                <Label htmlFor="nombre">Nombre</Label>
+                                <Label htmlFor="nombre" className="mb-2 block">Nombre</Label>
                                 <Input
                                     id="nombre"
                                     value={data.nombre}
                                     onChange={(e) => setData('nombre', e.target.value)}
                                     className={errors.nombre ? 'border-destructive' : ''}
+                                    disabled={isEditMode && definicionEvaluacion?.bloqueada}
                                 />
-                                {errors.nombre && <p className="text-destructive text-sm mt-1">{errors.nombre}</p>}
+                                {errors.nombre && <p className="text-destructive text-sm mt-2">{errors.nombre}</p>}
                             </div>
                             <div>
-                                <Label htmlFor="version">Versión</Label>
+                                <Label htmlFor="version" className="mb-2 block">Versión</Label>
                                 <Input
                                     id="version"
                                     type="number"
                                     value={data.version}
                                     onChange={(e) => setData('version', parseInt(e.target.value))}
                                     className={errors.version ? 'border-destructive' : ''}
+                                    disabled={isEditMode && definicionEvaluacion?.bloqueada}
                                 />
-                                {errors.version && <p className="text-destructive text-sm mt-1">{errors.version}</p>}
+                                {errors.version && <p className="text-destructive text-sm mt-2">{errors.version}</p>}
                             </div>
                             <div>
-                                <Label htmlFor="descripcion">Descripción</Label>
+                                <Label htmlFor="descripcion" className="mb-2 block">Descripción</Label>
                                 <Textarea
                                     id="descripcion"
                                     value={data.descripcion}
                                     onChange={(e) => setData('descripcion', e.target.value)}
                                     className={errors.descripcion ? 'border-destructive' : ''}
+                                    disabled={isEditMode && definicionEvaluacion?.bloqueada}
                                 />
-                                {errors.descripcion && <p className="text-destructive text-sm mt-1">{errors.descripcion}</p>}
+                                {errors.descripcion && <p className="text-destructive text-sm mt-2">{errors.descripcion}</p>}
                             </div>
                             <div>
-                                <Label htmlFor="estado">Estado</Label>
+                                <Label htmlFor="estado" className="mb-2 block">Estado</Label>
                                 <Select
                                     value={data.estado}
                                     onValueChange={(value) => setData('estado', value)}
+                                    disabled={isEditMode && definicionEvaluacion?.bloqueada}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Selecciona un estado" />
@@ -243,26 +258,30 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
                                         <SelectItem value="archivada">Archivada</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                {errors.estado && <p className="text-destructive text-sm mt-1">{errors.estado}</p>}
+                                {errors.estado && <p className="text-destructive text-sm mt-2">{errors.estado}</p>}
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-3">
                                 <Switch
                                     id="bloqueada"
                                     checked={data.bloqueada}
                                     onCheckedChange={(checked) => setData('bloqueada', checked)}
+                                    disabled={isEditMode && definicionEvaluacion?.bloqueada}
                                 />
-                                <Label htmlFor="bloqueada">Bloqueada (Impide modificaciones futuras)</Label>
+                                <Label htmlFor="bloqueada" className="mb-0">Bloqueada (Impide modificaciones futuras)</Label>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="mb-6">
+                    <Card className="mb-8">
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
+                            <div className="flex flex-col">
                                 <CardTitle>Ítems de Evaluación</CardTitle>
                                 <CardDescription>Define los ítems que componen esta evaluación.</CardDescription>
+                                <div className="text-sm text-muted-foreground mt-2">
+                                    Total de ítems: {data.items.length} | Puntuación máxima total: {totalPuntosMaximos.toFixed(2)}
+                                </div>
                             </div>
-                            <Button type="button" variant="outline" onClick={handleAddItem}>
+                            <Button type="button" variant="outline" onClick={handleAddItem} disabled={isEditMode && definicionEvaluacion?.bloqueada}>
                                 <PlusCircle className="h-4 w-4 mr-2" /> Añadir Ítem
                             </Button>
                         </CardHeader>
@@ -276,19 +295,23 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
                                                 item={item}
                                                 onRemove={handleRemoveItem}
                                                 onChange={handleItemChange}
+                                                isBlocked={isEditMode && definicionEvaluacion?.bloqueada}
                                             />
                                         ))}
                                     </SortableContext>
                                 </DndContext>
                             ) : (
-                                <p className="text-center text-muted-foreground">No hay ítems definidos. Haz clic en "Añadir Ítem" para empezar.</p>
+                                <div className="text-center text-muted-foreground py-8">
+                                    <p>No hay ítems definidos.</p>
+                                    <p className="text-sm">Haz clic en "Añadir Ítem" para empezar.</p>
+                                </div>
                             )}
-                            {errors.items && <p className="text-destructive text-sm mt-1">{errors.items}</p>}
+                            {errors.items && <p className="text-destructive text-sm mt-2">{errors.items}</p>}
                         </CardContent>
                     </Card>
 
                     <div className="flex justify-end">
-                        <Button type="submit" disabled={processing}>
+                        <Button type="submit" disabled={processing || (isEditMode && definicionEvaluacion?.bloqueada)}>
                             {isEditMode ? "Actualizar Definición" : "Guardar Definición"}
                         </Button>
                     </div>

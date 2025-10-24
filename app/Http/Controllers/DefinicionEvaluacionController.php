@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class DefinicionEvaluacionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $definiciones = DefinicionEvaluacion::with('itemsDefinidos')->get();
         return Inertia::render('Olimpiadas/DefinicionesEvaluacion/Index', [
@@ -25,34 +25,36 @@ class DefinicionEvaluacionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
             'version' => 'required|integer|min:1',
             'estado' => 'required|in:borrador,publicada,archivada',
             'bloqueada' => 'required|boolean',
-            'items' => 'nullable|array',
+            'items' => 'required|array|min:1',
             'items.*.nombre' => 'required|string|max:255',
             'items.*.descripcion' => 'nullable|string',
             'items.*.orden' => 'required|integer',
-            'items.*.obligatorio' => 'required|boolean',
-            'items.*.ponderacion' => 'required|numeric',
-            'items.*.puntaje_maximo' => 'required|numeric',
+            'items.*.puntos_maximos' => 'required|numeric|min:0.01',
+        ], [
+            'items.required' => 'Debes agregar al menos un ítem a la evaluación.',
+            'items.min' => 'Debes agregar al menos un ítem a la evaluación.',
+            'items.*.puntos_maximos.min' => 'Los puntos máximos para cada ítem deben ser mayores a 0.',
         ]);
 
         DB::beginTransaction();
         try {
             $definicion = DefinicionEvaluacion::create([
-                'nombre' => $request->nombre,
-                'descripcion' => $request->descripcion,
-                'version' => $request->version,
+                'nombre' => $validated['nombre'],
+                'descripcion' => $validated['descripcion'],
+                'version' => $validated['version'],
                 'creada_por' => auth()->id(),
-                'estado' => $request->estado,
-                'bloqueada' => $request->bloqueada,
+                'estado' => $validated['estado'],
+                'bloqueada' => $validated['bloqueada'],
             ]);
 
-            if ($request->has('items')) {
-                foreach ($request->items as $itemData) {
+            if (isset($validated['items'])) {
+                foreach ($validated['items'] as $itemData) {
                     $definicion->itemsDefinidos()->create($itemData);
                 }
             }
@@ -76,47 +78,56 @@ class DefinicionEvaluacionController extends Controller
 
     public function update(Request $request, DefinicionEvaluacion $definicionEvaluacion)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
             'version' => 'required|integer|min:1',
             'estado' => 'required|in:borrador,publicada,archivada',
             'bloqueada' => 'required|boolean',
-            'items' => 'nullable|array',
+            'items' => 'required|array|min:1',
             'items.*.id' => 'nullable|exists:items_definidos,id',
             'items.*.nombre' => 'required|string|max:255',
             'items.*.descripcion' => 'nullable|string',
             'items.*.orden' => 'required|integer',
-            'items.*.obligatorio' => 'required|boolean',
-            'items.*.ponderacion' => 'required|numeric',
-            'items.*.puntaje_maximo' => 'required|numeric',
+            'items.*.puntos_maximos' => 'required|numeric|min:0.01',
+        ], [
+            'items.required' => 'Debes agregar al menos un ítem a la evaluación.',
+            'items.min' => 'Debes agregar al menos un ítem a la evaluación.',
+            'items.*.puntos_maximos.min' => 'Los puntos máximos para cada ítem deben ser mayores a 0.',
         ]);
+
+        // Enforcement: Prevent updates if the definition is blocked
+        if ($definicionEvaluacion->bloqueada) {
+            return back()->withErrors(['bloqueada' => 'No se puede actualizar una definición de evaluación bloqueada.']);
+        }
 
         DB::beginTransaction();
         try {
             $definicionEvaluacion->update([
-                'nombre' => $request->nombre,
-                'descripcion' => $request->descripcion,
-                'version' => $request->version,
-                'estado' => $request->estado,
-                'bloqueada' => $request->bloqueada,
+                'nombre' => $validated['nombre'],
+                'descripcion' => $validated['descripcion'],
+                'version' => $validated['version'],
+                'estado' => $validated['estado'],
+                'bloqueada' => $validated['bloqueada'],
             ]);
 
             $existingItemIds = $definicionEvaluacion->itemsDefinidos->pluck('id')->toArray();
             $updatedItemIds = [];
 
-            foreach ($request->items as $itemData) {
-                if (isset($itemData['id'])) {
-                    // Update existing item
-                    $item = $definicionEvaluacion->itemsDefinidos()->where('id', $itemData['id'])->first();
-                    if ($item) {
-                        $item->update($itemData);
-                        $updatedItemIds[] = $item->id;
+            if (isset($validated['items'])) {
+                foreach ($validated['items'] as $itemData) {
+                    if (isset($itemData['id'])) {
+                        // Update existing item
+                        $item = $definicionEvaluacion->itemsDefinidos()->where('id', $itemData['id'])->first();
+                        if ($item) {
+                            $item->update($itemData);
+                            $updatedItemIds[] = $item->id;
+                        }
+                    } else {
+                        // Create new item
+                        $newItem = $definicionEvaluacion->itemsDefinidos()->create($itemData);
+                        $updatedItemIds[] = $newItem->id;
                     }
-                } else {
-                    // Create new item
-                    $newItem = $definicionEvaluacion->itemsDefinidos()->create($itemData);
-                    $updatedItemIds[] = $newItem->id;
                 }
             }
 

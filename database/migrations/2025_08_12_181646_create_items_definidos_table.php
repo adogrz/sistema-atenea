@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('definicion_evaluacion_id')->constrained('definiciones_evaluacion')->onDelete('cascade');
             $table->string('nombre');
             $table->text('descripcion')->nullable();
-            $table->decimal('puntaje_maximo', 8, 2);
+            $table->decimal('puntos_maximos', 5, 2)->default(0);
             $table->integer('orden')->default(0);
             $table->timestamps();
 

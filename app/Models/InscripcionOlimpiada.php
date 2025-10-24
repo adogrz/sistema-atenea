@@ -13,7 +13,6 @@ class InscripcionOlimpiada extends Model
 
     protected $fillable = [
         'olimpiada_id',
-        'fase_id',
         'estudiante_codigo',
         'estado_inscripcion_id',
         'fecha_inscripcion',
@@ -51,11 +50,6 @@ class InscripcionOlimpiada extends Model
     public function olimpiada()
     {
         return $this->belongsTo(Olimpiada::class);
-    }
-
-    public function area()
-    {
-        return $this->belongsTo(Area::class, 'area_id');
     }
 
     public function estudiante()

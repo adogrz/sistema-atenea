@@ -40,7 +40,7 @@ class Estudiante extends Model
         'segundo_apellido',
         'sexo',
         'fecha_nacimiento',
-        'centro_educativo_codigo',
+        'centro_educativo',
         'nie',
         'telefono_casa',
         'email',
