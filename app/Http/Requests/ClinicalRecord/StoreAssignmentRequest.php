@@ -71,7 +71,9 @@ class StoreAssignmentRequest extends FormRequest
         if (!$this->has('is_active')) {
             $this->merge(['is_active' => true]);
         }
-    }    /**
+    }
+
+    /**
      * Configure the validator instance.
      */
     public function withValidator($validator): void
