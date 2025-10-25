@@ -3,9 +3,13 @@
 namespace App\Providers;
 
 use App\Models\ClinicalRecord\Assignment;
+use App\Models\ClinicalRecord\ConsentForm;
+use App\Models\ClinicalRecord\MedicalConsultation;
 use App\Models\ClinicalRecord\MedicalRecord;
 use App\Models\User;
 use App\Policies\ClinicalRecord\AssignmentPolicy;
+use App\Policies\ClinicalRecord\ConsentFormPolicy;
+use App\Policies\ClinicalRecord\MedicalConsultationPolicy;
 use App\Policies\ClinicalRecord\MedicalRecordPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -22,6 +26,8 @@ class AuthServiceProvider extends ServiceProvider
         User::class => UserPolicy::class,
         Assignment::class => AssignmentPolicy::class,
         MedicalRecord::class => MedicalRecordPolicy::class,
+        MedicalConsultation::class => MedicalConsultationPolicy::class,
+        ConsentForm::class => ConsentFormPolicy::class,
     ];
 
     /**
