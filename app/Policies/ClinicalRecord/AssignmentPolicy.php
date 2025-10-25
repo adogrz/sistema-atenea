@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Policies\ClinicalRecords;
+namespace App\Policies\ClinicalRecord;
 
 use App\Models\ClinicalRecord\Assignment;
 use App\Models\User;
