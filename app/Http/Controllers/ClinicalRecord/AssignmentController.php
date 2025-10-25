@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClinicalRecord\ListAssignmentsRequest;
 use App\Http\Requests\ClinicalRecord\StoreAssignmentRequest;
 use App\Http\Requests\ClinicalRecord\UpdateAssignmentRequest;
-use App\Models\Assignment;
+use App\Models\ClinicalRecord\Assignment;
 use App\Services\ClinicalRecord\AssignmentFilter;
 use App\Services\ClinicalRecord\EntitySearchService;
 use Illuminate\Http\JsonResponse;

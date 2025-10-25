@@ -2,11 +2,11 @@
 
 namespace App\Providers;
 
-use App\Models\Assignment;
-use App\Models\MedicalRecord;
+use App\Models\ClinicalRecord\Assignment;
+use App\Models\ClinicalRecord\MedicalRecord;
 use App\Models\User;
-use App\Policies\AssignmentPolicy;
-use App\Policies\MedicalRecordPolicy;
+use App\Policies\ClinicalRecords\AssignmentPolicy;
+use App\Policies\ClinicalRecords\MedicalRecordPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 

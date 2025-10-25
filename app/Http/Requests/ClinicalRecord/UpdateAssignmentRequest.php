@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\ClinicalRecord;
 
-use App\Models\Assignment;
+use App\Models\ClinicalRecord\Assignment;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

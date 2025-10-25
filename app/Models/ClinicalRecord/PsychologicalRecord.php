@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\ClinicalRecord;
 
+use App\Models\Estudiante;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-class MedicalRecord extends Model
+class PsychologicalRecord extends Model
 {
     use SoftDeletes, LogsActivity;
 
@@ -26,7 +28,7 @@ class MedicalRecord extends Model
      */
     protected $fillable = [
         'student_nie',
-        'general_background',
+        'initial_assessment',
         'created_by',
         'change_justification',
     ];
@@ -48,11 +50,11 @@ class MedicalRecord extends Model
     }
 
     /**
-     * Consultas médicas asociadas a este expediente.
+     * Sesiones psicológicas asociadas a este expediente.
      */
-    public function medicalConsultations()
+    public function psychologicalSessions()
     {
-        return $this->hasMany(MedicalConsultation::class, 'medical_record_id');
+        return $this->hasMany(PsychologicalSession::class, 'psychological_record_id');
     }
 
     /**
@@ -80,20 +82,19 @@ class MedicalRecord extends Model
     }
 
     /**
-     * Scope para expedientes con antecedentes
+     * Scope para expedientes con evaluaciones iniciales
      */
-    public function scopeWithBackground(Builder $query): Builder
+    public function scopeWithInitialAssessment(Builder $query): Builder
     {
-        return $query->whereNotNull('general_background')
-                    ->where('general_background', '!=', '');
+        return $query->whereNotNull('initial_assessment')->where('initial_assessment', '!=', '');
     }
 
     /**
-     * Verifica si el expediente tiene antecedentes médicos registrados
+     * Verifca si el expediente tiene una evaluación inicial.
      */
-    public function hasBackground(): bool
+    public function hasInitialAssessment(): bool
     {
-        return !empty($this->general_background);
+        return !empty($this->initial_assessment);
     }
 
     /**
@@ -104,7 +105,7 @@ class MedicalRecord extends Model
         return [
             'student' => $this->student->primer_nombre . ' ' . $this->student->primer_apellido,
             'nie' => $this->student_nie,
-            'has_background' => $this->hasBackground(),
+            'has_initial_assessment' => $this->hasInitialAssessment(),
             'created_by' => $this->creator->name,
             'created_at' => $this->created_at->format('d/m/Y'),
         ];
@@ -113,15 +114,15 @@ class MedicalRecord extends Model
     /**
      * Configuración para el registro de actividades
      */
-    public function getActivitylogOptions(): LogOptions
+    public function getActivitylogOptions()
     {
         return LogOptions::defaults()
-            ->logOnly(['student_nie', 'general_background', 'change_justification'])
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
-            ->useLogName('medical_record')
-            ->setDescriptionForEvent(fn(string $eventName) => "Expediente médico {$eventName}")
-            ->dontLogIfAttributesChangedOnly(['updated_at']);
+        ->logOnly(['student_nie', 'initial_assessment', 'change_justification'])
+        ->logOnlyDirty()
+        ->dontSubmitEmptyLogs()
+        ->useLogName('psychological_record')
+        ->setDescriptionForEvent(fn(string $eventName) => "Expediente psicológico {$eventName}")
+        ->dontLogIfAttributesChangedOnly(['updated_at']);
     }
 
     /**
@@ -133,10 +134,10 @@ class MedicalRecord extends Model
         $creatorName = $this->creator->name ?? 'N/A';
 
         $description = match ($eventName) {
-            'created' => "Expediente médico creado para {$studentName} por {$creatorName}",
-            'updated' => "Expediente médico de {$studentName} actualizado",
-            'deleted' => "Expediente médico de {$studentName} eliminado",
-            default => "Expediente médico de {$studentName} {$eventName}",
+            'created' => "Expediente psicológico creado para {$studentName} por {$creatorName}",
+            'updated' => "Expediente psicológico de {$studentName} actualizado",
+            'deleted' => "Expediente psicológico de {$studentName} eliminado",
+            default => "Expediente psicológico de {$studentName} {$eventName}",
         };
 
         // Agregar justificación si existe

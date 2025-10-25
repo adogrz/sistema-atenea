@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Policies;
+namespace App\Policies\ClinicalRecords;
 
-use App\Models\Assignment;
-use App\Models\MedicalRecord;
+use App\Models\ClinicalRecord\Assignment;
+use App\Models\ClinicalRecord\MedicalRecord;
 use App\Models\User;
 
 class MedicalRecordPolicy
