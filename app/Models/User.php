@@ -2,6 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\ClinicalRecord\Assignment;
+use App\Models\ClinicalRecord\ConsentForm;
+use App\Models\ClinicalRecord\MedicalConsultation;
+use App\Models\ClinicalRecord\MedicalRecord;
+use App\Models\ClinicalRecord\PsychologicalRecord;
+use App\Models\ClinicalRecord\PsychologicalSession;
 use App\Notifications\ResetPasswordNotification;
 use App\Traits\HasTemporaryRoles;
 use Carbon\Carbon;
@@ -242,7 +248,7 @@ class User extends Authenticatable
      */
     public function canManageAssignments(): bool
     {
-        return $this->can('assignments:manage-medical') 
+        return $this->can('assignments:manage-medical')
             || $this->can('assignments:manage-psychological');
     }
 
@@ -251,7 +257,7 @@ class User extends Authenticatable
      */
     public function managesOnlyMedical(): bool
     {
-        return $this->can('assignments:manage-medical') 
+        return $this->can('assignments:manage-medical')
             && !$this->can('assignments:manage-psychological');
     }
 
@@ -260,7 +266,7 @@ class User extends Authenticatable
      */
     public function managesOnlyPsychological(): bool
     {
-        return $this->can('assignments:manage-psychological') 
+        return $this->can('assignments:manage-psychological')
             && !$this->can('assignments:manage-medical');
     }
 
@@ -269,7 +275,7 @@ class User extends Authenticatable
      */
     public function managesBothTypes(): bool
     {
-        return $this->can('assignments:manage-medical') 
+        return $this->can('assignments:manage-medical')
             && $this->can('assignments:manage-psychological');
     }
 }

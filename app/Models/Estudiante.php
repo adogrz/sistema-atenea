@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\ClinicalRecord\Assignment;
+use App\Models\ClinicalRecord\ConsentForm;
+use App\Models\ClinicalRecord\MedicalRecord;
+use App\Models\ClinicalRecord\PsychologicalRecord;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
