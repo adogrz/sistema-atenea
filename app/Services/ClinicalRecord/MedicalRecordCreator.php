@@ -26,7 +26,7 @@ class MedicalRecordCreator
 
         try {
             // 1. Crear el expediente médico
-            $medicalRecord = $this->createMedicalRecord($validatedData);
+            $medicalRecord = $this->createMedicalRecord($validatedData, $doctorId);
 
             // 2. Crear el consentimiento informado si es necesario
             $consentFormId = null;
@@ -67,14 +67,15 @@ class MedicalRecordCreator
      * Crea el expediente médico.
      *
      * @param array $data
+     * @param int $doctorId
      * @return MedicalRecord
      */
-    private function createMedicalRecord(array $data): MedicalRecord
+    private function createMedicalRecord(array $data, int $doctorId): MedicalRecord
     {
         return MedicalRecord::create([
             'student_nie' => $data['student_nie'],
             'general_background' => $data['general_background'] ?? null,
-            'created_by' => $data['created_by'],
+            'created_by' => $doctorId,
         ]);
     }
 

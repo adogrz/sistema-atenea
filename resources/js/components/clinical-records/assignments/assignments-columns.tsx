@@ -224,8 +224,16 @@ export const getProfessionalColumns = (): ColumnDef<AssignmentWithRelations>[] =
             const assignment = row.original;
 
             const handleViewRecord = () => {
-                console.log('Ver expediente:', assignment.id);
-                // TODO: Navegar al expediente clínico del estudiante
+                // Verificar el tipo de asignación y redirigir apropiadamente
+                if (assignment.type === 'medical') {
+                    // Redirigir a crear o ver expediente médico
+                    router.get(route('clinical-records.medical-records.create'), {
+                        student_nie: assignment.student_nie,
+                    });
+                } else if (assignment.type === 'psychological') {
+                    // TODO: Implementar redirección a expediente psicológico
+                    toast.info('La funcionalidad de expedientes psicológicos estará disponible próximamente');
+                }
             };
 
             return (

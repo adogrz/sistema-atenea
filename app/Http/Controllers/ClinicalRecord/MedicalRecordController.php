@@ -11,6 +11,7 @@ use App\Models\Estudiante;
 use App\Services\ClinicalRecord\MedicalRecordCreator;
 use Exception;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class MedicalRecordController extends Controller
 {
@@ -35,7 +36,84 @@ class MedicalRecordController extends Controller
     {
         $this->authorize('create', MedicalRecord::class);
 
-        // TODO: Implementar vista de creación de expediente médico
+        $studentNie = $request->input('student_nie', '');
+
+        if (!$studentNie) {
+            return redirect()
+                ->route('clinical-records.assignments.index')
+                ->withErrors(['error' => 'NIE del estudiante no proporcionado']);
+        }
+
+        // Verificar si ya existe un expediente médico para este estudiante
+        $existingRecord = MedicalRecord::where('student_nie', $studentNie)->first();
+
+        if ($existingRecord) {
+            // Si ya existe, redirigir al show
+            return redirect()->route('clinical-records.medical-records.show', $existingRecord);
+        }
+
+        $student = Estudiante::with([
+            'responsable',
+            'responsables',
+            'consentForms' => function ($query) {
+                $query->where('type', 'medical')
+                    ->orderBy('granted_at', 'desc');
+            }
+        ])
+            ->where('nie', $studentNie)
+            ->first();
+
+        if (!$student) {
+            return redirect()
+                ->route('clinical-records.assignments.index')
+                ->withErrors(['error' => 'Estudiante no encontrado']);
+        }
+
+        $responsables = [];
+        $existingConsents = [];
+
+        // Obtener responsables asociados al estudiante (soporta múltiples)
+        $responsables = $student->responsables && $student->responsables->count() > 0
+            ? $student->responsables
+            : ($student->responsable ? collect([$student->responsable]) : collect());
+
+        // Normalizar responsables a estructura liviana para el frontend
+        $responsablesData = $responsables->map(function ($r) {
+            return [
+                'id' => $r->id,
+                'dui' => $r->dui,
+                'nombres_responsable' => $r->nombres_responsable,
+                'apellidos_responsable' => $r->apellidos_responsable,
+            ];
+        })->values();
+
+        // Obtener consentimientos médicos existentes
+        $existingConsents = $student->consentForms->map(function ($consent) {
+            return [
+                'id' => $consent->id,
+                'granted_at' => $consent->granted_at->format('Y-m-d'),
+                'responsible_name' => $consent->responsible
+                    ? "{$consent->responsible->nombres_responsable} {$consent->responsible->apellidos_responsable}"
+                    : 'N/A',
+            ];
+        });
+
+        return Inertia::render('clinical-records/medical-record/create-medical-record', [
+            'student_nie' => $studentNie,
+            'student' => [
+                'nie' => $student->nie,
+                'codigo' => $student->codigo,
+                'primer_nombre' => $student->primer_nombre,
+                'segundo_nombre' => $student->segundo_nombre,
+                'primer_apellido' => $student->primer_apellido,
+                'segundo_apellido' => $student->segundo_apellido,
+                'fecha_nacimiento' => $student->fecha_nacimiento->format('Y-m-d'),
+                'sexo' => $student->sexo,
+                'email' => $student->email,
+            ],
+            'responsables' => $responsablesData,
+            'existing_consents' => $existingConsents,
+        ]);
     }
 
     /**
@@ -82,7 +160,20 @@ class MedicalRecordController extends Controller
     {
         $this->authorize('view', $medicalRecord);
 
-        // TODO: Implementar vista de detalle de expediente médico
+        $medicalRecord->load([
+            'student',
+            'creator',
+            'medicalConsultations.doctor',
+            'medicalConsultations.consentForm.responsible'
+        ]);
+
+        return Inertia::render('clinical-records/medical-record/show-medical-record', [
+            'medicalRecord' => $medicalRecord,
+            'permissions' => [
+                'canUpdate' => $request->user()->can('update', $medicalRecord),
+                'canDelete' => $request->user()->can('delete', $medicalRecord),
+            ],
+        ]);
     }
 
     /**
