@@ -20,24 +20,18 @@ interface ReviewSectionProps {
 export function ReviewSection({ data, studentName, responsableName, onBack, onSubmit, isSubmitting = false }: ReviewSectionProps) {
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <div>
-                <h2 className="text-2xl font-semibold tracking-tight">Revisar y Confirmar</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Verifique que toda la información sea correcta antes de crear el expediente</p>
-            </div>
-
-            {/* Estudiante */}
-            <div className="rounded-lg border bg-card p-6">
-                <div className="mb-4 flex items-center gap-2">
+            {/* Información del estudiante */}
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
                     <User className="h-5 w-5 text-muted-foreground" />
                     <h3 className="text-lg font-medium">Información del Estudiante</h3>
                 </div>
                 <div className="space-y-2">
-                    <div className="flex justify-between">
+                    <div className="flex gap-1">
                         <span className="text-sm text-muted-foreground">Nombre:</span>
                         <span className="text-sm font-medium">{studentName}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex gap-1">
                         <span className="text-sm text-muted-foreground">NIE:</span>
                         <span className="text-sm font-medium">{data.student_nie}</span>
                     </div>
@@ -45,8 +39,8 @@ export function ReviewSection({ data, studentName, responsableName, onBack, onSu
             </div>
 
             {/* Antecedentes Médicos */}
-            <div className="rounded-lg border bg-card p-6">
-                <div className="mb-4 flex items-center gap-2">
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
                     <ClipboardList className="h-5 w-5 text-muted-foreground" />
                     <h3 className="text-lg font-medium">Antecedentes Médicos</h3>
                 </div>
@@ -59,8 +53,8 @@ export function ReviewSection({ data, studentName, responsableName, onBack, onSu
 
             {/* Consulta Inicial */}
             {data.consultation && (
-                <div className="rounded-lg border bg-card p-6">
-                    <div className="mb-4 flex items-center gap-2">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
                         <FileText className="h-5 w-5 text-muted-foreground" />
                         <h3 className="text-lg font-medium">Consulta Médica Inicial</h3>
                     </div>
@@ -97,8 +91,8 @@ export function ReviewSection({ data, studentName, responsableName, onBack, onSu
 
             {/* Consentimiento Informado */}
             {data.is_minor && (
-                <div className="rounded-lg border bg-card p-6">
-                    <div className="mb-4 flex items-center gap-2">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
                         <FileCheck className="h-5 w-5 text-muted-foreground" />
                         <h3 className="text-lg font-medium">Consentimiento Informado</h3>
                         <Badge variant="secondary">Requerido</Badge>

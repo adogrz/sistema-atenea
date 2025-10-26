@@ -1,8 +1,8 @@
 'use client';
 
-// Sección de Expediente y Consulta Inicial para expedientes médicos
 import { MedicalConsultationForm } from '@/components/clinical-records/medical-consultation/medical-consultation-form';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { CreateMedicalConsultationData } from '@/types/clinical-records';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +16,6 @@ const recordSchema = z.object({
 type RecordFormValues = z.infer<typeof recordSchema>;
 
 interface RecordConsultationProps {
-    studentName: string;
     onNext: (data: { general_background?: string; consultation: CreateMedicalConsultationData }) => void;
     defaultValues?: {
         general_background?: string;
@@ -24,7 +23,7 @@ interface RecordConsultationProps {
     };
 }
 
-export default function RecordConsultationSection({ studentName, onNext, defaultValues }: RecordConsultationProps) {
+export default function RecordConsultationSection({ onNext, defaultValues }: RecordConsultationProps) {
     const recordForm = useForm<RecordFormValues>({
         resolver: zodResolver(recordSchema),
         defaultValues: {
@@ -42,28 +41,22 @@ export default function RecordConsultationSection({ studentName, onNext, default
 
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <div>
-                <h2 className="text-2xl font-semibold tracking-tight">Expediente y Consulta Inicial</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Crear expediente médico para <span className="font-medium text-foreground">{studentName}</span>
-                </p>
-            </div>
-
-            {/* Formulario de Antecedentes del Expediente */}
-            <div className="rounded-lg border bg-card p-6">
-                <h3 className="mb-4 text-lg font-medium">Antecedentes Médicos</h3>
+            {/* Antecedentes Médicos */}
+            <div className="space-y-4">
+                <h3 className="text-lg font-medium">Antecedentes Médicos</h3>
                 <Form {...recordForm}>
                     <FormField
                         control={recordForm.control}
                         name="general_background"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Antecedentes Generales</FormLabel>
+                                <FormLabel>
+                                    Antecedentes Generales <span className="text-sm font-normal text-muted-foreground">(Opcional)</span>
+                                </FormLabel>
                                 <FormControl>
                                     <Textarea
-                                        placeholder="Alergias, enfermedades crónicas, cirugías previas, medicamentos actuales, antecedentes familiares relevantes (opcional)..."
-                                        className="min-h-[150px] resize-none"
+                                        placeholder="Ej: Alergia a la penicilina, asma controlado con inhalador, cirugía de apéndice en 2020..."
+                                        className="min-h-[120px] resize-none"
                                         {...field}
                                     />
                                 </FormControl>
@@ -75,9 +68,11 @@ export default function RecordConsultationSection({ studentName, onNext, default
                 </Form>
             </div>
 
-            {/* Formulario de Consulta Inicial */}
-            <div className="rounded-lg border bg-card p-6">
-                <h3 className="mb-4 text-lg font-medium">Consulta Médica Inicial</h3>
+            <Separator />
+
+            {/* Consulta Médica Inicial */}
+            <div className="space-y-4">
+                <h3 className="text-lg font-medium">Consulta Médica Inicial</h3>
                 <MedicalConsultationForm onSubmit={handleConsultationSubmit} defaultValues={defaultValues?.consultation} submitLabel="Siguiente" />
             </div>
         </div>

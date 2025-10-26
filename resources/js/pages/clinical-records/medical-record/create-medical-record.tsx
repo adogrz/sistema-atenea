@@ -1,7 +1,8 @@
 'use client';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Stepper, StepperIndicator, StepperItem, StepperSeparator, StepperTitle, StepperTrigger } from '@/components/ui/stepper';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import InlineStepper from '@/components/ui/inline-stepper';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import {
@@ -12,7 +13,7 @@ import {
     StudentBasicInfo,
 } from '@/types/clinical-records';
 import { Head, router } from '@inertiajs/react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, FileText } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { ConsentFormSection } from './sections/consent-form';
@@ -61,6 +62,16 @@ export default function CreateMedicalRecord({ student_nie, student, responsables
     useEffect(() => {
         setFormData((prev) => ({ ...prev, is_minor: isMinor() }));
     }, [isMinor]);
+
+    // Scroll to top cuando cambie el paso
+    useEffect(() => {
+        const container = document.getElementById('form-content-container');
+        if (container) {
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        // También scroll general de la página
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [activeStep]);
 
     const getStudentFullName = () => {
         if (!student) return 'Estudiante';
@@ -188,98 +199,93 @@ export default function CreateMedicalRecord({ student_nie, student, responsables
         );
     }
 
-    // Determinar los pasos según si es menor o no
+    // Determinar los pasos según si es menor o no (comenzar desde 1)
     const minorUI = isMinor();
     const steps = minorUI
         ? [
-              { id: 0, title: 'Expediente y Consulta', completed: activeStep > 0 },
-              { id: 1, title: 'Consentimiento', completed: activeStep > 1 },
-              { id: 2, title: 'Revisar', completed: false },
+              { id: 1, title: 'Expediente y Consulta', completed: activeStep > 0 },
+              { id: 2, title: 'Consentimiento', completed: activeStep > 1 },
+              { id: 3, title: 'Revisar', completed: false },
           ]
         : [
-              { id: 0, title: 'Expediente y Consulta', completed: activeStep > 0 },
-              { id: 1, title: 'Revisar', completed: false },
+              { id: 1, title: 'Expediente y Consulta', completed: activeStep > 0 },
+              { id: 2, title: 'Revisar', completed: false },
           ];
 
     const reviewStepIndex = minorUI ? 2 : 1;
 
-    // Debug info (remove in production)
-    console.log('DEBUG - CreateMedicalRecord:', {
-        fecha_nacimiento: student?.fecha_nacimiento,
-        isMinor: minorUI,
-        activeStep,
-        reviewStepIndex,
-        formData_is_minor: formData.is_minor,
-        totalSteps: steps.length,
-    });
-
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
             <Head title={pageTitle} />
-            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-6">
-                {/* Header */}
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
-                    <p className="mt-2 text-muted-foreground">Complete los pasos para crear el expediente médico del estudiante</p>
-                </div>
-
-                {/* Stepper */}
+            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-6">
                 <div className="mx-auto w-full max-w-4xl">
-                    <Stepper value={activeStep} onValueChange={setActiveStep} orientation="horizontal">
-                        {steps.map((step, index) => (
-                            <div key={step.id} className="flex w-full items-center">
-                                <StepperItem step={step.id} completed={step.completed}>
-                                    <StepperTrigger>
-                                        <StepperIndicator>{index + 1}</StepperIndicator>
-                                        <StepperTitle>{step.title}</StepperTitle>
-                                    </StepperTrigger>
-                                </StepperItem>
-                                {index < steps.length - 1 && <StepperSeparator />}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-xl">Creación de Expediente Médico</CardTitle>
+                                    <p className="text-sm text-muted-foreground">
+                                        Registrando expediente médico para <span className="font-medium">{getStudentFullName()}</span>
+                                    </p>
+                                </div>
                             </div>
-                        ))}
-                    </Stepper>
-                </div>
+                        </CardHeader>
+                        <CardContent className="space-y-8">
+                            {/* Stepper centrado (componente reutilizable) */}
+                            <div className="mx-auto w-full max-w-2xl">
+                                <InlineStepper
+                                    steps={steps.map((s) => ({ title: s.title }))}
+                                    activeIndex={activeStep}
+                                    onChange={!isSubmitting ? setActiveStep : undefined}
+                                />
+                            </div>
 
-                {/* Contenido de los pasos */}
-                <div className="mx-auto w-full max-w-4xl">
-                    {/* Paso 0: Expediente y Consulta Inicial (siempre) */}
-                    {activeStep === 0 && (
-                        <RecordConsultationSection
-                            studentName={getStudentFullName()}
-                            onNext={handleRecordConsultationNext}
-                            defaultValues={{
-                                general_background: formData.general_background,
-                                consultation: formData.consultation,
-                            }}
-                        />
-                    )}
+                            {/* Contenido de los pasos */}
+                            <div id="form-content-container">
+                                {/* Paso 0: Expediente y Consulta Inicial (siempre) */}
+                                {activeStep === 0 && (
+                                    <RecordConsultationSection
+                                        onNext={handleRecordConsultationNext}
+                                        defaultValues={{
+                                            general_background: formData.general_background,
+                                            consultation: formData.consultation,
+                                        }}
+                                    />
+                                )}
 
-                    {/* Paso 1: Consentimiento (solo menores) */}
-                    {activeStep === 1 && minorUI && (
-                        <ConsentFormSection
-                            studentName={getStudentFullName()}
-                            responsables={responsables}
-                            existingConsents={existing_consents}
-                            onNext={handleConsentNext}
-                            onBack={handleConsentBack}
-                            defaultValues={{
-                                consent_form_id: formData.consent_form_id,
-                                consent: formData.consent,
-                            }}
-                        />
-                    )}
+                                {/* Paso 1: Consentimiento (solo menores) */}
+                                {activeStep === 1 && minorUI && (
+                                    <ConsentFormSection
+                                        responsables={responsables}
+                                        existingConsents={existing_consents}
+                                        onNext={handleConsentNext}
+                                        onBack={handleConsentBack}
+                                        defaultValues={{
+                                            consent_form_id: formData.consent_form_id,
+                                            consent: formData.consent,
+                                        }}
+                                    />
+                                )}
 
-                    {/* Paso Final: Revisar (índice depende si es menor) */}
-                    {activeStep === reviewStepIndex && (
-                        <ReviewSection
-                            data={formData}
-                            studentName={getStudentFullName()}
-                            responsableName={formData.consent?.responsible_id ? getResponsableName(formData.consent.responsible_id) : undefined}
-                            onBack={handleReviewBack}
-                            onSubmit={handleSubmit}
-                            isSubmitting={isSubmitting}
-                        />
-                    )}
+                                {/* Paso Final: Revisar (índice depende si es menor) */}
+                                {activeStep === reviewStepIndex && (
+                                    <ReviewSection
+                                        data={formData}
+                                        studentName={getStudentFullName()}
+                                        responsableName={
+                                            formData.consent?.responsible_id ? getResponsableName(formData.consent.responsible_id) : undefined
+                                        }
+                                        onBack={handleReviewBack}
+                                        onSubmit={handleSubmit}
+                                        isSubmitting={isSubmitting}
+                                    />
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </AppLayout>

@@ -14,7 +14,7 @@ const consultationSchema = z.object({
         .date({
             required_error: 'La fecha de consulta es requerida',
         })
-        .max(new Date(), 'La fecha de consulta no puede ser futura'),
+        .refine((date) => date <= new Date(), 'La fecha de consulta no puede ser posterior a hoy'),
     diagnosis: z
         .string({
             required_error: 'El diagnóstico es requerido',
@@ -102,7 +102,11 @@ export function MedicalConsultationForm({
                                 Diagnóstico <span className="text-destructive">*</span>
                             </FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Ingrese el diagnóstico médico..." className="min-h-[120px] resize-none" {...field} />
+                                <Textarea
+                                    placeholder="Ej: Faringitis aguda, dolor de cabeza persistente, fiebre de 38.5°C..."
+                                    className="min-h-[120px] resize-none"
+                                    {...field}
+                                />
                             </FormControl>
                             <FormDescription>Descripción detallada del diagnóstico ({field.value?.length || 0}/5000)</FormDescription>
                             <FormMessage />
@@ -116,10 +120,12 @@ export function MedicalConsultationForm({
                     name="treatment"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Tratamiento</FormLabel>
+                            <FormLabel>
+                                Tratamiento <span className="text-sm font-normal text-muted-foreground">(Opcional)</span>
+                            </FormLabel>
                             <FormControl>
                                 <Textarea
-                                    placeholder="Ingrese el tratamiento prescrito (opcional)..."
+                                    placeholder="Ej: Amoxicilina 500mg cada 8 horas por 7 días, reposo y abundantes líquidos..."
                                     className="min-h-[100px] resize-none"
                                     {...field}
                                 />
@@ -136,9 +142,15 @@ export function MedicalConsultationForm({
                     name="observations"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Observaciones</FormLabel>
+                            <FormLabel>
+                                Observaciones <span className="text-sm font-normal text-muted-foreground">(Opcional)</span>
+                            </FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Observaciones adicionales (opcional)..." className="min-h-[100px] resize-none" {...field} />
+                                <Textarea
+                                    placeholder="Ej: Control en 3 días si persisten los síntomas, evitar actividades físicas intensas..."
+                                    className="min-h-[100px] resize-none"
+                                    {...field}
+                                />
                             </FormControl>
                             <FormDescription>Notas u observaciones adicionales ({field.value?.length || 0}/5000)</FormDescription>
                             <FormMessage />
