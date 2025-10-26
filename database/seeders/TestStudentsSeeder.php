@@ -37,7 +37,7 @@ class TestStudentsSeeder extends Seeder
                 'telefono_estudiante' => '71234567',
                 'telefono_casa' => '22345678',
                 'sexo' => 'H',
-                'fecha_nacimiento' => '2005-03-15',
+                'fecha_nacimiento' => '2012-03-15',
                 'centro_educativo' => '10001', // CENTRO ESCOLAR  "ISIDRO MENÉNDEZ"
                 'direccion_data' => [
                     'colonia' => 'Col. Escalón',
@@ -58,7 +58,7 @@ class TestStudentsSeeder extends Seeder
                 'telefono_estudiante' => '79876543',
                 'telefono_casa' => '23456789',
                 'sexo' => 'M',
-                'fecha_nacimiento' => '2006-07-22',
+                'fecha_nacimiento' => '2009-07-22',
                 'centro_educativo' => '10002', // CENTRO ESCOLAR "ALFREDO ESPINO"
                 'direccion_data' => [
                     'colonia' => 'Col. Miramonte',
@@ -79,7 +79,7 @@ class TestStudentsSeeder extends Seeder
                 'telefono_estudiante' => '74567890',
                 'telefono_casa' => '25678901',
                 'sexo' => 'H',
-                'fecha_nacimiento' => '2005-11-08',
+                'fecha_nacimiento' => '2015-11-08',
                 'centro_educativo' => '10003', // CENTRO ESCOLAR "ALEJANDRO DE HUMBOLDT"
                 'direccion_data' => [
                     'colonia' => 'Col. San Benito',
@@ -154,16 +154,29 @@ class TestStudentsSeeder extends Seeder
                     'aprobado' => false,
                 ]);
 
-                // 5. Crear Responsable
+                // 5. Crear Responsables (Padre y Madre ficticios)
+                // Padre
                 Responsable::create([
-                    'dui' => '00000000' . ($index + 1), // DUI único para pruebas
+                    'dui' => '0000000' . ($index + 1) . '1',
                     'codigo_estudiante' => $estudiante->codigo,
-                    'nombres_responsable' => 'Responsable de',
-                    'apellidos_responsable' => $studentData['primer_nombre'],
+                    'nombres_responsable' => 'Juan',
+                    'apellidos_responsable' => 'Pérez',
                     'telefono_responsable' => '7000' . str_pad($index + 1000, 4, '0', STR_PAD_LEFT),
-                    'email_responsable' => 'responsable' . ($index + 1) . '@test.com',
+                    'email_responsable' => 'padre' . ($index + 1) . '@test.com',
                     'tipo_parentesco' => 'Padre',
                 ]);
+                // Madre
+                Responsable::create([
+                    'dui' => '0000000' . ($index + 1) . '2',
+                    'codigo_estudiante' => $estudiante->codigo,
+                    'nombres_responsable' => 'María',
+                    'apellidos_responsable' => 'García',
+                    'telefono_responsable' => '7100' . str_pad($index + 1000, 4, '0', STR_PAD_LEFT),
+                    'email_responsable' => 'madre' . ($index + 1) . '@test.com',
+                    'tipo_parentesco' => 'Madre',
+                ]);
+
+                $this->command->info("👨‍👩‍👧 Responsables creados para: {$studentData['name']}");
 
                 $this->command->info("✅ Estudiante creado: {$studentData['name']} (NIE: {$studentData['nie']}, User ID: {$user->id})");
             });

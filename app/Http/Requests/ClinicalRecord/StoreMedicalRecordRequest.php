@@ -18,16 +18,6 @@ class StoreMedicalRecordRequest extends FormRequest
     }
 
     /**
-     * Prepara los datos para la validación.
-     */
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'created_by' => $this->user()->id,
-        ]);
-    }
-
-    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -138,8 +128,10 @@ class StoreMedicalRecordRequest extends FormRequest
                 // Validar que el responsable esté asociado al estudiante
                 function ($attribute, $value, $fail) {
                     if ($value && $this->input('student_nie')) {
-                        $responsible = Responsable::find($value);
-                        if ($responsible && !$responsible->estudiantes()->where('nie', $this->input('student_nie'))->exists()) {
+                        $responsible = Responsable::with('estudiante')->find($value);
+                        $studentNie = $this->input('student_nie');
+
+                        if (!$responsible || !$responsible->estudiante || $responsible->estudiante->nie !== $studentNie) {
                             $fail('El responsable seleccionado no está asociado al estudiante.');
                         }
                     }
@@ -148,7 +140,7 @@ class StoreMedicalRecordRequest extends FormRequest
             'consent.type' => [
                 'required_with:consent',
                 'string',
-                'in:medical,psychological',
+                'in:medical',
             ],
             'consent.granted_at' => [
                 'required_with:consent',
@@ -199,7 +191,7 @@ class StoreMedicalRecordRequest extends FormRequest
             'consent.responsible_id.required_with' => 'El responsable es requerido para crear un consentimiento.',
             'consent.responsible_id.exists' => 'El responsable seleccionado no existe.',
             'consent.type.required_with' => 'El tipo de consentimiento es requerido.',
-            'consent.type.in' => 'El tipo de consentimiento debe ser médico o psicológico.',
+            'consent.type.in' => 'El tipo de consentimiento debe ser médico.',
             'consent.granted_at.required_with' => 'La fecha de otorgamiento del consentimiento es requerida.',
             'consent.granted_at.date' => 'La fecha de otorgamiento debe ser una fecha válida.',
             'consent.granted_at.before_or_equal' => 'La fecha de otorgamiento no puede ser futura.',

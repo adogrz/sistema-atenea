@@ -74,6 +74,14 @@ class Estudiante extends Model
     }
 
     /**
+     * Relación con múltiples Responsables (padre, madre, tutor, etc.)
+     */
+    public function responsables(): HasMany
+    {
+        return $this->hasMany(Responsable::class, 'codigo_estudiante', 'codigo');
+    }
+
+    /**
      * Relación con el modelo CentroEducativo
      */
     public function centroEducativo(): BelongsTo
