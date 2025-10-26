@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClinicalRecord\AssignmentController;
+use App\Http\Controllers\ClinicalRecord\MedicalRecordController;
 
 /**
  * Rutas para el módulo de Registros Clínicos
@@ -58,6 +59,36 @@ Route::middleware(['auth', 'verified', 'check.status'])
 
             // Restaurar asignación eliminada
             Route::post('/{assignment}/restore', [AssignmentController::class, 'restore'])
+                ->name('restore');
+        });
+
+        // Rutas de Expedientes Médicos (Medical Records)
+        Route::prefix('medical-records')->name('medical-records.')->group(function () {
+            Route::get('/', [MedicalRecordController::class, 'index'])
+                ->name('index');
+
+            Route::get('/create', [MedicalRecordController::class, 'create'])
+                ->name('create');
+
+            Route::post('/', [MedicalRecordController::class, 'store'])
+                ->name('store');
+
+            Route::get('/{medical_record}', [MedicalRecordController::class, 'show'])
+                ->name('show');
+
+            Route::get('/{medical_record}/edit', [MedicalRecordController::class, 'edit'])
+                ->name('edit');
+
+            Route::put('/{medical_record}', [MedicalRecordController::class, 'update'])
+                ->name('update');
+
+            Route::patch('/{medical_record}', [MedicalRecordController::class, 'update'])
+                ->name('patch');
+
+            Route::delete('/{medical_record}', [MedicalRecordController::class, 'destroy'])
+                ->name('destroy');
+
+            Route::post('/{medical_record}/restore', [MedicalRecordController::class, 'restore'])
                 ->name('restore');
         });
     });

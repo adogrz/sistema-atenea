@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\ClinicalRecord;
 
 use App\Models\ClinicalRecord\MedicalRecord;
 use App\Models\Responsable;
@@ -155,7 +155,7 @@ class StoreMedicalRecordRequest extends FormRequest
                 'date',
                 'before_or_equal:today',
             ],
-            'consent.file_path' => [
+            'consent.file' => [
                 'required_with:consent',
                 'file',
                 'mimes:pdf,jpg,jpeg,png',
@@ -203,10 +203,10 @@ class StoreMedicalRecordRequest extends FormRequest
             'consent.granted_at.required_with' => 'La fecha de otorgamiento del consentimiento es requerida.',
             'consent.granted_at.date' => 'La fecha de otorgamiento debe ser una fecha válida.',
             'consent.granted_at.before_or_equal' => 'La fecha de otorgamiento no puede ser futura.',
-            'consent.file_path.required_with' => 'El archivo del consentimiento es requerido.',
-            'consent.file_path.file' => 'Debe proporcionar un archivo válido.',
-            'consent.file_path.mimes' => 'El archivo debe ser PDF, JPG, JPEG o PNG.',
-            'consent.file_path.max' => 'El archivo no puede superar los 10MB.',
+            'consent.file.required_with' => 'El archivo del consentimiento es requerido.',
+            'consent.file.file' => 'Debe proporcionar un archivo válido.',
+            'consent.file.mimes' => 'El archivo debe ser PDF, JPG, JPEG o PNG.',
+            'consent.file.max' => 'El archivo no puede superar los 10MB.',
             'consent.observations.max' => 'Las observaciones no pueden superar los 2000 caracteres.',
         ];
     }
