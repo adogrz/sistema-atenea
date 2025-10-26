@@ -18,6 +18,8 @@ export interface StudentBasicInfo {
     segundo_apellido: string;
     sexo: string;
     email: string;
+    fecha_nacimiento: string;
+    codigo: string;
 }
 
 /**
