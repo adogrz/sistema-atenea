@@ -42,7 +42,10 @@ export default function CreateMedicalRecord({ student_nie, student, responsables
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Calcular si es menor de edad
+    /**
+     * Calcular si es menor de edad basado en la fecha de nacimiento
+     * Nota: Este cálculo también se realiza en el backend (modelo Estudiante::isMinor())
+     */
     const isMinor = useCallback(() => {
         if (!student?.fecha_nacimiento) return false;
         const today = new Date();

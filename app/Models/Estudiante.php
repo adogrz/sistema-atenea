@@ -122,6 +122,20 @@ class Estudiante extends Model
     }
 
     /**
+     * Determinar si el estudiante es menor de edad (menor de 18 años)
+     *
+     * @return bool
+     */
+    public function isMinor(): bool
+    {
+        if (!$this->fecha_nacimiento) {
+            return false;
+        }
+
+        return $this->fecha_nacimiento->age < 18;
+    }
+
+    /**
      * Asignaciones clinicas del estudiante
      */
     public function assignments(): HasMany

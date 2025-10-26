@@ -121,6 +121,11 @@ class MedicalRecordController extends Controller
      */
     public function store(StoreMedicalRecordRequest $request)
     {
+        // Obtener estudiante y calcular si es menor (antes de cualquier procesamiento)
+        $student = Estudiante::where('nie', $request->student_nie)->firstOrFail();
+        $isMinor = $student->isMinor();
+        $request->merge(['is_minor' => $isMinor]);
+
         // Verificar permisos adicionales
         $this->authorize('create', MedicalConsultation::class);
 
@@ -128,11 +133,6 @@ class MedicalRecordController extends Controller
         if ($request->has('consent') || $request->has('consent_form_id')) {
             $this->authorize('create', ConsentForm::class);
         }
-
-        // Calcular edad del estudiante y agregar al request
-        $student = Estudiante::where('nie', $request->student_nie)->firstOrFail();
-        $isMinor = $student->fecha_nacimiento->age < 18;
-        $request->merge(['is_minor' => $isMinor]);
 
         try {
             // Crear el expediente médico usando el servicio
