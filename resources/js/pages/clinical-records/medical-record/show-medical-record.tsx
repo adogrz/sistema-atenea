@@ -1,9 +1,7 @@
 'use client';
 
 import { getMedicalConsultationColumns } from '@/components/clinical-records/medical-consultation/medical-consultation-columns';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
@@ -12,7 +10,7 @@ import { Head } from '@inertiajs/react';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, CirclePlus, FileText, Stethoscope, User } from 'lucide-react';
+import { Calendar, CirclePlus, ClipboardList, FileText, Stethoscope, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
@@ -38,127 +36,131 @@ export default function ShowMedicalRecord({ medicalRecord }: Props) {
         ? `${[student.primer_nombre, student.segundo_nombre].filter(Boolean).join(' ')} ${[student.primer_apellido, student.segundo_apellido].filter(Boolean).join(' ')}`
         : 'N/A';
 
-    const pageTitle = `Expediente Médico - ${studentName}`;
+    const pageTitle = `Expediente Médico`;
+    const age = student?.fecha_nacimiento ? new Date().getFullYear() - new Date(student.fecha_nacimiento).getFullYear() : undefined;
 
-    // Ordenar consultas por fecha más reciente
     const sortedConsultations = useMemo(() => {
         if (!medicalRecord.medical_consultations) return [];
-        return [...medicalRecord.medical_consultations].sort((a, b) => {
-            return new Date(b.consultation_date).getTime() - new Date(a.consultation_date).getTime();
-        });
+        return [...medicalRecord.medical_consultations].sort(
+            (a, b) => new Date(b.consultation_date).getTime() - new Date(a.consultation_date).getTime(),
+        );
     }, [medicalRecord.medical_consultations]);
 
     const columns = useMemo(() => getMedicalConsultationColumns(), []);
 
     const handleNewConsultation = () => {
-        // TODO: Implementar funcionalidad de nueva consulta
         console.log('Agregar nueva consulta');
     };
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
-            <Head title={pageTitle} />
-            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
-                        <p className="mt-2 text-muted-foreground">Visualización del expediente médico del estudiante</p>
+            <Head title={`${pageTitle} - ${studentName}`} />
+
+            <div className="flex h-full flex-1 flex-col gap-8 overflow-x-auto rounded-xl p-6">
+                {/* Encabezado */}
+                <div className="flex flex-col gap-2 border-b border-muted/30 pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                            <Stethoscope className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
+                            <p className="text-sm text-muted-foreground">
+                                Detalles del expediente médico de <span className="font-medium text-foreground">{studentName}</span>
+                            </p>
+                        </div>
                     </div>
-                    <Badge variant="outline" className="h-fit">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Expediente #{medicalRecord.id}
-                    </Badge>
                 </div>
 
+                {/* Información general */}
                 <div className="grid gap-6 md:grid-cols-2">
-                    {/* Información del Estudiante */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <User className="h-5 w-5" />
-                                Información del Estudiante
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="grid grid-cols-2 gap-2">
-                                <span className="text-sm text-muted-foreground">Nombre:</span>
-                                <span className="text-sm font-medium">{studentName}</span>
+                    {/* Estudiante */}
+                    <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
+                        <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
+                            <User className="h-5 w-5 text-primary" />
+                            <h2 className="text-lg font-semibold">Información del Estudiante</h2>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Nombre:</span>
+                                <span className="font-medium">{studentName}</span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <span className="text-sm text-muted-foreground">NIE:</span>
-                                <span className="text-sm font-medium">{medicalRecord.student_nie}</span>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">NIE:</span>
+                                <span className="font-medium">{medicalRecord.student_nie}</span>
                             </div>
                             {student?.fecha_nacimiento && (
-                                <div className="grid grid-cols-2 gap-2">
-                                    <span className="text-sm text-muted-foreground">Fecha de Nacimiento:</span>
-                                    <span className="text-sm font-medium">{format(new Date(student.fecha_nacimiento), 'dd/MM/yyyy')}</span>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Fecha de Nacimiento:</span>
+                                    <span className="font-medium">
+                                        {format(new Date(student.fecha_nacimiento), 'dd/MM/yyyy')}
+                                        {age && ` (${age} años)`}
+                                    </span>
                                 </div>
                             )}
                             {student?.sexo && (
-                                <div className="grid grid-cols-2 gap-2">
-                                    <span className="text-sm text-muted-foreground">Sexo:</span>
-                                    <span className="text-sm font-medium">{student.sexo}</span>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Sexo:</span>
+                                    <span className="font-medium">{student.sexo === 'M' ? 'Femenino' : 'Masculino'}</span>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
 
-                    {/* Información del Expediente */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Stethoscope className="h-5 w-5" />
-                                Datos del Expediente
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="grid grid-cols-2 gap-2">
-                                <span className="text-sm text-muted-foreground">Creado por:</span>
-                                <span className="text-sm font-medium">{medicalRecord.creator?.name || 'N/A'}</span>
+                    {/* Expediente */}
+                    <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
+                        <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
+                            <ClipboardList className="h-5 w-5 text-primary" />
+                            <h2 className="text-lg font-semibold">Datos del Expediente</h2>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Creado por:</span>
+                                <span className="font-medium">{medicalRecord.creator?.name || 'N/A'}</span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <span className="text-sm text-muted-foreground">Fecha de Creación:</span>
-                                <span className="text-sm font-medium">
-                                    <Calendar className="mr-1 inline h-3 w-3" />
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Fecha de Creación:</span>
+                                <span className="flex items-center gap-1 font-medium">
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
                                     {format(new Date(medicalRecord.created_at), 'PPP', { locale: es })}
                                 </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <span className="text-sm text-muted-foreground">Última Actualización:</span>
-                                <span className="text-sm font-medium">{format(new Date(medicalRecord.updated_at), 'PPP', { locale: es })}</span>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Última Actualización:</span>
+                                <span className="font-medium">{format(new Date(medicalRecord.updated_at), 'PPP', { locale: es })}</span>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Antecedentes Médicos */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Antecedentes Médicos</CardTitle>
-                        <CardDescription>Información general sobre el historial médico del estudiante</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {medicalRecord.general_background ? (
-                            <p className="text-sm whitespace-pre-wrap text-muted-foreground">{medicalRecord.general_background}</p>
-                        ) : (
-                            <p className="text-sm text-muted-foreground italic">Sin antecedentes registrados</p>
-                        )}
-                    </CardContent>
-                </Card>
+                <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
+                    <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
+                        <FileText className="h-5 w-5 text-primary" />
+                        <h2 className="text-lg font-semibold">Antecedentes Médicos</h2>
+                    </div>
+                    {medicalRecord.general_background ? (
+                        <p className="text-sm whitespace-pre-wrap text-muted-foreground">{medicalRecord.general_background}</p>
+                    ) : (
+                        <p className="text-sm text-muted-foreground italic">Sin antecedentes registrados</p>
+                    )}
+                </div>
 
                 {/* Consultas Médicas */}
-                <div className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between space-y-2">
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between">
                         <div>
                             <h2 className="text-2xl font-bold tracking-tight">Consultas Médicas</h2>
                             <p className="text-sm text-muted-foreground">{sortedConsultations.length} consulta(s) registrada(s)</p>
                         </div>
-                        <Button className="cursor-pointer space-x-1" onClick={handleNewConsultation}>
-                            <CirclePlus />
-                            <span>Nueva Consulta</span>
+                        <Button onClick={handleNewConsultation}>
+                            <CirclePlus className="mr-2 h-4 w-4" />
+                            Nueva Consulta
                         </Button>
                     </div>
+
                     <DataTable
                         columns={columns}
                         data={sortedConsultations}
@@ -166,7 +168,7 @@ export default function ShowMedicalRecord({ medicalRecord }: Props) {
                         setColumnFilters={setColumnFilters}
                         searchPlaceholder="Buscar por diagnóstico, tratamiento o médico..."
                     />
-                </div>
+                </section>
             </div>
         </AppLayout>
     );
