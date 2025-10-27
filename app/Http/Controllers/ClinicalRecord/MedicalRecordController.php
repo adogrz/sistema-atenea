@@ -23,11 +23,49 @@ class MedicalRecordController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', MedicalRecord::class);
 
-        // TODO: Implementar listado de expedientes médicos
+        $user = $request->user();
+
+        // Si el usuario tiene permiso para ver todos los expedientes (jefe)
+        if ($user->can('medical-records:view-all')) {
+            $query = MedicalRecord::with([
+                'student.user',
+                'creator',
+                'medicalConsultations'
+            ]);
+
+            // Filtrar por sede si el usuario tiene sede asignada
+            if ($user->sede_name) {
+                $query->whereHas('student.user', function ($q) use ($user) {
+                    $q->where('sede_name', $user->sede_name);
+                });
+            }
+
+            $medicalRecords = $query->orderBy('created_at', 'desc')->get();
+        } else {
+            // Si es un profesional, solo ver expedientes de sus estudiantes asignados
+            $medicalRecords = MedicalRecord::with([
+                'student.user',
+                'creator',
+                'medicalConsultations'
+            ])
+                ->whereHas('student', function ($query) use ($user) {
+                    $query->whereHas('assignments', function ($q) use ($user) {
+                        $q->where('professional_id', $user->id)
+                            ->where('type', 'medical')
+                            ->where('is_active', true);
+                    });
+                })
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        return Inertia::render('clinical-records/medical-record/dashboard-medical-records', [
+            'medicalRecords' => $medicalRecords,
+        ]);
     }
 
     /**
@@ -168,23 +206,30 @@ class MedicalRecordController extends Controller
             'medicalConsultations.consentForm.responsible'
         ]);
 
+        // Determinar el origen de la navegación para los breadcrumbs
+        $source = $request->query('source', 'assignments');
+
         return Inertia::render('clinical-records/medical-record/show-medical-record', [
             'medicalRecord' => $medicalRecord,
             'permissions' => [
                 'canUpdate' => $request->user()->can('update', $medicalRecord),
                 'canDelete' => $request->user()->can('delete', $medicalRecord),
             ],
+            'source' => $source,
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
+     * 
+     * Este método no se utiliza ya que la edición se hace mediante un Dialog en el show.
      */
     public function edit(MedicalRecord $medicalRecord)
     {
         $this->authorize('update', $medicalRecord);
 
-        // TODO: Implementar vista de edición de expediente médico
+        // Redirigir al show donde está el Dialog de edición
+        return redirect()->route('clinical-records.medical-records.show', $medicalRecord);
     }
 
     /**
@@ -214,22 +259,13 @@ class MedicalRecordController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * 
+     * Los expedientes médicos NO deben ser eliminables por razones de auditoría y legales.
+     * Esta acción está completamente deshabilitada.
      */
     public function destroy(MedicalRecord $medicalRecord)
     {
-        $this->authorize('delete', $medicalRecord);
-
-        try {
-            $medicalRecord->delete();
-
-            return redirect()
-                ->route('clinical-records.medical-records.index')
-                ->with('success', 'Expediente médico eliminado exitosamente.');
-
-        } catch (Exception $e) {
-            return redirect()
-                ->back()
-                ->withErrors(['error' => 'Ocurrió un error al eliminar el expediente médico: ' . $e->getMessage()]);
-        }
+        // Denegar siempre la eliminación de expedientes médicos
+        abort(403, 'Los expedientes médicos no pueden ser eliminados por razones de auditoría y cumplimiento legal.');
     }
 }

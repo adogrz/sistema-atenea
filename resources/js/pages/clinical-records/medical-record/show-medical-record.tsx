@@ -15,25 +15,34 @@ import { Calendar, CirclePlus, ClipboardList, FileText, Pencil, Stethoscope, Use
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-const BREADCRUMBS: BreadcrumbItem[] = [
-    { title: 'Inicio', href: '/dashboard' },
-    { title: 'Expediente Clínico', href: '/dashboard/clinical-records' },
-    { title: 'Asignaciones', href: '/dashboard/clinical-records/assignments' },
-    { title: 'Expediente Médico', href: '#' },
-];
-
 interface Props {
     medicalRecord: MedicalRecordWithRelations;
     permissions: {
         canUpdate: boolean;
         canDelete: boolean;
     };
+    source?: 'assignments' | 'medical-records'; // Origen de la navegación
 }
 
-export default function ShowMedicalRecord({ medicalRecord, permissions }: Props) {
+export default function ShowMedicalRecord({ medicalRecord, permissions, source = 'assignments' }: Props) {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Breadcrumbs dinámicos según el origen
+    const breadcrumbs: BreadcrumbItem[] = useMemo(() => {
+        const base = [
+            { title: 'Inicio', href: '/dashboard' },
+            { title: 'Expediente Clínico', href: '/dashboard/clinical-records' },
+        ];
+
+        if (source === 'medical-records') {
+            return [...base, { title: 'Expedientes Médicos', href: '/dashboard/clinical-records/medical-records' }, { title: 'Detalle', href: '#' }];
+        }
+
+        // Por defecto desde assignments
+        return [...base, { title: 'Asignaciones', href: '/dashboard/clinical-records/assignments' }, { title: 'Expediente Médico', href: '#' }];
+    }, [source]);
 
     const student = medicalRecord.student;
     const studentName = student
@@ -97,7 +106,7 @@ export default function ShowMedicalRecord({ medicalRecord, permissions }: Props)
     };
 
     return (
-        <AppLayout breadcrumbs={BREADCRUMBS}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${pageTitle} - ${studentName}`} />
 
             <div className="flex h-full flex-1 flex-col gap-8 overflow-x-auto rounded-xl p-6">
