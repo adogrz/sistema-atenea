@@ -1,14 +1,19 @@
 'use client';
 
+import { getMedicalConsultationColumns } from '@/components/clinical-records/medical-consultation/medical-consultation-columns';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DataTable } from '@/components/ui/data-table';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { MedicalRecordWithRelations } from '@/types/clinical-records';
 import { Head } from '@inertiajs/react';
+import { ColumnFiltersState } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, FileText, Stethoscope, User } from 'lucide-react';
+import { Calendar, CirclePlus, FileText, Stethoscope, User } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
@@ -26,12 +31,29 @@ interface Props {
 }
 
 export default function ShowMedicalRecord({ medicalRecord }: Props) {
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
     const student = medicalRecord.student;
     const studentName = student
         ? `${[student.primer_nombre, student.segundo_nombre].filter(Boolean).join(' ')} ${[student.primer_apellido, student.segundo_apellido].filter(Boolean).join(' ')}`
         : 'N/A';
 
     const pageTitle = `Expediente Médico - ${studentName}`;
+
+    // Ordenar consultas por fecha más reciente
+    const sortedConsultations = useMemo(() => {
+        if (!medicalRecord.medical_consultations) return [];
+        return [...medicalRecord.medical_consultations].sort((a, b) => {
+            return new Date(b.consultation_date).getTime() - new Date(a.consultation_date).getTime();
+        });
+    }, [medicalRecord.medical_consultations]);
+
+    const columns = useMemo(() => getMedicalConsultationColumns(), []);
+
+    const handleNewConsultation = () => {
+        // TODO: Implementar funcionalidad de nueva consulta
+        console.log('Agregar nueva consulta');
+    };
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
@@ -126,40 +148,25 @@ export default function ShowMedicalRecord({ medicalRecord }: Props) {
                 </Card>
 
                 {/* Consultas Médicas */}
-                {medicalRecord.medical_consultations && medicalRecord.medical_consultations.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Consultas Médicas</CardTitle>
-                            <CardDescription>{medicalRecord.medical_consultations.length} consulta(s) registrada(s)</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {medicalRecord.medical_consultations.map((consultation) => (
-                                    <div key={consultation.id} className="rounded-lg border p-4">
-                                        <div className="mb-2 flex items-center justify-between">
-                                            <span className="text-sm font-medium">
-                                                {format(new Date(consultation.consultation_date), 'PPP', { locale: es })}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">Dr. {consultation.doctor?.name || 'N/A'}</span>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div>
-                                                <span className="text-xs font-medium">Diagnóstico:</span>
-                                                <p className="mt-1 text-sm text-muted-foreground">{consultation.diagnosis}</p>
-                                            </div>
-                                            {consultation.treatment && (
-                                                <div>
-                                                    <span className="text-xs font-medium">Tratamiento:</span>
-                                                    <p className="mt-1 text-sm text-muted-foreground">{consultation.treatment}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
+                <div className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between space-y-2">
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight">Consultas Médicas</h2>
+                            <p className="text-sm text-muted-foreground">{sortedConsultations.length} consulta(s) registrada(s)</p>
+                        </div>
+                        <Button className="cursor-pointer space-x-1" onClick={handleNewConsultation}>
+                            <CirclePlus />
+                            <span>Nueva Consulta</span>
+                        </Button>
+                    </div>
+                    <DataTable
+                        columns={columns}
+                        data={sortedConsultations}
+                        columnFilters={columnFilters}
+                        setColumnFilters={setColumnFilters}
+                        searchPlaceholder="Buscar por diagnóstico, tratamiento o médico..."
+                    />
+                </div>
             </div>
         </AppLayout>
     );
