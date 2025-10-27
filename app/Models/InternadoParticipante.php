@@ -19,6 +19,10 @@ class InternadoParticipante extends Model
         'estado',
     ];
 
+    protected $appends = [
+        'nivel_educativo',
+    ];
+
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -33,6 +37,14 @@ class InternadoParticipante extends Model
         return $this->belongsTo(Estudiante::class, 'estudiante_codigo', 'codigo');
     }
 
+    public function getNivelEducativoAttribute($value): ?string
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+        return optional($this->estudiante)->nivel_educativo;
+    }
+
     /**
      * Relación con calificaciones
      */
@@ -42,7 +54,23 @@ class InternadoParticipante extends Model
     }
 
     /**
-     * Obtener promedio ponderado del participante
+     * Relación con asistencias
+     */
+    public function asistencias(): HasMany
+    {
+        return $this->hasMany(InternadoAsistencia::class, 'participante_id');
+    }
+
+    /**
+     * Relación con conductas
+     */
+    public function conductas(): HasMany
+    {
+        return $this->hasMany(InternadoConducta::class, 'participante_id');
+    }
+
+    /**
+     * Obtener promedio ponderado
      */
     public function getPromedioGeneralAttribute(): float
     {
@@ -55,20 +83,59 @@ class InternadoParticipante extends Model
             return 0.0;
         }
 
-        $totalPonderado = $calificaciones->sum(function ($calificacion) {
-            return $calificacion->nota_ponderada;
-        });
-
-        $totalPeso = $calificaciones->sum(function ($calificacion) {
-            return $calificacion->evaluacion->peso_porcentual ?? 0;
-        });
+        $totalPonderado = $calificaciones->sum(fn($c) => $c->nota_ponderada);
+        $totalPeso = $calificaciones->sum(fn($c) => $c->evaluacion->peso_porcentual ?? 0);
 
         if ($totalPeso == 0) {
             return 0.0;
         }
 
-        // Normalizar a escala de 10
         return ($totalPonderado / $totalPeso) * 10;
+    }
+
+    /**
+     * Obtener total de créditos extra acumulados
+     */
+    public function getTotalCreditosExtraAttribute(): float
+    {
+        return $this->calificaciones()
+            ->whereNotNull('credito_extra')
+            ->sum('credito_extra') ?? 0.0;
+    }
+
+    /**
+     * Obtener porcentaje de asistencia por periodo
+     */
+    public function getPorcentajeAsistenciaPorPeriodo(int $periodoId): float
+    {
+        $total = $this->asistencias()->where('periodo_id', $periodoId)->count();
+        
+        if ($total === 0) {
+            return 0.0;
+        }
+
+        $presentes = $this->asistencias()
+            ->where('periodo_id', $periodoId)
+            ->whereIn('estado', ['presente', 'justificada'])
+            ->count();
+
+        return ($presentes / $total) * 100;
+    }
+
+    /**
+     * Obtener conducta de un periodo
+     */
+    public function getConductaPorPeriodo(int $periodoId)
+    {
+        return $this->conductas()->where('periodo_id', $periodoId)->first();
+    }
+
+    /**
+     * Scope para filtrar por estado
+     */
+    public function scopeConEstado($query, string $estado)
+    {
+        return $query->where('estado', $estado);
     }
 
     /**

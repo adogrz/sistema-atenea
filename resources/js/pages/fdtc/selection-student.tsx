@@ -14,35 +14,13 @@ import { DataTableMultiSelect } from '@/components/ui/data-table-multi-select';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { type Estudiante } from '@/types/fdtc/internado'
 import { Head, router, usePage } from '@inertiajs/react';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { UserPlus, X, Download, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { getInternadoColumns } from '@/components/selection-student-columns';
-import { fi } from 'date-fns/locale';
-
-interface Materia {
-    id: number;
-    nombre: string;
-    nota: number;
-}
-
-export interface Estudiante {
-    id: string;
-    codigo: string;
-    nombre: string;
-    email: string;
-    sede_name: string;
-    sede_description?: string;
-    promedio_general: number;
-    materias: Materia[];
-    status: string;
-    en_internado: boolean;
-    estado_internado?: string;
-    fecha_ingreso?: string;
-}
-
 interface FlashMessages {
     success?: string;
     error?: string;

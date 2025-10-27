@@ -17,6 +17,10 @@ return new class extends Migration
             $table->text('descripcion')->nullable();
             $table->decimal('peso_porcentual', 5, 2)->default(0);
             $table->decimal('nota_maxima', 3, 1)->default(10.0);
+            $table->date('fecha_inicio')->nullable();
+            $table->date('fecha_fin')->nullable();
+            $table->boolean('permite_credito_extra')->default(false);
+            $table->decimal('credito_extra_max', 3, 1)->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

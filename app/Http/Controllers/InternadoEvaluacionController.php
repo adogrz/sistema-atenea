@@ -14,11 +14,10 @@ class InternadoEvaluacionController extends Controller
     /**
      * Mostrar lista de evaluaciones
      */
-    public function index(): Response
+    public function evaluaciones(): Response
     {
-        $evaluaciones = InternadoEvaluacion::withCount([
-            'calificaciones',
-            'calificaciones as calificaciones_completadas' => function ($query) {
+        $evaluaciones = InternadoEvaluacion::withCount('calificaciones')
+        ->with(['calificaciones' => function ($query) {
                 $query->whereNotNull('nota');
             }
         ])
@@ -31,6 +30,10 @@ class InternadoEvaluacionController extends Controller
                 'descripcion' => $evaluacion->descripcion,
                 'peso_porcentual' => $evaluacion->peso_porcentual,
                 'nota_maxima' => $evaluacion->nota_maxima,
+                'fecha_inicio' => $evaluacion->fecha_inicio?->format('Y-m-d'),
+                'fecha_fin' => $evaluacion->fecha_fin?->format('Y-m-d'),
+                'permite_credito_extra' => $evaluacion->permite_credito_extra,
+                'credito_extra_max' => $evaluacion->credito_extra_max,
                 'total_estudiantes' => $evaluacion->calificaciones_count,
                 'estudiantes_calificados' => $evaluacion->calificaciones_completadas,
                 'promedio' => $evaluacion->promedio,
@@ -38,9 +41,14 @@ class InternadoEvaluacionController extends Controller
             ];
         });
 
-        return Inertia::render('fdtc/evaluations/evaluations-list', [
+        return Inertia::render('fdtc/evaluations/evaluations-management', [
             'evaluaciones' => $evaluaciones,
         ]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('fdtc/evaluations/create-evaluation');
     }
 
     /**
@@ -53,18 +61,18 @@ class InternadoEvaluacionController extends Controller
             'descripcion' => 'nullable|string',
             'peso_porcentual' => 'required|numeric|min:0|max:100',
             'nota_maxima' => 'required|numeric|min:0|max:10',
+            'fecha_inicio' => 'nullable|date',
+            'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
+            'permite_credito_extra' => 'boolean',
+            'credito_extra_max' => 'nullable|numeric|min:0|max:5',
         ]);
 
         try {
-            $evaluacion = InternadoEvaluacion::create($request->only([
-                'nombre',
-                'descripcion',
-                'peso_porcentual',
-                'nota_maxima',
-            ]));
 
-            // Crear registros de calificación para todos los participantes activos
-            $participantes = InternadoParticipante::whereNull('deleted_at')->get();
+            $evaluacion = InternadoEvaluacion::create($request->all());
+
+            // Crear calificaciones vacías para todos los participantes activos
+            $participantes = InternadoParticipante::where('estado', 'activo')->get();
             
             foreach ($participantes as $participante) {
                 InternadoCalificacion::create([
@@ -79,6 +87,26 @@ class InternadoEvaluacionController extends Controller
         }
     }
 
+    public function edit(InternadoEvaluacion $evaluacion): Response
+    {
+        return Inertia::render('fdtc/evaluations/edit-evaluation', [
+            'evaluacion' => [
+                'id' => $evaluacion->id,
+                'nombre' => $evaluacion->nombre,
+                'descripcion' => $evaluacion->descripcion,
+                'peso_porcentual' => $evaluacion->peso_porcentual,
+                'nota_maxima' => $evaluacion->nota_maxima,
+                'fecha_inicio' => $evaluacion->fecha_inicio?->format('Y-m-d'),
+                'fecha_fin' => $evaluacion->fecha_fin?->format('Y-m-d'),
+                'permite_credito_extra' => $evaluacion->permite_credito_extra,
+                'credito_extra_max' => $evaluacion->credito_extra_max,
+                'total_estudiantes' => $evaluacion->calificaciones()->count(),
+                'estudiantes_calificados' => $evaluacion->estudiantes_calificados,
+                'promedio' => $evaluacion->promedio,
+            ],
+        ]);
+    }
+
     /**
      * Actualizar evaluación
      */
@@ -89,17 +117,16 @@ class InternadoEvaluacionController extends Controller
             'descripcion' => 'nullable|string',
             'peso_porcentual' => 'required|numeric|min:0|max:100',
             'nota_maxima' => 'required|numeric|min:0|max:10',
+            'fecha_inicio' => 'nullable|date',
+            'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
+            'permite_credito_extra' => 'boolean',
+            'credito_extra_max' => 'nullable|numeric|min:0|max:5',
         ]);
 
         try {
-            $evaluacion->update($request->only([
-                'nombre',
-                'descripcion',
-                'peso_porcentual',
-                'nota_maxima',
-            ]));
+            $evaluacion->update($request->all());
 
-            return redirect()->back()->with('success', 'Evaluación actualizada exitosamente');
+            return redirect()->route('internado-fdtc.evaluaciones')->with('success', 'Evaluación actualizada exitosamente');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error al actualizar evaluación: ' . $e->getMessage());
         }

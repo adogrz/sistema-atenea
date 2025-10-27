@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('participante_id')->constrained('internado_participantes')->onDelete('cascade');
             $table->decimal('nota', 3, 1)->nullable();
             $table->text('observaciones')->nullable();
+            $table->decimal('credito_extra', 3, 1)->nullable()->after('nota');
             $table->timestamps();
             $table->softDeletes();
 

@@ -15,6 +15,10 @@ use App\Http\Controllers\InscripcionOlimpiadaController;
 use App\Http\Controllers\OlimpiadaController;
 use App\Http\Controllers\InternadoFDTCController;
 use App\Http\Controllers\InternadoParticipanteController;
+use App\Http\Controllers\InternadoEvaluacionController;
+use App\Http\Controllers\InternadoPeriodoController;
+use App\Http\Controllers\InternadoAsistenciaController;
+use App\Http\Controllers\InternadoConductaController;
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -185,30 +189,64 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             ]);
         })->name('academic-forms.edit');
     });
+});
 
-Route::middleware(['auth', 'permission:internado:view'])->group(function () {
+// Rutas para gestión del internado FDTC
+Route::middleware(['auth', 'permission:internado:view'])->prefix('dashboard/internado-fdtc')->name('internado-fdtc.')->group(function () {
     
-    Route::get('/dashboard/internado-fdtc/seleccion', [InternadoFDTCController::class, 'selection_list'])
-        ->name('internado-fdtc.selection_list');
+    // Rutas de solo lectura
+    Route::get('seleccion', [InternadoFDTCController::class, 'selection_list'])->name('selection_list');
+    Route::get('participantes', [InternadoParticipanteController::class, 'participants_list'])->name('participantes');
+    Route::get('participantes/{codigo}/progreso', [InternadoParticipanteController::class, 'showProgreso'])->name('participantes.progreso');
+    
+    Route::get('periodos', [InternadoPeriodoController::class, 'periodos'])->name('periodos');
+    
+    Route::get('evaluaciones', [InternadoEvaluacionController::class, 'evaluaciones'])->name('evaluaciones');
+    
+    Route::get('asistencias', [InternadoAsistenciaController::class, 'asistencias'])->name('asistencias');
+    Route::get('asistencias/reporte', [InternadoAsistenciaController::class, 'reporte'])->name('asistencias.reporte');
+    Route::get('asistencias/reporte/detalle', [InternadoAsistenciaController::class, 'detalle'])->name('asistencias.reporte.detalle');
+    
+    Route::get('conductas', [InternadoConductaController::class, 'conductas'])->name('conductas');
+    Route::get('conductas/reporte', [InternadoConductaController::class, 'reporte'])->name('conductas.reporte');
+    Route::get('conductas/reporte/detalle', [InternadoConductaController::class, 'detalle'])->name('conductas.reporte.detalle');
 
-    Route::get('/dashboard/internado-fdtc/participantes', [InternadoParticipanteController::class, 'participants_list'])
-        ->name('internado-fdtc.participantes');
-
-    Route::get('/dashboard/internado-fdtc/participantes/{codigo}/progreso', [InternadoParticipanteController::class, 'showProgreso'])
-        ->name('internado-fdtc.participantes.progreso');
-
+    // Rutas protegidas con internado:manage
     Route::middleware('permission:internado:manage')->group(function () {
-        Route::post('/dashboard/internado-fdtc/add', [InternadoFDTCController::class, 'add'])
-            ->name('internado-fdtc.add');
+        
+        // Participantes
+        Route::post('add', [InternadoFDTCController::class, 'add'])->name('add');
+        Route::post('participantes/cambiar-estado', [InternadoParticipanteController::class, 'cambiarEstado'])->name('participantes.cambiar-estado');
+        Route::post('participantes/remover', [InternadoParticipanteController::class, 'remover'])->name('participantes.remover');
 
-        Route::post('/dashboard/internado-fdtc/participantes/cambiar-estado', [InternadoParticipanteController::class, 'cambiarEstado'])
-            ->name('internado-fdtc.participantes.cambiar-estado');
+        // Periodos
+        Route::post('periodos', [InternadoPeriodoController::class, 'store'])->name('periodos.store');
+        Route::get('periodos/create', [InternadoPeriodoController::class, 'create'])->name('periodos.create');
+        Route::get('periodos/{periodo}/edit', [InternadoPeriodoController::class, 'edit'])->name('periodos.edit');
+        Route::put('periodos/{periodo}', [InternadoPeriodoController::class, 'update'])->name('periodos.update');
+        Route::delete('periodos/{periodo}', [InternadoPeriodoController::class, 'destroy'])->name('periodos.destroy');
+        Route::patch('periodos/{periodo}/toggle', [InternadoPeriodoController::class, 'toggleActivo'])->name('periodos.toggle');
 
-        Route::post('/dashboard/internado-fdtc/participantes/remover', [InternadoParticipanteController::class, 'remover'])
-            ->name('internado-fdtc.participantes.remover');
+        // Evaluaciones
+        Route::post('evaluaciones', [InternadoEvaluacionController::class, 'store'])->name('evaluaciones.store');
+        Route::get('evaluaciones/create', [InternadoEvaluacionController::class, 'create'])->name('evaluaciones.create');
+        Route::get('evaluaciones/{evaluacion}/edit', [InternadoEvaluacionController::class, 'edit'])->name('evaluaciones.edit');
+        Route::put('evaluaciones/{evaluacion}', [InternadoEvaluacionController::class, 'update'])->name('evaluaciones.update');
+        Route::delete('evaluaciones/{evaluacion}', [InternadoEvaluacionController::class, 'destroy'])->name('evaluaciones.destroy');
+
+        // Calificaciones
+        Route::put('calificaciones/{calificacion}', [InternadoEvaluacionController::class, 'guardarCalificacion'])->name('calificaciones.guardar');
+        Route::post('evaluaciones/{evaluacion}/calificaciones-masivo', [InternadoEvaluacionController::class, 'guardarCalificacionesMasivo'])->name('calificaciones.guardar-masivo');
+
+        // Asistencias
+        Route::post('asistencias', [InternadoAsistenciaController::class, 'store'])->name('asistencias.store');
+        Route::post('asistencias/masivo', [InternadoAsistenciaController::class, 'storeMasivo'])->name('asistencias.masivo');
+
+        // Conductas
+        Route::post('conductas', [InternadoConductaController::class, 'store'])->name('conductas.store');
+        Route::post('conductas/masivo', [InternadoConductaController::class, 'storeMasivo'])->name('conductas.masivo');
     });
 });
-}); // close outer middleware group
 
 Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {
     // Página que contiene el formulario de carga
