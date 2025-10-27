@@ -49,6 +49,17 @@ class InscripcionOlimpiadaController extends Controller
         ]);
     }
 
+    public function gestionIndex(): Response
+    {
+        $inscripciones = InscripcionOlimpiada::with(['estudiante', 'olimpiada', 'faseOlimpiada', 'estadoInscripcion'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('Inscripciones/Gestion', [
+            'inscripciones' => $inscripciones,
+        ]);
+    }
+
     public function create(): Response
     {
         $estudiante = Auth::user()?->estudiante;

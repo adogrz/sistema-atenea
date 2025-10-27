@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { GripVertical, PlusCircle } from 'lucide-react';
-import { Olimpiada, FaseOlimpiada, DefinicionEvaluacion } from '@/types/olympics/registration';
+import { Olimpiada, FaseOlimpiada, DefinicionEvaluacion } from '@/types';
 
 // Sortable Item Component
 const SortableFaseCard = ({ fase, onEdit, onDelete }: { fase: FaseOlimpiada, onEdit: () => void, onDelete: () => void }) => {

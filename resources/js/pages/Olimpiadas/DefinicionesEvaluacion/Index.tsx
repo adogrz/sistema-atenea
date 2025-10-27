@@ -4,7 +4,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DefinicionEvaluacion } from '@/types/olympics';
+import { DefinicionEvaluacion } from '@/types';
 import { BreadcrumbItem } from '@/types';
 import { toast } from 'sonner';
 import { ArrowUpDown, MoreHorizontal, Trash2, Edit } from 'lucide-react';
@@ -168,7 +168,7 @@ const Index: React.FC<DefinicionesEvaluacionIndexProps> = ({ definiciones }) => 
                     </CardHeader>
                     <CardContent>
                         <div className="rounded-md border">
-                            <DataTable columns={columns} data={definiciones} />
+                            <DataTable columns={columns} data={definiciones} toolbarOptions={[]}/>
                         </div>
                     </CardContent>
                 </Card>

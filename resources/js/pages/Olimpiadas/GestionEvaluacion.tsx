@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -109,8 +109,12 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion }
                 {selectedFase ? (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Ítems de la Fase: {selectedFase.nombre}</CardTitle>
-                            <CardDescription>Asigna uno o más calificadores a cada ítem de la evaluación.</CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Ítems de la Fase: {selectedFase.nombre}</CardTitle>
+                                    <CardDescription>Asigna uno o más calificadores a cada ítem de la evaluación.</CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -202,7 +206,12 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion }
                                                 <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary ${data.calificador_ids.includes(calificador.id) ? 'bg-primary text-primary-foreground' : 'opacity-50 [&_svg]:invisible'}`}>
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                                                 </div>
-                                                <span>{calificador.name}</span>
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>{calificador.name}</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {calificador.areas?.map(area => area.name).join(', ')}
+                                                    </span>
+                                                </div>
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>

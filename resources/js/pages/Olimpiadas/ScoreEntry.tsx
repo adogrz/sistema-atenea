@@ -37,6 +37,10 @@ const ScoreEntry = ({ evaluacion, itemsEvaluados, assignedItemIds }) => {
         });
     };
 
+    const totalScore = useMemo(() => {
+        return data.scores.reduce((acc, score) => acc + (parseFloat(score.puntaje) || 0), 0);
+    }, [data.scores]);
+
     const assignedItems = itemsEvaluados.filter(item => assignedItemIds.includes(item.item_definido_id));
     const otherItems = itemsEvaluados.filter(item => !assignedItemIds.includes(item.item_definido_id));
 
@@ -57,6 +61,7 @@ const ScoreEntry = ({ evaluacion, itemsEvaluados, assignedItemIds }) => {
                             Estudiante: {evaluacion.inscripcion.estudiante.nombre_completo} <br />
                             Fase: {evaluacion.fase_olimpiada.nombre}
                         </CardDescription>
+                        <div className="text-2xl font-bold text-right">Puntaje Total: {totalScore.toFixed(2)}</div>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit}>
@@ -68,7 +73,10 @@ const ScoreEntry = ({ evaluacion, itemsEvaluados, assignedItemIds }) => {
                                             const formIndex = data.scores.findIndex(s => s.item_evaluado_id === item.id);
                                             return (
                                                 <div key={item.id} className="p-4 border rounded-lg">
-                                                    <Label htmlFor={`score-${item.id}`} className="font-semibold">{item.item_definido.nombre}</Label>
+                                                    <div className="flex items-center">
+                                                        <Label htmlFor={`score-${item.id}`} className="font-semibold">{item.item_definido.nombre}</Label>
+                                                        {data.scores[formIndex]?.puntaje && <Check className="h-5 w-5 text-green-500 ml-2" />}
+                                                    </div>
                                                     <p className="text-sm text-muted-foreground">Puntaje Máximo: {item.item_definido.puntaje_maximo}</p>
                                                     <Input
                                                         id={`score-${item.id}`}

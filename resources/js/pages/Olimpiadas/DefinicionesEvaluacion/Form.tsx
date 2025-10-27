@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { DefinicionEvaluacion, ItemDefinido } from '@/types/olympics';
+import { DefinicionEvaluacion, ItemDefinido } from '@/types';
 import { PlusCircle, Trash2, GripVertical } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -97,14 +97,15 @@ const Form: React.FC<DefinicionEvaluacionFormProps> = ({ definicionEvaluacion })
 
     useEffect(() => {
         if (definicionEvaluacion) {
-            setData({
+            setData(prevData => ({
+                ...prevData,
                 nombre: definicionEvaluacion.nombre,
                 descripcion: definicionEvaluacion.descripcion || '',
-                version: definicionEvaluacion.version || 1,
+                version: definicionEvaluacion?.version || 1,
                 estado: definicionEvaluacion.estado || 'borrador',
-                bloqueada: definicionEvaluacion.bloqueada,
+                bloqueada: definicionEvaluacion.bloqueada ?? false,
                 items: definicionEvaluacion.items_definidos?.map(item => ({ ...item, local_id: item.id ? String(item.id) : `new-${Math.random()}` })) || [],
-            });
+            }));
         }
     }, [definicionEvaluacion]);
 

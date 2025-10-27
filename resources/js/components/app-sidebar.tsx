@@ -43,6 +43,7 @@ export function AppSidebar() {
             icon: Trophy,
             items: [
                 { title: 'Olimpiadas y Fases', href: route('olimpiadas.index'), icon: GraduationCap },
+                { title: 'Resultados', href: route('resultados.index'), icon: Trophy },
                 //...(hasRole('coordinador-area') ? [
                 { title: 'Centro de Control', href: route('area.dashboard'), icon: LayoutDashboard },
                 { title: 'Dashboard de Calificador', href: route('calificaciones.olimpiadas.index'), icon: ClipboardListIcon },

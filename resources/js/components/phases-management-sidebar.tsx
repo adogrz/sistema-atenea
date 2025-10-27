@@ -1,5 +1,5 @@
 import React from 'react';
-import { Olimpiada, FaseOlimpiada, DefinicionEvaluacion } from '@/types/olympics/registration';
+import { Olimpiada, FaseOlimpiada, DefinicionEvaluacion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { FaTimes } from 'react-icons/fa';
 import PhasesIndex from '@/pages/phases/index'; // Assuming this is the component to render inside the sidebar

@@ -20,7 +20,6 @@ class FaseOlimpiadaController extends Controller
             'orden' => ['required', 'integer', 'min:1'],
             'fecha_inicio' => ['nullable', 'date'],
             'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
-            'estado' => ['required', 'string', 'in:programada,en_proceso,finalizada,anulada'],
             'activa' => ['required', 'boolean'],
             'observaciones' => ['nullable', 'string'],
             'definicion_evaluacion_id' => ['nullable', 'integer', 'exists:definiciones_evaluacion,id'],
@@ -45,7 +44,6 @@ class FaseOlimpiadaController extends Controller
             'orden' => ['required', 'integer', 'min:1'],
             'fecha_inicio' => ['nullable', 'date'],
             'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
-            'estado' => ['required', 'string', 'in:programada,en_proceso,finalizada,anulada'],
             'activa' => ['required', 'boolean'],
             'observaciones' => ['nullable', 'string'],
             'definicion_evaluacion_id' => ['nullable', 'integer', 'exists:definiciones_evaluacion,id'],
@@ -116,5 +114,26 @@ class FaseOlimpiadaController extends Controller
         $fase->update($validated);
 
         return redirect()->back()->with('success', 'Evaluación asignada exitosamente.');
+    }
+
+    public function showResults(FaseOlimpiada $fase)
+    {
+        $fase->load(['evaluaciones.inscripcion.estudiante', 'olimpiada']);
+
+        $notaMinima = $fase->nota_minima_aprobacion;
+
+        $resultados = $fase->evaluaciones->map(function ($evaluacion) use ($notaMinima) {
+            $aprobado = $evaluacion->total_puntaje >= $notaMinima;
+            return [
+                'estudiante' => $evaluacion->inscripcion->estudiante,
+                'puntaje' => $evaluacion->total_puntaje,
+                'aprobado' => $aprobado,
+            ];
+        });
+
+        return Inertia::render('Olimpiadas/Resultados', [
+            'fase' => $fase,
+            'resultados' => $resultados,
+        ]);
     }
 }

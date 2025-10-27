@@ -15,7 +15,7 @@ class AreaDashboardController extends Controller
     {
         $user = Auth::user();
         $primaryArea = $user->primaryArea();
-        $areaId = $primaryArea ? $primaryArea->id : null;
+        $areaId = 1;//$primaryArea ? $primaryArea->id : null;
 
         if (!$areaId) {
             return Inertia::render('Area/Dashboard', [
@@ -27,6 +27,7 @@ class AreaDashboardController extends Controller
             ->with(['fases.evaluaciones.itemsEvaluados', 'fases.definicionEvaluacion.itemsDefinidos'])
             ->get();
 
+
         $availableYears = $olimpiadas->map(function ($olimpiada) {
             return $olimpiada->created_at->year;
         })->unique()->sortDesc()->values();
@@ -34,7 +35,7 @@ class AreaDashboardController extends Controller
         $olimpiadasWithStats = $olimpiadas->map(function ($olimpiada) {
             $fasesWithStats = $olimpiada->fases->map(function ($fase) {
                 $totalParticipantes = $fase->evaluaciones->count();
-                $itemsDefinidosCount = $fase->definicionEvaluacion->itemsDefinidos->count() ?? 0;
+                $itemsDefinidosCount = $fase->definicionEvaluacion ? $fase->definicionEvaluacion->itemsDefinidos->count() : 0;
                 $evaluacionesCompletadas = 0;
 
                 if ($itemsDefinidosCount > 0) {
@@ -51,7 +52,7 @@ class AreaDashboardController extends Controller
                     'total_inscripciones' => $totalParticipantes,
                     'evaluaciones_completadas' => $evaluacionesCompletadas,
                     'progreso' => $totalParticipantes > 0 ? round(($evaluacionesCompletadas / $totalParticipantes) * 100) : 0,
-                    'resultados_publicados' => $fase->resultados_publicados,
+                    'resultados_publicados' => $fase->resultados_publicados ?? false,
                 ];
             });
 
@@ -63,6 +64,7 @@ class AreaDashboardController extends Controller
             ];
         });
 
+        //dump($olimpiadasWithStats);
         return Inertia::render('Area/Dashboard', [
             'olimpiadasWithStats' => $olimpiadasWithStats,
             'availableYears' => $availableYears,

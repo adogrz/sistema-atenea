@@ -1,3 +1,4 @@
+import React from 'react';
 import {
     ColumnDef,
     SortingState,
@@ -8,15 +9,16 @@ import {
     getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
-    VisibilityState
+    VisibilityState,
+    Row
 } from '@tanstack/react-table';
 import { Dispatch, SetStateAction, useState } from 'react';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-import { Input } from '@/components/ui/input';
 import { DataTablePagination } from './data-table-pagination';
-import { DataTableViewOptions } from './data-table-view-options';
+
+import { DataTableToolbar } from './data-table-toolbar';
 
 // Definición de las propiedades del componente DataTable
 interface DataTableProps<TData, TValue> {
@@ -27,6 +29,12 @@ interface DataTableProps<TData, TValue> {
     getRowId?: (row: TData) => string | number;
     columnFilters: ColumnFiltersState;
     setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
+    toolbarOptions: {
+        areas: { label: string; value: string }[]
+        niveles: { label: string; value: string }[]
+    };
+    renderRowSubComponent?: (props: { row: Row<TData> }) => React.ReactElement;
+    getRowCanExpand?: (row: Row<TData>) => boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -36,7 +44,10 @@ export function DataTable<TData, TValue>({
                                              onRowClick,
                                              getRowId = (row: TData) => (row as { id: string | number }).id,
                                              columnFilters,
-                                             setColumnFilters
+                                             setColumnFilters,
+                                             toolbarOptions,
+                                             renderRowSubComponent,
+                                             getRowCanExpand
                                          }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
@@ -58,22 +69,14 @@ export function DataTable<TData, TValue>({
         onColumnVisibilityChange: setColumnVisibility,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
-        getFilteredRowModel: getFilteredRowModel()
+        getFilteredRowModel: getFilteredRowModel(),
+        getRowCanExpand,
     });
 
     return (
         <div>
             {/* Búsqueda Global */}
-            <div className="flex items-center py-4">
-                <Input
-                    type="search"
-                    placeholder="Buscar..."
-                    value={globalFilter ?? ''}
-                    onChange={(event) => setGlobalFilter(event.target.value)}
-                    className="max-w-sm"
-                />
-                <DataTableViewOptions table={table} />
-            </div>
+            <DataTableToolbar table={table} toolbarOptions={toolbarOptions} />
 
             {/* Tabla */}
             <div className="rounded-md border">
@@ -99,18 +102,26 @@ export function DataTable<TData, TValue>({
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={selectedRowId === getRowId(row.original) ? 'selected' : undefined}
-                                    onClick={() => onRowClick?.(row.original)}
-                                    className="cursor-pointer hover:bg-muted"
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
+                                <React.Fragment key={row.id}>
+                                    <TableRow
+                                        data-state={selectedRowId === getRowId(row.original) ? 'selected' : undefined}
+                                        onClick={() => onRowClick?.(row.original)}
+                                        className="cursor-pointer hover:bg-muted"
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                    {row.getIsExpanded() && (
+                                        <TableRow>
+                                            <TableCell colSpan={columns.length}>
+                                                {renderRowSubComponent?.({ row })}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </React.Fragment>
                             ))
                         ) : (
                             <TableRow>

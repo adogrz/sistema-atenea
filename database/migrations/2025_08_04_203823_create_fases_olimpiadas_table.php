@@ -21,8 +21,6 @@ return new class extends Migration {
             $table->unsignedTinyInteger('orden')->default(1); // Posición secuencial (1,2,3...)
 
             // Control del estado y ventana temporal
-            $table->enum('estado', ['programada','en_proceso','finalizada','anulada'])
-                  ->default('programada');
 
             $table->dateTime('fecha_inicio')->nullable();
             $table->dateTime('fecha_fin')->nullable();

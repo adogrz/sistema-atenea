@@ -21,7 +21,7 @@ class AsignacionCalificadorController extends Controller
             }
         ])->orderBy('nombre')->get();
 
-        $calificadores = User::role('calificador')->orderBy('name')->get(['id', 'name']);
+        $calificadores = User::role('calificador')->with('areas')->orderBy('name')->get(['id', 'name']);
         $definicionesEvaluacion = DefinicionEvaluacion::all();
 
         return Inertia::render('Olimpiadas/GestionEvaluacion', [

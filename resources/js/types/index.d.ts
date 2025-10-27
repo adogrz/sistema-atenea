@@ -66,7 +66,119 @@ export interface SharedData {
     [key: string]: unknown;
 }
 
-import { DefinicionEvaluacion, ItemDefinido } from './olympics';
+export interface ItemDefinido {
+    id: number;
+    definicion_evaluacion_id: number;
+    nombre: string;
+    descripcion: string | null;
+    orden: number;
+    puntos_maximos: number;
+    created_at: string;
+    updated_at: string;
+    // Frontend-only property for DND
+    local_id?: string;
+}
+
+export interface DefinicionEvaluacion {
+    id: number;
+    nombre: string;
+    descripcion: string | null;
+    version: number;
+    estado: 'borrador' | 'publicada' | 'archivada';
+    bloqueada: boolean;
+    creada_por: number;
+    created_at: string;
+    updated_at: string;
+    items_definidos: ItemDefinido[];
+}
+
+export interface Distrito {
+    id: string;
+    nombre_distrito: string;
+    id_municipio: string;
+}
+
+export interface CentroEducativo {
+    codigo: string;
+    nombre: string;
+    departamento: string;
+    distrito: string;
+    sector: string;
+    zona: string;
+    direccion: string;
+    internacional: string;
+}
+
+export interface NivelEducativo {
+    codigo: number;
+    descripcion: string;
+    nivel: string;
+    id_sede: string;
+}
+
+export interface Estudiante {
+    codigo: string;
+    user_id: string;
+    primer_nombre: string;
+    segundo_nombre: string;
+    primer_apellido: string;
+    segundo_apellido: string;
+    nombre_completo: string;
+    sexo: string;
+    fecha_nacimiento: string;
+    centro_educativo: string;
+    nie: string;
+    telefono_casa: string;
+    email: string;
+    direccion: string;
+    distrito: number;
+    nivel_educativo: number;
+    nivel: string;
+    aprobado: boolean;
+}
+
+export interface Area {
+    id: number;
+    name: string;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}
+
+export interface Olimpiada {
+    id: number;
+    nombre: string;
+    descripcion: string | null;
+    area_id: number;
+    activa: boolean;
+    created_at: string;
+    updated_at: string;
+    nivel_educativo_id: number | null;
+    area?: Area; // Eager loaded relationship
+    fases?: FaseOlimpiada[]; // Eager loaded relationship
+    nivelEducativo?: NivelEducativo; // Eager loaded relationship
+}
+
+export interface FaseOlimpiada {
+    id: number;
+    nombre: string;
+    orden: number;
+    fecha_inicio: string;
+    fecha_fin: string;
+    activa: boolean;
+    observaciones: string;
+    resultados_publicados?: boolean;
+    definicionEvaluacion?: any;
+}
+
+export interface Inscripcion {
+    id: number;
+    estado: any; // Consider defining a more specific type for estado
+    codigo_estudiante: string;
+    fase_id: number;
+    fecha_inscripcion: Date;
+}
 
 export type PageProps = SharedData & {
     definicionEvaluacion?: DefinicionEvaluacion;

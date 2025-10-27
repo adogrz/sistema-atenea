@@ -18,7 +18,11 @@ use App\Http\Controllers\FaseGestionController;
 use App\Http\Controllers\InscripcionOlimpiadaController;
 use App\Http\Controllers\AreaDashboardController;
 use App\Http\Controllers\OlimpiadaController;
+use App\Http\Controllers\EstudianteController;
+use App\Http\Controllers\ResultadoController;
 use Illuminate\Container\Attributes\Auth;
+
+Route::post('estudiantes/generate-permanent-ids', [EstudianteController::class, 'generatePermanentIds'])->name('estudiantes.generate-permanent-ids');
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -31,7 +35,11 @@ Route::get('/', static function () {
 })->name('home');
 
 // Rutas para usuarios autenticados
+use App\Http\Controllers\CalificacionController;
+
 Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
+    Route::get('/calificaciones', [CalificacionController::class, 'index'])->name('calificaciones.index'); //->middleware('role:Calificador')
+    Route::post('/calificaciones', [CalificacionController::class, 'store'])->name('calificaciones.store');
     // Dashboard principal
     Route::get('/dashboard', static function () {
         return Inertia::render('dashboard');
@@ -65,7 +73,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             Route::get('/', [OlimpiadaController::class, 'index'])->name('index');
             Route::get('/crear', [OlimpiadaController::class, 'create'])->name('create');
             Route::post('/', [OlimpiadaController::class, 'store'])->name('store');
-            Route::get('/{olimpiada}', [OlimpiadaController::class, 'show'])->name('show');
+            Route::get('/{olimpiada}/editar', [OlimpiadaController::class, 'edit'])->name('edit');
             Route::put('/{olimpiada}', [OlimpiadaController::class, 'update'])->name('update');
             Route::delete('/{olimpiada}', [OlimpiadaController::class, 'destroy'])->name('destroy');
         });
@@ -74,9 +82,13 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::prefix('fases')->name('fases.')->group(function () {
             Route::get('/', [FaseOlimpiadaController::class, 'index'])->name('index');
             Route::get('/crear', [FaseOlimpiadaController::class, 'create'])->name('create');
+            Route::post('{olimpiada}', [FaseOlimpiadaController::class, 'store'])->name('store');
+            Route::put('{fase}', [FaseOlimpiadaController::class, 'update'])->name('update');
+            Route::delete('{fase}', [FaseOlimpiadaController::class, 'destroy'])->name('destroy');
             Route::put('/{fase}/gestion', [FaseGestionController::class, 'update'])->name('gestion.update');
             Route::post('/{fase}/publish-results', [FaseGestionController::class, 'publishResults'])->name('gestion.publishResults');
-        Route::post('/{fase}/assign-evaluation', [FaseOlimpiadaController::class, 'assignEvaluation'])->name('gestion.assignEvaluation');
+            Route::post('/{fase}/assign-evaluation', [FaseOlimpiadaController::class, 'assignEvaluation'])->name('gestion.assignEvaluation');
+            Route::get('{fase}/resultados', [FaseOlimpiadaController::class, 'showResults'])->name('results');
         });
         
         // Inscripciones
@@ -85,13 +97,17 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             Route::get('/crear', [InscripcionOlimpiadaController::class, 'create'])->name('create');
             Route::post('/', [InscripcionOlimpiadaController::class, 'store'])->name('store');
             Route::get('/{inscripcion}', [InscripcionOlimpiadaController::class, 'show'])->name('show');
+            Route::get('/gestion', [InscripcionOlimpiadaController::class, 'gestionIndex'])->name('gestion.index');
             Route::put('/{inscripcion}', [InscripcionOlimpiadaController::class, 'update'])->name('update');
             Route::delete('/{inscripcion}', [InscripcionOlimpiadaController::class, 'destroy'])->name('destroy');
         });
 
         Route::get('/area', [AreaDashboardController::class, 'index'])
-            ->name('area.dashboard')
-            ->middleware('role:coordinador-area');
+            ->name('area.dashboard');
+            //->middleware('role:coordinador-area');
+
+        Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
+        Route::get('/resultados/emails-passed', [ResultadoController::class, 'getEmailsForPassedStudents'])->name('resultados.emailsPassed');
 
         /**
          * Calificaciones (dashboard del calificador + flujo de edición)
