@@ -29,7 +29,9 @@ class MedicalRecordPolicy
                 return true;
             }
             // El supervisor puede ver el expediente si el estudiante pertenece a su misma sede.
-            return $user->sede_name === $medicalRecord->student->sede_name;
+            // El estudiante tiene una relación con User, y el User tiene sede_name.
+            $studentSede = $medicalRecord->student->user->sede_name ?? null;
+            return $user->sede_name === $studentSede;
         }
 
         // 2. Regla para Profesionales (Doctor)
@@ -65,7 +67,9 @@ class MedicalRecordPolicy
             if (!$user->sede_name) {
                 return true; // Admin puede editar cualquier expediente.
             }
-            return $user->sede_name === $medicalRecord->student->sede_name;
+            // El estudiante tiene una relación con User, y el User tiene sede_name.
+            $studentSede = $medicalRecord->student->user->sede_name ?? null;
+            return $user->sede_name === $studentSede;
         }
 
         return false;

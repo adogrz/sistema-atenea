@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\ClinicalRecord;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -28,11 +28,11 @@ class UpdateMedicalRecordRequest extends FormRequest
                 'string',
                 'max:5000',
             ],
-            'change_justification' => [
+            'justification' => [
                 'required',
                 'string',
                 'min:10', // Forzar una justificación mínimamente descriptiva.
-                'max:500',
+                'max:1000',
             ],
         ];
     }
@@ -43,8 +43,10 @@ class UpdateMedicalRecordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'change_justification.required' => 'Se requiere una justificación para guardar los cambios.',
-            'change_justification.min' => 'La justificación debe tener al menos 10 caracteres.',
+            'general_background.max' => 'Los antecedentes generales no pueden superar los 5000 caracteres.',
+            'justification.required' => 'La justificación del cambio es requerida.',
+            'justification.min' => 'La justificación debe tener al menos 10 caracteres.',
+            'justification.max' => 'La justificación no puede superar los 1000 caracteres.',
         ];
     }
 }

@@ -1,17 +1,19 @@
 'use client';
 
 import { getMedicalConsultationColumns } from '@/components/clinical-records/medical-consultation/medical-consultation-columns';
+import EditBackgroundDialog from '@/components/clinical-records/medical-record/edit-background-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { MedicalRecordWithRelations } from '@/types/clinical-records';
-import { Head } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, CirclePlus, ClipboardList, FileText, Stethoscope, User } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Calendar, CirclePlus, ClipboardList, FileText, Pencil, Stethoscope, User } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
@@ -28,8 +30,10 @@ interface Props {
     };
 }
 
-export default function ShowMedicalRecord({ medicalRecord }: Props) {
+export default function ShowMedicalRecord({ medicalRecord, permissions }: Props) {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const student = medicalRecord.student;
     const studentName = student
@@ -48,8 +52,48 @@ export default function ShowMedicalRecord({ medicalRecord }: Props) {
 
     const columns = useMemo(() => getMedicalConsultationColumns(), []);
 
+    // Mostrar toasts de mensajes flash (éxito/error)
+    const { props: pageProps } = usePage<{ flash?: { success?: string | null; error?: string | null } }>();
+    useEffect(() => {
+        if (pageProps.flash?.success) toast.success(pageProps.flash.success);
+        if (pageProps.flash?.error) toast.error(pageProps.flash.error);
+    }, [pageProps.flash?.success, pageProps.flash?.error]);
+
     const handleNewConsultation = () => {
         console.log('Agregar nueva consulta');
+    };
+
+    const handleEditBackground = () => {
+        setIsEditDialogOpen(true);
+    };
+
+    const handleConfirmEdit = async (data: { general_background: string | null; justification: string }) => {
+        setIsSubmitting(true);
+
+        await new Promise<void>((resolve) => {
+            router.patch(
+                route('clinical-records.medical-records.update', medicalRecord.id),
+                {
+                    general_background: data.general_background,
+                    justification: data.justification,
+                },
+                {
+                    onSuccess: () => {
+                        toast.success('Antecedentes médicos actualizados correctamente.');
+                        setIsEditDialogOpen(false);
+                    },
+                    onError: (errors: Record<string, string>) => {
+                        const firstError = Object.values(errors)[0];
+                        toast.error(firstError || 'No se pudo actualizar los antecedentes médicos.');
+                    },
+                    onFinish: () => {
+                        setIsSubmitting(false);
+                        resolve();
+                    },
+                    preserveScroll: true,
+                },
+            );
+        });
     };
 
     return (
@@ -137,9 +181,17 @@ export default function ShowMedicalRecord({ medicalRecord }: Props) {
 
                 {/* Antecedentes Médicos */}
                 <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
-                    <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
-                        <FileText className="h-5 w-5 text-primary" />
-                        <h2 className="text-lg font-semibold">Antecedentes Médicos</h2>
+                    <div className="mb-4 flex items-center justify-between border-b border-muted/20 pb-2">
+                        <div className="flex items-center gap-2">
+                            <FileText className="h-5 w-5 text-primary" />
+                            <h2 className="text-lg font-semibold">Antecedentes Médicos</h2>
+                        </div>
+                        {permissions.canUpdate && (
+                            <Button variant="outline" size="sm" onClick={handleEditBackground}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Editar
+                            </Button>
+                        )}
                     </div>
                     {medicalRecord.general_background ? (
                         <p className="text-sm whitespace-pre-wrap text-muted-foreground">{medicalRecord.general_background}</p>
@@ -169,6 +221,15 @@ export default function ShowMedicalRecord({ medicalRecord }: Props) {
                         searchPlaceholder="Buscar por diagnóstico, tratamiento o médico..."
                     />
                 </section>
+
+                {/* Modal de edición de antecedentes */}
+                <EditBackgroundDialog
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
+                    currentBackground={medicalRecord.general_background || null}
+                    onConfirm={handleConfirmEdit}
+                    isSubmitting={isSubmitting}
+                />
             </div>
         </AppLayout>
     );

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ClinicalRecord;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClinicalRecord\StoreMedicalRecordRequest;
+use App\Http\Requests\ClinicalRecord\UpdateMedicalRecordRequest;
 use App\Models\ClinicalRecord\ConsentForm;
 use App\Models\ClinicalRecord\MedicalConsultation;
 use App\Models\ClinicalRecord\MedicalRecord;
@@ -161,7 +162,7 @@ class MedicalRecordController extends Controller
         $this->authorize('view', $medicalRecord);
 
         $medicalRecord->load([
-            'student',
+            'student.user', // Cargar la relación user del estudiante para la policy
             'creator',
             'medicalConsultations.doctor',
             'medicalConsultations.consentForm.responsible'
@@ -189,11 +190,26 @@ class MedicalRecordController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, MedicalRecord $medicalRecord)
+    public function update(UpdateMedicalRecordRequest $request, MedicalRecord $medicalRecord)
     {
         $this->authorize('update', $medicalRecord);
 
-        // TODO: Implementar actualización de expediente médico
+        try {
+            // Actualizar solo los antecedentes médicos
+            $medicalRecord->update([
+                'general_background' => $request->input('general_background'),
+                'updated_by' => $request->user()->id,
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('success', 'Antecedentes médicos actualizados exitosamente.');
+
+        } catch (Exception $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => 'Ocurrió un error al actualizar los antecedentes médicos: ' . $e->getMessage()]);
+        }
     }
 
     /**
