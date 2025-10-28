@@ -54,8 +54,12 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
     };
 
     const handleEdit = () => {
-        // TODO: Implementar edición de consulta
-        toast.info('La edición de consultas estará disponible próximamente');
+        router.get(
+            route('clinical-records.medical-records.consultations.edit', {
+                medical_record: consultation.medical_record_id,
+                consultation: consultation.id,
+            }),
+        );
     };
 
     return (
@@ -73,7 +77,10 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
                             <div>
                                 <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
                                 <p className="text-sm text-muted-foreground">
-                                    Consulta del <span className="font-medium text-foreground">{format(new Date(consultation.consultation_date), 'PPP', { locale: es })}</span>
+                                    Consulta del{' '}
+                                    <span className="font-medium text-foreground">
+                                        {format(new Date(consultation.consultation_date), 'PPP', { locale: es })}
+                                    </span>
                                 </p>
                             </div>
                         </div>
@@ -246,4 +253,3 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
         </AppLayout>
     );
 }
-

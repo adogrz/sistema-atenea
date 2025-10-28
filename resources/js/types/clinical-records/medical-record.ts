@@ -129,6 +129,17 @@ export interface CreateMedicalConsultationData {
 }
 
 /**
+ * Datos para actualizar una consulta médica
+ */
+export interface UpdateMedicalConsultationData {
+    consultation_date: string;
+    diagnosis: string;
+    treatment?: string;
+    observations?: string;
+    change_justification: string;
+}
+
+/**
  * Datos para crear un consentimiento informado
  */
 export interface CreateConsentFormData {
