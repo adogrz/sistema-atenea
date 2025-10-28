@@ -226,13 +226,28 @@ export const getProfessionalColumns = (): ColumnDef<AssignmentWithRelations>[] =
             const handleViewRecord = () => {
                 // Verificar el tipo de asignación y redirigir apropiadamente
                 if (assignment.type === 'medical') {
-                    // Redirigir a crear o ver expediente médico
-                    router.get(route('clinical-records.medical-records.create'), {
-                        student_nie: assignment.student_nie,
-                    });
+                    // Si ya existe un expediente médico, redirigir a verlo
+                    if (assignment.medical_record_id) {
+                        router.get(
+                            route('clinical-records.medical-records.show', {
+                                medical_record: assignment.medical_record_id,
+                            }),
+                        );
+                    } else {
+                        // Si no existe, redirigir a crear uno nuevo
+                        router.get(route('clinical-records.medical-records.create'), {
+                            student_nie: assignment.student_nie,
+                        });
+                    }
                 } else if (assignment.type === 'psychological') {
-                    // TODO: Implementar redirección a expediente psicológico
-                    toast.info('La funcionalidad de expedientes psicológicos estará disponible próximamente');
+                    // Si ya existe un expediente psicológico, redirigir a verlo
+                    if (assignment.psychological_record_id) {
+                        // TODO: Implementar ruta de show para expediente psicológico
+                        toast.info('La funcionalidad de expedientes psicológicos estará disponible próximamente');
+                    } else {
+                        // TODO: Implementar redirección a crear expediente psicológico
+                        toast.info('La funcionalidad de expedientes psicológicos estará disponible próximamente');
+                    }
                 }
             };
 
@@ -249,7 +264,7 @@ export const getProfessionalColumns = (): ColumnDef<AssignmentWithRelations>[] =
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleViewRecord} className="cursor-pointer">
                             <Eye className="mr-2 size-4" />
-                            Ver Expediente
+                            {assignment.medical_record_id || assignment.psychological_record_id ? 'Ver Expediente' : 'Crear Expediente'}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

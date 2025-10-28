@@ -12,9 +12,9 @@ class AssignmentFilter
      */
     public function applyRoleFilters(Builder $query, User $user): Builder
     {
-        // Si es profesional (no jefe), solo sus asignaciones
+        // Si es profesional (no jefe), solo sus asignaciones ACTIVAS
         if (!$user->canManageAssignments()) {
-            return $query->forProfessional($user->id);
+            return $query->forProfessional($user->id)->active();
         }
 
         // Si es jefe, filtrar por sede
