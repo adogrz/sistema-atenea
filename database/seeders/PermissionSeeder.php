@@ -256,14 +256,15 @@ class PermissionSeeder extends Seeder
                     // Permisos para expedientes médicos
                     'medical-records:view',
                     'medical-records:create',
+                    // Permisos para consultas médicas
+                    'medical-consultations:delete-own', // Puede eliminar sus propias consultas
                     // Permisos básicos de consentimiento informado
                     'consent-forms:create',
                     'consent-forms:view',
                 ],
                 'inherits' => [],
                 'exclude_permissions' => [
-                    // Por seguridad no puede borrar consultas por defecto
-                    'medical-consultations:delete-own',
+                    // Por seguridad no puede borrar consultas de otros doctores
                     'medical-consultations:delete'
                 ]
             ],

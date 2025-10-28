@@ -91,6 +91,12 @@ Route::middleware(['auth', 'verified', 'check.status'])
 
                 Route::get('/{consultation}', [MedicalConsultationController::class, 'show'])
                     ->name('show');
+
+                Route::delete('/{consultation}', [MedicalConsultationController::class, 'destroy'])
+                    ->name('destroy');
+
+                Route::post('/{consultation}/restore', [MedicalConsultationController::class, 'restore'])
+                    ->name('restore');
             });
         });
     });

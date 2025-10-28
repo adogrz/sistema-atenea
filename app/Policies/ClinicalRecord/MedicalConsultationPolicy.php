@@ -69,7 +69,7 @@ class MedicalConsultationPolicy
             if (!$user->sede_name) {
                 return true; // Admin sin sede
             }
-            
+
             $studentUser = $medicalConsultation->medicalRecord->student->user ?? null;
             return $studentUser && $user->sede_name === $studentUser->sede_name;
         }
@@ -129,11 +129,32 @@ class MedicalConsultationPolicy
 
     /**
      * Determine whether the user can restore the model.
-     * Solo administradores pueden restaurar consultas eliminadas.
+     * Permitir que el mismo usuario que eliminó pueda restaurar (deshacer),
+     * además de los administradores y jefes.
      */
     public function restore(User $user, MedicalConsultation $medicalConsultation): bool
     {
-        return $user->hasRole('admin-ti');
+        // Admin TI siempre puede restaurar
+        if ($user->hasRole('admin-ti')) {
+            return true;
+        }
+
+        // Jefe puede restaurar cualquier consulta de su sede
+        if ($user->can('medical-consultations:delete')) {
+            if (!$user->sede_name) {
+                return true; // Admin sin sede
+            }
+
+            $studentUser = $medicalConsultation->medicalRecord->student->user ?? null;
+            return $studentUser && $user->sede_name === $studentUser->sede_name;
+        }
+
+        // El doctor que creó la consulta puede restaurarla (deshacer)
+        if ($user->can('medical-consultations:delete-own')) {
+            return $medicalConsultation->doctor_id === $user->id;
+        }
+
+        return false;
     }
 
     /**

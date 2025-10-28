@@ -18,7 +18,7 @@ class MedicalConsultation extends Model
      *
      * @var array<int, string>
      */
-    protected $with = ['doctor', 'medicalRecord'];
+    protected $with = ['doctor', 'medicalRecord.student.user'];
 
     /**
      * The attributes that are mass assignable.

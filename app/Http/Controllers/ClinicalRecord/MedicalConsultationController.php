@@ -149,8 +149,90 @@ class MedicalConsultationController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, MedicalRecord $medicalRecord, MedicalConsultation $consultation)
     {
-        //
+        // Verificar permisos
+        $this->authorize('delete', $consultation);
+        $this->authorize('view', $medicalRecord);
+
+        // Verificar que la consulta pertenezca al expediente
+        if ($consultation->medical_record_id !== $medicalRecord->id) {
+            abort(404, 'La consulta no pertenece a este expediente médico.');
+        }
+
+        // Validar que se proporcione una justificación
+        $validated = $request->validate([
+            'justification' => [
+                'required',
+                'string',
+                'min:10',
+                'max:1000',
+            ],
+        ], [
+            'justification.required' => 'La justificación es requerida para eliminar una consulta médica.',
+            'justification.min' => 'La justificación debe tener al menos 10 caracteres.',
+            'justification.max' => 'La justificación no puede superar los 1000 caracteres.',
+        ]);
+
+        try {
+            // Guardar la justificación antes de eliminar
+            $consultation->change_justification = $validated['justification'];
+            $consultation->save();
+
+            // Soft delete de la consulta
+            $consultation->delete();
+
+            // No redirigir, dejar que Inertia maneje la respuesta
+            // El frontend mostrará el toast con el botón de deshacer
+            return back();
+
+        } catch (Exception $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => 'Ocurrió un error al eliminar la consulta médica: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Restore a soft-deleted consultation.
+     * Solo accesible para consultas recientemente eliminadas (dentro del período de "deshacer").
+     */
+    public function restore(Request $request, MedicalRecord $medicalRecord, $consultationId)
+    {
+        // Buscar la consulta eliminada (withTrashed para incluir soft deleted)
+        $consultation = MedicalConsultation::withTrashed()->findOrFail($consultationId);
+
+        // Verificar permisos
+        $this->authorize('restore', $consultation);
+        $this->authorize('view', $medicalRecord);
+
+        // Verificar que la consulta pertenezca al expediente
+        if ($consultation->medical_record_id !== $medicalRecord->id) {
+            abort(404, 'La consulta no pertenece a este expediente médico.');
+        }
+
+        // Verificar que la consulta esté eliminada
+        if (!$consultation->trashed()) {
+            return redirect()
+                ->route('clinical-records.medical-records.show', $medicalRecord)
+                ->withErrors(['error' => 'La consulta no está eliminada.']);
+        }
+
+        try {
+            // Restaurar la consulta
+            $consultation->restore();
+
+            // Limpiar la justificación de eliminación ya que se revirtió la acción
+            $consultation->change_justification = null;
+            $consultation->save();
+
+            // No redirigir, dejar que Inertia maneje la respuesta
+            return back();
+
+        } catch (Exception $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => 'Ocurrió un error al restaurar la consulta médica: ' . $e->getMessage()]);
+        }
     }
 }

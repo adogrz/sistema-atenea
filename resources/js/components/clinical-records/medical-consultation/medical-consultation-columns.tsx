@@ -1,5 +1,6 @@
 'use client';
 
+import DeleteConsultationDialog from '@/components/clinical-records/medical-consultation/delete-consultation-dialog';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -10,11 +11,13 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MedicalConsultationWithRelations } from '@/types/clinical-records';
+import { router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { router } from '@inertiajs/react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 /**
  * Formatea la fecha en formato legible
@@ -39,49 +42,129 @@ const truncateText = (text: string, maxLength: number = 60): string => {
  * Componente para las acciones de la consulta
  */
 function ActionsCell({ consultation }: { consultation: MedicalConsultationWithRelations }) {
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const handleView = () => {
-        router.get(route('clinical-records.medical-records.consultations.show', {
-            medical_record: consultation.medical_record_id,
-            consultation: consultation.id
-        }));
+        router.get(
+            route('clinical-records.medical-records.consultations.show', {
+                medical_record: consultation.medical_record_id,
+                consultation: consultation.id,
+            }),
+        );
     };
 
     const handleEdit = () => {
         // TODO: Implementar edición
-        console.log('Editar consulta:', consultation.id);
+        toast.info('La edición de consultas estará disponible próximamente');
     };
 
-    const handleDelete = () => {
-        // TODO: Implementar eliminación
-        console.log('Eliminar consulta:', consultation.id);
+    const handleDeleteClick = () => {
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async (data: { justification: string }) => {
+        setIsDeleting(true);
+        let consultationId: number | null = null;
+
+        await new Promise<void>((resolve) => {
+            router.delete(
+                route('clinical-records.medical-records.consultations.destroy', {
+                    medical_record: consultation.medical_record_id,
+                    consultation: consultation.id,
+                }),
+                {
+                    data: {
+                        justification: data.justification,
+                    },
+                    onSuccess: () => {
+                        setIsDeleteDialogOpen(false);
+                        consultationId = consultation.id;
+
+                        // Toast con botón de deshacer
+                        toast.success('Consulta médica eliminada exitosamente', {
+                            duration: 10000, // 10 segundos para deshacer
+                            action: {
+                                label: 'Deshacer',
+                                onClick: () => {
+                                    if (consultationId) {
+                                        handleUndoDelete(consultationId, consultation.medical_record_id);
+                                    }
+                                },
+                            },
+                        });
+                    },
+                    onError: (errors: Record<string, string>) => {
+                        const firstError = Object.values(errors)[0];
+                        toast.error(firstError || 'No se pudo eliminar la consulta médica.');
+                    },
+                    onFinish: () => {
+                        setIsDeleting(false);
+                        resolve();
+                    },
+                    preserveScroll: true,
+                },
+            );
+        });
+    };
+
+    const handleUndoDelete = (consultationId: number, medicalRecordId: number) => {
+        router.post(
+            route('clinical-records.medical-records.consultations.restore', {
+                medical_record: medicalRecordId,
+                consultation: consultationId,
+            }),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Consulta restaurada exitosamente');
+                },
+                onError: (errors: Record<string, string>) => {
+                    const firstError = Object.values(errors)[0];
+                    toast.error(firstError || 'No se pudo restaurar la consulta.');
+                },
+                preserveScroll: true,
+            },
+        );
     };
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="size-8 p-0">
-                    <span className="sr-only">Abrir menú</span>
-                    <MoreHorizontal className="size-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleView} className="cursor-pointer">
-                    <Eye className="mr-2 size-4" />
-                    Ver Detalle
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
-                    <Pencil className="mr-2 size-4" />
-                    Editar
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleDelete} className="cursor-pointer text-destructive">
-                    <Trash2 className="mr-2 size-4" />
-                    Eliminar
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="size-8 p-0">
+                        <span className="sr-only">Abrir menú</span>
+                        <MoreHorizontal className="size-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleView} className="cursor-pointer">
+                        <Eye className="mr-2 size-4" />
+                        Ver Detalle
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
+                        <Pencil className="mr-2 size-4" />
+                        Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleDeleteClick} className="cursor-pointer text-destructive">
+                        <Trash2 className="mr-2 size-4" />
+                        Eliminar
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DeleteConsultationDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                consultationDate={format(new Date(consultation.consultation_date), 'PPP', { locale: es })}
+                diagnosis={consultation.diagnosis}
+                onConfirm={handleConfirmDelete}
+                isSubmitting={isDeleting}
+            />
+        </>
     );
 }
 
