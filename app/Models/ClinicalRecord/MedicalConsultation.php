@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\ClinicalRecord;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,7 +18,7 @@ class MedicalConsultation extends Model
      *
      * @var array<int, string>
      */
-    protected $with = ['doctor', 'medicalRecord'];
+    protected $with = ['doctor', 'medicalRecord.student.user'];
 
     /**
      * The attributes that are mass assignable.

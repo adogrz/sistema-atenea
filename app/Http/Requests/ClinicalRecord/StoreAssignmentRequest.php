@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\ClinicalRecord;
 
-use App\Models\Assignment;
+use App\Models\ClinicalRecord\Assignment;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -71,7 +71,9 @@ class StoreAssignmentRequest extends FormRequest
         if (!$this->has('is_active')) {
             $this->merge(['is_active' => true]);
         }
-    }    /**
+    }
+
+    /**
      * Configure the validator instance.
      */
     public function withValidator($validator): void

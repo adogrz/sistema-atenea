@@ -74,6 +74,7 @@ class PermissionSeeder extends Seeder
                 'medical-consultations:create',     // Añadir una nueva consulta a un expediente existente
                 'medical-consultations:edit-own',   // Editar una consulta que el propio doctor creó
                 'medical-consultations:delete-own', // Eliminar una consulta que el propio doctor creó
+                'medical-consultations:delete', // Eliminar cualquier consulta (permiso de jefe)
                 'medical-consultations:generate-report', // Generar un reporte PDF del historial de consultas
             ],
             'psychological-records' => [
@@ -255,14 +256,16 @@ class PermissionSeeder extends Seeder
                     // Permisos para expedientes médicos
                     'medical-records:view',
                     'medical-records:create',
+                    // Permisos para consultas médicas
+                    'medical-consultations:delete-own', // Puede eliminar sus propias consultas
                     // Permisos básicos de consentimiento informado
                     'consent-forms:create',
                     'consent-forms:view',
                 ],
                 'inherits' => [],
                 'exclude_permissions' => [
-                    // Por seguridad no puede borrar consultas por defecto
-                    'medical-consultations:delete-own'
+                    // Por seguridad no puede borrar consultas de otros doctores
+                    'medical-consultations:delete'
                 ]
             ],
             'jefe-medicina' => [
@@ -276,6 +279,7 @@ class PermissionSeeder extends Seeder
                     'medical-records:view-all',
                     'medical-records:edit',
                     'medical-consultations:delete-own', // Anula la exclusión heredada
+                    'medical-consultations:delete',     // Puede borrar cualquier consulta
                     'consent-forms:manage',           // Puede gestionar los documentos adjuntos
                     'audit:medical-view'
                 ],

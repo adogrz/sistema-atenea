@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClinicalRecord\ListAssignmentsRequest;
 use App\Http\Requests\ClinicalRecord\StoreAssignmentRequest;
 use App\Http\Requests\ClinicalRecord\UpdateAssignmentRequest;
-use App\Models\Assignment;
+use App\Models\ClinicalRecord\Assignment;
+use App\Models\ClinicalRecord\MedicalRecord;
+use App\Models\ClinicalRecord\PsychologicalRecord;
 use App\Services\ClinicalRecord\AssignmentFilter;
 use App\Services\ClinicalRecord\EntitySearchService;
 use Illuminate\Http\JsonResponse;
@@ -50,6 +52,23 @@ class AssignmentController extends Controller
             ->orderBy($filters['sort_by'], $filters['sort_order'])
             ->paginate($filters['per_page'])
             ->withQueryString();
+
+        // Agregar información de expedientes existentes
+        $assignments->getCollection()->transform(function ($assignment) {
+            // Buscar expediente médico si es asignación médica
+            if ($assignment->type === 'medical') {
+                $medicalRecord = MedicalRecord::where('student_nie', $assignment->student_nie)->first();
+                $assignment->medical_record_id = $medicalRecord?->id;
+            }
+
+            // Buscar expediente psicológico si es asignación psicológica
+            if ($assignment->type === 'psychological') {
+                $psychologicalRecord = PsychologicalRecord::where('student_nie', $assignment->student_nie)->first();
+                $assignment->psychological_record_id = $psychologicalRecord?->id;
+            }
+
+            return $assignment;
+        });
 
         return Inertia::render('clinical-records/assignments/dashboard-assignments', [
             'assignments' => $assignments,

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\ClinicalRecord;
 
-use App\Models\Assignment;
+use App\Models\ClinicalRecord\Assignment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ListAssignmentsRequest extends FormRequest

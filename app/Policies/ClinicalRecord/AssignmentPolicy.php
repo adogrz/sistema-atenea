@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Policies;
+namespace App\Policies\ClinicalRecord;
 
-use App\Models\Assignment;
+use App\Models\ClinicalRecord\Assignment;
 use App\Models\User;
 
 class AssignmentPolicy

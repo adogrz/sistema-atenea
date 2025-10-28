@@ -18,6 +18,8 @@ export interface Assignment extends Timestamps {
 export interface AssignmentWithRelations extends Assignment {
     student?: StudentBasicInfo;
     professional?: ProfessionalBasicInfo;
+    medical_record_id?: number | null; // ID del expediente médico si existe
+    psychological_record_id?: number | null; // ID del expediente psicológico si existe
 }
 
 /**
