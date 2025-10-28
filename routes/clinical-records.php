@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClinicalRecord\AssignmentController;
+use App\Http\Controllers\ClinicalRecord\MedicalConsultationController;
 use App\Http\Controllers\ClinicalRecord\MedicalRecordController;
 
 /**
@@ -39,10 +40,6 @@ Route::middleware(['auth', 'verified', 'check.status'])
             Route::post('/', [AssignmentController::class, 'store'])
                 ->name('store');
 
-            // Ver asignación específica
-            Route::get('/{assignment}', [AssignmentController::class, 'show'])
-                ->name('show');
-
             // Editar asignación
             Route::get('/{assignment}/edit', [AssignmentController::class, 'edit'])
                 ->name('edit');
@@ -56,10 +53,6 @@ Route::middleware(['auth', 'verified', 'check.status'])
             // Eliminar asignación (soft delete)
             Route::delete('/{assignment}', [AssignmentController::class, 'destroy'])
                 ->name('destroy');
-
-            // Restaurar asignación eliminada
-            Route::post('/{assignment}/restore', [AssignmentController::class, 'restore'])
-                ->name('restore');
         });
 
         // Rutas de Expedientes Médicos (Medical Records)
@@ -88,7 +81,13 @@ Route::middleware(['auth', 'verified', 'check.status'])
             Route::delete('/{medical_record}', [MedicalRecordController::class, 'destroy'])
                 ->name('destroy');
 
-            Route::post('/{medical_record}/restore', [MedicalRecordController::class, 'restore'])
-                ->name('restore');
+            // Rutas anidadas para Consultas Médicas dentro de un Expediente
+            Route::prefix('{medical_record}/consultations')->name('consultations.')->group(function () {
+                Route::get('/create', [MedicalConsultationController::class, 'create'])
+                    ->name('create');
+
+                Route::post('/', [MedicalConsultationController::class, 'store'])
+                    ->name('store');
+            });
         });
     });

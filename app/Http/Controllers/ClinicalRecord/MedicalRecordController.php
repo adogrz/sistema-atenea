@@ -3,21 +3,28 @@
 namespace App\Http\Controllers\ClinicalRecord;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\ClinicalRecord\Concerns\HandlesConsentForms;
+use App\Http\Controllers\ClinicalRecord\Concerns\HandlesStudentData;
 use App\Http\Requests\ClinicalRecord\StoreMedicalRecordRequest;
 use App\Http\Requests\ClinicalRecord\UpdateMedicalRecordRequest;
 use App\Models\ClinicalRecord\ConsentForm;
 use App\Models\ClinicalRecord\MedicalConsultation;
 use App\Models\ClinicalRecord\MedicalRecord;
 use App\Models\Estudiante;
+use App\Services\ClinicalRecord\ConsentFormCreator;
 use App\Services\ClinicalRecord\MedicalRecordCreator;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class MedicalRecordController extends Controller
 {
+    use HandlesStudentData, HandlesConsentForms;
+
     public function __construct(
-        private MedicalRecordCreator $medicalRecordCreator
+        private MedicalRecordCreator $medicalRecordCreator,
+        private ConsentFormCreator $consentFormCreator
     ) {}
 
     /**
@@ -91,67 +98,14 @@ class MedicalRecordController extends Controller
             return redirect()->route('clinical-records.medical-records.show', $existingRecord);
         }
 
-        $student = Estudiante::with([
-            'responsable',
-            'responsables',
-            'consentForms' => function ($query) {
-                $query->where('type', 'medical')
-                    ->orderBy('granted_at', 'desc');
-            }
-        ])
-            ->where('nie', $studentNie)
-            ->first();
-
-        if (!$student) {
-            return redirect()
-                ->route('clinical-records.assignments.index')
-                ->withErrors(['error' => 'Estudiante no encontrado']);
-        }
-
-        $responsables = [];
-        $existingConsents = [];
-
-        // Obtener responsables asociados al estudiante (soporta múltiples)
-        $responsables = $student->responsables && $student->responsables->count() > 0
-            ? $student->responsables
-            : ($student->responsable ? collect([$student->responsable]) : collect());
-
-        // Normalizar responsables a estructura liviana para el frontend
-        $responsablesData = $responsables->map(function ($r) {
-            return [
-                'id' => $r->id,
-                'dui' => $r->dui,
-                'nombres_responsable' => $r->nombres_responsable,
-                'apellidos_responsable' => $r->apellidos_responsable,
-            ];
-        })->values();
-
-        // Obtener consentimientos médicos existentes
-        $existingConsents = $student->consentForms->map(function ($consent) {
-            return [
-                'id' => $consent->id,
-                'granted_at' => $consent->granted_at->format('Y-m-d'),
-                'responsible_name' => $consent->responsible
-                    ? "{$consent->responsible->nombres_responsable} {$consent->responsible->apellidos_responsable}"
-                    : 'N/A',
-            ];
-        });
+        // Preparar datos del estudiante usando el trait
+        $studentData = $this->prepareStudentData($studentNie);
 
         return Inertia::render('clinical-records/medical-record/create-medical-record', [
             'student_nie' => $studentNie,
-            'student' => [
-                'nie' => $student->nie,
-                'codigo' => $student->codigo,
-                'primer_nombre' => $student->primer_nombre,
-                'segundo_nombre' => $student->segundo_nombre,
-                'primer_apellido' => $student->primer_apellido,
-                'segundo_apellido' => $student->segundo_apellido,
-                'fecha_nacimiento' => $student->fecha_nacimiento->format('Y-m-d'),
-                'sexo' => $student->sexo,
-                'email' => $student->email,
-            ],
-            'responsables' => $responsablesData,
-            'existing_consents' => $existingConsents,
+            'student' => $studentData['student'],
+            'responsables' => $studentData['responsables'],
+            'existing_consents' => $studentData['existing_consents'],
         ]);
     }
 
@@ -160,7 +114,7 @@ class MedicalRecordController extends Controller
      */
     public function store(StoreMedicalRecordRequest $request)
     {
-        // Obtener estudiante y calcular si es menor (antes de cualquier procesamiento)
+        // Obtener estudiante y calcular si es menor
         $student = Estudiante::where('nie', $request->student_nie)->firstOrFail();
         $isMinor = $student->isMinor();
         $request->merge(['is_minor' => $isMinor]);
@@ -174,17 +128,29 @@ class MedicalRecordController extends Controller
         }
 
         try {
-            // Crear el expediente médico usando el servicio
-            $medicalRecord = $this->medicalRecordCreator->create(
-                $request->validated(),
-                $request->user()->id
-            );
+            $medicalRecord = DB::transaction(function () use ($request, $isMinor) {
+                // Procesar el consentimiento informado si es necesario
+                $consentFormId = $this->processConsentForm($request, $request->student_nie, $isMinor);
+
+                // Preparar datos validados con el consent_form_id
+                $validatedData = $request->validated();
+                $validatedData['consent_form_id'] = $consentFormId;
+
+                // Crear el expediente médico usando el servicio
+                // Nota: El servicio también usa transacción, pero al estar dentro de esta transacción
+                // externa, se comportará como una transacción anidada (savepoint)
+                return $this->medicalRecordCreator->create(
+                    $validatedData,
+                    $request->user()->id
+                );
+            });
 
             return redirect()
                 ->route('clinical-records.medical-records.show', $medicalRecord)
                 ->with('success', 'Expediente médico creado exitosamente.');
 
         } catch (Exception $e) {
+
             return redirect()
                 ->back()
                 ->withInput()
@@ -221,7 +187,7 @@ class MedicalRecordController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     * 
+     *
      * Este método no se utiliza ya que la edición se hace mediante un Dialog en el show.
      */
     public function edit(MedicalRecord $medicalRecord)
@@ -259,7 +225,7 @@ class MedicalRecordController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     * 
+     *
      * Los expedientes médicos NO deben ser eliminables por razones de auditoría y legales.
      * Esta acción está completamente deshabilitada.
      */

@@ -69,7 +69,7 @@ export default function ShowMedicalRecord({ medicalRecord, permissions, source =
     }, [pageProps.flash?.success, pageProps.flash?.error]);
 
     const handleNewConsultation = () => {
-        console.log('Agregar nueva consulta');
+        router.get(route('clinical-records.medical-records.consultations.create', medicalRecord.id));
     };
 
     const handleEditBackground = () => {

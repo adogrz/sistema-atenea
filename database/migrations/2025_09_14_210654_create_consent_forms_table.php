@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('professional_id')->constrained('users');
             $table->enum('type', ['medical', 'psychological']);
             $table->date('granted_at');
-            $table->string('file_path');
+            $table->string('file_path')->nullable();
             $table->text('observations')->nullable();
             $table->text('change_justification')->nullable(); // Justificación de cambios críticos (auditoría)
             $table->softDeletes();

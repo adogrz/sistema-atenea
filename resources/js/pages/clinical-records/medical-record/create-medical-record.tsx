@@ -104,8 +104,9 @@ export default function CreateMedicalRecord({ student_nie, student, responsables
     const handleConsentNext = (data: { consent_form_id?: number; consent?: CreateMedicalConsentData }) => {
         setFormData((prev) => ({
             ...prev,
+            // Si hay consent_form_id, limpiar consent; si hay consent, limpiar consent_form_id
             consent_form_id: data.consent_form_id,
-            consent: data.consent,
+            consent: data.consent_form_id ? undefined : data.consent,
         }));
         setActiveStep(2);
     };
@@ -153,9 +154,12 @@ export default function CreateMedicalRecord({ student_nie, student, responsables
 
             // Datos de consentimiento si es menor
             if (formData.is_minor) {
+                // Caso 1: Usar consentimiento existente
                 if (formData.consent_form_id) {
                     submitData.append('consent_form_id', formData.consent_form_id.toString());
-                } else if (formData.consent) {
+                }
+                // Caso 2: Crear nuevo consentimiento (solo si NO hay consent_form_id)
+                else if (formData.consent) {
                     submitData.append('consent[responsible_id]', formData.consent.responsible_id.toString());
                     submitData.append('consent[type]', formData.consent.type);
                     submitData.append('consent[granted_at]', formData.consent.granted_at);

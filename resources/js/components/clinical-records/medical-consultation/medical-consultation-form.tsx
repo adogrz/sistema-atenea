@@ -55,8 +55,14 @@ export function MedicalConsultationForm({
     });
 
     const handleSubmit = (values: ConsultationFormValues) => {
+        // Formatear la fecha sin conversión a UTC para evitar cambios de zona horaria
+        const year = values.consultation_date.getFullYear();
+        const month = String(values.consultation_date.getMonth() + 1).padStart(2, '0');
+        const day = String(values.consultation_date.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+
         onSubmit({
-            consultation_date: values.consultation_date.toISOString().slice(0, 10),
+            consultation_date: formattedDate,
             diagnosis: values.diagnosis,
             treatment: values.treatment,
             observations: values.observations,
