@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\ClinicalRecord\Concerns\HandlesConsentForms;
 use App\Http\Controllers\ClinicalRecord\Concerns\HandlesStudentData;
 use App\Http\Requests\ClinicalRecord\StoreMedicalConsultationRequest;
+use App\Http\Requests\ClinicalRecord\UpdateMedicalConsultationRequest;
 use App\Models\ClinicalRecord\MedicalConsultation;
 use App\Models\ClinicalRecord\MedicalRecord;
 use App\Services\ClinicalRecord\ConsentFormCreator;
@@ -133,17 +134,94 @@ class MedicalConsultationController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Request $request, MedicalRecord $medicalRecord, MedicalConsultation $consultation)
     {
-        //
+        // Verificar permisos
+        $this->authorize('update', $consultation);
+        $this->authorize('view', $medicalRecord);
+
+        // Verificar que la consulta pertenezca al expediente
+        if ($consultation->medical_record_id !== $medicalRecord->id) {
+            abort(404, 'La consulta no pertenece a este expediente médico.');
+        }
+
+        // Cargar relaciones necesarias
+        $consultation->load([
+            'doctor',
+            'consentForm.responsible',
+        ]);
+
+        $medicalRecord->load('student');
+
+        // Preparar datos del estudiante usando el trait
+        $studentData = $this->prepareStudentData($medicalRecord->student_nie);
+
+        return Inertia::render('clinical-records/medical-consultation/edit-medical-consultation', [
+            'consultation' => [
+                'id' => $consultation->id,
+                'medical_record_id' => $consultation->medical_record_id,
+                'doctor_id' => $consultation->doctor_id,
+                'doctor_name' => $consultation->doctor->name,
+                'consent_form_id' => $consultation->consent_form_id,
+                'consultation_date' => $consultation->consultation_date->format('Y-m-d\TH:i'),
+                'diagnosis' => $consultation->diagnosis,
+                'treatment' => $consultation->treatment,
+                'observations' => $consultation->observations,
+                'created_at' => $consultation->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $consultation->updated_at->format('Y-m-d H:i:s'),
+            ],
+            'medical_record' => [
+                'id' => $medicalRecord->id,
+                'student_nie' => $medicalRecord->student_nie,
+                'created_at' => $medicalRecord->created_at->format('Y-m-d'),
+            ],
+            'student' => $studentData['student'],
+            'permissions' => [
+                'canUpdate' => $request->user()->can('update', $consultation),
+            ],
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateMedicalConsultationRequest $request, MedicalRecord $medicalRecord, MedicalConsultation $consultation)
     {
-        //
+        // Verificar permisos
+        $this->authorize('update', $consultation);
+        $this->authorize('view', $medicalRecord);
+
+        // Verificar que la consulta pertenezca al expediente
+        if ($consultation->medical_record_id !== $medicalRecord->id) {
+            abort(404, 'La consulta no pertenece a este expediente médico.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Actualizar la consulta médica con los datos validados
+            $consultation->update([
+                'consultation_date' => $request->input('consultation_date'),
+                'diagnosis' => $request->input('diagnosis'),
+                'treatment' => $request->input('treatment'),
+                'observations' => $request->input('observations'),
+                'change_justification' => $request->input('change_justification'),
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->route('clinical-records.medical-records.show', $medicalRecord->id)
+                ->with('success', 'Consulta médica actualizada exitosamente.');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Error al actualizar la consulta médica: ' . $e->getMessage());
+        }
     }
 
     /**

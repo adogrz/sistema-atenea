@@ -92,6 +92,15 @@ Route::middleware(['auth', 'verified', 'check.status'])
                 Route::get('/{consultation}', [MedicalConsultationController::class, 'show'])
                     ->name('show');
 
+                Route::get('/{consultation}/edit', [MedicalConsultationController::class, 'edit'])
+                    ->name('edit');
+
+                Route::put('/{consultation}', [MedicalConsultationController::class, 'update'])
+                    ->name('update');
+
+                Route::patch('/{consultation}', [MedicalConsultationController::class, 'update'])
+                    ->name('patch');
+
                 Route::delete('/{consultation}', [MedicalConsultationController::class, 'destroy'])
                     ->name('destroy');
 

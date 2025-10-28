@@ -55,8 +55,12 @@ function ActionsCell({ consultation }: { consultation: MedicalConsultationWithRe
     };
 
     const handleEdit = () => {
-        // TODO: Implementar edición
-        toast.info('La edición de consultas estará disponible próximamente');
+        router.get(
+            route('clinical-records.medical-records.consultations.edit', {
+                medical_record: consultation.medical_record_id,
+                consultation: consultation.id,
+            }),
+        );
     };
 
     const handleDeleteClick = () => {
