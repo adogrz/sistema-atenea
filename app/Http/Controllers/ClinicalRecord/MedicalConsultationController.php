@@ -23,14 +23,6 @@ class MedicalConsultationController extends Controller
     ) {}
 
     /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
      * Show the form for creating a new resource.
      */
     public function create(Request $request, MedicalRecord $medicalRecord)
@@ -103,9 +95,39 @@ class MedicalConsultationController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, MedicalRecord $medicalRecord, MedicalConsultation $consultation)
     {
-        //
+        // Verificar permisos
+        $this->authorize('view', $consultation);
+        $this->authorize('view', $medicalRecord);
+
+        // Verificar que la consulta pertenezca al expediente
+        if ($consultation->medical_record_id !== $medicalRecord->id) {
+            abort(404, 'La consulta no pertenece a este expediente médico.');
+        }
+
+        // Cargar relaciones necesarias
+        $consultation->load([
+            'doctor',
+            'consentForm.responsible',
+        ]);
+
+        $medicalRecord->load('student');
+
+        return Inertia::render('clinical-records/medical-consultation/show-medical-consultation', [
+            'consultation' => $consultation,
+            'medical_record' => [
+                'id' => $medicalRecord->id,
+                'student_nie' => $medicalRecord->student_nie,
+                'general_background' => $medicalRecord->general_background,
+                'created_at' => $medicalRecord->created_at->format('Y-m-d'),
+            ],
+            'student' => $medicalRecord->student,
+            'permissions' => [
+                'canUpdate' => $request->user()->can('update', $consultation),
+                'canDelete' => $request->user()->can('delete', $consultation),
+            ],
+        ]);
     }
 
     /**

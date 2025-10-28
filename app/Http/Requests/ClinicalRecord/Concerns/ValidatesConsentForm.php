@@ -37,9 +37,14 @@ trait ValidatesConsentForm
 
             // Datos para crear un nuevo consentimiento (si no se proporciona consent_form_id)
             'consent' => [
-                'required_if:is_minor,true',
                 'nullable',
                 'array',
+                // Solo requerido si es menor Y no hay consent_form_id
+                function ($attribute, $value, $fail) {
+                    if ($this->input('is_minor') && !$this->input('consent_form_id') && !$value) {
+                        $fail('Para menores de edad es obligatorio proporcionar un consentimiento informado.');
+                    }
+                },
             ],
             'consent.responsible_id' => [
                 'required_with:consent',

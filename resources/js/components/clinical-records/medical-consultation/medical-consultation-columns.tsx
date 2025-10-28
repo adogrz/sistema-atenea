@@ -14,6 +14,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { router } from '@inertiajs/react';
 
 /**
  * Formatea la fecha en formato legible
@@ -39,8 +40,10 @@ const truncateText = (text: string, maxLength: number = 60): string => {
  */
 function ActionsCell({ consultation }: { consultation: MedicalConsultationWithRelations }) {
     const handleView = () => {
-        // TODO: Implementar vista de detalle
-        console.log('Ver consulta:', consultation.id);
+        router.get(route('clinical-records.medical-records.consultations.show', {
+            medical_record: consultation.medical_record_id,
+            consultation: consultation.id
+        }));
     };
 
     const handleEdit = () => {

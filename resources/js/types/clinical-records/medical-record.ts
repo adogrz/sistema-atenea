@@ -12,6 +12,16 @@ export interface MedicalRecord extends Timestamps {
 }
 
 /**
+ * Información básica del expediente médico (para props y listados)
+ */
+export interface MedicalRecordBasicInfo {
+    id: number;
+    student_nie: string;
+    general_background?: string;
+    created_at: string;
+}
+
+/**
  * Expediente médico con relaciones
  */
 export interface MedicalRecordWithRelations extends MedicalRecord {

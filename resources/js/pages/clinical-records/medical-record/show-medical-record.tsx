@@ -88,7 +88,6 @@ export default function ShowMedicalRecord({ medicalRecord, permissions, source =
                 },
                 {
                     onSuccess: () => {
-                        toast.success('Antecedentes médicos actualizados correctamente.');
                         setIsEditDialogOpen(false);
                     },
                     onError: (errors: Record<string, string>) => {

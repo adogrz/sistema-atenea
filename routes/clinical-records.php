@@ -88,6 +88,9 @@ Route::middleware(['auth', 'verified', 'check.status'])
 
                 Route::post('/', [MedicalConsultationController::class, 'store'])
                     ->name('store');
+
+                Route::get('/{consultation}', [MedicalConsultationController::class, 'show'])
+                    ->name('show');
             });
         });
     });

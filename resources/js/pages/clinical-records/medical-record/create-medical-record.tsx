@@ -16,7 +16,7 @@ import { Head, router } from '@inertiajs/react';
 import { AlertCircle, FileText } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { ConsentFormSection } from './sections/consent-form';
+import { ConsentFormSection } from '@/components/clinical-records/consent/consent-form-section';
 import RecordConsultationSection from './sections/record-consultation';
 import { ReviewSection } from './sections/review';
 

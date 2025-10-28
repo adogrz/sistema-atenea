@@ -16,8 +16,9 @@ interface ConsentFormSectionProps {
 }
 
 /**
- * Sección de consentimiento para el flujo de creación de expediente médico.
+ * Sección de consentimiento para flujos multi-step.
  * Wrapper del componente ConsentFormSelector con props específicas del flujo multi-step.
+ * Reutilizable en creación de expedientes y consultas.
  */
 export function ConsentFormSection({ responsables, existingConsents = [], onNext, onBack, defaultValues }: ConsentFormSectionProps) {
     return (
