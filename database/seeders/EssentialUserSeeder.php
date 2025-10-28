@@ -60,21 +60,6 @@ class EssentialUserSeeder extends Seeder
             ['name' => 'jefe-medicina', 'is_primary' => true, 'expires_at' => null],
         ]);
 
-        // 4. Calificadores de prueba
-        for ($i = 1; $i <= 4; $i++) {
-            $calificador = User::updateOrCreate(
-                ['email' => "calificador{$i}@atenea.com"],
-                [
-                    'name' => "Calificador {$i}",
-                    'password' => Hash::make('password123'),
-                    'email_verified_at' => now(),
-                    'sede_name' => 'central',
-                    'status' => 'active',
-                ]
-            );
-            $calificador->syncRolesWithExpiration([
-                ['name' => 'calificador', 'is_primary' => true, 'expires_at' => null],
-            ]);
-        }
+
     }
 }

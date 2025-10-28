@@ -12,6 +12,7 @@ use App\Models\ItemEvaluado;
 use App\Models\Olimpiada;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class TestDataSeeder extends Seeder
 {
@@ -36,57 +37,44 @@ class TestDataSeeder extends Seeder
             return;
         }
 
-        $calificadores = User::role('calificador')->get();
-        if ($calificadores->count() < 2) {
-            $this->command->error('No hay suficientes calificadores. Se necesitan al menos 2.');
-            return;
-        }
-
         // 2. Create students and enroll them
         $estudiantes = Estudiante::factory(20)->create();
+        $estadoInscritoId = DB::table('estados_inscripciones')->where('slug', 'inscrito')->value('id') ?? 1;
+
         foreach ($estudiantes as $estudiante) {
             InscripcionOlimpiada::create([
                 'olimpiada_id' => $olimpiada->id,
                 'estudiante_codigo' => $estudiante->codigo,
-                'estado_inscripcion_id' => 1, // "Pendiente" or a valid state
+                'estado_inscripcion_id' => $estadoInscritoId,
             ]);
         }
 
-        // 3. Create evaluations for each student in the phase
+        // 3. Create evaluations for each student in the phase with random scores
         $inscripciones = $olimpiada->inscripciones()->get();
         foreach ($inscripciones as $inscripcion) {
+            $totalPuntaje = 0;
             $evaluacion = Evaluacion::create([
                 'inscripcion_id' => $inscripcion->id,
                 'fase_olimpiada_id' => $fase->id,
-                'total_puntaje' => 0,
+                'total_puntaje' => 0, // Will be updated after item scores
+                'finalizada_at' => now(), // Use the correct column name
+                'estado' => 'finalizada', // Add the new estado column
             ]);
 
-            // 4. Create the evaluated items for each evaluation
+            // 4. Create the evaluated items for each evaluation with random scores
             foreach ($itemsDefinidos as $itemDefinido) {
+                $puntaje = rand(0, $itemDefinido->puntos_maximos);
                 ItemEvaluado::create([
                     'evaluacion_id' => $evaluacion->id,
                     'item_definido_id' => $itemDefinido->id,
-                    'puntaje' => 0, // Initial score
+                    'puntaje' => $puntaje,
+                    'calificador_id' => null, // Assign null for now, as no specific calificadores are seeded
                 ]);
+                $totalPuntaje += $puntaje;
             }
-        }
 
-        // 5. Assign graders to items
-        $calificador1 = $calificadores[0];
-        $calificador2 = $calificadores[1];
-
-        foreach ($itemsDefinidos as $index => $item) {
-            // Assign 2 graders to each item
-            CalificadorItemAsignado::updateOrCreate([
-                'calificador_id' => ($index % 2 == 0) ? $calificador1->id : $calificador2->id,
-                'fase_olimpiada_id' => $fase->id,
-                'item_definido_id' => $item->id,
-            ]);
-            CalificadorItemAsignado::updateOrCreate([
-                'calificador_id' => ($index % 2 == 0) ? $calificador2->id : $calificador1->id,
-                'fase_olimpiada_id' => $fase->id,
-                'item_definido_id' => $item->id,
-            ]);
+            // Update total_puntaje for the evaluation
+            $evaluacion->update(['total_puntaje' => $totalPuntaje]);
         }
 
         $this->command->info('Seeder de datos de prueba ejecutado exitosamente!');

@@ -18,6 +18,10 @@ return new class extends Migration
             $table->text('descripcion')->nullable();
             $table->decimal('puntos_maximos', 5, 2)->default(0);
             $table->integer('orden')->default(0);
+            $table->foreignId('fase_olimpiada_id')
+                ->nullable()
+                ->constrained('fases_olimpiadas')
+                ->nullOnDelete();
             $table->timestamps();
 
             $table->index('definicion_evaluacion_id'); // para consultas por rúbrica

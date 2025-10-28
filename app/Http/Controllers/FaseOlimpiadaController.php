@@ -32,7 +32,8 @@ class FaseOlimpiadaController extends Controller
             return back()->withErrors(['orden' => 'El número de orden ya existe para esta olimpiada.'])->withInput();
         }
 
-        $olimpiada->fases()->create($validated);
+        $fase = $olimpiada->fases()->create($validated);
+        activity()->performedOn($fase)->log('Fase de Olimpiada creada');
 
         return redirect()->back()->with('success', 'Fase creada exitosamente.');
     }
@@ -58,8 +59,8 @@ class FaseOlimpiadaController extends Controller
         if ($exists) {
             return back()->withErrors(['orden' => 'El número de orden ya existe para esta olimpiada.'])->withInput();
         }
-
         $fase->update($validated);
+        activity()->performedOn($fase)->log('Fase de Olimpiada actualizada');
 
         return redirect()->back()->with('success', 'Fase actualizada exitosamente.');
     }
@@ -67,6 +68,7 @@ class FaseOlimpiadaController extends Controller
     public function destroy(FaseOlimpiada $fase)
     {
         try {
+            activity()->performedOn($fase)->log('Fase de Olimpiada eliminada');
             $fase->delete();
             return redirect()->back()->with('success', 'Fase eliminada exitosamente.');
         } catch (\Illuminate\Database\QueryException $e) {
@@ -99,6 +101,7 @@ class FaseOlimpiadaController extends Controller
             if ($other) {
                 $fase->update(['orden' => $other->orden]);
                 $other->update(['orden' => $currentOrder]);
+                activity()->performedOn($fase)->log('Fase de Olimpiada reordenada');
             }
         });
 
@@ -112,6 +115,7 @@ class FaseOlimpiadaController extends Controller
         ]);
 
         $fase->update($validated);
+        activity()->performedOn($fase)->log('Evaluación asignada a Fase de Olimpiada');
 
         return redirect()->back()->with('success', 'Evaluación asignada exitosamente.');
     }

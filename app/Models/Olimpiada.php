@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Olimpiada extends Model
 {
+    use LogsActivity;
+
     protected $table = 'olimpiadas';
 
     protected $fillable = [
@@ -50,5 +54,13 @@ class Olimpiada extends Model
     public function inscripciones(): HasMany
     {
         return $this->hasMany(InscripcionOlimpiada::class, 'olimpiada_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

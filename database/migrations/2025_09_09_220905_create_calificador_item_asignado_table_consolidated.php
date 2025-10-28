@@ -20,7 +20,8 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->unique(['calificador_id', 'fase_olimpiada_id', 'item_definido_id'], 'calificador_item_unique');
+            // The unique index 'calificador_item_unique' is intentionally omitted here
+            // as per the consolidation request to remove it.
         });
     }
 

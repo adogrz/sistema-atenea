@@ -1,0 +1,134 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\User;
+use App\Models\Olimpiada;
+use Illuminate\Auth\Access\HandlesAuthorization;
+
+class OlimpiadaPolicy
+{
+    use HandlesAuthorization;
+
+    /**
+     * Determine whether the user can view any models.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewAny(User $user)
+    {
+        return $user->hasRole('admin-ti') || $user->hasRole('coordinador-area');
+    }
+
+    /**
+     * Determine whether the user can view the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Olimpiada  $olimpiada
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function view(User $user, Olimpiada $olimpiada)
+    {
+        if ($user->hasRole('admin-ti')) {
+            return true;
+        }
+
+        if ($user->hasRole('coordinador-area')) {
+            return $user->primaryArea()->id === $olimpiada->area_id;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether the user can create models.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function create(User $user)
+    {
+        return $user->hasRole('admin-ti') || $user->hasRole('coordinador-area');
+    }
+
+    /**
+     * Determine whether the user can update the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Olimpiada  $olimpiada
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function update(User $user, Olimpiada $olimpiada)
+    {
+        if ($user->hasRole('admin-ti')) {
+            return true;
+        }
+
+        if ($user->hasRole('coordinador-area')) {
+            return $user->primaryArea()->id === $olimpiada->area_id;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether the user can delete the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Olimpiada  $olimpiada
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function delete(User $user, Olimpiada $olimpiada)
+    {
+        if ($user->hasRole('admin-ti')) {
+            return true;
+        }
+
+        if ($user->hasRole('coordinador-area')) {
+            return $user->primaryArea()->id === $olimpiada->area_id;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether the user can restore the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Olimpiada  $olimpiada
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function restore(User $user, Olimpiada $olimpiada)
+    {
+        if ($user->hasRole('admin-ti')) {
+            return true;
+        }
+
+        if ($user->hasRole('coordinador-area')) {
+            return $user->primaryArea()->id === $olimpiada->area_id;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether the user can permanently delete the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Olimpiada  $olimpiada
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function forceDelete(User $user, Olimpiada $olimpiada)
+    {
+        if ($user->hasRole('admin-ti')) {
+            return true;
+        }
+
+        if ($user->hasRole('coordinador-area')) {
+            return $user->primaryArea()->id === $olimpiada->area_id;
+        }
+
+        return false;
+    }
+}

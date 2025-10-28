@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Models\Olimpiada;
 use App\Policies\UserPolicy;
+use App\Policies\OlimpiadaPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -16,6 +18,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         // Aquí es donde registramos nuestras políticas
         User::class => UserPolicy::class,
+        Olimpiada::class => OlimpiadaPolicy::class,
     ];
 
     /**

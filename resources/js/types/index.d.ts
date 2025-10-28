@@ -169,7 +169,10 @@ export interface FaseOlimpiada {
     activa: boolean;
     observaciones: string;
     resultados_publicados?: boolean;
-    definicionEvaluacion?: any;
+    nota_minima_aprobacion?: number | null;
+    cupos?: number | null;
+    definicionEvaluacion?: DefinicionEvaluacion;
+    olimpiada?: Olimpiada; // Add this
 }
 
 export interface Inscripcion {
@@ -180,8 +183,51 @@ export interface Inscripcion {
     fecha_inscripcion: Date;
 }
 
+export interface Resultado {
+    evaluacion_id: number;
+    olimpiada_id: number; // Add this
+    fase_id: number;
+    fase_nombre: string;
+    olimpiada_nombre: string;
+    estudiante_id: number;
+    estudiante_codigo: string; // Add this
+    estudiante_nombre: string;
+    estudiante_email: string;
+    total_score: number;
+    max_score: number;
+    percentage_score: number;
+    aprobado: boolean;
+    nota_minima: number;
+    pasa_siguiente_fase: boolean;
+}
+
+export interface ItemEvaluado {
+    id: number;
+    evaluacion_id: number;
+    item_definido_id: number;
+    puntaje: number | null;
+    observacion: string | null;
+    calificador_id: number | null; // Added
+    item_definido: ItemDefinido; // Eager loaded
+    calificador?: User; // Eager loaded
+}
+
+export interface Evaluacion {
+    id: number;
+    estudiante_id: number;
+    fase_id: number;
+    finalizada_at: string | null; // Changed from fecha_evaluacion
+    estado: string;
+    observaciones_generales: string | null;
+    estudiante: Estudiante & { user: User }; // Eager loaded
+    faseOlimpiada: FaseOlimpiada; // Eager loaded
+    items_evaluados: ItemEvaluado[]; // Eager loaded
+}
+
 export type PageProps = SharedData & {
     definicionEvaluacion?: DefinicionEvaluacion;
     definiciones?: DefinicionEvaluacion[];
     itemDefinido?: ItemDefinido;
+    resultados?: Resultado[];
+    evaluacion?: Evaluacion;
 };

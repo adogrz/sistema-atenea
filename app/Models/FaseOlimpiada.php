@@ -7,9 +7,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class FaseOlimpiada extends Model
 {
+    use LogsActivity;
+
+    protected $with = ['olimpiada'];
+
     /**
      * The table associated with the model.
      *
@@ -78,5 +84,13 @@ class FaseOlimpiada extends Model
     public function itemsDefinidos(): HasMany
     {
         return $this->hasMany(ItemDefinido::class, 'fase_olimpiada_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

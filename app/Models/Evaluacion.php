@@ -25,11 +25,7 @@ class Evaluacion extends Model
         'finalizada_at' => 'datetime',
     ];
 
-    public function estudiante(): BelongsTo
-    {
-        return $this->belongsTo(Estudiante::class, 'inscripcion_id', 'id');
-    }
-    
+
     public function inscripcion(): BelongsTo
     {
         return $this->belongsTo(InscripcionOlimpiada::class, 'inscripcion_id');

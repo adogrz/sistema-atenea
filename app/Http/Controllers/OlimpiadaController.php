@@ -65,6 +65,7 @@ class OlimpiadaController extends Controller
         ]);
 
         $olimpiada = Olimpiada::create($validated);
+        activity()->performedOn($olimpiada)->log('Olimpiada creada');
 
         if (isset($validated['fases'])) {
             foreach ($validated['fases'] as $faseData) {
@@ -94,6 +95,7 @@ class OlimpiadaController extends Controller
         ]);
 
         $olimpiada->update($validated);
+        activity()->performedOn($olimpiada)->log('Olimpiada actualizada');
 
         if (isset($validated['fases'])) {
             $incomingPhaseIds = collect($validated['fases'])->pluck('id')->filter()->all();
@@ -123,6 +125,7 @@ class OlimpiadaController extends Controller
     public function destroy(Olimpiada $olimpiada)
     {
         try {
+            activity()->performedOn($olimpiada)->log('Olimpiada eliminada');
             $olimpiada->delete();
             return redirect()->back()->with('success', 'Olimpiada eliminada exitosamente.');
         } catch (\Illuminate\Database\QueryException $e) {

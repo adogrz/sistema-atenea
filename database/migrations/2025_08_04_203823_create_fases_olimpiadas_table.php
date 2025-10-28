@@ -20,6 +20,17 @@ return new class extends Migration {
             $table->string('nombre', 120);               // Ej: "Fase Municipal", "Fase Nacional"
             $table->unsignedTinyInteger('orden')->default(1); // Posición secuencial (1,2,3...)
 
+            // Campos de gestión de fase
+            $table->integer('cupos')->nullable();
+            $table->decimal('nota_minima_aprobacion', 5, 2)->nullable();
+            $table->timestamp('fecha_inicio_inscripcion')->nullable();
+            $table->timestamp('fecha_fin_inscripcion')->nullable();
+            $table->boolean('resultados_publicados')->default(false);
+            $table->foreignId('definicion_evaluacion_id')
+                ->nullable()
+                ->constrained('definiciones_evaluacion')
+                ->nullOnDelete();
+
             // Control del estado y ventana temporal
 
             $table->dateTime('fecha_inicio')->nullable();

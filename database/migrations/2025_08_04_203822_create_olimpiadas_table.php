@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text('descripcion')->nullable();  // Detalles generales
             $table->foreignId('area_id')->constrained('areas');
             $table->boolean('activa')->default(true); // Control de visibilidad
+            $table->foreignId('nivel_educativo_id')->nullable()->constrained('niveles_educativos', 'codigo')->onDelete('set null');
             $table->timestamps();
         });
     }

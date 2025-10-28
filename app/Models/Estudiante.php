@@ -26,6 +26,8 @@ class Estudiante extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    protected $appends = ['nombre_completo'];
+
     /**
      * The attributes that are mass assignable.
      *

@@ -20,6 +20,9 @@ use App\Http\Controllers\AreaDashboardController;
 use App\Http\Controllers\OlimpiadaController;
 use App\Http\Controllers\EstudianteController;
 use App\Http\Controllers\ResultadoController;
+use App\Http\Controllers\EvaluacionController;
+use App\Http\Controllers\CalificacionController;
+
 use Illuminate\Container\Attributes\Auth;
 
 Route::post('estudiantes/generate-permanent-ids', [EstudianteController::class, 'generatePermanentIds'])->name('estudiantes.generate-permanent-ids');
@@ -33,9 +36,6 @@ Route::get('/', static function () {
     // Si no, redirigir al login.
     return redirect()->route('login');
 })->name('home');
-
-// Rutas para usuarios autenticados
-use App\Http\Controllers\CalificacionController;
 
 Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     Route::get('/calificaciones', [CalificacionController::class, 'index'])->name('calificaciones.index'); //->middleware('role:Calificador')
@@ -107,7 +107,12 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             //->middleware('role:coordinador-area');
 
         Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
+        Route::get('/resultados/fase/{fase}', [ResultadoController::class, 'getResultsForFase'])->name('resultados.fase');
         Route::get('/resultados/emails-passed', [ResultadoController::class, 'getEmailsForPassedStudents'])->name('resultados.emailsPassed');
+        Route::post('/resultados/generate-permanent-codes', [ResultadoController::class, 'generatePermanentCodes'])->name('resultados.generatePermanentCodes');
+
+        // Ruta para ver el detalle de una evaluación
+        Route::get('evaluaciones/{evaluacion}', [EvaluacionController::class, 'show'])->name('evaluaciones.show');
 
         /**
          * Calificaciones (dashboard del calificador + flujo de edición)
