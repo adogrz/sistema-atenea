@@ -6,17 +6,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { InternadoEvaluacion } from '@/types/fdtc/internado';
+import { InternadoEvaluacion, InternadoPeriodo, InternadoMateria } from '@/types/fdtc/internado';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { LoaderCircle, Award } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import { toast } from 'sonner';
 
-interface Props {
-    evaluacion: InternadoEvaluacion;
+interface EvaluacionEdit extends InternadoEvaluacion {
+    periodo_id?: number;
+    materia_id?: number;
 }
 
-export default function EditEvaluation({ evaluacion }: Props) {
+interface Props {
+    evaluacion: EvaluacionEdit;
+    periodos: InternadoPeriodo[];
+    materias: InternadoMateria[];
+}
+
+export default function EditEvaluation({ evaluacion, periodos, materias }: Props) {
     const BREADCRUMBS: BreadcrumbItem[] = [
         { title: 'Inicio', href: '/dashboard' },
         { title: 'Internado FDTC', href: '/dashboard/internado-fdtc' },
@@ -24,26 +31,35 @@ export default function EditEvaluation({ evaluacion }: Props) {
         { title: 'Editar Evaluación', href: `/dashboard/internado-fdtc/evaluaciones/${evaluacion.id}/edit` },
     ];
 
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, processing, errors } = useForm<{
+        periodo_id: string;
+        materia_id: string;
+        nombre: string;
+        descripcion: string;
+        peso_porcentual: string;
+        nota_maxima: string;
+        fecha_inicio: string;
+        fecha_fin: string;
+        permite_credito_extra: boolean;
+        credito_extra_max: string;
+    }>({
+        periodo_id: evaluacion.periodo_id?.toString() || '',
+        materia_id: evaluacion.materia_id?.toString() || '',
         nombre: evaluacion.nombre,
         descripcion: evaluacion.descripcion || '',
-        peso_porcentual: evaluacion.peso_porcentual.toString(),
-        nota_maxima: evaluacion.nota_maxima.toString(),
+        peso_porcentual: evaluacion.peso_porcentual?.toString() || '0',
+        nota_maxima: evaluacion.nota_maxima?.toString() || '10',
         fecha_inicio: evaluacion.fecha_inicio || '',
         fecha_fin: evaluacion.fecha_fin || '',
-        permite_credito_extra: evaluacion.permite_credito_extra,
-        credito_extra_max: evaluacion.credito_extra_max.toString(),
+        permite_credito_extra: !!evaluacion.permite_credito_extra,
+        credito_extra_max: evaluacion.credito_extra_max?.toString() || '0',
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         put(route('internado-fdtc.evaluaciones.update', evaluacion.id), {
-            onSuccess: () => {
-                toast.success('Evaluación actualizada exitosamente');
-            },
-            onError: () => {
-                toast.error('Error al actualizar la evaluación');
-            },
+            onSuccess: () => toast.success('Evaluación actualizada exitosamente'),
+            onError: () => toast.error('Error al actualizar la evaluación'),
         });
     };
 
@@ -55,12 +71,55 @@ export default function EditEvaluation({ evaluacion }: Props) {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-2xl">Editar evaluación</CardTitle>
-                            <CardDescription>
-                                Actualiza la configuración de la evaluación
-                            </CardDescription>
+                            <CardDescription>Actualiza la configuración de la evaluación</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={submit} className="space-y-6">
+                                {/* Periodo y Materia */}
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <Label htmlFor="periodo_id">Periodo *</Label>
+                                        <select
+                                            id="periodo_id"
+                                            value={data.periodo_id}
+                                            onChange={(e) => setData('periodo_id', e.target.value)}
+                                            className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm"
+                                            required
+                                        >
+                                            <option value="">Selecciona un periodo</option>
+                                            {periodos.map((p) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.nombre} {p.es_vigente ? '✓' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.periodo_id && (
+                                            <p className="mt-1 text-sm text-red-600">{errors.periodo_id as string}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="materia_id">Materia *</Label>
+                                        <select
+                                            id="materia_id"
+                                            value={data.materia_id}
+                                            onChange={(e) => setData('materia_id', e.target.value)}
+                                            className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm"
+                                            required
+                                        >
+                                            <option value="">Selecciona una materia</option>
+                                            {materias.map((m) => (
+                                                <option key={m.id} value={m.id}>
+                                                    {m.nombre} ({m.codigo})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.materia_id && (
+                                            <p className="mt-1 text-sm text-red-600">{errors.materia_id as string}</p>
+                                        )}
+                                    </div>
+                                </div>
+
                                 {/* Información Básica */}
                                 <div className="space-y-4">
                                     <div>
@@ -73,7 +132,7 @@ export default function EditEvaluation({ evaluacion }: Props) {
                                             className="mt-1"
                                         />
                                         {errors.nombre && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
+                                            <p className="mt-1 text-sm text-red-600">{errors.nombre as string}</p>
                                         )}
                                     </div>
 
@@ -88,7 +147,7 @@ export default function EditEvaluation({ evaluacion }: Props) {
                                             className="mt-1"
                                         />
                                         {errors.descripcion && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.descripcion}</p>
+                                            <p className="mt-1 text-sm text-red-600">{errors.descripcion as string}</p>
                                         )}
                                     </div>
 
@@ -108,7 +167,7 @@ export default function EditEvaluation({ evaluacion }: Props) {
                                             />
                                             {errors.peso_porcentual && (
                                                 <p className="mt-1 text-sm text-red-600">
-                                                    {errors.peso_porcentual}
+                                                    {errors.peso_porcentual as string}
                                                 </p>
                                             )}
                                         </div>
@@ -126,7 +185,7 @@ export default function EditEvaluation({ evaluacion }: Props) {
                                                 className="mt-1"
                                             />
                                             {errors.nota_maxima && (
-                                                <p className="mt-1 text-sm text-red-600">{errors.nota_maxima}</p>
+                                                <p className="mt-1 text-sm text-red-600">{errors.nota_maxima as string}</p>
                                             )}
                                         </div>
                                     </div>
@@ -144,7 +203,7 @@ export default function EditEvaluation({ evaluacion }: Props) {
                                             className="mt-1"
                                         />
                                         {errors.fecha_inicio && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.fecha_inicio}</p>
+                                            <p className="mt-1 text-sm text-red-600">{errors.fecha_inicio as string}</p>
                                         )}
                                     </div>
 
@@ -158,7 +217,7 @@ export default function EditEvaluation({ evaluacion }: Props) {
                                             className="mt-1"
                                         />
                                         {errors.fecha_fin && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.fecha_fin}</p>
+                                            <p className="mt-1 text-sm text-red-600">{errors.fecha_fin as string}</p>
                                         )}
                                     </div>
                                 </div>
@@ -178,12 +237,9 @@ export default function EditEvaluation({ evaluacion }: Props) {
                                         <Switch
                                             id="permite_credito"
                                             checked={data.permite_credito_extra}
-                                            onCheckedChange={(value) => {
-                                                setData((prev) => ({
-                                                    ...prev,
-                                                    permite_credito_extra: value,
-                                                    credito_extra_max: value ? prev.credito_extra_max : '0',
-                                                }));
+                                            onCheckedChange={(checked: boolean) => {
+                                                setData('permite_credito_extra', checked);
+                                                if (!checked) setData('credito_extra_max', '0');
                                             }}
                                         />
                                     </div>
@@ -204,7 +260,7 @@ export default function EditEvaluation({ evaluacion }: Props) {
                                             />
                                             {errors.credito_extra_max && (
                                                 <p className="mt-1 text-sm text-red-600">
-                                                    {errors.credito_extra_max}
+                                                    {errors.credito_extra_max as string}
                                                 </p>
                                             )}
                                             <p className="mt-1 text-xs text-muted-foreground">
@@ -220,15 +276,15 @@ export default function EditEvaluation({ evaluacion }: Props) {
                                     <div className="grid grid-cols-3 gap-4 text-sm">
                                         <div>
                                             <span className="text-muted-foreground">Total estudiantes:</span>
-                                            <p className="font-semibold">{evaluacion.total_estudiantes}</p>
+                                            <p className="font-semibold">{evaluacion.total_estudiantes ?? 0}</p>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">Calificados:</span>
-                                            <p className="font-semibold">{evaluacion.estudiantes_calificados}</p>
+                                            <p className="font-semibold">{evaluacion.estudiantes_calificados ?? 0}</p>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">Promedio:</span>
-                                            <p className="font-semibold">{evaluacion.promedio.toFixed(1)}</p>
+                                            <p className="font-semibold">{Number(evaluacion.promedio ?? 0).toFixed(1)}</p>
                                         </div>
                                     </div>
                                 </div>

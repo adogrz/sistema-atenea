@@ -1,7 +1,8 @@
-export interface Materia {
+export interface InternadoMateria {
     id: number;
+    codigo: string;
     nombre: string;
-    nota: number;
+    created_at?: string;
 }
 
 export interface Estudiante {
@@ -14,7 +15,7 @@ export interface Estudiante {
     sede_name: string;
     sede_description?: string;
     promedio_general: number;
-    materias: Materia[];
+    materias: InternadoMateria[];
     status: string;
     en_internado: boolean;
     estado_internado?: string;
@@ -47,6 +48,10 @@ export interface InternadoParticipante {
 
 export interface InternadoEvaluacion {
     id: number;
+    periodo_id?: number;
+    materia_id?: number;
+    materia_codigo?: string;
+    materia?: string;
     nombre: string;
     descripcion?: string;
     peso_porcentual: number;

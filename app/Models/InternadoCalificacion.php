@@ -17,11 +17,13 @@ class InternadoCalificacion extends Model
         'evaluacion_id',
         'participante_id',
         'nota',
+        'credito_extra',
         'observaciones',
     ];
 
     protected $casts = [
         'nota' => 'decimal:1',
+        'credito_extra' => 'decimal:1',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',

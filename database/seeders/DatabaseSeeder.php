@@ -34,6 +34,9 @@ class DatabaseSeeder extends Seeder
 
             // Estudiantes de prueba
             TestStudentsSeeder::class,
+
+            //Materias
+            MateriaSeeder::class,
         ]);
     }
 }

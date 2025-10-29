@@ -142,11 +142,11 @@ export const getParticipantColumns = (): ColumnDef<Participante>[] => [
         header: 'Acciones',
         cell: ({ row }) => (
             <Button variant="ghost" size="sm" asChild>
-                <Link href={`/dashboard/internado-fdtc/participantes/${row.original.codigo}/progreso`}>
+                <Link href={`/dashboard/internado-fdtc/participantes/${row.original.id}/progreso`}>
                     <Eye className="mr-2 h-4 w-4" />
                     Ver Progreso
                 </Link>
-            </Button>
+    </Button>
         ),
         enableSorting: false,
         enableHiding: false,

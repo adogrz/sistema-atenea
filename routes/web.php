@@ -197,7 +197,7 @@ Route::middleware(['auth', 'permission:internado:view'])->prefix('dashboard/inte
     // Rutas de solo lectura
     Route::get('seleccion', [InternadoFDTCController::class, 'selection_list'])->name('selection_list');
     Route::get('participantes', [InternadoParticipanteController::class, 'participants_list'])->name('participantes');
-    Route::get('participantes/{codigo}/progreso', [InternadoParticipanteController::class, 'showProgreso'])->name('participantes.progreso');
+    Route::get('participantes/{participante}/progreso', [InternadoParticipanteController::class, 'progreso'])->name('participantes.progreso');
     
     Route::get('periodos', [InternadoPeriodoController::class, 'periodos'])->name('periodos');
     
@@ -233,14 +233,15 @@ Route::middleware(['auth', 'permission:internado:view'])->prefix('dashboard/inte
         Route::get('evaluaciones/{evaluacion}/edit', [InternadoEvaluacionController::class, 'edit'])->name('evaluaciones.edit');
         Route::put('evaluaciones/{evaluacion}', [InternadoEvaluacionController::class, 'update'])->name('evaluaciones.update');
         Route::delete('evaluaciones/{evaluacion}', [InternadoEvaluacionController::class, 'destroy'])->name('evaluaciones.destroy');
-
-        // Calificaciones
-        Route::put('calificaciones/{calificacion}', [InternadoEvaluacionController::class, 'guardarCalificacion'])->name('calificaciones.guardar');
-        Route::post('evaluaciones/{evaluacion}/calificaciones-masivo', [InternadoEvaluacionController::class, 'guardarCalificacionesMasivo'])->name('calificaciones.guardar-masivo');
+        Route::get('evaluaciones/show/{evaluacion}', [InternadoEvaluacionController::class, 'show'])->name('evaluaciones.show');
 
         // Asistencias
         Route::post('asistencias', [InternadoAsistenciaController::class, 'store'])->name('asistencias.store');
         Route::post('asistencias/masivo', [InternadoAsistenciaController::class, 'storeMasivo'])->name('asistencias.masivo');
+
+        // Calificaciones: guardar individual y masivo
+        Route::put('calificaciones/{calificacion}', [InternadoEvaluacionController::class, 'guardarCalificacion'])->name('calificaciones.guardar');
+        Route::post('calificaciones/guardar-masivo/{evaluacion}', [InternadoEvaluacionController::class, 'guardarCalificacionesMasivo'])->name('calificaciones.guardar-masivo');
 
         // Conductas
         Route::post('conductas', [InternadoConductaController::class, 'store'])->name('conductas.store');

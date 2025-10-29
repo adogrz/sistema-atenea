@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -17,10 +17,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Eye, FileText, Calendar, Award } from 'lucide-react';
 import { type BreadcrumbItem } from '@/types';
-import { InternadoEvaluacion } from '@/types/fdtc/internado';
+import { InternadoEvaluacion, InternadoMateria } from '@/types/fdtc/internado';
 
 interface Props {
     evaluaciones: InternadoEvaluacion[];
+    materias: InternadoMateria[];
+    filtros?: {
+        materia_id?: number | null;
+        periodo_id?: number | null;
+    };
 }
 
 const BREADCRUMBS: BreadcrumbItem[] = [
@@ -29,9 +34,28 @@ const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Evaluaciones', href: '/dashboard/internado-fdtc/evaluaciones' },
 ];
 
-export default function EvaluationsList({ evaluaciones }: Props) {
+export default function EvaluationsList({ evaluaciones, materias, filtros }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [selectedEvaluacion, setSelectedEvaluacion] = useState<InternadoEvaluacion | null>(null);
+    const [materiaId, setMateriaId] = useState<string>(filtros?.materia_id ? String(filtros.materia_id) : '');
+
+    type EvalWithMateria = InternadoEvaluacion & { materia_id?: number };
+
+    const pesosPorMateria = useMemo(() => {
+        const map = new Map<number, number>();
+        for (const ev of evaluaciones as EvalWithMateria[]) {
+            const mid = ev.materia_id ?? -1;
+            const peso = Number(ev.peso_porcentual || 0);
+            map.set(mid, (map.get(mid) || 0) + peso);
+        }
+        return map;
+    }, [evaluaciones]);
+
+    const totalPesoMateriaSeleccionada = useMemo(() => {
+        if (!materiaId) return 0;
+        const mid = Number(materiaId);
+        return pesosPorMateria.get(mid) || 0;
+    }, [materiaId, pesosPorMateria]);
 
     const handleDelete = () => {
         if (!selectedEvaluacion) return;
@@ -53,7 +77,15 @@ export default function EvaluationsList({ evaluaciones }: Props) {
         setShowDeleteDialog(true);
     };
 
-    const totalPeso = evaluaciones.reduce((sum, ev) => sum + (Number(ev.peso_porcentual) || 0), 0);
+    const handleMateriaChange = (value: string) => {
+        setMateriaId(value);
+        router.get(
+            route('internado-fdtc.evaluaciones'),
+            { materia_id: value || undefined },
+            { preserveScroll: true, replace: true }
+        );
+    };
+
     const promedioGeneral = evaluaciones.length > 0
         ? evaluaciones.reduce((sum, ev) => sum + (Number(ev.promedio) || 0), 0) / evaluaciones.length
         : 0;
@@ -79,6 +111,31 @@ export default function EvaluationsList({ evaluaciones }: Props) {
                         </Button>
                     </div>
 
+                    {/* Filtros */}
+                    <Card className="mb-2">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Filtros</CardTitle>
+                            <CardDescription>Filtra las evaluaciones por materia</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 gap-3 md:max-w-md">
+                            <div>
+                                <label className="mb-1 block text-sm">Materia</label>
+                                <select
+                                    value={materiaId}
+                                    onChange={(e) => handleMateriaChange(e.target.value)}
+                                    className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                                >
+                                    <option value="">Todas</option>
+                                    {materias.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.nombre} ({m.codigo})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Estadísticas */}
                     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
                         <Card>
@@ -95,14 +152,28 @@ export default function EvaluationsList({ evaluaciones }: Props) {
                                 <CardTitle className="text-sm font-medium">Peso Total</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex items-center gap-2">
-                                    <div className="text-2xl font-bold">{totalPeso.toFixed(1)}%</div>
-                                    {totalPeso !== 100 && totalPeso > 0 && (
-                                        <Badge variant="outline" className="text-yellow-600">
-                                            No suma 100%
-                                        </Badge>
-                                    )}
-                                </div>
+                                {materiaId ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-2xl font-bold">{totalPesoMateriaSeleccionada.toFixed(1)}%</div>
+                                        {totalPesoMateriaSeleccionada !== 100 && totalPesoMateriaSeleccionada > 0 && (
+                                            <Badge variant="outline" className="text-yellow-600">
+                                                No suma 100%
+                                            </Badge>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                        {materias.map((m) => {
+                                            const total = Number(pesosPorMateria.get(m.id) || 0);
+                                            const warn = total !== 100 && total > 0;
+                                            return (
+                                                <Badge key={m.id} variant={warn ? 'outline' : 'secondary'}>
+                                                    {m.nombre}: {total.toFixed(1)}%
+                                                </Badge>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 
@@ -146,6 +217,13 @@ export default function EvaluationsList({ evaluaciones }: Props) {
                                                         </Badge>
                                                     )}
                                                 </CardTitle>
+                                                {/* Mostrar materia */}
+                                                {evaluacion.materia && (
+                                                    <CardDescription className="mt-1">
+                                                        {evaluacion.materia} {evaluacion.materia_codigo ? `(${evaluacion.materia_codigo})` : ''}
+                                                    </CardDescription>
+                                                )}
+                                                {/* Descripción */}
                                                 {evaluacion.descripcion && (
                                                     <CardDescription className="mt-1">
                                                         {evaluacion.descripcion}
@@ -153,20 +231,12 @@ export default function EvaluationsList({ evaluaciones }: Props) {
                                                 )}
                                             </div>
                                             <div className="flex gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    asChild
-                                                >
+                                                <Button variant="ghost" size="icon" asChild>
                                                     <Link href={route('internado-fdtc.evaluaciones.edit', evaluacion.id)}>
                                                         <Edit className="h-4 w-4" />
                                                     </Link>
                                                 </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => openDeleteDialog(evaluacion)}
-                                                >
+                                                <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(evaluacion)}>
                                                     <Trash2 className="h-4 w-4 text-destructive" />
                                                 </Button>
                                             </div>
@@ -185,8 +255,7 @@ export default function EvaluationsList({ evaluaciones }: Props) {
                                             <div>
                                                 <p className="text-muted-foreground">Calificados</p>
                                                 <p className="font-semibold">
-                                                    {evaluacion.estudiantes_calificados} /{' '}
-                                                    {evaluacion.total_estudiantes}
+                                                    {evaluacion.estudiantes_calificados} / {evaluacion.total_estudiantes}
                                                 </p>
                                             </div>
                                             <div>
@@ -199,9 +268,7 @@ export default function EvaluationsList({ evaluaciones }: Props) {
                                             </div>
                                         </div>
                                         <Button asChild className="w-full">
-                                            <Link
-                                                href={route('internado-fdtc.evaluaciones', evaluacion.id)}
-                                            >
+                                            <Link href={route('internado-fdtc.evaluaciones.show', evaluacion.id)}>
                                                 <Eye className="mr-2 h-4 w-4" />
                                                 Ver Calificaciones
                                             </Link>

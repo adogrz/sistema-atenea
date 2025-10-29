@@ -21,6 +21,8 @@ return new class extends Migration
             $table->date('fecha_fin')->nullable();
             $table->boolean('permite_credito_extra')->default(false);
             $table->decimal('credito_extra_max', 3, 1)->default(0);
+            $table->foreignId('periodo_id')->after('id')->nullable()->constrained('internado_periodos')->onDelete('cascade');
+            $table->foreignId('materia_id')->after('periodo_id')->nullable()->constrained('materias')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
         });

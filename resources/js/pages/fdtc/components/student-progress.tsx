@@ -5,6 +5,8 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Mail, MapPin, Phone, School } from 'lucide-react';
+import { useMemo } from 'react';
+import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 
 interface Participante {
     id: number;
@@ -19,6 +21,31 @@ interface Participante {
     estado: 'activo' | 'completado' | 'retirado' | 'suspendido';
     fecha_ingreso: string;
     dias_en_internado: number;
+}
+interface PageProps extends InertiaPageProps {
+    participante: Participante;
+    materias_stats: MateriaStat[];
+}
+interface MateriaStat {
+    materia_id: number;
+    materia: string;
+    codigo: string;
+    evaluaciones_count: number;
+    peso_total: number; // suma de pesos de las evaluaciones de esa materia
+    promedio: number;   // promedio de notas del estudiante en esa materia
+    detalle: Array<{
+        evaluacion_id: number;
+        nombre: string;
+        fecha?: string | null;
+        peso_porcentual: number;
+        nota_maxima: number;
+        nota: number | null;
+    }>;
+}
+
+interface PageProps {
+    participante: Participante;
+    materias_stats: MateriaStat[];
 }
 
 const getEstadoBadge = (estado: string) => {
@@ -41,7 +68,7 @@ const getEstadoBadge = (estado: string) => {
 };
 
 export default function ParticipantProgress() {
-    const { participante } = usePage<{ participante: Participante }>().props;
+    const { participante, materias_stats } = usePage<PageProps>().props;
 
     const BREADCRUMBS: BreadcrumbItem[] = [
         { title: 'Inicio', href: '/dashboard' },
@@ -49,6 +76,15 @@ export default function ParticipantProgress() {
         { title: 'Participantes', href: '/dashboard/internado-fdtc/participantes' },
         { title: participante.nombre, href: '#' },
     ];
+
+    const resumen = useMemo(() => {
+        const materias = materias_stats?.length || 0;
+        const evaluaciones = materias_stats?.reduce((s, m) => s + (m.evaluaciones_count || 0), 0) || 0;
+        const promedioGeneral = materias_stats && materias_stats.length > 0
+            ? materias_stats.reduce((s, m) => s + (Number(m.promedio) || 0), 0) / materias_stats.length
+            : 0;
+        return { materias, evaluaciones, promedioGeneral };
+    }, [materias_stats]);
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
@@ -125,20 +161,113 @@ export default function ParticipantProgress() {
                         </Card>
                     </div>
 
-                    {/* Sección de Progreso - Por implementar */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Progreso del Participante</CardTitle>
-                            <CardDescription>Métricas y evaluaciones del internado</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed">
-                                <p className="text-muted-foreground">
-                                    Sección de progreso en desarrollo...
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Resumen */}
+                    <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">Materias</CardTitle>
+                                <CardDescription>Con evaluaciones registradas</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{resumen.materias}</div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">Evaluaciones</CardTitle>
+                                <CardDescription>Totales calificadas/asignadas</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{resumen.evaluaciones}</div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">Promedio General</CardTitle>
+                                <CardDescription>Promedio por materia</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{Number(resumen.promedioGeneral || 0).toFixed(1)}</div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Progreso por Materia */}
+                    {(!materias_stats || materias_stats.length === 0) ? (
+                        <Card>
+                            <CardContent className="flex h-48 items-center justify-center">
+                                <p className="text-muted-foreground">Aún no hay calificaciones para mostrar.</p>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                            {materias_stats.map((m) => (
+                                <Card key={m.materia_id}>
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <CardTitle className="text-lg">
+                                                    {m.materia} <span className="text-muted-foreground">({m.codigo})</span>
+                                                </CardTitle>
+                                                <CardDescription>
+                                                    Promedio: <span className="font-medium text-foreground">{Number(m.promedio || 0).toFixed(1)}</span> | 
+                                                    Evaluaciones: {m.evaluaciones_count} | 
+                                                    Peso acumulado: {Number(m.peso_total || 0).toFixed(1)}%
+                                                </CardDescription>
+                                            </div>
+                                            <Badge variant={Number(m.peso_total) === 100 ? 'secondary' : 'outline'}>
+                                                {Number(m.peso_total || 0).toFixed(1)}%
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {/* Barra de peso total */}
+                                        <div className="mb-4">
+                                            <div className="h-2 w-full rounded bg-muted">
+                                                <div
+                                                    className={`h-2 rounded ${Number(m.peso_total) === 100 ? 'bg-green-600' : 'bg-yellow-600'}`}
+                                                    style={{ width: `${Math.min(Number(m.peso_total || 0), 100)}%` }}
+                                                />
+                                            </div>
+                                            {Number(m.peso_total) !== 100 && Number(m.peso_total) > 0 && (
+                                                <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-400">Advertencia: el peso no suma 100%</p>
+                                            )}
+                                        </div>
+
+                                        {/* Detalle de evaluaciones */}
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full table-fixed border-collapse text-sm">
+                                                <thead>
+                                                    <tr className="text-left">
+                                                        <th className="w-[48%] border-b p-2">Evaluación</th>
+                                                        <th className="w-[18%] border-b p-2">Fecha</th>
+                                                        <th className="w-[16%] border-b p-2">Peso</th>
+                                                        <th className="w-[18%] border-b p-2">Nota</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {m.detalle.map((d) => (
+                                                        <tr key={d.evaluacion_id} className="hover:bg-muted/50">
+                                                            <td className="border-b p-2">
+                                                                <span className="font-medium">{d.nombre}</span>
+                                                            </td>
+                                                            <td className="border-b p-2">{d.fecha || '-'}</td>
+                                                            <td className="border-b p-2">{Number(d.peso_porcentual).toFixed(1)}%</td>
+                                                            <td className="border-b p-2">
+                                                                {d.nota === null || d.nota === undefined
+                                                                    ? <span className="text-muted-foreground">Sin nota</span>
+                                                                    : `${Number(d.nota).toFixed(1)} / ${Number(d.nota_maxima).toFixed(1)}`}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </AppLayout>

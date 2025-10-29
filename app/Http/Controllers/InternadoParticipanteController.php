@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\InternadoParticipante;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class InternadoParticipanteController extends Controller
 {
@@ -96,43 +98,72 @@ class InternadoParticipanteController extends Controller
     /**
      * Muestra el progreso individual de un participante
      */
-    public function showProgreso(string $codigo): Response
+    public function progreso(InternadoParticipante $participante): Response
     {
-        $participante = InternadoParticipante::with([
-            'estudiante.user.sede',
-            'estudiante.centroEducativo',
-            'estudiante.nivelEducativo'
-        ])
-        ->whereHas('estudiante', function ($query) use ($codigo) {
-            $query->where('codigo', $codigo);
-        })
-        ->firstOrFail();
+        // Resumen por materia
+        $resumen = DB::table('internado_calificaciones as c')
+            ->join('internado_evaluaciones as e', 'e.id', '=', 'c.evaluacion_id')
+            ->join('materias as m', 'm.id', '=', 'e.materia_id')
+            ->where('c.participante_id', $participante->id)
+            ->groupBy('e.materia_id', 'm.nombre', 'm.codigo')
+            ->selectRaw('e.materia_id, m.nombre as materia, m.codigo, COUNT(e.id) as evaluaciones_count, COALESCE(SUM(e.peso_porcentual),0) as peso_total, COALESCE(AVG(c.nota),0) as promedio')
+            ->get();
 
-        $estudiante = $participante->estudiante;
-        
-        $nombreCompleto = trim(
-            ($estudiante->primer_nombre ?? '') . ' ' .
-            ($estudiante->segundo_nombre ?? '') . ' ' .
-            ($estudiante->primer_apellido ?? '') . ' ' .
-            ($estudiante->segundo_apellido ?? '')
-        );
+        // Detalle por materia
+        $detalle = DB::table('internado_calificaciones as c')
+            ->join('internado_evaluaciones as e', 'e.id', '=', 'c.evaluacion_id')
+            ->where('c.participante_id', $participante->id)
+            ->orderBy('e.materia_id')
+            ->orderBy('e.fecha_inicio')
+            ->select([
+                'e.materia_id',
+                'e.id as evaluacion_id',
+                'e.nombre',
+                'e.fecha_inicio', // <- sin DATE_FORMAT
+                'e.peso_porcentual',
+                'e.nota_maxima',
+                'c.nota',
+            ])
+            ->get()
+            ->groupBy('materia_id');
 
-        $data = [
+        $materias_stats = $resumen->map(function ($r) use ($detalle) {
+            return [
+                'materia_id' => (int) $r->materia_id,
+                'materia' => $r->materia,
+                'codigo' => $r->codigo,
+                'evaluaciones_count' => (int) $r->evaluaciones_count,
+                'peso_total' => (float) $r->peso_total,
+                'promedio' => (float) $r->promedio,
+                'detalle' => ($detalle[$r->materia_id] ?? collect())->map(function ($d) {
+                    return [
+                        'evaluacion_id' => (int) $d->evaluacion_id,
+                        'nombre' => $d->nombre,
+                        'fecha' => $d->fecha_inicio ? Carbon::parse($d->fecha_inicio)->format('Y-m-d') : null,
+                        'peso_porcentual' => (float) $d->peso_porcentual,
+                        'nota_maxima' => (float) $d->nota_maxima,
+                        'nota' => $d->nota !== null ? (float) $d->nota : null,
+                    ];
+                })->values(),
+            ];
+        })->values();
+
+        return Inertia::render('fdtc/components/student-progress', [
             'participante' => [
                 'id' => $participante->id,
-                'codigo' => $estudiante->codigo,
-                'nombre' => $nombreCompleto ?: $estudiante->user->name ?? 'N/A',
-                'email' => $estudiante->email ?? $estudiante->user->email ?? 'N/A',
-                'telefono' => $estudiante->telefono_estudiante ?? 'N/A',
-                'centro_educativo' => $estudiante->centroEducativo->nombre ?? 'N/A',
-                'nivel_educativo' => $estudiante->nivelEducativo->nivel ?? 'N/A',
-                'sede_description' => $estudiante->user->sede->description ?? 'Sin sede',
+                'codigo' => $participante->estudiante->codigo ?? '',
+                'nombre' => $participante->estudiante->user->name ?? '',
+                'email' => $participante->estudiante->email ?? ($participante->estudiante->user->email ?? ''),
+                'telefono' => $participante->estudiante->telefono ?? '',
+                'centro_educativo' => $participante->estudiante->centroEducativo->nombre ?? '',
+                'nivel_educativo' => $participante->estudiante->nivel_educativo ?? '',
+                'sede_name' => $participante->sede->nombre ?? '',
+                'sede_description' => $participante->sede->descripcion ?? null,
                 'estado' => $participante->estado,
-                'fecha_ingreso' => $participante->created_at->format('d/m/Y'),
+                'fecha_ingreso' => optional($participante->fecha_ingreso)->format('Y-m-d'),
+                'dias_en_internado' => optional($participante->fecha_ingreso)->diffInDays(now()) ?? 0,
             ],
-            // TODO: Agregar aquí las métricas de progreso, evaluaciones, etc.
-        ];
-
-        return Inertia::render('fdtc/components/student-progress', $data);
+            'materias_stats' => $materias_stats,
+        ]);
     }
 }
