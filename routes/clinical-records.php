@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClinicalRecord\AssignmentController;
 use App\Http\Controllers\ClinicalRecord\MedicalConsultationController;
 use App\Http\Controllers\ClinicalRecord\MedicalRecordController;
+use App\Http\Controllers\ClinicalRecord\ConsentFormController;
 
 /**
  * Rutas para el módulo de Registros Clínicos
@@ -80,6 +81,10 @@ Route::middleware(['auth', 'verified', 'check.status'])
 
             Route::delete('/{medical_record}', [MedicalRecordController::class, 'destroy'])
                 ->name('destroy');
+
+            // Ruta para visualizar archivo de consentimiento (inline)
+            Route::get('/consent-forms/{consent_form}/file', [ConsentFormController::class, 'file'])
+                ->name('consent-forms.file');
 
             // Rutas anidadas para Consultas Médicas dentro de un Expediente
             Route::prefix('{medical_record}/consultations')->name('consultations.')->group(function () {

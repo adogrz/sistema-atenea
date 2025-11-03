@@ -73,7 +73,7 @@ trait ValidatesConsentForm
                 'before_or_equal:today',
             ],
             'consent.file' => [
-                'required_with:consent',
+                'nullable', // Cambiado temporalmente para debugging
                 'file',
                 'mimes:pdf,jpg,jpeg,png',
                 'max:10240', // 10MB máximo

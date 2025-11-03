@@ -1,5 +1,6 @@
 'use client';
 
+import { ConsentFormSection } from '@/components/clinical-records/consent/consent-form-section';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InlineStepper from '@/components/ui/inline-stepper';
@@ -16,7 +17,6 @@ import { Head, router } from '@inertiajs/react';
 import { AlertCircle, FileText } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { ConsentFormSection } from '@/components/clinical-records/consent/consent-form-section';
 import RecordConsultationSection from './sections/record-consultation';
 import { ReviewSection } from './sections/review';
 
@@ -171,6 +171,7 @@ export default function CreateMedicalRecord({ student_nie, student, responsables
             }
 
             router.post(route('clinical-records.medical-records.store'), submitData, {
+                forceFormData: true,
                 onSuccess: () => {
                     toast.success('Expediente médico creado exitosamente');
                 },

@@ -21,6 +21,27 @@ class ConsentFormPolicy
      */
     public function view(User $user, ConsentForm $consentForm): bool
     {
+        // Permiso general para ver consentimientos
+        if (!$user->can('consent-forms:view')) {
+            return false;
+        }
+
+        // Si el usuario puede ver todos, permitir
+        if ($user->can('medical-records:view-all')) {
+            return true;
+        }
+
+        // Si el usuario es el profesional que registró el consentimiento
+        if ($consentForm->professional_id === $user->id) {
+            return true;
+        }
+
+        // Si el usuario está asignado a la misma sede y coincide el estudiante (heurística simple)
+        // Nota: para reglas más finas, se debería validar asignaciones explícitas.
+        if ($user->sede_name && optional($consentForm->student)->sede_name === $user->sede_name) {
+            return true;
+        }
+
         return false;
     }
 

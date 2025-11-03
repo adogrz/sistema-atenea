@@ -26,6 +26,12 @@ class ConsentFormCreator
         $filePath = null;
         if (isset($data['file']) && $data['file'] instanceof UploadedFile) {
             $filePath = $this->storeConsentFile($data['file'], $data['student_nie'], $data['type']);
+            \Log::info('Archivo de consentimiento guardado', ['path' => $filePath]);
+        } else {
+            \Log::warning('No se recibió archivo para el consentimiento', [
+                'has_file_key' => isset($data['file']),
+                'file_type' => isset($data['file']) ? get_class($data['file']) : 'null',
+            ]);
         }
 
         try {
@@ -72,9 +78,12 @@ class ConsentFormCreator
             throw new Exception("El tipo de consentimiento debe ser 'medical' o 'psychological'.");
         }
 
-        // Validar que el archivo exista si se proporcionó
+        // Validar que el archivo exista si se proporcionó (no es obligatorio temporalmente)
         if (isset($data['file']) && !($data['file'] instanceof UploadedFile)) {
-            throw new Exception("El archivo del consentimiento debe ser un archivo válido.");
+            \Log::warning('Archivo de consentimiento inválido', [
+                'type' => gettype($data['file']),
+                'class' => is_object($data['file']) ? get_class($data['file']) : 'not an object',
+            ]);
         }
     }
 
@@ -97,12 +106,22 @@ class ConsentFormCreator
             $file->getClientOriginalExtension()
         );
 
-        // Almacenar en la carpeta correspondiente
+        // Almacenar en la carpeta correspondiente usando el disco 'private'
+        // La ruta completa será: storage/app/private/consent-forms/{type}/{studentNie}/{fileName}
         $path = $file->storeAs(
             "consent-forms/{$type}/{$studentNie}",
             $fileName,
             'private'
         );
+
+        if (!$path) {
+            throw new Exception("Error al guardar el archivo del consentimiento.");
+        }
+
+        // Verificar que el archivo realmente se guardó
+        if (!Storage::disk('private')->exists($path)) {
+            throw new Exception("El archivo del consentimiento no se guardó correctamente.");
+        }
 
         return $path;
     }

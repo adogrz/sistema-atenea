@@ -64,6 +64,22 @@ trait HandlesConsentForms
         $consentData = $request->input('consent');
         $consentData['student_nie'] = $studentNie;
 
+        // Debug: Verificar si el archivo está presente
+        if ($request->hasFile('consent.file')) {
+            \Log::info('Archivo de consentimiento recibido', [
+                'original_name' => $request->file('consent.file')->getClientOriginalName(),
+                'size' => $request->file('consent.file')->getSize(),
+                'mime' => $request->file('consent.file')->getMimeType(),
+            ]);
+            $consentData['file'] = $request->file('consent.file');
+        } else {
+            \Log::error('No se recibió archivo de consentimiento', [
+                'has_input' => $request->has('consent'),
+                'consent_keys' => array_keys($consentData),
+            ]);
+            throw new Exception('No se recibió el archivo del consentimiento informado.');
+        }
+
         // Inyectar el servicio si no está disponible
         if (!property_exists($this, 'consentFormCreator')) {
             throw new Exception('ConsentFormCreator service no está disponible en este controlador.');
@@ -73,6 +89,11 @@ trait HandlesConsentForms
             $consentData,
             $request->user()->id
         );
+
+        \Log::info('Consentimiento creado exitosamente', [
+            'id' => $consentForm->id,
+            'file_path' => $consentForm->file_path,
+        ]);
 
         return $consentForm->id;
     }

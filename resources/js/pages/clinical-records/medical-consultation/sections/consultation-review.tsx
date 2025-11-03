@@ -2,11 +2,8 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatBytes } from '@/hooks/use-file-upload';
 import { CreateMedicalConsentData, CreateMedicalConsultationData } from '@/types/clinical-records';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Calendar, FileCheck, FileText, Stethoscope } from 'lucide-react';
+import { Calendar, FileCheck, Stethoscope } from 'lucide-react';
 
 interface ConsultationReviewSectionProps {
     consultationData: CreateMedicalConsultationData;
@@ -32,6 +29,14 @@ export function ConsultationReviewSection({
     onSubmit,
     isSubmitting = false,
 }: ConsultationReviewSectionProps) {
+    const openLocalConsentPreview = () => {
+        const file = consentData?.consent?.file;
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank', 'noopener');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+    };
+
     return (
         <div className="space-y-8">
             {/* Consulta Médica */}
@@ -50,7 +55,7 @@ export function ConsultationReviewSection({
                         <label className="text-sm font-medium">Fecha de Consulta</label>
                         <p className="mt-1 text-sm text-muted-foreground">
                             <Calendar className="mr-2 inline h-4 w-4" />
-                            {format(new Date(consultationData.consultation_date), 'PPP', { locale: es })}
+                            {consultationData.consultation_date}
                         </p>
                     </div>
 
@@ -90,9 +95,19 @@ export function ConsultationReviewSection({
                                 <span className="text-sm text-muted-foreground">Tipo:</span>
                                 <Badge>Consentimiento Existente</Badge>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex items-center justify-between">
                                 <span className="text-sm text-muted-foreground">ID:</span>
-                                <span className="text-sm font-medium">#{consentData.consent_form_id}</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-medium">#{consentData.consent_form_id}</span>
+                                    <a
+                                        href={route('clinical-records.medical-records.consent-forms.file', consentData.consent_form_id)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-primary underline"
+                                    >
+                                        Ver documento
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     ) : consentData.consent ? (
@@ -104,25 +119,23 @@ export function ConsultationReviewSection({
 
                             <div>
                                 <label className="text-sm font-medium">Responsable</label>
-                                <p className="mt-1 text-sm text-muted-foreground">{responsableName || 'N/A'}</p>
+                                <p className="mt-1 text-sm text-muted-foreground">{responsableName}</p>
                             </div>
 
                             <div>
                                 <label className="text-sm font-medium">Fecha de Otorgamiento</label>
                                 <p className="mt-1 text-sm text-muted-foreground">
                                     <Calendar className="mr-2 inline h-4 w-4" />
-                                    {format(new Date(consentData.consent.granted_at), 'PPP', { locale: es })}
+                                    {consentData.consent.granted_at}
                                 </p>
                             </div>
 
                             <div>
                                 <label className="text-sm font-medium">Documento</label>
-                                <div className="mt-2 flex items-center gap-3 rounded-md border p-3">
-                                    <FileText className="h-5 w-5 text-muted-foreground" />
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-medium">{consentData.consent.file.name}</p>
-                                        <p className="text-xs text-muted-foreground">{formatBytes(consentData.consent.file.size)}</p>
-                                    </div>
+                                <div className="mt-1">
+                                    <button type="button" onClick={openLocalConsentPreview} className="text-sm text-primary underline">
+                                        Ver documento
+                                    </button>
                                 </div>
                             </div>
 
@@ -149,4 +162,3 @@ export function ConsultationReviewSection({
         </div>
     );
 }
-

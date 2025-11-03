@@ -1,14 +1,11 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { MedicalConsultationWithRelations, MedicalRecordBasicInfo, StudentBasicInfo } from '@/types/clinical-records';
 import { Head, router, usePage } from '@inertiajs/react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { ArrowLeft, Calendar, ClipboardList, FileCheck, FileText, Pencil, Stethoscope, User } from 'lucide-react';
+import { ClipboardList, FileCheck, FileText, User } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 
@@ -71,30 +68,13 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
                 <div className="flex flex-col gap-2 border-b border-muted/30 pb-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                                <Stethoscope className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
-                                <p className="text-sm text-muted-foreground">
-                                    Consulta del{' '}
-                                    <span className="font-medium text-foreground">
-                                        {format(new Date(consultation.consultation_date), 'PPP', { locale: es })}
-                                    </span>
-                                </p>
-                            </div>
+                            <h1 className="text-xl font-semibold">{pageTitle}</h1>
                         </div>
                         <div className="flex gap-2">
-                            {permissions.canUpdate && (
-                                <Button variant="outline" onClick={handleEdit}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Editar
-                                </Button>
-                            )}
                             <Button variant="outline" onClick={handleBack}>
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Volver al Expediente
+                                Volver
                             </Button>
+                            {permissions.canUpdate && <Button onClick={handleEdit}>Editar</Button>}
                         </div>
                     </div>
                 </div>
@@ -105,28 +85,22 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
                     <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
                         <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
                             <User className="h-5 w-5 text-primary" />
-                            <h2 className="text-lg font-semibold">Información del Paciente</h2>
+                            <h3 className="text-base font-medium">Estudiante</h3>
                         </div>
 
                         <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
+                            <div className="flex gap-1">
                                 <span className="text-muted-foreground">Nombre:</span>
                                 <span className="font-medium">{studentName}</span>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex gap-1">
                                 <span className="text-muted-foreground">NIE:</span>
                                 <span className="font-medium">{student.nie}</span>
                             </div>
-                            {student?.fecha_nacimiento && (
-                                <div className="flex justify-between">
+                            {age !== undefined && (
+                                <div className="flex gap-1">
                                     <span className="text-muted-foreground">Edad:</span>
                                     <span className="font-medium">{age} años</span>
-                                </div>
-                            )}
-                            {student?.sexo && (
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Sexo:</span>
-                                    <span className="font-medium">{student.sexo === 'M' ? 'Femenino' : 'Masculino'}</span>
                                 </div>
                             )}
                         </div>
@@ -136,29 +110,24 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
                     <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
                         <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
                             <ClipboardList className="h-5 w-5 text-primary" />
-                            <h2 className="text-lg font-semibold">Datos de la Consulta</h2>
+                            <h3 className="text-base font-medium">Consulta</h3>
                         </div>
 
                         <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Médico:</span>
-                                <span className="font-medium">{consultation.doctor?.name || 'N/A'}</span>
+                            <div className="flex gap-1">
+                                <span className="text-muted-foreground">Fecha:</span>
+                                <span className="font-medium">{consultation.consultation_date}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Fecha de Consulta:</span>
-                                <span className="flex items-center gap-1 font-medium">
-                                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                                    {format(new Date(consultation.consultation_date), 'dd/MM/yyyy')}
-                                </span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Registrada el:</span>
-                                <span className="font-medium">{format(new Date(consultation.created_at), 'PPP', { locale: es })}</span>
-                            </div>
-                            {consultation.updated_at !== consultation.created_at && (
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Última Actualización:</span>
-                                    <span className="font-medium">{format(new Date(consultation.updated_at), 'PPP', { locale: es })}</span>
+                            {consultation.treatment && (
+                                <div className="flex gap-1">
+                                    <span className="text-muted-foreground">Tratamiento:</span>
+                                    <span className="font-medium whitespace-pre-wrap">{consultation.treatment}</span>
+                                </div>
+                            )}
+                            {consultation.observations && (
+                                <div className="flex gap-1">
+                                    <span className="text-muted-foreground">Observaciones:</span>
+                                    <span className="font-medium whitespace-pre-wrap">{consultation.observations}</span>
                                 </div>
                             )}
                         </div>
@@ -169,8 +138,7 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
                 <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
                     <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
                         <FileText className="h-5 w-5 text-primary" />
-                        <h2 className="text-lg font-semibold">Diagnóstico</h2>
-                        <Badge variant="secondary">Requerido</Badge>
+                        <h3 className="text-base font-medium">Diagnóstico</h3>
                     </div>
                     <p className="text-sm whitespace-pre-wrap">{consultation.diagnosis}</p>
                 </div>
@@ -178,10 +146,7 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
                 {/* Tratamiento */}
                 {consultation.treatment && (
                     <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
-                        <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
-                            <ClipboardList className="h-5 w-5 text-primary" />
-                            <h2 className="text-lg font-semibold">Tratamiento</h2>
-                        </div>
+                        <div className="mb-2 font-medium">Tratamiento</div>
                         <p className="text-sm whitespace-pre-wrap">{consultation.treatment}</p>
                     </div>
                 )}
@@ -189,11 +154,8 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
                 {/* Observaciones */}
                 {consultation.observations && (
                     <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
-                        <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
-                            <FileText className="h-5 w-5 text-primary" />
-                            <h2 className="text-lg font-semibold">Observaciones</h2>
-                        </div>
-                        <p className="text-sm whitespace-pre-wrap text-muted-foreground">{consultation.observations}</p>
+                        <div className="mb-2 font-medium">Observaciones</div>
+                        <p className="text-sm whitespace-pre-wrap">{consultation.observations}</p>
                     </div>
                 )}
 
@@ -202,34 +164,42 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
                     <div className="rounded-lg border bg-card px-6 py-4 shadow-sm">
                         <div className="mb-4 flex items-center gap-2 border-b border-muted/20 pb-2">
                             <FileCheck className="h-5 w-5 text-primary" />
-                            <h2 className="text-lg font-semibold">Consentimiento Informado</h2>
-                            <Badge>Requerido (Menor de Edad)</Badge>
+                            <h3 className="text-base font-medium">Consentimiento Informado</h3>
                         </div>
-
-                        <div className="space-y-3 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">ID del Consentimiento:</span>
-                                <span className="font-medium">#{consultation.consent_form_id}</span>
-                            </div>
-                            <div className="flex justify-between">
+                        <div className="space-y-2 text-sm">
+                            <div className="flex gap-1">
                                 <span className="text-muted-foreground">Responsable:</span>
                                 <span className="font-medium">
-                                    {consultation.consent_form.responsible
-                                        ? `${consultation.consent_form.responsible.nombres_responsable} ${consultation.consent_form.responsible.apellidos_responsable}`
-                                        : 'N/A'}
+                                    {consultation.consent_form.responsible?.nombres_responsable}{' '}
+                                    {consultation.consent_form.responsible?.apellidos_responsable}
                                 </span>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex items-center justify-between">
+                                <div className="flex gap-1">
+                                    <span className="text-muted-foreground">ID:</span>
+                                    <span className="font-medium">#{consultation.consent_form_id}</span>
+                                </div>
+                                {consultation.consent_form.file_path ? (
+                                    <a
+                                        href={route('clinical-records.medical-records.consent-forms.file', consultation.consent_form_id)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-primary underline"
+                                    >
+                                        Ver documento
+                                    </a>
+                                ) : (
+                                    <span className="text-xs text-muted-foreground">Sin archivo adjunto</span>
+                                )}
+                            </div>
+                            <div className="flex gap-1">
                                 <span className="text-muted-foreground">Fecha de Otorgamiento:</span>
-                                <span className="flex items-center gap-1 font-medium">
-                                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                                    {format(new Date(consultation.consent_form.granted_at), 'dd/MM/yyyy')}
-                                </span>
+                                <span className="font-medium">{consultation.consent_form.granted_at}</span>
                             </div>
                             {consultation.consent_form.observations && (
-                                <div>
-                                    <span className="text-muted-foreground">Observaciones del Consentimiento:</span>
-                                    <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{consultation.consent_form.observations}</p>
+                                <div className="flex gap-1">
+                                    <span className="text-muted-foreground">Observaciones:</span>
+                                    <span className="font-medium whitespace-pre-wrap">{consultation.consent_form.observations}</span>
                                 </div>
                             )}
                         </div>
@@ -239,14 +209,8 @@ export default function ShowMedicalConsultation({ consultation, medical_record, 
                 {/* Justificación de cambios (si existe) */}
                 {consultation.change_justification && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-4 shadow-sm dark:border-amber-800 dark:bg-amber-950">
-                        <div className="mb-4 flex items-center gap-2 border-b border-amber-200 pb-2 dark:border-amber-800">
-                            <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                            <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">Justificación de Cambios</h2>
-                            <Badge variant="outline" className="border-amber-600 text-amber-600 dark:border-amber-400 dark:text-amber-400">
-                                Auditoría
-                            </Badge>
-                        </div>
-                        <p className="text-sm whitespace-pre-wrap text-amber-800 dark:text-amber-200">{consultation.change_justification}</p>
+                        <div className="mb-2 font-medium text-amber-900 dark:text-amber-200">Justificación de cambios</div>
+                        <p className="text-sm whitespace-pre-wrap text-amber-800 dark:text-amber-300">{consultation.change_justification}</p>
                     </div>
                 )}
             </div>

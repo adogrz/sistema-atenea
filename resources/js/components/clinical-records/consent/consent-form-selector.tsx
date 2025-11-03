@@ -119,11 +119,18 @@ export function ConsentFormSelector({
             onSubmit({ consent_form_id: values.consent_form_id });
         } else {
             if (hasNoResponsables) return; // bloquear si no hay responsables
+
+            // Formatear la fecha sin conversión a UTC para evitar cambios de zona horaria
+            const year = values.granted_at!.getFullYear();
+            const month = String(values.granted_at!.getMonth() + 1).padStart(2, '0');
+            const day = String(values.granted_at!.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
+
             onSubmit({
                 consent: {
                     responsible_id: values.responsible_id!,
                     type: 'medical',
-                    granted_at: format(values.granted_at!, 'yyyy-MM-dd'),
+                    granted_at: formattedDate,
                     file: values.file!,
                     observations: values.observations,
                 },
@@ -188,10 +195,7 @@ export function ConsentFormSelector({
                                         <FormLabel>
                                             Consentimiento <span className="text-destructive">*</span>
                                         </FormLabel>
-                                        <Select
-                                            onValueChange={(value) => field.onChange(parseInt(value))}
-                                            value={field.value?.toString() || ''}
-                                        >
+                                        <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ''}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Seleccione un consentimiento" />
@@ -366,4 +370,3 @@ export function ConsentFormSelector({
         </div>
     );
 }
-

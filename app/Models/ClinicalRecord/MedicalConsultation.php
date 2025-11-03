@@ -42,7 +42,7 @@ class MedicalConsultation extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'consultation_date' => 'datetime',
+        'consultation_date' => 'date',
     ];
 
     /**

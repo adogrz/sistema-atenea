@@ -116,7 +116,30 @@ class MedicalConsultationController extends Controller
         $medicalRecord->load('student');
 
         return Inertia::render('clinical-records/medical-consultation/show-medical-consultation', [
-            'consultation' => $consultation,
+            'consultation' => [
+                'id' => $consultation->id,
+                'medical_record_id' => $consultation->medical_record_id,
+                'doctor_id' => $consultation->doctor_id,
+                'consent_form_id' => $consultation->consent_form_id,
+                'consultation_date' => $consultation->consultation_date->format('d/m/Y'),
+                'diagnosis' => $consultation->diagnosis,
+                'treatment' => $consultation->treatment,
+                'observations' => $consultation->observations,
+                'change_justification' => $consultation->change_justification,
+                'created_at' => $consultation->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $consultation->updated_at->format('Y-m-d H:i:s'),
+                'doctor' => $consultation->doctor,
+                'consent_form' => $consultation->consentForm ? [
+                    'id' => $consultation->consentForm->id,
+                    'student_nie' => $consultation->consentForm->student_nie,
+                    'responsible_id' => $consultation->consentForm->responsible_id,
+                    'type' => $consultation->consentForm->type,
+                    'granted_at' => $consultation->consentForm->granted_at->format('d/m/Y'),
+                    'file_path' => $consultation->consentForm->file_path,
+                    'observations' => $consultation->consentForm->observations,
+                    'responsible' => $consultation->consentForm->responsible,
+                ] : null,
+            ],
             'medical_record' => [
                 'id' => $medicalRecord->id,
                 'student_nie' => $medicalRecord->student_nie,

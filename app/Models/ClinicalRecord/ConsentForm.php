@@ -183,15 +183,23 @@ class ConsentForm extends Model
         ];
     }
 
+    /**
+     * Obtiene una URL protegida (ruta) para visualizar el archivo inline
+     */
+    public function getFileRouteUrl(): ?string
+    {
+        if (!$this->file_path) {
+            return null;
+        }
+        return route('clinical-records.medical-records.consent-forms.file', ['consent_form' => $this->id]);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['student_nie', 'responsible_id', 'professional_id', 'type', 'granted_at', 'file_path', 'change_justification'])
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
             ->useLogName('consent_form')
-            ->setDescriptionForEvent(fn(string $eventName) => "Consentimiento {$eventName}")
-            ->dontLogIfAttributesChangedOnly(['updated_at', 'observations']);
+            ->logAll()
+            ->logOnlyDirty();
     }
 
     /**
@@ -204,15 +212,15 @@ class ConsentForm extends Model
         $typeLabel = $this->type === self::TYPE_MEDICAL ? 'médico' : 'psicológico';
 
         $description = match ($eventName) {
-            'created' => "Consentimiento {$typeLabel} creado para {$studentName} por {$responsibleName}",
-            'updated' => "Consentimiento {$typeLabel} de {$studentName} actualizado",
-            'deleted' => "Consentimiento {$typeLabel} de {$studentName} eliminado",
-            default => "Consentimiento {$typeLabel} de {$studentName} {$eventName}",
+            'created' => "Se creó consentimiento {$typeLabel} para {$studentName} por {$responsibleName}",
+            'updated' => "Se actualizó consentimiento {$typeLabel} para {$studentName}",
+            'deleted' => "Se eliminó consentimiento {$typeLabel} para {$studentName}",
+            'restored' => "Se restauró consentimiento {$typeLabel} para {$studentName}",
+            default => "Operación '{$eventName}' sobre consentimiento {$typeLabel}",
         };
 
-        // Agregar justificación si existe
         if (!empty($this->change_justification)) {
-            $description .= " | Justificación: {$this->change_justification}";
+            $description .= ". Justificación: {$this->change_justification}";
         }
 
         return $description;

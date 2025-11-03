@@ -139,6 +139,7 @@ export default function CreateMedicalConsultation({ medical_record, student, is_
         }
 
         router.post(route('clinical-records.medical-records.consultations.store', medical_record.id), submitData, {
+            forceFormData: true,
             onSuccess: () => {
                 toast.success('Consulta médica registrada exitosamente');
             },
@@ -258,4 +259,3 @@ export default function CreateMedicalConsultation({ medical_record, student, is_
         </AppLayout>
     );
 }
-

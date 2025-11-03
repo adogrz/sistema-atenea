@@ -2,7 +2,6 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatBytes } from '@/hooks/use-file-upload';
 import { CreateMedicalRecordData } from '@/types/clinical-records';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -18,6 +17,14 @@ interface ReviewSectionProps {
 }
 
 export function ReviewSection({ data, studentName, responsableName, onBack, onSubmit, isSubmitting = false }: ReviewSectionProps) {
+    const openLocalConsentPreview = () => {
+        const file = data.consent?.file;
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank', 'noopener');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+    };
+
     return (
         <div className="space-y-8">
             {/* Información del estudiante */}
@@ -104,9 +111,19 @@ export function ReviewSection({ data, studentName, responsableName, onBack, onSu
                                 <span className="text-sm text-muted-foreground">Tipo:</span>
                                 <Badge>Consentimiento Existente</Badge>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex items-center justify-between">
                                 <span className="text-sm text-muted-foreground">ID:</span>
-                                <span className="text-sm font-medium">#{data.consent_form_id}</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-medium">#{data.consent_form_id}</span>
+                                    <a
+                                        href={route('clinical-records.medical-records.consent-forms.file', data.consent_form_id)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-primary underline"
+                                    >
+                                        Ver documento
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     ) : data.consent ? (
@@ -131,12 +148,10 @@ export function ReviewSection({ data, studentName, responsableName, onBack, onSu
 
                             <div>
                                 <label className="text-sm font-medium">Documento</label>
-                                <div className="mt-2 flex items-center gap-3 rounded-md border p-3">
-                                    <FileText className="h-5 w-5 text-muted-foreground" />
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-medium">{data.consent.file.name}</p>
-                                        <p className="text-xs text-muted-foreground">{formatBytes(data.consent.file.size)}</p>
-                                    </div>
+                                <div className="mt-1">
+                                    <button type="button" onClick={openLocalConsentPreview} className="text-sm text-primary underline">
+                                        Ver documento
+                                    </button>
                                 </div>
                             </div>
 
