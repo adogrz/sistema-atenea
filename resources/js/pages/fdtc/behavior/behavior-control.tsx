@@ -11,6 +11,14 @@ type Participante = {
   codigo: string;
   nombre: string;
   centro_educativo: string;
+  nivel_educativo?: string;
+  estudiante?: {
+    nivel_educativo?: string;
+    nivelEducativo?: {
+      nombre?: string;
+      nivel?: string;
+    };
+  };
   conducta?: {
     id: number;
     calificacion: 'excelente' | 'buena' | 'regular' | 'mala';
@@ -32,19 +40,52 @@ export default function BehaviorControl(props: PageProps) {
 
   const [periodoId, setPeriodoId] = useState<string>(props.periodoSeleccionado ? String(props.periodoSeleccionado) : '');
   const [q, setQ] = useState<string>('');
+  const [nivel, setNivel] = useState<string>('');
   const [conductas, setConductas] = useState<Record<number, { calificacion: string; descripcion: string }>>({});
   const [guardando, setGuardando] = useState(false);
 
   const participantesFiltrados = useMemo(() => {
     const query = toText(q).trim().toLowerCase();
-    if (!query) return listaParticipantes;
-    return listaParticipantes.filter(
-      (p) =>
-        toText(p.nombre).toLowerCase().includes(query) ||
-        toText(p.codigo).toLowerCase().includes(query) ||
-        toText(p.centro_educativo).toLowerCase().includes(query)
-    );
-  }, [listaParticipantes, q]);
+    const nivelFilter = toText(nivel).trim();
+    
+    let resultado = listaParticipantes;
+    
+    if (query) {
+      resultado = resultado.filter(
+        (p) =>
+          toText(p.nombre).toLowerCase().includes(query) ||
+          toText(p.codigo).toLowerCase().includes(query) ||
+          toText(p.centro_educativo).toLowerCase().includes(query)
+      );
+    }
+    
+    if (nivelFilter) {
+      resultado = resultado.filter((p) => {
+        const nivelParticipante = p.nivel_educativo || 
+          p.estudiante?.nivel_educativo || 
+          p.estudiante?.nivelEducativo?.nivel || 
+          p.estudiante?.nivelEducativo?.nombre || 
+          '';
+        return toText(nivelParticipante).toLowerCase().includes(nivelFilter.toLowerCase());
+      });
+    }
+    
+    return resultado;
+  }, [listaParticipantes, q, nivel]);
+
+  const niveles = useMemo(() => {
+    const nivelesUnicos = new Set<string>();
+    listaParticipantes.forEach((p) => {
+      const nivelParticipante = p.nivel_educativo || 
+        p.estudiante?.nivel_educativo || 
+        p.estudiante?.nivelEducativo?.nivel || 
+        p.estudiante?.nivelEducativo?.nombre || 
+        '';
+      const nivelStr = toText(nivelParticipante).trim();
+      if (nivelStr) nivelesUnicos.add(nivelStr);
+    });
+    return Array.from(nivelesUnicos).sort((a, b) => a.localeCompare(b));
+  }, [listaParticipantes]);
 
   const handleChangePeriodo = (newPeriodoId: string) => {
     setPeriodoId(newPeriodoId);
@@ -141,7 +182,7 @@ export default function BehaviorControl(props: PageProps) {
             <CardDescription>Selecciona el periodo y busca participantes</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-3">
               <div>
                 <label htmlFor="periodo" className="block text-sm mb-1">Periodo</label>
                 <select
@@ -153,6 +194,20 @@ export default function BehaviorControl(props: PageProps) {
                   <option value="">Selecciona un periodo</option>
                   {listaPeriodos.map((p) => (
                     <option key={p.id} value={p.id}>{p.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="nivel" className="block text-sm mb-1">Nivel Educativo</label>
+                <select
+                  id="nivel"
+                  value={nivel}
+                  onChange={(e) => setNivel(e.target.value)}
+                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                >
+                  <option value="">Todos los niveles</option>
+                  {niveles.map((n) => (
+                    <option key={n} value={n}>{n}</option>
                   ))}
                 </select>
               </div>

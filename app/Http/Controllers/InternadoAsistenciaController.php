@@ -172,7 +172,7 @@ class InternadoAsistenciaController extends Controller
                 ->get();
 
             $participantes = InternadoParticipante::query()
-                ->with(['estudiante:id,codigo,nivel_educativo,user_id','estudiante.user:id,name'])
+                ->with(['estudiante:id,codigo,nivel_educativo,primer_nombre,segundo_nombre,primer_apellido,segundo_apellido,user_id','estudiante.user:id,name'])
                 ->whereIn('id', $rows->pluck('participante_id')->all())
                 ->get()
                 ->keyBy('id');
@@ -186,13 +186,19 @@ class InternadoAsistenciaController extends Controller
 
                 if ($nivel && strcasecmp($nivelEdu ?? '', $nivel) !== 0) continue;
 
-                $nombre = trim($p->nombre ?? $est->user->name ?? '');
+                $nombre = trim(
+                    ($est->primer_nombre ?? '') . ' ' .
+                    ($est->segundo_nombre ?? '') . ' ' .
+                    ($est->primer_apellido ?? '') . ' ' .
+                    ($est->segundo_apellido ?? '')
+                );
+                $nombre = $nombre ?: ($est->user->name ?? 'Sin nombre');
                 $codigo = $est->codigo ?? '';
 
                 $filas[] = [
                     'participante_id' => $p->id,
                     'codigo'          => $codigo,
-                    'nombre'          => $nombre ?: 'Sin nombre',
+                    'nombre'          => $nombre,
                     'nivel_educativo' => $nivelEdu,
                     'presentes'       => (int) $r->presentes,
                     'ausentes'        => (int) $r->ausentes,

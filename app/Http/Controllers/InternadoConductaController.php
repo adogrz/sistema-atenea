@@ -52,6 +52,7 @@ class InternadoConductaController extends Controller
                     'codigo' => $estudiante->codigo,
                     'nombre' => $nombreCompleto ?: $estudiante->user->name ?? 'N/A',
                     'centro_educativo' => $estudiante->centroEducativo->nombre ?? 'N/A',
+                    'nivel_educativo' => $estudiante->nivel_educativo ?? 'N/A',
                     'conducta' => $conducta ? [
                         'id' => $conducta->id,
                         'calificacion' => $conducta->calificacion,
