@@ -31,21 +31,20 @@ export default function ShowPsychologicalRecord({ psychologicalRecord, permissio
 
     // Breadcrumbs dinámicos según el origen
     const breadcrumbs: BreadcrumbItem[] = useMemo(() => {
-        const base = [
-            { title: 'Inicio', href: '/dashboard' },
-            { title: 'Expediente Clínico', href: '/dashboard/clinical-records' },
-        ];
-
         if (source === 'psychological-records') {
             return [
-                ...base,
+                { title: 'Inicio', href: '/dashboard' },
                 { title: 'Expedientes Psicológicos', href: '/dashboard/clinical-records/psychological-records' },
                 { title: 'Detalle', href: '#' },
             ];
         }
 
         // Por defecto desde assignments
-        return [...base, { title: 'Asignaciones', href: '/dashboard/clinical-records/assignments' }, { title: 'Expediente Psicológico', href: '#' }];
+        return [
+            { title: 'Inicio', href: '/dashboard' },
+            { title: 'Mis Estudiantes', href: '/dashboard/clinical-records/assignments' },
+            { title: 'Expediente Psicológico', href: '#' },
+        ];
     }, [source]);
 
     const student = psychologicalRecord.student;

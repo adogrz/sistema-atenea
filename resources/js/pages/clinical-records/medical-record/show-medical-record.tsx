@@ -31,17 +31,20 @@ export default function ShowMedicalRecord({ medicalRecord, permissions, source =
 
     // Breadcrumbs dinámicos según el origen
     const breadcrumbs: BreadcrumbItem[] = useMemo(() => {
-        const base = [
-            { title: 'Inicio', href: '/dashboard' },
-            { title: 'Expediente Clínico', href: '/dashboard/clinical-records' },
-        ];
-
         if (source === 'medical-records') {
-            return [...base, { title: 'Expedientes Médicos', href: '/dashboard/clinical-records/medical-records' }, { title: 'Detalle', href: '#' }];
+            return [
+                { title: 'Inicio', href: '/dashboard' },
+                { title: 'Expedientes Médicos', href: '/dashboard/clinical-records/medical-records' },
+                { title: 'Detalle', href: '#' },
+            ];
         }
 
         // Por defecto desde assignments
-        return [...base, { title: 'Asignaciones', href: '/dashboard/clinical-records/assignments' }, { title: 'Expediente Médico', href: '#' }];
+        return [
+            { title: 'Inicio', href: '/dashboard' },
+            { title: 'Mis Estudiantes', href: '/dashboard/clinical-records/assignments' },
+            { title: 'Expediente Médico', href: '#' },
+        ];
     }, [source]);
 
     const student = medicalRecord.student;

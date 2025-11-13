@@ -13,7 +13,6 @@ import { toast } from 'sonner';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
-    { title: 'Expediente Clínico', href: '/dashboard/clinical-records' },
     { title: 'Expedientes Psicológicos', href: '/dashboard/clinical-records/psychological-records' },
 ];
 

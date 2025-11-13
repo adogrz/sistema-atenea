@@ -12,6 +12,7 @@ import {
     CalendarDays,
     ClipboardListIcon,
     Clock,
+    FileHeart,
     GraduationCap,
     GraduationCapIcon,
     HouseIcon,
@@ -46,22 +47,44 @@ export function AppSidebar() {
     function buildClinicalRecordsNav(): NavItem[] {
         if (!hasPermission('clinical-records:view-module')) return [];
 
-        const canManage = hasPermission('assignments:manage-medical') || hasPermission('assignments:manage-psychological');
-        const isMedical = hasPermission('assignments:view-medical');
+        const canManageMedical = hasPermission('assignments:manage-medical');
+        const canManagePsychological = hasPermission('assignments:manage-psychological');
 
-        return [
-            {
-                title: isMedical ? 'Expedientes Medicos' : 'Expe. Psicológicos',
-                icon: isMedical ? Stethoscope : Brain,
-                items: [
-                    {
-                        icon: Users,
-                        href: '/dashboard/clinical-records/assignments',
-                        title: canManage ? 'Asignaciones' : 'Mis Estudiantes',
-                    },
-                ],
-            },
-        ];
+        const items: NavItem[] = [];
+
+        // Para jefes: mostrar todos los expedientes
+        if (canManageMedical) {
+            items.push({
+                icon: Stethoscope,
+                href: '/dashboard/clinical-records/medical-records',
+                title: 'Expedientes Médicos',
+            });
+        }
+
+        if (canManagePsychological) {
+            items.push({
+                icon: Brain,
+                href: '/dashboard/clinical-records/psychological-records',
+                title: 'Expedientes Psicológicos',
+            });
+        }
+
+        // Asignaciones (visible para todos)
+        items.push({
+            icon: Users,
+            href: '/dashboard/clinical-records/assignments',
+            title: canManageMedical || canManagePsychological ? 'Asignaciones' : 'Mis Estudiantes',
+        });
+
+        return items.length > 0
+            ? [
+                  {
+                      title: 'Expediente Clínico',
+                      icon: FileHeart,
+                      items,
+                  },
+              ]
+            : [];
     }
 
     function buildAdministrationNav(): NavItem[] {

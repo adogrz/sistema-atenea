@@ -15,7 +15,6 @@ import { toast } from 'sonner';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
-    { title: 'Expediente Clinico', href: '/dashboard/clinical-records' },
     { title: 'Asignaciones', href: '/dashboard/clinical-records/assignments' },
 ];
 
