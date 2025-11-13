@@ -120,7 +120,7 @@ export function SessionReviewSection({
                         <CardDescription>Información del consentimiento</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {consentData.consent_form_id && consentData.existing_consent_info ? (
+                        {consentData.consent_form_id ? (
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
                                     <FileText className="h-5 w-5 text-primary" />
@@ -129,35 +129,29 @@ export function SessionReviewSection({
                                             <p className="text-sm font-medium">Consentimiento existente seleccionado</p>
                                             <Badge variant="secondary">Existente</Badge>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            Otorgado: {formatDate(consentData.existing_consent_info.granted_at)}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Responsable: {consentData.existing_consent_info.responsible_name}
-                                        </p>
+                                        {consentData.existing_consent_info ? (
+                                            <>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Otorgado: {formatDate(consentData.existing_consent_info.granted_at)}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Responsable: {consentData.existing_consent_info.responsible_name}
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground">ID: {consentData.consent_form_id}</p>
+                                        )}
                                     </div>
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={() =>
-                                        window.open(`/dashboard/clinical-records/consent-forms/${consentData.consent_form_id}/file`, '_blank')
-                                    }
+                                <a
+                                    href={`/dashboard/clinical-records/consent-forms/${consentData.consent_form_id}/file`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex h-9 w-full items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                 >
                                     <FileText className="mr-2 h-4 w-4" />
                                     Ver documento
-                                </Button>
-                            </div>
-                        ) : consentData.consent_form_id ? (
-                            <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
-                                <FileText className="h-5 w-5 text-primary" />
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium">Consentimiento existente seleccionado</p>
-                                    <p className="text-sm text-muted-foreground">ID: {consentData.consent_form_id}</p>
-                                </div>
-                                <Badge variant="secondary">Existente</Badge>
+                                </a>
                             </div>
                         ) : consentData.consent ? (
                             <div className="space-y-3">
@@ -192,6 +186,18 @@ export function SessionReviewSection({
                                         </div>
                                     </>
                                 )}
+
+                                <Separator />
+
+                                <a
+                                    href={URL.createObjectURL(consentData.consent.file)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex h-9 w-full items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                >
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Ver documento
+                                </a>
                             </div>
                         ) : null}
                     </CardContent>
