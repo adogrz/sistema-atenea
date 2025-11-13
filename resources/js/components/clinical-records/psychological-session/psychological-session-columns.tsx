@@ -17,6 +17,7 @@ import { es } from 'date-fns/locale';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import DeleteSessionDialog from './delete-session-dialog';
 
 /**
  * Formatea la fecha en formato legible
@@ -42,6 +43,7 @@ const truncateText = (text: string, maxLength: number = 60): string => {
  */
 function ActionsCell({ session }: { session: PsychologicalSessionWithRelations }) {
     const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const handleView = () => {
         router.get(
@@ -61,53 +63,54 @@ function ActionsCell({ session }: { session: PsychologicalSessionWithRelations }
         );
     };
 
-    const handleDelete = () => {
-        if (!confirm('¿Está seguro de que desea eliminar esta sesión psicológica?')) return;
+    const handleDeleteClick = () => {
+        setDeleteDialogOpen(true);
+    };
 
-        const justification = prompt('Ingrese la justificación para eliminar esta sesión:');
-        if (!justification || justification.trim().length < 10) {
-            toast.error('Debe proporcionar una justificación válida (mínimo 10 caracteres)');
-            return;
-        }
-
+    const handleConfirmDelete = async (data: { justification: string }) => {
         setIsDeleting(true);
         let sessionId: number | null = null;
 
-        router.delete(
-            route('clinical-records.psychological-records.sessions.destroy', {
-                psychological_record: session.psychological_record_id,
-                session: session.id,
-            }),
-            {
-                data: {
-                    justification: justification.trim(),
-                },
-                onSuccess: () => {
-                    sessionId = session.id;
+        return new Promise<void>((resolve, reject) => {
+            router.delete(
+                route('clinical-records.psychological-records.sessions.destroy', {
+                    psychological_record: session.psychological_record_id,
+                    session: session.id,
+                }),
+                {
+                    data: {
+                        justification: data.justification.trim(),
+                    },
+                    onSuccess: () => {
+                        sessionId = session.id;
+                        setDeleteDialogOpen(false);
 
-                    // Toast con botón de deshacer
-                    toast.success('Sesión psicológica eliminada exitosamente', {
-                        duration: 10000, // 10 segundos para deshacer
-                        action: {
-                            label: 'Deshacer',
-                            onClick: () => {
-                                if (sessionId) {
-                                    handleUndoDelete(sessionId, session.psychological_record_id);
-                                }
+                        // Toast con botón de deshacer
+                        toast.success('Sesión psicológica eliminada exitosamente', {
+                            duration: 10000, // 10 segundos para deshacer
+                            action: {
+                                label: 'Deshacer',
+                                onClick: () => {
+                                    if (sessionId) {
+                                        handleUndoDelete(sessionId, session.psychological_record_id);
+                                    }
+                                },
                             },
-                        },
-                    });
+                        });
+                        resolve();
+                    },
+                    onError: (errors: Record<string, string>) => {
+                        const firstError = Object.values(errors)[0];
+                        toast.error(firstError || 'No se pudo eliminar la sesión psicológica.');
+                        reject(new Error(firstError));
+                    },
+                    onFinish: () => {
+                        setIsDeleting(false);
+                    },
+                    preserveScroll: true,
                 },
-                onError: (errors: Record<string, string>) => {
-                    const firstError = Object.values(errors)[0];
-                    toast.error(firstError || 'No se pudo eliminar la sesión psicológica.');
-                },
-                onFinish: () => {
-                    setIsDeleting(false);
-                },
-                preserveScroll: true,
-            },
-        );
+            );
+        });
     };
 
     const handleUndoDelete = (sessionId: number, psychologicalRecordId: number) => {
@@ -130,32 +133,45 @@ function ActionsCell({ session }: { session: PsychologicalSessionWithRelations }
         );
     };
 
+    const sessionDateFormatted = format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy", { locale: es });
+
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="size-8 p-0" disabled={isDeleting}>
-                    <span className="sr-only">Abrir menú</span>
-                    <MoreHorizontal className="size-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleView} className="cursor-pointer">
-                    <Eye className="mr-2 size-4" />
-                    Ver Detalle
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
-                    <Pencil className="mr-2 size-4" />
-                    Editar
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleDelete} className="cursor-pointer text-destructive">
-                    <Trash2 className="mr-2 size-4" />
-                    Eliminar
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="size-8 p-0" disabled={isDeleting}>
+                        <span className="sr-only">Abrir menú</span>
+                        <MoreHorizontal className="size-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleView} className="cursor-pointer">
+                        <Eye className="mr-2 size-4" />
+                        Ver Detalle
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
+                        <Pencil className="mr-2 size-4" />
+                        Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleDeleteClick} className="cursor-pointer text-destructive">
+                        <Trash2 className="mr-2 size-4" />
+                        Eliminar
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DeleteSessionDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                sessionDate={sessionDateFormatted}
+                sessionContent={session.session_content}
+                onConfirm={handleConfirmDelete}
+                isSubmitting={isDeleting}
+            />
+        </>
     );
 }
 
