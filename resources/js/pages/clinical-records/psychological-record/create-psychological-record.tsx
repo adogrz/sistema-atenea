@@ -7,7 +7,7 @@ import InlineStepper from '@/components/ui/inline-stepper';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import {
-    CreateMedicalConsentData,
+    CreateConsentData,
     CreatePsychologicalRecordData,
     CreatePsychologicalSessionData,
     ResponsibleBasicInfo,
@@ -101,7 +101,7 @@ export default function CreatePsychologicalRecord({ student_nie, student, respon
     };
 
     // Handler para el paso 2: Consentimiento (solo si es menor)
-    const handleConsentNext = (data: { consent_form_id?: number; consent?: CreateMedicalConsentData }) => {
+    const handleConsentNext = (data: { consent_form_id?: number; consent?: CreateConsentData }) => {
         setFormData((prev) => ({
             ...prev,
             // Si hay consent_form_id, limpiar consent; si hay consent, limpiar consent_form_id
@@ -272,6 +272,7 @@ export default function CreatePsychologicalRecord({ student_nie, student, respon
                                             consent_form_id: formData.consent_form_id,
                                             consent: formData.consent,
                                         }}
+                                        consentType="psychological"
                                     />
                                 )}
 

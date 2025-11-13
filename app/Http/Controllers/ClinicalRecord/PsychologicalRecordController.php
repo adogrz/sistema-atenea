@@ -130,7 +130,7 @@ class PsychologicalRecordController extends Controller
         try {
             $psychologicalRecord = DB::transaction(function () use ($request, $isMinor) {
                 // Procesar el consentimiento informado si es necesario
-                $consentFormId = $this->processConsentForm($request, $request->student_nie, $isMinor);
+                $consentFormId = $this->processConsentForm($request, $request->student_nie, $isMinor, ConsentForm::TYPE_PSYCHOLOGICAL);
 
                 // Preparar datos validados con el consent_form_id
                 $validatedData = $request->validated();

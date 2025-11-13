@@ -8,7 +8,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { CreateMedicalConsentData, ResponsibleBasicInfo } from '@/types/clinical-records';
+import { CreateConsentData, ResponsibleBasicInfo } from '@/types/clinical-records';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { AlertCircle } from 'lucide-react';
@@ -58,16 +58,17 @@ type ConsentFormValues = z.infer<typeof consentFormSchema>;
 interface ConsentFormSelectorProps {
     responsables: ResponsibleBasicInfo[];
     existingConsents?: Array<{ id: number; granted_at: string; responsible_name: string }>;
-    onSubmit: (data: { consent_form_id?: number; consent?: CreateMedicalConsentData }) => void;
+    onSubmit: (data: { consent_form_id?: number; consent?: CreateConsentData }) => void;
     onCancel?: () => void;
     defaultValues?: {
         use_existing?: 'existing' | 'new';
         consent_form_id?: number;
-        consent?: Partial<CreateMedicalConsentData>;
+        consent?: Partial<CreateConsentData>;
     };
     submitLabel?: string;
     showCancel?: boolean;
     showAlert?: boolean;
+    consentType?: 'medical' | 'psychological';
 }
 
 /**
@@ -75,7 +76,8 @@ interface ConsentFormSelectorProps {
  * Se usa en:
  * - Creación de expediente médico
  * - Creación de consulta médica
- * - Edición de consulta médica
+ * - Creación de expediente psicológico
+ * - Creación de sesión psicológica
  */
 export function ConsentFormSelector({
     responsables,
@@ -86,6 +88,7 @@ export function ConsentFormSelector({
     submitLabel = 'Continuar',
     showCancel = true,
     showAlert = true,
+    consentType = 'medical',
 }: ConsentFormSelectorProps) {
     const form = useForm<ConsentFormValues>({
         resolver: zodResolver(consentFormSchema),
@@ -129,7 +132,7 @@ export function ConsentFormSelector({
             onSubmit({
                 consent: {
                     responsible_id: values.responsible_id!,
-                    type: 'medical',
+                    type: consentType,
                     granted_at: formattedDate,
                     file: values.file!,
                     observations: values.observations,

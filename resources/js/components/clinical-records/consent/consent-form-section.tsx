@@ -1,18 +1,19 @@
 'use client';
 
 import { ConsentFormSelector } from '@/components/clinical-records/consent/consent-form-selector';
-import { CreateMedicalConsentData, ResponsibleBasicInfo } from '@/types/clinical-records';
+import { CreateConsentData, ResponsibleBasicInfo } from '@/types/clinical-records';
 
 interface ConsentFormSectionProps {
     responsables: ResponsibleBasicInfo[];
     existingConsents?: Array<{ id: number; granted_at: string; responsible_name: string }>;
-    onNext: (data: { consent_form_id?: number; consent?: CreateMedicalConsentData }) => void;
+    onNext: (data: { consent_form_id?: number; consent?: CreateConsentData }) => void;
     onBack: () => void;
     defaultValues?: {
         use_existing?: 'existing' | 'new';
         consent_form_id?: number;
-        consent?: Partial<CreateMedicalConsentData>;
+        consent?: Partial<CreateConsentData>;
     };
+    consentType?: 'medical' | 'psychological';
 }
 
 /**
@@ -20,7 +21,14 @@ interface ConsentFormSectionProps {
  * Wrapper del componente ConsentFormSelector con props específicas del flujo multi-step.
  * Reutilizable en creación de expedientes y consultas.
  */
-export function ConsentFormSection({ responsables, existingConsents = [], onNext, onBack, defaultValues }: ConsentFormSectionProps) {
+export function ConsentFormSection({
+    responsables,
+    existingConsents = [],
+    onNext,
+    onBack,
+    defaultValues,
+    consentType = 'medical',
+}: ConsentFormSectionProps) {
     return (
         <ConsentFormSelector
             responsables={responsables}
@@ -31,7 +39,7 @@ export function ConsentFormSection({ responsables, existingConsents = [], onNext
             submitLabel="Siguiente"
             showCancel={true}
             showAlert={true}
+            consentType={consentType}
         />
     );
 }
-

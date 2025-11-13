@@ -1,4 +1,4 @@
-import { ProfessionalBasicInfo, StudentBasicInfo, Timestamps } from './shared';
+import { ProfessionalBasicInfo, StudentBasicInfo, Timestamps, CreateConsentData } from './shared';
 import { ConsentFormWithRelations } from './medical-record';
 
 /**
@@ -77,7 +77,7 @@ export interface CreatePsychologicalRecordData {
     // Consentimiento existente
     consent_form_id?: number;
     // O crear nuevo consentimiento
-    consent?: CreatePsychologicalConsentData;
+    consent?: CreateConsentData;
     // Sesión inicial (obligatoria)
     session: {
         session_date: string;
@@ -114,7 +114,7 @@ export interface CreatePsychologicalSessionFullData extends CreatePsychologicalS
     // Consentimiento existente
     consent_form_id?: number;
     // O crear nuevo consentimiento
-    consent?: CreatePsychologicalConsentData;
+    consent?: CreateConsentData;
 }
 
 /**

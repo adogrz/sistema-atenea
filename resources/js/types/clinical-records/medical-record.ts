@@ -1,4 +1,4 @@
-import { ProfessionalBasicInfo, StudentBasicInfo, Timestamps } from './shared';
+import { ProfessionalBasicInfo, StudentBasicInfo, Timestamps, CreateConsentData } from './shared';
 
 /**
  * Modelo de Expediente Médico
@@ -113,9 +113,11 @@ export interface CreateMedicalRecordData {
         treatment?: string;
         observations?: string;
     };
-    consent?: CreateMedicalConsentData;
-    consent_form_id?: number;
     is_minor: boolean;
+    // Consentimiento existente
+    consent_form_id?: number;
+    // O crear nuevo consentimiento
+    consent?: CreateConsentData;
 }
 
 /**

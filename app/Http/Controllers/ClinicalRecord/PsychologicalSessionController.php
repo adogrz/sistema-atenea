@@ -7,6 +7,7 @@ use App\Http\Controllers\ClinicalRecord\Concerns\HandlesConsentForms;
 use App\Http\Controllers\ClinicalRecord\Concerns\HandlesStudentData;
 use App\Http\Requests\ClinicalRecord\StorePsychologicalSessionRequest;
 use App\Http\Requests\ClinicalRecord\UpdatePsychologicalSessionRequest;
+use App\Models\ClinicalRecord\ConsentForm;
 use App\Models\ClinicalRecord\PsychologicalRecord;
 use App\Models\ClinicalRecord\PsychologicalSession;
 use App\Services\ClinicalRecord\ConsentFormCreator;
@@ -34,8 +35,8 @@ class PsychologicalSessionController extends Controller
         // Cargar relaciones necesarias del expediente
         $psychologicalRecord->load('student');
 
-        // Preparar datos del estudiante usando el trait
-        $studentData = $this->prepareStudentData($psychologicalRecord->student_nie);
+        // Preparar datos del estudiante usando el trait con filtro de tipo psicológico
+        $studentData = $this->prepareStudentData($psychologicalRecord->student_nie, ConsentForm::TYPE_PSYCHOLOGICAL);
 
         return Inertia::render('clinical-records/psychological-session/create-psychological-session', [
             'psychological_record' => [
@@ -64,7 +65,7 @@ class PsychologicalSessionController extends Controller
         try {
             // Determinar si el estudiante es menor y procesar consentimiento
             $isMinor = $request->input('is_minor', false);
-            $consentFormId = $this->processConsentForm($request, $psychologicalRecord->student_nie, $isMinor);
+            $consentFormId = $this->processConsentForm($request, $psychologicalRecord->student_nie, $isMinor, ConsentForm::TYPE_PSYCHOLOGICAL);
 
             // Crear la sesión psicológica
             $psychologicalSession = PsychologicalSession::create([
@@ -73,8 +74,8 @@ class PsychologicalSessionController extends Controller
                 'consent_form_id' => $consentFormId,
                 'session_date' => $request->input('session_date'),
                 'session_content' => $request->input('session_content'),
-                'test_results' => $request->input('test_results'),
-                'observations' => $request->input('observations'),
+                'interventions' => $request->input('interventions'),
+                'conclusions' => $request->input('conclusions'),
             ]);
 
             DB::commit();
@@ -123,8 +124,8 @@ class PsychologicalSessionController extends Controller
                 'consent_form_id' => $session->consent_form_id,
                 'session_date' => $session->session_date->format('d/m/Y'),
                 'session_content' => $session->session_content,
-                'test_results' => $session->test_results,
-                'observations' => $session->observations,
+                'interventions' => $session->interventions,
+                'conclusions' => $session->conclusions,
                 'change_justification' => $session->change_justification,
                 'created_at' => $session->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $session->updated_at->format('Y-m-d H:i:s'),
@@ -171,36 +172,30 @@ class PsychologicalSessionController extends Controller
         // Cargar relaciones necesarias
         $session->load([
             'psychologist',
-            'consentForm.responsible',
+            'psychologicalRecord.student',
         ]);
-
-        $psychologicalRecord->load('student');
-
-        // Preparar datos del estudiante usando el trait
-        $studentData = $this->prepareStudentData($psychologicalRecord->student_nie);
 
         return Inertia::render('clinical-records/psychological-session/edit-psychological-session', [
             'session' => [
                 'id' => $session->id,
                 'psychological_record_id' => $session->psychological_record_id,
-                'psychologist_id' => $session->psychologist_id,
-                'psychologist_name' => $session->psychologist->name,
-                'consent_form_id' => $session->consent_form_id,
-                'session_date' => $session->session_date->format('Y-m-d\TH:i'),
+                'session_date' => $session->session_date->format('Y-m-d'),
                 'session_content' => $session->session_content,
-                'test_results' => $session->test_results,
-                'observations' => $session->observations,
+                'interventions' => $session->interventions,
+                'conclusions' => $session->conclusions,
                 'created_at' => $session->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $session->updated_at->format('Y-m-d H:i:s'),
-            ],
-            'psychological_record' => [
-                'id' => $psychologicalRecord->id,
-                'student_nie' => $psychologicalRecord->student_nie,
-                'created_at' => $psychologicalRecord->created_at->format('Y-m-d'),
-            ],
-            'student' => $studentData['student'],
-            'permissions' => [
-                'canUpdate' => $request->user()->can('update', $session),
+                'psychological_record' => [
+                    'id' => $session->psychologicalRecord->id,
+                    'student_nie' => $session->psychologicalRecord->student_nie,
+                    'student' => [
+                        'nie' => $session->psychologicalRecord->student->nie,
+                        'primer_nombre' => $session->psychologicalRecord->student->primer_nombre,
+                        'segundo_nombre' => $session->psychologicalRecord->student->segundo_nombre,
+                        'primer_apellido' => $session->psychologicalRecord->student->primer_apellido,
+                        'segundo_apellido' => $session->psychologicalRecord->student->segundo_apellido,
+                    ],
+                ],
             ],
         ]);
     }
@@ -226,8 +221,8 @@ class PsychologicalSessionController extends Controller
             $session->update([
                 'session_date' => $request->input('session_date'),
                 'session_content' => $request->input('session_content'),
-                'test_results' => $request->input('test_results'),
-                'observations' => $request->input('observations'),
+                'interventions' => $request->input('interventions'),
+                'conclusions' => $request->input('conclusions'),
                 'change_justification' => $request->input('change_justification'),
             ]);
 

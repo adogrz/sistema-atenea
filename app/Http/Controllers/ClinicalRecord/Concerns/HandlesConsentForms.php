@@ -17,10 +17,11 @@ trait HandlesConsentForms
      * @param Request $request
      * @param string $studentNie
      * @param bool $isMinor
+     * @param string $type Tipo de consentimiento ('medical' o 'psychological')
      * @return int|null
      * @throws Exception
      */
-    protected function processConsentForm(Request $request, string $studentNie, bool $isMinor): ?int
+    protected function processConsentForm(Request $request, string $studentNie, bool $isMinor, string $type = 'medical'): ?int
     {
         // Si no es menor, no se requiere consentimiento
         if (!$isMinor) {
@@ -34,7 +35,7 @@ trait HandlesConsentForms
             // Verificar que el consentimiento existe y pertenece al estudiante
             $consentForm = ConsentForm::where('id', $consentFormId)
                 ->where('student_nie', $studentNie)
-                ->where('type', 'medical')
+                ->where('type', $type)
                 ->firstOrFail();
 
             return $consentForm->id;

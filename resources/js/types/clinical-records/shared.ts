@@ -40,3 +40,14 @@ export interface Timestamps {
     updated_at: string;
     deleted_at?: string | null;
 }
+
+/**
+ * Datos base para crear un consentimiento informado (genérico)
+ */
+export interface CreateConsentData {
+    responsible_id: number;
+    type: 'medical' | 'psychological';
+    granted_at: string;
+    file: File;
+    observations?: string;
+}

@@ -7,6 +7,7 @@ use App\Http\Controllers\ClinicalRecord\Concerns\HandlesConsentForms;
 use App\Http\Controllers\ClinicalRecord\Concerns\HandlesStudentData;
 use App\Http\Requests\ClinicalRecord\StoreMedicalConsultationRequest;
 use App\Http\Requests\ClinicalRecord\UpdateMedicalConsultationRequest;
+use App\Models\ClinicalRecord\ConsentForm;
 use App\Models\ClinicalRecord\MedicalConsultation;
 use App\Models\ClinicalRecord\MedicalRecord;
 use App\Services\ClinicalRecord\ConsentFormCreator;
@@ -64,7 +65,7 @@ class MedicalConsultationController extends Controller
         try {
             // Determinar si el estudiante es menor y procesar consentimiento
             $isMinor = $request->input('is_minor', false);
-            $consentFormId = $this->processConsentForm($request, $medicalRecord->student_nie, $isMinor);
+            $consentFormId = $this->processConsentForm($request, $medicalRecord->student_nie, $isMinor, ConsentForm::TYPE_MEDICAL);
 
             // Crear la consulta médica
             $medicalConsultation = MedicalConsultation::create([
