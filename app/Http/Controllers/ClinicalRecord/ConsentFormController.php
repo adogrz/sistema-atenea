@@ -4,7 +4,6 @@ namespace App\Http\Controllers\ClinicalRecord;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClinicalRecord\ConsentForm;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 
 class ConsentFormController extends Controller

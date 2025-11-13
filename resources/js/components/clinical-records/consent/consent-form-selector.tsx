@@ -341,7 +341,7 @@ export function ConsentFormSelector({
                                             <FormControl>
                                                 <Textarea
                                                     placeholder="Notas adicionales sobre el consentimiento..."
-                                                    className="min-h-[80px] resize-none"
+                                                    className="min-h-20 resize-none"
                                                     {...field}
                                                 />
                                             </FormControl>
