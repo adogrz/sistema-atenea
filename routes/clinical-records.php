@@ -5,6 +5,7 @@ use App\Http\Controllers\ClinicalRecord\AssignmentController;
 use App\Http\Controllers\ClinicalRecord\MedicalConsultationController;
 use App\Http\Controllers\ClinicalRecord\MedicalRecordController;
 use App\Http\Controllers\ClinicalRecord\PsychologicalRecordController;
+use App\Http\Controllers\ClinicalRecord\PsychologicalSessionController;
 use App\Http\Controllers\ClinicalRecord\ConsentFormController;
 
 /**
@@ -141,9 +142,31 @@ Route::middleware(['auth', 'verified', 'check.status'])
             Route::delete('/{psychological_record}', [PsychologicalRecordController::class, 'destroy'])
                 ->name('destroy');
 
-            // TODO: Rutas anidadas para Sesiones Psicológicas dentro de un Expediente
-            // Route::prefix('{psychological_record}/sessions')->name('sessions.')->group(function () {
-            //     ...
-            // });
+            // Rutas anidadas para Sesiones Psicológicas dentro de un Expediente
+            Route::prefix('{psychological_record}/sessions')->name('sessions.')->group(function () {
+                Route::get('/create', [PsychologicalSessionController::class, 'create'])
+                    ->name('create');
+
+                Route::post('/', [PsychologicalSessionController::class, 'store'])
+                    ->name('store');
+
+                Route::get('/{session}', [PsychologicalSessionController::class, 'show'])
+                    ->name('show');
+
+                Route::get('/{session}/edit', [PsychologicalSessionController::class, 'edit'])
+                    ->name('edit');
+
+                Route::put('/{session}', [PsychologicalSessionController::class, 'update'])
+                    ->name('update');
+
+                Route::patch('/{session}', [PsychologicalSessionController::class, 'update'])
+                    ->name('patch');
+
+                Route::delete('/{session}', [PsychologicalSessionController::class, 'destroy'])
+                    ->name('destroy');
+
+                Route::post('/{session}/restore', [PsychologicalSessionController::class, 'restore'])
+                    ->name('restore');
+            });
         });
     });

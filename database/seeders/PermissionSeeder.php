@@ -87,6 +87,7 @@ class PermissionSeeder extends Seeder
                 'psychological-sessions:create',
                 'psychological-sessions:edit-own',
                 'psychological-sessions:delete-own',
+                'psychological-sessions:delete', // Jefe puede eliminar cualquier sesión
                 'psychological-sessions:generate-report',
             ],
             'consent-forms' => [
@@ -224,8 +225,9 @@ class PermissionSeeder extends Seeder
                 ],
                 'inherits' => [],
                 'exclude_permissions' => [
-                    // Por seguridad no puede borrar sesiones por defecto
-                    'psychological-sessions:delete-own'
+                    // Por seguridad no puede borrar sesiones por defecto (ni propias ni de otros)
+                    'psychological-sessions:delete-own',
+                    'psychological-sessions:delete'
                 ]
             ],
             'jefe-psicologia' => [
@@ -239,6 +241,7 @@ class PermissionSeeder extends Seeder
                     'psychological-records:view-all', // Puede ver todos los expedientes
                     'psychological-records:edit',     // Puede editar la info general de cualquier expediente
                     'psychological-sessions:delete-own', // Anula la exclusión heredada
+                    'psychological-sessions:delete',     // Puede borrar cualquier sesión (no solo las propias)
                     'consent-forms:manage',           // Puede gestionar los documentos adjuntos
                     'audit:psychological-view'
                 ],
