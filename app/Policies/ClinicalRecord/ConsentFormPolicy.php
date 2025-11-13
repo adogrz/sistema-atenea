@@ -26,8 +26,8 @@ class ConsentFormPolicy
             return false;
         }
 
-        // Si el usuario puede ver todos, permitir
-        if ($user->can('medical-records:view-all')) {
+        // Si el usuario puede ver todos los expedientes (médicos o psicológicos)
+        if ($user->can('medical-records:view-all') || $user->can('psychological-records:view-all')) {
             return true;
         }
 

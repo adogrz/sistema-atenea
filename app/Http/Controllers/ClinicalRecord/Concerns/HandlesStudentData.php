@@ -10,16 +10,19 @@ trait HandlesStudentData
      * Obtiene y prepara los datos del estudiante para el frontend.
      *
      * @param string $studentNie
+     * @param string|null $consentType Tipo de consentimiento a filtrar ('medical', 'psychological', o null para todos)
      * @return array
      */
-    protected function prepareStudentData(string $studentNie): array
+    protected function prepareStudentData(string $studentNie, ?string $consentType = null): array
     {
         $student = Estudiante::with([
             'responsable',
             'responsables',
-            'consentForms' => function ($query) {
-                $query->where('type', 'medical')
-                    ->orderBy('granted_at', 'desc');
+            'consentForms' => function ($query) use ($consentType) {
+                if ($consentType) {
+                    $query->where('type', $consentType);
+                }
+                $query->orderBy('granted_at', 'desc');
             }
         ])
             ->where('nie', $studentNie)

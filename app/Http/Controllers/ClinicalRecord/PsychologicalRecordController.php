@@ -99,7 +99,7 @@ class PsychologicalRecordController extends Controller
         }
 
         // Preparar datos del estudiante usando el trait
-        $studentData = $this->prepareStudentData($studentNie);
+        $studentData = $this->prepareStudentData($studentNie, ConsentForm::TYPE_PSYCHOLOGICAL);
 
         return Inertia::render('clinical-records/psychological-record/create-psychological-record', [
             'student_nie' => $studentNie,

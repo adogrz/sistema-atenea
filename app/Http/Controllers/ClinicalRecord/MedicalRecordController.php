@@ -99,7 +99,7 @@ class MedicalRecordController extends Controller
         }
 
         // Preparar datos del estudiante usando el trait
-        $studentData = $this->prepareStudentData($studentNie);
+        $studentData = $this->prepareStudentData($studentNie, ConsentForm::TYPE_MEDICAL);
 
         return Inertia::render('clinical-records/medical-record/create-medical-record', [
             'student_nie' => $studentNie,
