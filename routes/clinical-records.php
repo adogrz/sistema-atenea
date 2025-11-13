@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClinicalRecord\AssignmentController;
 use App\Http\Controllers\ClinicalRecord\MedicalConsultationController;
 use App\Http\Controllers\ClinicalRecord\MedicalRecordController;
+use App\Http\Controllers\ClinicalRecord\PsychologicalRecordController;
 use App\Http\Controllers\ClinicalRecord\ConsentFormController;
 
 /**
@@ -112,5 +113,37 @@ Route::middleware(['auth', 'verified', 'check.status'])
                 Route::post('/{consultation}/restore', [MedicalConsultationController::class, 'restore'])
                     ->name('restore');
             });
+        });
+
+        // Rutas de Expedientes Psicológicos (Psychological Records)
+        Route::prefix('psychological-records')->name('psychological-records.')->group(function () {
+            Route::get('/', [PsychologicalRecordController::class, 'index'])
+                ->name('index');
+
+            Route::get('/create', [PsychologicalRecordController::class, 'create'])
+                ->name('create');
+
+            Route::post('/', [PsychologicalRecordController::class, 'store'])
+                ->name('store');
+
+            Route::get('/{psychological_record}', [PsychologicalRecordController::class, 'show'])
+                ->name('show');
+
+            Route::get('/{psychological_record}/edit', [PsychologicalRecordController::class, 'edit'])
+                ->name('edit');
+
+            Route::put('/{psychological_record}', [PsychologicalRecordController::class, 'update'])
+                ->name('update');
+
+            Route::patch('/{psychological_record}', [PsychologicalRecordController::class, 'update'])
+                ->name('patch');
+
+            Route::delete('/{psychological_record}', [PsychologicalRecordController::class, 'destroy'])
+                ->name('destroy');
+
+            // TODO: Rutas anidadas para Sesiones Psicológicas dentro de un Expediente
+            // Route::prefix('{psychological_record}/sessions')->name('sessions.')->group(function () {
+            //     ...
+            // });
         });
     });

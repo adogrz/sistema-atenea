@@ -114,7 +114,7 @@ class PsychologicalRecord extends Model
     /**
      * Configuración para el registro de actividades
      */
-    public function getActivitylogOptions()
+    public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
         ->logOnly(['student_nie', 'initial_assessment', 'change_justification'])
