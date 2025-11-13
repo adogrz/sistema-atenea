@@ -10,3 +10,6 @@ export * from './assignment';
 
 // Expedientes Médicos
 export * from './medical-record';
+
+// Expedientes Psicológicos
+export * from './psychological-record';
