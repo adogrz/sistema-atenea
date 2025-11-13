@@ -41,9 +41,10 @@ export interface PsychologicalSession extends Timestamps {
     consent_form_id?: number;
     session_date: string;
     session_content: string;
-    test_results?: string;
-    observations?: string;
+    interventions?: string;
+    conclusions?: string;
     change_justification?: string;
+    deleted_at?: string;
 }
 
 /**
@@ -81,8 +82,8 @@ export interface CreatePsychologicalRecordData {
     session: {
         session_date: string;
         session_content: string;
-        test_results?: string;
-        observations?: string;
+        interventions?: string;
+        conclusions?: string;
     };
 }
 
@@ -98,11 +99,17 @@ export interface UpdatePsychologicalRecordData {
  * Datos para crear una sesión psicológica
  */
 export interface CreatePsychologicalSessionData {
-    psychological_record_id: number;
     session_date: string;
     session_content: string;
-    test_results?: string;
-    observations?: string;
+    interventions?: string;
+    conclusions?: string;
+}
+
+/**
+ * Datos completos para crear una sesión psicológica (con consent)
+ */
+export interface CreatePsychologicalSessionFullData extends CreatePsychologicalSessionData {
+    psychological_record_id: number;
     is_minor: boolean;
     // Consentimiento existente
     consent_form_id?: number;
@@ -116,7 +123,7 @@ export interface CreatePsychologicalSessionData {
 export interface UpdatePsychologicalSessionData {
     session_date: string;
     session_content: string;
-    test_results?: string;
-    observations?: string;
+    interventions?: string;
+    conclusions?: string;
     change_justification: string;
 }

@@ -242,11 +242,16 @@ export const getProfessionalColumns = (): ColumnDef<AssignmentWithRelations>[] =
                 } else if (assignment.type === 'psychological') {
                     // Si ya existe un expediente psicológico, redirigir a verlo
                     if (assignment.psychological_record_id) {
-                        // TODO: Implementar ruta de show para expediente psicológico
-                        toast.info('La funcionalidad de expedientes psicológicos estará disponible próximamente');
+                        router.get(
+                            route('clinical-records.psychological-records.show', {
+                                psychological_record: assignment.psychological_record_id,
+                            }),
+                        );
                     } else {
-                        // TODO: Implementar redirección a crear expediente psicológico
-                        toast.info('La funcionalidad de expedientes psicológicos estará disponible próximamente');
+                        // Si no existe, redirigir a crear uno nuevo
+                        router.get(route('clinical-records.psychological-records.create'), {
+                            student_nie: assignment.student_nie,
+                        });
                     }
                 }
             };
