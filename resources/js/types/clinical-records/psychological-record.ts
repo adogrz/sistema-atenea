@@ -1,4 +1,5 @@
-import { ConsentFormWithRelations, ProfessionalBasicInfo, StudentBasicInfo, Timestamps } from './shared';
+import { ProfessionalBasicInfo, StudentBasicInfo, Timestamps } from './shared';
+import { ConsentFormWithRelations } from './medical-record';
 
 /**
  * Modelo de Expediente Psicológico
