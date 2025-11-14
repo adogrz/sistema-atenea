@@ -24,10 +24,8 @@ Route::get('/', static function () {
 
 // Rutas para usuarios autenticados
 Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
-    // Dashboard principal
-    Route::get('/dashboard', static function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    // Dashboard principal (contextual)
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/dashboard/audit', static function () {
         // Solo usuarios con permiso pueden ver esto.
@@ -136,3 +134,4 @@ require __DIR__ . '/internado.php';
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/settings.php';
+require __DIR__ . '/clinical-records.php';

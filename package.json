@@ -20,7 +20,7 @@
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-tailwindcss": "^0.6.11",
-        "shadcn": "^3.2.1",
+        "shadcn": "^3.5.0",
         "typescript-eslint": "^8.23.0"
     },
     "dependencies": {
@@ -70,7 +70,7 @@
         "globals": "^15.14.0",
         "laravel-vite-plugin": "^1.0",
         "lucide-react": "^0.475.0",
-        "radix-ui": "^1.4.2",
+        "radix-ui": "^1.4.3",
         "react": "^19.0.0",
         "react-aria-components": "^1.11.0",
         "react-day-picker": "^9.8.1",
@@ -93,5 +93,6 @@
     },
     "overrides": {
         "react-is": "^19.0.0-rc-69d4b800-20241021"
-    }
+    },
+    "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c"
 }

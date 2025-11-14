@@ -2,6 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\ClinicalRecord\Assignment;
+use App\Models\ClinicalRecord\ConsentForm;
+use App\Models\ClinicalRecord\MedicalConsultation;
+use App\Models\ClinicalRecord\MedicalRecord;
+use App\Models\ClinicalRecord\PsychologicalRecord;
+use App\Models\ClinicalRecord\PsychologicalSession;
 use App\Notifications\ResetPasswordNotification;
 use App\Traits\HasTemporaryRoles;
 use Carbon\Carbon;
@@ -167,5 +173,109 @@ class User extends Authenticatable
     public function participante()
     {
         return $this->belongsTo(Estudiante::class, 'codigo_estudiante', 'codigo');
+    }
+
+    /**
+     * Asignaciones como profesional
+     */
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class, 'professional_id');
+    }
+
+    /**
+     * Asignaciones médicas activas
+     */
+    public function medicalAssignments()
+    {
+        return $this->assignments()->medical()->active();
+    }
+
+    /**
+     * Asignaciones psicológicas activas
+     */
+    public function psychologicalAssignments()
+    {
+        return $this->assignments()->psychological()->active();
+    }
+
+    /**
+     * Expedientes médicos creados por el profesional
+     */
+    public function medicalRecords()
+    {
+        return $this->hasMany(MedicalRecord::class, 'created_by');
+    }
+
+    /**
+     * Expedientes psicológicos creados por el profesional
+     */
+    public function psychologicalRecords()
+    {
+        return $this->hasMany(PsychologicalRecord::class, 'created_by');
+    }
+
+    /**
+     * Consultas médicas realizadas por el profesional
+     */
+    public function medicalConsultations()
+    {
+        return $this->hasMany(MedicalConsultation::class, 'doctor_id');
+    }
+
+    /**
+     * Sesiones psicológicas realizadas por el profesional
+     */
+    public function psychologicalSessions()
+    {
+        return $this->hasMany(PsychologicalSession::class, 'psychologist_id');
+    }
+
+    /**
+     * Consentimientos registrados por el profesional
+     */
+    public function consentForms()
+    {
+        return $this->hasMany(ConsentForm::class, 'professional_id');
+    }
+
+    // ==========================================
+    // Helpers para Permisos de Asignaciones
+    // ==========================================
+
+    /**
+     * Verifica si el usuario puede gestionar asignaciones (médicas o psicológicas).
+     */
+    public function canManageAssignments(): bool
+    {
+        return $this->can('assignments:manage-medical')
+            || $this->can('assignments:manage-psychological');
+    }
+
+    /**
+     * Verifica si el usuario solo puede gestionar asignaciones médicas.
+     */
+    public function managesOnlyMedical(): bool
+    {
+        return $this->can('assignments:manage-medical')
+            && !$this->can('assignments:manage-psychological');
+    }
+
+    /**
+     * Verifica si el usuario solo puede gestionar asignaciones psicológicas.
+     */
+    public function managesOnlyPsychological(): bool
+    {
+        return $this->can('assignments:manage-psychological')
+            && !$this->can('assignments:manage-medical');
+    }
+
+    /**
+     * Verifica si el usuario puede gestionar ambos tipos de asignaciones.
+     */
+    public function managesBothTypes(): bool
+    {
+        return $this->can('assignments:manage-medical')
+            && $this->can('assignments:manage-psychological');
     }
 }
