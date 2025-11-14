@@ -2,9 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\ClinicalRecord\Assignment;
+use App\Models\ClinicalRecord\ConsentForm;
+use App\Models\ClinicalRecord\MedicalRecord;
+use App\Models\ClinicalRecord\PsychologicalRecord;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Estudiante extends Model
@@ -61,11 +66,27 @@ class Estudiante extends Model
     ];
 
     /**
+     * Relación con el usuario asociado al estudiante
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * Relación con el modelo Responsable
      */
     public function responsable(): HasOne
     {
         return $this->hasOne(Responsable::class, 'codigo_estudiante', 'codigo');
+    }
+
+    /**
+     * Relación con múltiples Responsables (padre, madre, tutor, etc.)
+     */
+    public function responsables(): HasMany
+    {
+        return $this->hasMany(Responsable::class, 'codigo_estudiante', 'codigo');
     }
 
     /**
@@ -106,5 +127,70 @@ class Estudiante extends Model
     public function getDireccionCompleta(): string
     {
         return $this->direccion?->getDireccionFormateadaAttribute() ?? 'Sin dirección';
+    }
+
+    /**
+     * Determinar si el estudiante es menor de edad (menor de 18 años)
+     *
+     * @return bool
+     */
+    public function isMinor(): bool
+    {
+        if (!$this->fecha_nacimiento) {
+            return false;
+        }
+
+        return $this->fecha_nacimiento->age < 18;
+    }
+
+    /**
+     * Asignaciones clinicas del estudiante
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(Assignment::class, 'student_nie', 'nie');
+    }
+
+    /**
+     * Expediente médico del estudiante
+     */
+    public function medicalRecord(): HasOne
+    {
+        return $this->hasOne(MedicalRecord::class, 'student_nie', 'nie');
+    }
+
+    /**
+     * Expediente psicológico del estudiante
+     */
+    public function psychologicalRecord(): HasOne
+    {
+        return $this->hasOne(PsychologicalRecord::class, 'student_nie', 'nie');
+    }
+
+    /**
+     * Consentimientos del estudiante
+     */
+    public function consentForms(): HasMany
+    {
+        return $this->hasMany(ConsentForm::class, 'student_nie', 'nie');
+    }
+  
+     /**
+     *  Relación con el internado FDTC
+     */
+    public function internadoParticipante(): HasOne
+    {
+        return $this->hasOne(InternadoParticipante::class, 'estudiante_codigo', 'codigo')
+            ->whereNull('deleted_at');
+    }
+
+    /**
+     * Verificar si está en el internado
+     */
+    public function estaEnInternado(): bool
+    {
+        return $this->internadoParticipante()
+            ->where('estado', 'activo')
+            ->exists();
     }
 }
