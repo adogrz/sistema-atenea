@@ -44,18 +44,26 @@ export function AppSidebar() {
                 { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
             ],
         }] : []),
-        ...(hasPermission('internado:view') ? [{
+        ...(hasPermission('internado:view') || hasPermission('internado:admin:view') || hasPermission('internado:asistencias:view') ? [{
             title: 'FDTC',
             icon: ShieldCheck,
             items: [
-                { title: 'Selección FDTC', href: '/dashboard/internado-fdtc/seleccion', icon: UserPlus },
-                { title: 'Participantes', href: '/dashboard/internado-fdtc/participantes', icon: Users },
-                { title: 'Periodos', href: '/dashboard/internado-fdtc/periodos', icon: Calendar },
-                { title: 'Evaluaciones', href: '/dashboard/internado-fdtc/evaluaciones', icon: FileCheck },
-                { title: 'Asistencias', href: '/dashboard/internado-fdtc/asistencias', icon: UserCheck },
-                { title: 'Reporte Asistencias', href: '/dashboard/internado-fdtc/asistencias/reporte', icon: FileBarChart },
-                { title: 'Conductas', href: '/dashboard/internado-fdtc/conductas', icon: ClipboardCheck },
-                { title: 'Reporte Conductas', href: '/dashboard/internado-fdtc/conductas/reporte', icon: FileBarChart },
+                ...(hasPermission('internado:admin:view') ? [
+                    { title: 'Selección FDTC', href: '/dashboard/internado-fdtc/seleccion', icon: UserPlus },
+                    { title: 'Participantes', href: '/dashboard/internado-fdtc/participantes', icon: Users },
+                    { title: 'Periodos', href: '/dashboard/internado-fdtc/periodos', icon: Calendar },
+                ] : []),
+                ...(hasPermission('internado:evaluaciones:view') ? [
+                    { title: 'Evaluaciones', href: '/dashboard/internado-fdtc/evaluaciones', icon: FileCheck },
+                ] : []),
+                ...(hasPermission('internado:asistencias:view') ? [
+                    { title: 'Asistencias', href: '/dashboard/internado-fdtc/asistencias', icon: UserCheck },
+                    { title: 'Reporte Asistencias', href: '/dashboard/internado-fdtc/asistencias/reporte', icon: FileBarChart },
+                ] : []),
+                ...(hasPermission('internado:conductas:view') ? [
+                    { title: 'Conductas', href: '/dashboard/internado-fdtc/conductas', icon: ClipboardCheck },
+                    { title: 'Reporte Conductas', href: '/dashboard/internado-fdtc/conductas/reporte', icon: FileBarChart },
+                ] : []),
             ],
         }] : []),
     ];

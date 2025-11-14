@@ -8,17 +8,9 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
-use App\Models\Evento;
-use App\Http\Controllers\EventController;
 use App\Http\Controllers\CalificacionInscripcionController;
 use App\Http\Controllers\InscripcionOlimpiadaController;
 use App\Http\Controllers\OlimpiadaController;
-use App\Http\Controllers\InternadoFDTCController;
-use App\Http\Controllers\InternadoParticipanteController;
-use App\Http\Controllers\InternadoEvaluacionController;
-use App\Http\Controllers\InternadoPeriodoController;
-use App\Http\Controllers\InternadoAsistenciaController;
-use App\Http\Controllers\InternadoConductaController;
 
 Route::get('/', static function () {
     // Si el usuario está autenticado, siempre redirigir al dashboard principal.
@@ -96,157 +88,6 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     Route::get('/users/{user}/debug', [UserController::class, 'debug'])
         ->name('users.debug')
         ->middleware('permission:users:view-all');
-        
-    // Rutas para gestión de eventos académicos
-    Route::middleware(['auth', 'permission:academic:view'])->group(function () {
-        
-        Route::get('/dashboard/calendario', function () {
-            $events = Evento::orderBy('fecha_inicio', 'asc')->get()->map(function ($evento) {
-                return [
-                    'id' => $evento->id,
-                    'nombre' => $evento->nombre,
-                    'clasificacion' => $evento->clasificacion,
-                    'fecha_inicio' => $evento->fecha_inicio?->format('Y-m-d'),
-                    'fecha_fin' => $evento->fecha_fin?->format('Y-m-d'),
-                    'hora_inicio' => $evento->hora_inicio,
-                    'hora_fin' => $evento->hora_fin,
-                    'descripcion' => $evento->descripcion,
-                    'ubicacion' => $evento->ubicacion,
-                    'estado' => $evento->estado,
-                    'created_at' => $evento->created_at,
-                    'updated_at' => $evento->updated_at,
-                ];
-            });
-
-            return Inertia::render('academic-forms/calendar', [
-                'events' => $events,
-            ]);
-        })->name('calendario');
-
-        Route::get('/dashboard/academico', function () {
-            $events = Evento::orderBy('created_at', 'desc')->get()->map(function ($evento) {
-                return [
-                    'id' => $evento->id,
-                    'nombre' => $evento->nombre,
-                    'clasificacion' => $evento->clasificacion,
-                    'fecha_inicio' => $evento->fecha_inicio?->format('Y-m-d'),
-                    'fecha_fin' => $evento->fecha_fin?->format('Y-m-d'),
-                    'hora_inicio' => $evento->hora_inicio,
-                    'hora_fin' => $evento->hora_fin,
-                    'descripcion' => $evento->descripcion,
-                    'ubicacion' => $evento->ubicacion,
-                    'estado' => $evento->estado,
-                    'created_at' => $evento->created_at,
-                    'updated_at' => $evento->updated_at,
-                ];
-            });
-            
-
-            return Inertia::render('dashboard-academico', [
-                'events' => $events,
-            ]);
-        })->name('dashboard_academico');
-
-        // Rutas de gestión de eventos
-        Route::middleware('permission:events:create')->group(function () {
-            Route::post('/dashboard/academic-forms', [EventController::class, 'store'])
-                ->name('academic-forms.store');
-        });
-
-        Route::middleware('permission:events:edit')->group(function () {
-            Route::put('/dashboard/academic-forms/{event}', [EventController::class, 'update'])
-                ->name('academic-forms.update');
-        });
-
-        Route::middleware('permission:events:delete')->group(function () {
-            Route::delete('/dashboard/academic-forms/{event}', [EventController::class, 'destroy'])
-                ->name('academic-forms.destroy');
-        });
-
-        // Rutas para formularios
-        Route::get('/dashboard/academic-forms/create-event', function () {
-            return Inertia::render('academic-forms/create-event');
-        })->name('academic-forms.create-event');
-
-        Route::get('/dashboard/academic-forms/{event}/edit', function (Evento $event) {
-            $mappedEvent = [
-                'id' => $event->id,
-                'nombre' => $event->nombre,             
-                'clasificacion' => $event->clasificacion, 
-                'fecha_inicio' => $event->fecha_inicio ? $event->fecha_inicio->format('Y-m-d') : null,
-                'fecha_fin' => $event->fecha_fin ? $event->fecha_fin->format('Y-m-d') : null, 
-                'hora_inicio' => $event->hora_inicio,    
-                'hora_fin' => $event->hora_fin,          
-                'descripcion' => $event->descripcion,   
-                'ubicacion' => $event->ubicacion,      
-                'estado' => $event->estado,            
-                'created_at' => $event->created_at,
-                'updated_at' => $event->updated_at,
-            ];
-
-            return Inertia::render('academic-forms/edit-event', [
-                'event' => $mappedEvent,
-            ]);
-        })->name('academic-forms.edit');
-    });
-});
-
-// Rutas para gestión del internado FDTC
-Route::middleware(['auth', 'permission:internado:view'])->prefix('dashboard/internado-fdtc')->name('internado-fdtc.')->group(function () {
-    
-    // Rutas de solo lectura
-    Route::get('seleccion', [InternadoFDTCController::class, 'selection_list'])->name('selection_list');
-    Route::get('participantes', [InternadoParticipanteController::class, 'participants_list'])->name('participantes');
-    Route::get('participantes/{participante}/progreso', [InternadoParticipanteController::class, 'progreso'])->name('participantes.progreso');
-    
-    Route::get('periodos', [InternadoPeriodoController::class, 'periodos'])->name('periodos');
-    
-    Route::get('evaluaciones', [InternadoEvaluacionController::class, 'evaluaciones'])->name('evaluaciones');
-    
-    Route::get('asistencias', [InternadoAsistenciaController::class, 'asistencias'])->name('asistencias');
-    Route::get('asistencias/reporte', [InternadoAsistenciaController::class, 'reporte'])->name('asistencias.reporte');
-    Route::get('asistencias/reporte/detalle', [InternadoAsistenciaController::class, 'detalle'])->name('asistencias.reporte.detalle');
-    
-    Route::get('conductas', [InternadoConductaController::class, 'conductas'])->name('conductas');
-    Route::get('conductas/reporte', [InternadoConductaController::class, 'reporte'])->name('conductas.reporte');
-    Route::get('conductas/reporte/detalle', [InternadoConductaController::class, 'detalle'])->name('conductas.reporte.detalle');
-
-    // Rutas protegidas con internado:manage
-    Route::middleware('permission:internado:manage')->group(function () {
-        
-        // Participantes
-        Route::post('add', [InternadoFDTCController::class, 'add'])->name('add');
-        Route::post('participantes/cambiar-estado', [InternadoParticipanteController::class, 'cambiarEstado'])->name('participantes.cambiar-estado');
-        Route::post('participantes/remover', [InternadoParticipanteController::class, 'remover'])->name('participantes.remover');
-
-        // Periodos
-        Route::post('periodos', [InternadoPeriodoController::class, 'store'])->name('periodos.store');
-        Route::get('periodos/create', [InternadoPeriodoController::class, 'create'])->name('periodos.create');
-        Route::get('periodos/{periodo}/edit', [InternadoPeriodoController::class, 'edit'])->name('periodos.edit');
-        Route::put('periodos/{periodo}', [InternadoPeriodoController::class, 'update'])->name('periodos.update');
-        Route::delete('periodos/{periodo}', [InternadoPeriodoController::class, 'destroy'])->name('periodos.destroy');
-        Route::patch('periodos/{periodo}/toggle', [InternadoPeriodoController::class, 'toggleActivo'])->name('periodos.toggle');
-
-        // Evaluaciones
-        Route::post('evaluaciones', [InternadoEvaluacionController::class, 'store'])->name('evaluaciones.store');
-        Route::get('evaluaciones/create', [InternadoEvaluacionController::class, 'create'])->name('evaluaciones.create');
-        Route::get('evaluaciones/{evaluacion}/edit', [InternadoEvaluacionController::class, 'edit'])->name('evaluaciones.edit');
-        Route::put('evaluaciones/{evaluacion}', [InternadoEvaluacionController::class, 'update'])->name('evaluaciones.update');
-        Route::delete('evaluaciones/{evaluacion}', [InternadoEvaluacionController::class, 'destroy'])->name('evaluaciones.destroy');
-        Route::get('evaluaciones/show/{evaluacion}', [InternadoEvaluacionController::class, 'show'])->name('evaluaciones.show');
-
-        // Asistencias
-        Route::post('asistencias', [InternadoAsistenciaController::class, 'store'])->name('asistencias.store');
-        Route::post('asistencias/masivo', [InternadoAsistenciaController::class, 'storeMasivo'])->name('asistencias.masivo');
-
-        // Calificaciones: guardar individual y masivo
-        Route::put('calificaciones/{calificacion}', [InternadoEvaluacionController::class, 'guardarCalificacion'])->name('calificaciones.guardar');
-        Route::post('calificaciones/guardar-masivo/{evaluacion}', [InternadoEvaluacionController::class, 'guardarCalificacionesMasivo'])->name('calificaciones.guardar-masivo');
-
-        // Conductas
-        Route::post('conductas', [InternadoConductaController::class, 'store'])->name('conductas.store');
-        Route::post('conductas/masivo', [InternadoConductaController::class, 'storeMasivo'])->name('conductas.masivo');
-    });
 });
 
 Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {
@@ -286,6 +127,12 @@ Route::get('/health', function () {
 Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
     Route::post('api/check-duplicate', [App\Http\Controllers\Api\DuplicateCheckController::class, 'checkDuplicate']);
 });
+
+// Rutas de eventos académicos
+require __DIR__ . '/academic.php';
+
+// Rutas del internado FDTC
+require __DIR__ . '/internado.php';
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/settings.php';

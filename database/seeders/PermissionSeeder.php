@@ -74,6 +74,10 @@ class PermissionSeeder extends Seeder
             'internado' => [
                 'internado:view',
                 'internado:manage',
+                'internado:asistencias:view',
+                'internado:conductas:view',
+                'internado:evaluaciones:view',
+                'internado:admin:view',  // Para selección, participantes y periodos
             ],
         ];
     }
@@ -128,14 +132,14 @@ class PermissionSeeder extends Seeder
             ],
             'admin-ti' => [
                 'description' => 'Administrador de TI',
-                'groups' => ['general', 'users', 'roles', 'sedes', 'areas', 'auditing', 'internado'],
+                'groups' => ['general', 'users', 'roles', 'sedes', 'areas', 'auditing'],
                 'permissions' => ['users:view-all', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []
             ],
             'admin-academico' => [
                 'description' => 'Administrador Académico',
-                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic'],
+                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic', 'internado'],
                 'permissions' => ['users:view-all', 'roles:list', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -219,7 +223,14 @@ class PermissionSeeder extends Seeder
             'calificador' => [
                 'description' => 'Calificador',
                 'groups' => ['general'],
-                'permissions' => ['users:view-sede', 'users:view-area', 'users:list'],
+                'permissions' => [
+                    'users:view-sede', 
+                    'users:view-area', 
+                    'users:list',
+                    'internado:asistencias:view',
+                    'internado:conductas:view',
+                    'internado:evaluaciones:view',
+                ],
                 'inherits' => [],
                 'exclude_permissions' => []
             ],
