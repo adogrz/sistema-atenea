@@ -109,10 +109,6 @@ export function AppSidebar() {
                 items: [
                     { title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard },
                     { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
-                    { title: 'Datos Aspirantes', href: '/dashboard/academico/aspirantes', icon: Clock },
-                    { title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users },
-                    { title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen },
-                    { title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap },
                 ],
             },
         ];
@@ -164,7 +160,6 @@ export function AppSidebar() {
                 items: [
                     { title: 'Inscripciones', href: '/dashboard/inscripciones', icon: LayoutDashboard },
                     { title: 'Calendario', href: '/dashboard/calendario', icon: Calendar },
-                    { title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap },
                 ],
             },
         ];
