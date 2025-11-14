@@ -4,7 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays } from 'lucide-react';
+import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays, UserPlus, FileCheck, UserCheck, ClipboardCheck, FileBarChart } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -42,10 +42,28 @@ export function AppSidebar() {
             items: [
                 { title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard },
                 { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
-                { title: 'Datos Aspirantes', href: '/dashboard/academico/aspirantes', icon: Clock },
-                { title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users },
-                { title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen },
-                { title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap },
+            ],
+        }] : []),
+        ...(hasPermission('internado:view') || hasPermission('internado:admin:view') || hasPermission('internado:asistencias:view') ? [{
+            title: 'FDTC',
+            icon: ShieldCheck,
+            items: [
+                ...(hasPermission('internado:admin:view') ? [
+                    { title: 'Selección FDTC', href: '/dashboard/internado-fdtc/seleccion', icon: UserPlus },
+                    { title: 'Participantes', href: '/dashboard/internado-fdtc/participantes', icon: Users },
+                    { title: 'Periodos', href: '/dashboard/internado-fdtc/periodos', icon: Calendar },
+                ] : []),
+                ...(hasPermission('internado:evaluaciones:view') ? [
+                    { title: 'Evaluaciones', href: '/dashboard/internado-fdtc/evaluaciones', icon: FileCheck },
+                ] : []),
+                ...(hasPermission('internado:asistencias:view') ? [
+                    { title: 'Asistencias', href: '/dashboard/internado-fdtc/asistencias', icon: UserCheck },
+                    { title: 'Reporte Asistencias', href: '/dashboard/internado-fdtc/asistencias/reporte', icon: FileBarChart },
+                ] : []),
+                ...(hasPermission('internado:conductas:view') ? [
+                    { title: 'Conductas', href: '/dashboard/internado-fdtc/conductas', icon: ClipboardCheck },
+                    { title: 'Reporte Conductas', href: '/dashboard/internado-fdtc/conductas/reporte', icon: FileBarChart },
+                ] : []),
             ],
         }] : []),
     ];

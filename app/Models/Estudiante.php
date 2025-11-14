@@ -61,6 +61,14 @@ class Estudiante extends Model
     ];
 
     /**
+     * Relación con el usuario asociado al estudiante
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * Relación con el modelo Responsable
      */
     public function responsable(): HasOne
@@ -106,5 +114,24 @@ class Estudiante extends Model
     public function getDireccionCompleta(): string
     {
         return $this->direccion?->getDireccionFormateadaAttribute() ?? 'Sin dirección';
+    }
+
+    /**
+     * Relación con el internado FDTC
+     */
+    public function internadoParticipante(): HasOne
+    {
+        return $this->hasOne(InternadoParticipante::class, 'estudiante_codigo', 'codigo')
+            ->whereNull('deleted_at');
+    }
+
+    /**
+     * Verificar si está en el internado
+     */
+    public function estaEnInternado(): bool
+    {
+        return $this->internadoParticipante()
+            ->where('estado', 'activo')
+            ->exists();
     }
 }

@@ -107,7 +107,6 @@ export default function DashboardAcademico() {
     const activeEvents = events.filter(e => e.estado === 'activo').length;
     const inactiveEvents = events.filter(e => e.estado === 'inactivo').length;
     const completedEvents = events.filter(e => e.estado === 'completado').length;
-    const upcomingEvents = events.filter(e => new Date(e.fecha_inicio) > new Date()).length;
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
