@@ -17,7 +17,9 @@ return new class extends Migration
             $table->text('descripcion')->nullable();  // Detalles generales
             $table->foreignId('area_id')->constrained('areas');
             $table->boolean('activa')->default(true); // Control de visibilidad
-            $table->foreignId('nivel_educativo_id')->nullable()->constrained('niveles_educativos', 'codigo')->onDelete('set null');
+            $table->foreignId('nivel_educativo_id')->constrained('niveles_educativos', 'codigo')->onDelete('cascade');
+            $table->enum('tipo', ['nivel', 'olimpico'])->default('nivel');
+            $table->integer('anio')->default(date('Y'));
             $table->timestamps();
         });
     }

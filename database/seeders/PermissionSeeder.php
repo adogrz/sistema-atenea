@@ -71,6 +71,12 @@ class PermissionSeeder extends Seeder
             'academic:view',
             'academic:manage',
         ],
+            'grupos' => [
+                'grupos:list',
+                'grupos:create',
+                'grupos:edit',
+                'grupos:delete',
+            ],
         ];
     }
 
@@ -154,7 +160,7 @@ class PermissionSeeder extends Seeder
             ],
             'coordinador-area' => [
                 'description' => 'Coordinador de Área',
-                'groups' => ['general'],
+                'groups' => ['general', 'grupos'],
                 'permissions' => ['users:view-sede', 'users:view-area', 'users:list',
                                   'users:create', 'users:edit', 'roles:assign'],
                 'inherits' => [],

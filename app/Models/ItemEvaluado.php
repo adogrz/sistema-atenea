@@ -17,6 +17,7 @@ class ItemEvaluado extends Model
         'item_definido_id',
         'puntaje',
         'observacion',
+        'calificador_id', // Added
     ];
 
     public function evaluacion(): BelongsTo
@@ -27,5 +28,10 @@ class ItemEvaluado extends Model
     public function itemDefinido(): BelongsTo
     {
         return $this->belongsTo(ItemDefinido::class, 'item_definido_id');
+    }
+
+    public function calificador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'calificador_id');
     }
 }

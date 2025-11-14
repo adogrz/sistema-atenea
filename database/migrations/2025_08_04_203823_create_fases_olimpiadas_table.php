@@ -21,10 +21,8 @@ return new class extends Migration {
             $table->unsignedTinyInteger('orden')->default(1); // Posición secuencial (1,2,3...)
 
             // Campos de gestión de fase
-            $table->integer('cupos')->nullable();
-            $table->decimal('nota_minima_aprobacion', 5, 2)->nullable();
-            $table->timestamp('fecha_inicio_inscripcion')->nullable();
-            $table->timestamp('fecha_fin_inscripcion')->nullable();
+            $table->integer('cupos');
+            $table->decimal('nota_minima_aprobacion', 5, 2);
             $table->boolean('resultados_publicados')->default(false);
             $table->foreignId('definicion_evaluacion_id')
                 ->nullable()
@@ -33,8 +31,8 @@ return new class extends Migration {
 
             // Control del estado y ventana temporal
 
-            $table->dateTime('fecha_inicio')->nullable();
-            $table->dateTime('fecha_fin')->nullable();
+            $table->dateTime('fecha_inicio');
+            $table->dateTime('fecha_fin');
 
             // Control de uso y observaciones
             $table->boolean('activa')->default(true);

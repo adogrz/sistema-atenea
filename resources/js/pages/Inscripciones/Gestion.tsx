@@ -22,10 +22,12 @@ interface InscripcionesGestionProps extends PageProps {
     inscripciones: InscripcionOlimpiadaWithRelations[];
 }
 
-const breadcrumbs = [
-    { label: 'Inicio', href: route('dashboard') },
-    { label: 'Inscripciones', href: route('inscripciones.index') },
-    { label: 'Gestión de Inscripciones' },
+import { BreadcrumbItem } from '@/types';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Inicio', href: route('dashboard') },
+    { title: 'Inscripciones', href: route('inscripciones.index') },
+    { title: 'Gestión de Inscripciones' },
 ];
 
 const Gestion: React.FC<InscripcionesGestionProps> = ({ inscripciones: initialInscripciones }) => {
@@ -97,29 +99,10 @@ const Gestion: React.FC<InscripcionesGestionProps> = ({ inscripciones: initialIn
     ], []);
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de Inscripciones" />
             <div className="p-4 md:p-6">
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        {breadcrumbs.map((crumb, index) => (
-                            <React.Fragment key={index}>
-                                <BreadcrumbItem>
-                                    {crumb.href ? (
-                                        <BreadcrumbLink asChild>
-                                            <Link href={crumb.href}>{crumb.label}</Link>
-                                        </BreadcrumbLink>
-                                    ) : (
-                                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                                    )}
-                                </BreadcrumbItem>
-                                {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-                            </React.Fragment>
-                        ))}
-                    </BreadcrumbList>
-                </Breadcrumb>
-
-                <div className="flex items-center justify-between my-4">
+                <div className="flex items-center justify-between mb-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Gestión de Inscripciones</h1>
                         <p className="text-muted-foreground">

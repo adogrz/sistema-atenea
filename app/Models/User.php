@@ -144,9 +144,13 @@ class User extends Authenticatable
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     }
     
-   /*********************************
-    * Relaciones entres modelos
-    ********************************/
-    
-
-}
+       /*********************************
+        * Relaciones entres modelos
+        ********************************/
+   
+       public function calificacionesItems(): HasMany
+       {
+           return $this->hasMany(ItemEvaluado::class, 'calificador_id');
+       }
+   
+   }

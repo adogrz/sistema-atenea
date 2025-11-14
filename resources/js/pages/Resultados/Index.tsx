@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
-import { PageProps, Olimpiada, Resultado } from '@/types';
+import { PageProps, Olimpiada, Resultado, BreadcrumbItem } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { copyToClipboard } from '@/lib/utils';
-import { Download, Mail, Eye, Award, CheckCircle2, XCircle } from 'lucide-react';
+import { Eye, Award, CheckCircle2, XCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResultadosToolbar } from './ResultadosToolbar';
 import { ColumnDef } from '@tanstack/react-table';
@@ -15,82 +14,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import axios from 'axios';
 import { StatsCards } from './StatsCards';
 import { ScoreDistributionChart } from './ScoreDistributionChart';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import EvaluationModalContent from '@/components/EvaluationModalContent';
 
 const RESULTS_PER_PAGE = 100;
-
-// We define columns here as it's tightly coupled with this component's logic now
-const StudentInfoPopover: React.FC<{ student: Resultado }> = ({ student }) => (
-    <Popover>
-        <PopoverTrigger asChild>
-            <Button variant="link" className="h-auto p-0 font-mono">
-                {student.estudiante_codigo}
-            </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80">
-            <div className="grid gap-4">
-                <div className="space-y-2">
-                    <h4 className="font-medium leading-none">{student.estudiante_nombre}</h4>
-                    <p className="text-sm text-muted-foreground">{student.estudiante_email}</p>
-                </div>
-                <div className="text-sm">
-                    <p><span className="font-semibold">Código:</span> {student.estudiante_codigo}</p>
-                    <p><span className="font-semibold">Olimpiada:</span> {student.olimpiada_nombre}</p>
-                    <p><span className="font-semibold">Fase:</span> {student.fase_nombre}</p>
-                </div>
-            </div>
-        </PopoverContent>
-    </Popover>
-);
-
-export const columns: ColumnDef<Resultado>[] = [
-    {
-        accessorKey: "estudiante_codigo",
-        header: "Código Estudiante",
-        cell: ({ row }) => <StudentInfoPopover student={row.original} />,
-    },
-    {
-        accessorKey: "olimpiada_nombre",
-        header: "Olimpiada",
-    },
-    {
-        accessorKey: "fase_nombre",
-        header: "Fase",
-    },
-    {
-        accessorKey: "total_score",
-        header: "Puntaje",
-        cell: ({ row }) => `${row.original.total_score} / ${row.original.max_score}`,
-    },
-    {
-        accessorKey: "aprobado",
-        header: "Aprobado",
-        cell: ({ row }) => (
-            <div className="flex items-center">
-                {row.original.aprobado ? <CheckCircle2 className="h-4 w-4 text-green-500 mr-1" /> : <XCircle className="h-4 w-4 text-red-500 mr-1" />}
-                {row.original.aprobado ? "Sí" : "No"}
-            </div>
-        ),
-    },
-    {
-        accessorKey: "pasa_siguiente_fase",
-        header: "Clasifica",
-        cell: ({ row }) => (
-            <div className={`flex items-center font-semibold ${row.original.pasa_siguiente_fase ? "text-green-600" : "text-red-600"}`}>
-                {row.original.pasa_siguiente_fase ? <Award className="h-4 w-4 mr-1" /> : <XCircle className="h-4 w-4 mr-1" />}
-                {row.original.pasa_siguiente_fase ? "Sí" : "No"}
-            </div>
-        ),
-    },
-    {
-        id: "actions",
-        header: "Acciones",
-        cell: ({ row }) => (
-            <Button variant="outline" size="icon" onClick={() => router.get(route("evaluaciones.show", row.original.evaluacion_id))}>
-                <Eye className="h-4 w-4" />
-            </Button>
-        ),
-    },
-];
 
 interface ResultadosIndexProps extends PageProps {
     olimpiadas: Olimpiada[];
@@ -103,6 +30,89 @@ const Index: React.FC<ResultadosIndexProps> = ({ olimpiadas }) => {
     const [results, setResults] = useState<Resultado[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [visibleCount, setVisibleCount] = useState(RESULTS_PER_PAGE);
+    const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+    const [selectedEvaluationId, setSelectedEvaluationId] = useState<number | null>(null);
+
+    const StudentInfoPopover: React.FC<{ student: Resultado }> = ({ student }) => (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="link" className="h-auto p-0 font-mono">
+                    {student.estudiante_codigo}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+                <div className="grid gap-4">
+                    <div className="space-y-2">
+                        <h4 className="font-medium leading-none">{student.estudiante_nombre}</h4>
+                        <p className="text-sm text-muted-foreground">{student.estudiante_email}</p>
+                    </div>
+                    <div className="text-sm">
+                        <p><span className="font-semibold">Código:</span> {student.estudiante_codigo}</p>
+                        <p><span className="font-semibold">Olimpiada:</span> {student.olimpiada_nombre}</p>
+                        <p><span className="font-semibold">Fase:</span> {student.fase_nombre}</p>
+                    </div>
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+
+    const columns: ColumnDef<Resultado>[] = [
+        {
+            accessorKey: "estudiante_codigo",
+            header: "Código Estudiante",
+            cell: ({ row }) => <StudentInfoPopover student={row.original} />,
+        },
+        {
+            accessorKey: "olimpiada_nombre",
+            header: "Olimpiada",
+        },
+        {
+            accessorKey: "fase_nombre",
+            header: "Fase",
+        },
+        {
+            accessorKey: "total_score",
+            header: "Puntaje",
+            cell: ({ row }) => `${row.original.total_score} / ${row.original.max_score}`,
+        },
+        {
+            accessorKey: "aprobado",
+            header: "Aprobado",
+            cell: ({ row }) => (
+                <div className="flex items-center">
+                    {row.original.aprobado ? <CheckCircle2 className="h-4 w-4 text-green-500 mr-1" /> : <XCircle className="h-4 w-4 text-red-500 mr-1" />}
+                    {row.original.aprobado ? "Sí" : "No"}
+                </div>
+            ),
+        },
+        {
+            accessorKey: "pasa_siguiente_fase",
+            header: "Clasifica",
+            cell: ({ row }) => (
+                <div className={`flex items-center font-semibold ${row.original.pasa_siguiente_fase ? "text-green-600" : "text-red-600"}`}>
+                    {row.original.pasa_siguiente_fase ? <Award className="h-4 w-4 mr-1" /> : <XCircle className="h-4 w-4 mr-1" />}
+                    {row.original.pasa_siguiente_fase ? "Sí" : "No"}
+                </div>
+            ),
+        },
+        {
+            id: "actions",
+            header: "Acciones",
+            cell: ({ row }) => (
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                        setSelectedEvaluationId(row.original.evaluacion_id);
+                        setShowEvaluationModal(true);
+                    }}
+                >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Ver Resultados
+                </Button>
+            ),
+        },
+    ];
 
     const fasesForDropdown = useMemo(() => {
         if (selectedOlimpiadaId === 'all') return [];
@@ -183,33 +193,13 @@ const Index: React.FC<ResultadosIndexProps> = ({ olimpiadas }) => {
         fetchResults(value);
     };
 
-    const generateCodes = () => {
-        if (!selectedFase) return;
-        router.post(route('resultados.generatePermanentCodes'), { fase_id: selectedFase.id }, {
-            onSuccess: () => toast.success('Petición para generar códigos enviada.'),
-            onError: () => toast.error('Error al solicitar la generación de códigos.'),
-        });
-    };
-
-    const getEmails = () => {
-        if (!selectedFase) return;
-        router.get(route('resultados.getEmailsForPassedStudents'), { fase_id: selectedFase.id }, {
-            preserveState: true,
-            onSuccess: (page: any) => {
-                const emails = page.props.jetstream.flash?.emails || page.props.emails;
-                if (emails && emails.length > 0) {
-                    copyToClipboard(emails.join(', '));
-                    toast.success(`Se copiaron ${emails.length} correos al portapapeles.`)
-                } else {
-                    toast.info('No se encontraron correos para los estudiantes que pasan.');
-                }
-            },
-            onError: () => toast.error('Error al obtener los correos.'),
-        });
-    };
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Inicio', href: route('dashboard') },
+        { title: 'Resultados' },
+    ];
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Resultados de Olimpiadas" />
             <div className="p-4 md:p-6 space-y-6">
                 <h1 className="text-2xl font-bold tracking-tight">Resultados de Olimpiadas</h1>
@@ -269,23 +259,6 @@ const Index: React.FC<ResultadosIndexProps> = ({ olimpiadas }) => {
                                 )}
                             </TabsContent>
                             <TabsContent value="classified">
-                                <div className="flex items-center justify-end space-x-2 py-4">
-                                    {selectedFase && (
-                                        <>
-                                            <div className="text-sm text-muted-foreground border rounded-md px-3 py-2">
-                                                Cupos: <span className="font-bold text-primary">{selectedFase.cupos ?? 0}</span>
-                                            </div>
-                                            <Button variant="outline" size="sm" onClick={generateCodes}>
-                                                <Download className="mr-2 h-4 w-4" />
-                                                Generar Códigos
-                                            </Button>
-                                            <Button variant="outline" size="sm" onClick={getEmails}>
-                                                <Mail className="mr-2 h-4 w-4" />
-                                                Obtener Correos
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
                                 <DataTable
                                     columns={columns}
                                     data={visibleResults}
@@ -304,6 +277,21 @@ const Index: React.FC<ResultadosIndexProps> = ({ olimpiadas }) => {
                     </CardContent>
                 </Card>
             </div>
+            <Dialog open={showEvaluationModal} onOpenChange={setShowEvaluationModal}>
+                <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Detalle de Evaluación</DialogTitle>
+                        <DialogDescription>
+                            Resultados detallados de la evaluación seleccionada.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-grow overflow-auto p-4 -mx-4 -mb-4">
+                        {selectedEvaluationId && (
+                            <EvaluationModalContent evaluationId={selectedEvaluationId} />
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 };

@@ -25,8 +25,6 @@ class FaseOlimpiadaSeeder extends Seeder
                 'orden' => 1,
                 'cupos' => 50, // Example value
                 'nota_minima_aprobacion' => 60.00, // Example value
-                'fecha_inicio_inscripcion' => Carbon::now()->subDays(7),
-                'fecha_fin_inscripcion' => Carbon::now()->addDays(7),
                 'resultados_publicados' => false,
                 'fecha_inicio' => Carbon::now(),
                 'fecha_fin' => Carbon::now()->addDays(14),
@@ -41,8 +39,6 @@ class FaseOlimpiadaSeeder extends Seeder
                 'orden' => 2,
                 'cupos' => 30, // Example value
                 'nota_minima_aprobacion' => 70.00, // Example value
-                'fecha_inicio_inscripcion' => Carbon::now()->subDays(7),
-                'fecha_fin_inscripcion' => Carbon::now()->addDays(7),
                 'resultados_publicados' => false,
                 'fecha_inicio' => Carbon::now(),
                 'fecha_fin' => Carbon::now()->addDays(28),
@@ -57,8 +53,6 @@ class FaseOlimpiadaSeeder extends Seeder
                 'orden' => 3,
                 'cupos' => 10, // Example value
                 'nota_minima_aprobacion' => 80.00, // Example value
-                'fecha_inicio_inscripcion' => Carbon::now()->subDays(7),
-                'fecha_fin_inscripcion' => Carbon::now()->addDays(7),
                 'resultados_publicados' => false,
                 'fecha_inicio' => Carbon::now(),
                 'fecha_fin' => Carbon::now()->addDays(42),

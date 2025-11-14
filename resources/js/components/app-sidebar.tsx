@@ -5,7 +5,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 
-import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays, GraduationCapIcon, Trophy} from 'lucide-react';
+import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon, LayoutDashboard, ShieldCheck, Users, School, CalendarDays, GraduationCapIcon, Trophy, Award} from 'lucide-react';
 
 import AppLogo from './app-logo';
 
@@ -44,11 +44,14 @@ export function AppSidebar() {
             items: [
                 { title: 'Olimpiadas y Fases', href: route('olimpiadas.index'), icon: GraduationCap },
                 { title: 'Resultados', href: route('resultados.index'), icon: Trophy },
+                { title: 'Gestión de Resultados', href: route('resultados.management'), icon: ClipboardListIcon },
                 //...(hasRole('coordinador-area') ? [
                 { title: 'Centro de Control', href: route('area.dashboard'), icon: LayoutDashboard },
                 { title: 'Dashboard de Calificador', href: route('calificaciones.olimpiadas.index'), icon: ClipboardListIcon },
                 { title: 'Asignación de Evaluadores', href: route('gestion-evaluacion.index'), icon: ShieldCheck },
                 { title: 'Definiciones de Evaluación', href: route('definiciones-evaluacion.index'), icon: ClipboardListIcon },
+                ...(hasPermission('grupos:list') ? [{ title: 'Gestión de Grupos', href: route('grupos.index'), icon: Users }] : []),
+                ...(hasPermission('academic:manage') ? [{ title: 'Aprobación Académica', href: route('aprobacion-academica.index'), icon: Award }] : []),
             ],
         },
         ...(hasPermission('academic:view') ? [{

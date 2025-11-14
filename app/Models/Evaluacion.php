@@ -16,9 +16,9 @@ class Evaluacion extends Model
     protected $fillable = [
         'inscripcion_id',
         'fase_olimpiada_id',
-        'calificador_id',
         'total_puntaje',
         'finalizada_at',
+        'estado', // Added
     ];
 
     protected $casts = [
@@ -36,10 +36,6 @@ class Evaluacion extends Model
         return $this->belongsTo(FaseOlimpiada::class, 'fase_olimpiada_id');
     }
 
-    public function calificador(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'calificador_id');
-    }
 
     public function itemsEvaluados(): HasMany
     {

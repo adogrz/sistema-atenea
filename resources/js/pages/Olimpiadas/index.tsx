@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { PlusCircle, PencilIcon, Trash2Icon, ChevronDown, ChevronRight } from 'lucide-react';
 import { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { FasesList } from './FasesList';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
@@ -20,9 +19,11 @@ interface OlimpiadasIndexProps extends PageProps {
     nivelesEducativos: NivelEducativo[];
 }
 
-const breadcrumbs = [
-    { label: 'Inicio', href: route('dashboard') },
-    { label: 'Olimpiadas' },
+import { BreadcrumbItem } from '@/types';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Inicio', href: route('dashboard') },
+    { title: 'Olimpiadas' },
 ];
 
 import { DataTableToolbar } from '@/components/ui/data-table-toolbar';
@@ -34,7 +35,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, 
     const [selectedYear, setSelectedYear] = React.useState<string>('all');
 
     const availableYears = useMemo(() => {
-        const years = initialOlimpiadas.map(olimpiada => new Date(olimpiada.created_at).getFullYear());
+        const years = initialOlimpiadas.map(olimpiada => olimpiada.anio);
         return Array.from(new Set(years)).sort((a, b) => b - a);
     }, [initialOlimpiadas]);
 
@@ -42,7 +43,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, 
         if (selectedYear === 'all') {
             return initialOlimpiadas;
         }
-        return initialOlimpiadas.filter(olimpiada => new Date(olimpiada.created_at).getFullYear() === parseInt(selectedYear));
+        return initialOlimpiadas.filter(olimpiada => olimpiada.anio === parseInt(selectedYear));
     }, [selectedYear, initialOlimpiadas]);
 
     useEffect(() => {
@@ -96,7 +97,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, 
             header: 'Año',
             cell: ({ row }) => (
                 <Badge variant="outline" className="w-fit">
-                    {new Date(row.original.created_at).getFullYear()}
+                    {row.original.anio}
                 </Badge>
             ),
         },
@@ -119,10 +120,24 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, 
             },
         },
         {
+            accessorKey: 'tipo',
+            header: 'Tipo',
+            cell: ({ row }) => {
+                const tipo = row.original.tipo;
+                return (
+                    <Badge
+                        className={tipo === 'nivel' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}>
+                        {tipo === 'nivel' ? 'Por Nivel' : 'Olímpico'}
+                    </Badge>
+                );
+            },
+        },
+        {
             accessorKey: 'activa',
             header: 'Estado',
             cell: ({ row }) => (
-                <Badge variant={row.original.activa ? 'success' : 'destructive'}>
+                <Badge
+                    className={row.original.activa ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
                     {row.original.activa ? 'Activa' : 'Inactiva'}
                 </Badge>
             ),
@@ -159,30 +174,11 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, 
     );
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de Olimpiadas" />
 
             <div className="p-4 md:p-6">
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        {breadcrumbs.map((crumb, index) => (
-                            <React.Fragment key={index}>
-                                <BreadcrumbItem>
-                                    {crumb.href ? (
-                                        <BreadcrumbLink asChild>
-                                            <Link href={crumb.href}>{crumb.label}</Link>
-                                        </BreadcrumbLink>
-                                    ) : (
-                                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                                    )}
-                                </BreadcrumbItem>
-                                {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-                            </React.Fragment>
-                        ))}
-                    </BreadcrumbList>
-                </Breadcrumb>
-
-                <div className="flex items-center justify-between my-4 p-1">
+                <div className="flex items-center justify-between mb-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Gestión de Olimpiadas</h1>
                         <p className="text-muted-foreground">

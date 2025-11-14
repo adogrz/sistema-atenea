@@ -48,7 +48,8 @@ class EstudianteFactory extends Factory
             'distrito'         => $distrito->id,
             'nivel_educativo'  => $nivel->codigo,
             'nivel'            => $nivel->nombre ?? 'media',
-            'aprobado'         => $this->faker->boolean(70),
+            'nuevo_ingreso'    => true,
+            'prueba_psicologica_aprobada' => $this->faker->boolean(80),
             'created_at'       => now(),
             'updated_at'       => now(),
         ];

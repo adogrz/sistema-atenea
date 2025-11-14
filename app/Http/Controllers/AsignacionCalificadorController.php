@@ -16,18 +16,22 @@ class AsignacionCalificadorController extends Controller
     public function index()
     {
         $olimpiadas = Olimpiada::with([
-            'fases.definicionEvaluacion.itemsDefinidos.calificadores' => function ($query) {
-                $query->select('users.id', 'users.name'); // Select only needed fields
-            }
+            'fases.definicionEvaluacion.itemsDefinidos.calificadores',
+            'area',
+            'nivelEducativo'
         ])->orderBy('nombre')->get();
 
         $calificadores = User::role('calificador')->with('areas')->orderBy('name')->get(['id', 'name']);
-        $definicionesEvaluacion = DefinicionEvaluacion::all();
+        $definicionesEvaluacion = DefinicionEvaluacion::with('itemsDefinidos')->get();
+
+        $assignmentsData = $this->getAllAssignmentsData();
 
         return Inertia::render('Olimpiadas/GestionEvaluacion', [
             'olimpiadas' => $olimpiadas,
             'calificadores' => $calificadores,
             'definicionesEvaluacion' => $definicionesEvaluacion,
+            'allAssignments' => $assignmentsData['allAssignments'],
+            'chartsData' => $assignmentsData['chartsData'],
         ]);
     }
 
@@ -98,6 +102,59 @@ class AsignacionCalificadorController extends Controller
             }
         });
 
-        return response()->json(['success' => true, 'message' => 'Asignaciones actualizadas.']);
+        return redirect()->back()->with('success', 'Asignaciones actualizadas.');
+    }
+
+    public function getAllAssignmentsData()
+    {
+        $assignments = CalificadorItemAsignado::with([
+            'calificador:id,name',
+            'itemDefinido:id,nombre',
+            'faseOlimpiada:id,nombre,olimpiada_id',
+            'faseOlimpiada.olimpiada:id,nombre,area_id,created_at,tipo',
+            'faseOlimpiada.olimpiada.area:id,name',
+        ])->get()->map(function ($assignment) {
+            return [
+                'id' => $assignment->id,
+                'calificador_id' => $assignment->calificador_id,
+                'calificador_name' => $assignment->calificador->name,
+                'item_definido_id' => $assignment->item_definido_id,
+                'item_definido_nombre' => $assignment->itemDefinido->nombre,
+                'fase_olimpiada_id' => $assignment->fase_olimpiada_id,
+                'fase_olimpiada_nombre' => $assignment->faseOlimpiada->nombre,
+                'olimpiada_id' => $assignment->faseOlimpiada->olimpiada_id,
+                'olimpiada_nombre' => $assignment->faseOlimpiada->olimpiada->nombre,
+                'olimpiada_tipo' => $assignment->faseOlimpiada->olimpiada->tipo,
+                'area_id' => $assignment->faseOlimpiada->olimpiada->area_id,
+                'area_name' => $assignment->faseOlimpiada->olimpiada->area->name,
+                'year' => $assignment->faseOlimpiada->olimpiada->anio,
+                'created_at' => $assignment->created_at,
+            ];
+        });
+
+        // Aggregate data for charts
+        $assignmentsByYearAndArea = $assignments->groupBy('year')
+            ->map(function ($yearAssignments) {
+                return $yearAssignments->groupBy('area_name')
+                    ->map(fn ($areaAssignments) => $areaAssignments->count());
+            });
+
+        $assignmentsByYearAndCalificador = $assignments->groupBy('year')
+            ->map(function ($yearAssignments) {
+                return $yearAssignments->groupBy('calificador_name')
+                    ->map(fn ($calificadorAssignments) => $calificadorAssignments->count());
+            });
+
+        $totalAssignmentsByYear = $assignments->groupBy('year')
+            ->map(fn ($yearAssignments) => $yearAssignments->count());
+
+        return [
+            'allAssignments' => $assignments,
+            'chartsData' => [
+                'assignmentsByYearAndArea' => $assignmentsByYearAndArea,
+                'assignmentsByYearAndCalificador' => $assignmentsByYearAndCalificador,
+                'totalAssignmentsByYear' => $totalAssignmentsByYear,
+            ],
+        ];
     }
 }

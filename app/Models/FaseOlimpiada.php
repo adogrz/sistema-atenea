@@ -14,7 +14,7 @@ class FaseOlimpiada extends Model
 {
     use LogsActivity;
 
-    protected $with = ['olimpiada'];
+
 
     /**
      * The table associated with the model.
@@ -35,8 +35,8 @@ class FaseOlimpiada extends Model
         'definicion_evaluacion_id',
         'cupos',
         'nota_minima_aprobacion',
-        'fecha_inicio_inscripcion',
-        'fecha_fin_inscripcion',
+        'fecha_inicio',
+        'fecha_fin',
         'resultados_publicados',
         'orden',
     ];
@@ -63,6 +63,24 @@ class FaseOlimpiada extends Model
         'resultados_publicados' => 'boolean',
     ];
 
+    protected $visible = [
+        'id', // Explicitly include ID
+        'olimpiada_id',
+        'nombre',
+        'descripcion',
+        'definicion_evaluacion_id',
+        'cupos',
+        'nota_minima_aprobacion',
+        'fecha_inicio_inscripcion',
+        'fecha_fin_inscripcion',
+        'resultados_publicados',
+        'orden',
+        'activa',
+        'observaciones',
+        'created_at',
+        'updated_at',
+    ];
+
     /**
      * Relación: pertenece a una olimpiada
      */
@@ -79,13 +97,26 @@ class FaseOlimpiada extends Model
         return $this->hasMany(Evaluacion::class, 'fase_olimpiada_id');
     }
 
-    
-
-    public function itemsDefinidos(): HasMany
+    /**
+     * Verifica si la inscripción está abierta.
+     */
+    public function isInscripcionAbierta(): bool
     {
-        return $this->hasMany(ItemDefinido::class, 'fase_olimpiada_id');
+        $now = Carbon::now();
+        return $this->fecha_inicio_inscripcion <= $now && $now <= $this->fecha_fin_inscripcion;
     }
 
+    /**
+     * Scope para fases activas.
+     */
+    public function scopeActivas(Builder $query): Builder
+    {
+        return $query->where('activa', true);
+    }
+
+    /**
+     * Get the options for activity logging.
+     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

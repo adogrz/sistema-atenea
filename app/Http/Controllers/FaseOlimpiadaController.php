@@ -111,7 +111,7 @@ class FaseOlimpiadaController extends Controller
     public function assignEvaluation(Request $request, FaseOlimpiada $fase)
     {
         $validated = $request->validate([
-            'definicion_evaluacion_id' => ['required', 'integer', 'exists:definiciones_evaluacion,id'],
+            'definicion_evaluacion_id' => ['nullable', 'integer', 'exists:definiciones_evaluacion,id'],
         ]);
 
         $fase->update($validated);
@@ -139,5 +139,25 @@ class FaseOlimpiadaController extends Controller
             'fase' => $fase,
             'resultados' => $resultados,
         ]);
+    }
+
+    public function getPhaseDetails(FaseOlimpiada $fase)
+    {
+        $faseDetails = FaseOlimpiada::with([
+            'definicionEvaluacion' => function ($query) {
+                $query->with(['itemsDefinidos' => function ($q) {
+                    $q->with(['calificadores' => function ($q2) {
+                        $q2->select('users.id', 'users.name');
+                    }]);
+                }]);
+            },
+            'olimpiada' // Ensure olimpiada is loaded for context
+        ])->find($fase->id);
+
+        if (!$faseDetails) {
+            return response()->json(['message' => 'Fase no encontrada.'], 404);
+        }
+
+        return response()->json($faseDetails);
     }
 }

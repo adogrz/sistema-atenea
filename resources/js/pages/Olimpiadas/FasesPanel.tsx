@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import { Olimpiada, FaseOlimpiada } from '@/types';
+import { FaseOlimpiada } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -15,12 +15,12 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-
+import { toast } from 'sonner';
 
 interface FasesPanelProps {
     fases: FaseOlimpiada[];
     setFases: (fases: FaseOlimpiada[]) => void;
-    olimpiadaId?: number;
+    processing: boolean;
 }
 
 function SortableFaseItem({ fase, onEdit, onDelete }: { fase: FaseOlimpiada, onEdit: () => void, onDelete: () => void }) {
@@ -59,12 +59,11 @@ function SortableFaseItem({ fase, onEdit, onDelete }: { fase: FaseOlimpiada, onE
     );
 }
 
-const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, olimpiadaId }) => {
+const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingFase, setEditingFase] = useState<FaseOlimpiada | null>(null);
-    const [activeId, setActiveId] = useState<number | null>(null);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, errors, reset } = useForm({
         nombre: '',
         orden: fases.length + 1,
         fecha_inicio: '',
@@ -73,7 +72,7 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, olimpiadaId })
         observaciones: '',
     });
 
-    const { data: editData, setData: setEditData, put: update, processing: updating, errors: editErrors } = useForm({
+    const { data: editData, setData: setEditData, errors: editErrors } = useForm({
         nombre: '',
         orden: 0,
         fecha_inicio: '',
@@ -81,8 +80,6 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, olimpiadaId })
         activa: true,
         observaciones: '',
     });
-
-    const { delete: destroy } = useForm();
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -93,78 +90,33 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, olimpiadaId })
 
     const handleCreateSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (olimpiadaId) {
-            post(route('fases.store', { olimpiada: olimpiadaId }), {
-                onSuccess: () => {
-                    reset();
-                    toast.success('Fase creada exitosamente.');
-                },
-                onError: (err) => {
-                    toast.error('Error al crear la fase.');
-                    console.error(err);
-                },
-            });
-        } else {
-            // If no olimpiadaId, add to local state
-            const newFase: FaseOlimpiada = {
-                id: Date.now(), // Temporary ID for local management
-                nombre: data.nombre,
-                orden: data.orden,
-                fecha_inicio: data.fecha_inicio,
-                fecha_fin: data.fecha_fin,
-                activa: data.activa,
-                observaciones: data.observaciones,
-            };
-            setFases([...fases, newFase]);
-            reset();
-            toast.success('Fase agregada localmente.');
-        }
+        const newFase: FaseOlimpiada = {
+            id: Date.now(), // Temporary ID for local management
+            ...data,
+        };
+        setFases([...fases, newFase].map((f, i) => ({ ...f, orden: i + 1 })));
+        reset();
+        setData('orden', fases.length + 2);
+        toast.success('Fase agregada.');
     };
 
     const handleUpdateSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingFase) return;
 
-        if (olimpiadaId) {
-            update(route('fases.update', { fase: editingFase.id }), {
-                onSuccess: () => {
-                    setIsEditModalOpen(false);
-                    toast.success('Fase actualizada exitosamente.');
-                },
-                onError: (err) => {
-                    toast.error('Error al actualizar la fase.');
-                    console.error(err);
-                },
-            });
-        } else {
-            // Update local state
-            setFases(fases.map(fase =>
-                fase.id === editingFase.id
-                    ? { ...fase, ...editData, id: fase.id } // Ensure ID is preserved
-                    : fase
-            ));
-            setIsEditModalOpen(false);
-            toast.success('Fase actualizada localmente.');
-        }
+        setFases(fases.map(fase =>
+            fase.id === editingFase.id
+                ? { ...fase, ...editData, id: fase.id } // Ensure ID is preserved
+                : fase
+        ));
+        setIsEditModalOpen(false);
+        toast.success('Fase actualizada.');
     };
 
-    const handleDelete = (fase: FaseOlimpiada) => {
+    const handleDelete = (faseToDelete: FaseOlimpiada) => {
         if (confirm('¿Estás seguro de que quieres eliminar esta fase?')) {
-            if (olimpiadaId) {
-                destroy(route('fases.destroy', { fase: fase.id }), {
-                    onSuccess: () => {
-                        toast.success('Fase eliminada exitosamente.');
-                    },
-                    onError: (err) => {
-                        toast.error('Error al eliminar la fase.');
-                        console.error(err);
-                    },
-                });
-            } else {
-                // Remove from local state
-                setFases(fases.filter(f => f.id !== fase.id));
-                toast.success('Fase eliminada localmente.');
-            }
+            setFases(fases.filter(f => f.id !== faseToDelete.id));
+            toast.success('Fase eliminada.');
         }
     };
 
@@ -181,13 +133,10 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, olimpiadaId })
         setIsEditModalOpen(true);
     };
 
-    function handleDragStart(event: any) {
-        setActiveId(event.active.id);
-    }
+    function handleDragStart(event: any) {}
 
     function handleDragEnd(event: any) {
         const { active, over } = event;
-        setActiveId(null);
 
         if (over && active.id !== over.id) {
             const oldIndex = fases.findIndex(f => f.id === active.id);
@@ -195,28 +144,10 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, olimpiadaId })
 
             if (oldIndex !== -1 && newIndex !== -1) {
                 const newOrderFases = arrayMove(fases, oldIndex, newIndex);
-
-                if (olimpiadaId) {
-                    // If olimpiada exists, update backend
-                    const direction = newIndex > oldIndex ? 'down' : 'up';
-                    post(route('fases.reorder', { fase: active.id }), {
-                        direction: direction,
-                    }, {
-                        onSuccess: () => {
-                            setFases(newOrderFases); // Optimistic update after success
-                            toast.success('Fase reordenada exitosamente.');
-                        },
-                        onError: (err) => {
-                            toast.error('Error al reordenar la fase.');
-                            console.error(err);
-                        },
-                        preserveScroll: true,
-                    });
-                } else {
-                    // If olimpiada is new, update local state only
-                    setFases(newOrderFases);
-                    toast.success('Fase reordenada localmente.');
-                }
+                // Update order property for all items
+                const reorderedFases = newOrderFases.map((f, i) => ({ ...f, orden: i + 1 }));
+                setFases(reorderedFases);
+                toast.success('Fase reordenada.');
             }
         }
     }
@@ -436,7 +367,7 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, olimpiadaId })
                         </div>
                         <DialogFooter className="mt-4">
                             <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
-                            <Button type="submit" disabled={updating}>Actualizar</Button>
+                            <Button type="submit" disabled={processing}>Actualizar</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>

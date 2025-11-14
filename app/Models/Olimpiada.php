@@ -20,6 +20,7 @@ class Olimpiada extends Model
         'area_id', // Relación con el área académica
         'activa',
         'nivel_educativo_id',
+        'anio',
     ];
 
     protected $casts = [

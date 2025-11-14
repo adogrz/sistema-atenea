@@ -42,61 +42,36 @@ class ResultadoController extends Controller
         return response()->json($results);
     }
 
-    public function getEmailsForPassedStudents(Request $request)
+    public function managementIndex(): Response
     {
-        $request->validate([
-            'fase_id' => ['required', 'integer', 'exists:fases_olimpiadas,id'],
+        $user = Auth::user();
+        $query = Olimpiada::query();
+
+        if ($user->hasRole('coordinador-area')) {
+            $primaryArea = $user->primaryArea();
+            if ($primaryArea) {
+                $query->where('area_id', $primaryArea->id);
+            }
+        }
+
+        $olimpiadas = $query->with(['area', 'nivelEducativo', 'fases' => function ($query) {
+            $query->with('definicionEvaluacion.itemsDefinidos')->orderBy('orden');
+        }])->get();
+
+        return Inertia::render('Resultados/Management', [
+            'olimpiadas' => $olimpiadas,
         ]);
-
-        $fase = FaseOlimpiada::find($request->input('fase_id'));
-
-        if (!$fase) {
-            return response()->json(['message' => 'Fase no encontrada.'], 404);
-        }
-
-        $resultados = $this->getFaseResults($fase);
-
-        $emails = $resultados->where('pasa_siguiente_fase', true)
-            ->pluck('estudiante_email')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        return response()->json(['emails' => $emails]);
-    }
-
-    public function generatePermanentCodes(Request $request)
-    {
-        $request->validate([
-            'fase_id' => ['required', 'integer', 'exists:fases_olimpiadas,id'],
-        ]);
-
-        $fase = FaseOlimpiada::find($request->input('fase_id'));
-        if (!$fase) {
-            return response()->json(['message' => 'Fase no encontrada.'], 404);
-        }
-
-        $resultados = $this->getFaseResults($fase);
-        $passedStudentCodes = $resultados->where('pasa_siguiente_fase', true)->pluck('estudiante_codigo');
-
-        $studentsToUpdate = Estudiante::whereIn('codigo', $passedStudentCodes)->where('aprobado', false)->get();
-
-        $count = 0;
-        if ($studentsToUpdate->isNotEmpty()) {
-            DB::transaction(function () use ($studentsToUpdate, &$count) {
-                foreach ($studentsToUpdate as $estudiante) {
-                    $estudiante->generateAndAssignPermanentCode();
-                    $count++;
-                }
-            });
-        }
-
-        return redirect()->back()->with('success', "$count códigos permanentes generados y asignados exitosamente.");
     }
 
     private function getFaseResults(FaseOlimpiada $fase)
     {
+        // Eager load necessary relationships for evaluations
+        $fase->load([
+            'evaluaciones.inscripcion.estudiante.user',
+            'evaluaciones.itemsEvaluados.itemDefinido',
+            'evaluaciones.itemsEvaluados.calificador', // Load calificador for each item
+        ]);
+
         $notaMinima = $fase->nota_minima_aprobacion ?? 0;
         $cupos = $fase->cupos ?? 0;
         $maxScore = $fase->definicionEvaluacion ? $fase->definicionEvaluacion->itemsDefinidos->sum('puntos_maximos') : 0;

@@ -154,7 +154,9 @@ export interface Olimpiada {
     activa: boolean;
     created_at: string;
     updated_at: string;
-    nivel_educativo_id: number | null;
+    nivel_educativo_id: number;
+    tipo: 'nivel' | 'olimpico';
+    anio: number; // Add this line
     area?: Area; // Eager loaded relationship
     fases?: FaseOlimpiada[]; // Eager loaded relationship
     nivelEducativo?: NivelEducativo; // Eager loaded relationship
@@ -170,8 +172,7 @@ export interface FaseOlimpiada {
     observaciones: string;
     resultados_publicados?: boolean;
     nota_minima_aprobacion?: number | null;
-    cupos?: number | null;
-    definicionEvaluacion?: DefinicionEvaluacion;
+    definicion_evaluacion?: DefinicionEvaluacion;
     olimpiada?: Olimpiada; // Add this
 }
 
@@ -222,6 +223,28 @@ export interface Evaluacion {
     estudiante: Estudiante & { user: User }; // Eager loaded
     faseOlimpiada: FaseOlimpiada; // Eager loaded
     items_evaluados: ItemEvaluado[]; // Eager loaded
+}
+
+export interface CalificadorItemAsignado {
+    id: number;
+    calificador_id: number;
+    calificador_name: string;
+    item_definido_id: number;
+    item_definido_nombre: string;
+    fase_olimpiada_id: number;
+    fase_olimpiada_nombre: string;
+    olimpiada_id: number;
+    olimpiada_nombre: string;
+    area_id: number;
+    area_name: string;
+    year: number;
+    created_at: string;
+}
+
+export interface ChartData {
+    assignmentsByYearAndArea: { [year: string]: { [areaName: string]: number } };
+    assignmentsByYearAndCalificador: { [year: string]: { [calificadorName: string]: number } };
+    totalAssignmentsByYear: { [year: string]: number };
 }
 
 export type PageProps = SharedData & {
