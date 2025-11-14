@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TimePicker } from '@/components/ui/time-picker';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
@@ -296,21 +297,21 @@ export default function EditEventPage() {
 
                                         <div className="space-y-2">
                                             <Label htmlFor="hora_inicio">Hora de Inicio</Label>
-                                            <Input
+                                            <TimePicker
                                                 id="hora_inicio"
-                                                type="time"
                                                 value={data.hora_inicio}
-                                                onChange={(e) => setData('hora_inicio', e.target.value)}
+                                                onChange={(value) => setData('hora_inicio', value)}
+                                                placeholder="Seleccionar hora de inicio"
                                             />
                                         </div>
 
                                         <div className="space-y-2">
                                             <Label htmlFor="hora_fin">Hora de Fin</Label>
-                                            <Input
+                                            <TimePicker
                                                 id="hora_fin"
-                                                type="time"
                                                 value={data.hora_fin}
-                                                onChange={(e) => setData('hora_fin', e.target.value)}
+                                                onChange={(value) => setData('hora_fin', value)}
+                                                placeholder="Seleccionar hora de fin"
                                             />
                                         </div>
                                     </div>

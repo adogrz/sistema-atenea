@@ -88,13 +88,17 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         ->middleware('permission:users:view-all');
 });
 
+// Rutas de carga de centros educativos (requiere autenticación y evento activo)
 Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {
     // Página que contiene el formulario de carga
     Route::get('/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create');
 
     // Ruta POST que procesa el archivo Excel
     Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store');
+});
 
+// Rutas públicas de admisión de aspirantes (sin autenticación, solo verificar evento activo)
+Route::middleware(['web', 'check.event.period:registro-aspirantes'])->group(function () {
     // Página que contiene el formulario de admisión
     Route::get('/formulario-admision', [AdmisionController::class, 'create'])->name('admision.create');
 

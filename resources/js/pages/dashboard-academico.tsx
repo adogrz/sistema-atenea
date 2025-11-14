@@ -121,8 +121,9 @@ export default function DashboardAcademico() {
                             onClick={handleCreate}
                             disabled={!canCreateEvent}
                             title={!canCreateEvent ? "No tienes permisos para crear eventos" : "Crear nuevo evento"}
+                            asChild
                         >
-                            <Link href="/dashboard/academic-forms/create-event">
+                            <Link href="/dashboard/academic-forms/create-event" className="flex items-center gap-2">
                                 <Plus className="h-4 w-4" />
                                 <span>Agregar Evento</span>
                             </Link>

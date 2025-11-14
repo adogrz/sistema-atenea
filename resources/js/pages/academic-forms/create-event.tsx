@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TimePicker } from '@/components/ui/time-picker';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -261,21 +262,21 @@ export default function CreateEvent() {
 
                                         <div className="space-y-2">
                                             <Label htmlFor="hora_inicio">Hora de Inicio</Label>
-                                            <Input
+                                            <TimePicker
                                                 id="hora_inicio"
-                                                type="time"
                                                 value={data.hora_inicio}
-                                                onChange={(e) => setData('hora_inicio', e.target.value)}
+                                                onChange={(value) => setData('hora_inicio', value)}
+                                                placeholder="Seleccionar hora de inicio"
                                             />
                                         </div>
 
                                         <div className="space-y-2">
                                             <Label htmlFor="hora_fin">Hora de Fin</Label>
-                                            <Input
+                                            <TimePicker
                                                 id="hora_fin"
-                                                type="time"
                                                 value={data.hora_fin}
-                                                onChange={(e) => setData('hora_fin', e.target.value)}
+                                                onChange={(value) => setData('hora_fin', value)}
+                                                placeholder="Seleccionar hora de fin"
                                             />
                                         </div>
                                     </div>
@@ -323,11 +324,11 @@ export default function CreateEvent() {
                                     <div className="space-y-2">
                                         <SummaryItem label="Nombre" field="nombre" />
                                         <SummaryItem label="Clasificación" field="clasificacion" />
-                                        <SummaryItem label="Estado" field="estado" />
-                                        <SummaryItem label="Fechas" field="fechas" />
-                                        <SummaryItem label="Horario" field="horario" />
-                                        <SummaryItem label="Ubicación" field="ubicacion" />
-                                        <SummaryItem label="Descripción" field="descripcion" />
+                                        <SummaryItem label="Estado" field="status" />
+                                        <SummaryItem label="Fechas" field="dates" />
+                                        <SummaryItem label="Horario" field="time" />
+                                        <SummaryItem label="Ubicación" field="location" />
+                                        <SummaryItem label="Descripción" field="description" />
                                     </div>
                                     {!isFormValid() && (
                                         <div className="mt-3 rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-950/30">
