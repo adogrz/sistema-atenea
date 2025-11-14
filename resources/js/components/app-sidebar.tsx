@@ -4,14 +4,16 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-
 import {
     BookOpen,
     Brain,
     Calendar,
     CalendarDays,
+    ClipboardCheck,
     ClipboardListIcon,
     Clock,
+    FileBarChart,
+    FileCheck,
     FileHeart,
     GraduationCap,
     GraduationCapIcon,
@@ -20,6 +22,8 @@ import {
     School,
     ShieldCheck,
     Stethoscope,
+    UserCheck,
+    UserPlus,
     Users,
 } from 'lucide-react';
 
@@ -41,6 +45,7 @@ export function AppSidebar() {
         ...buildClinicalRecordsNav(),
         ...buildAdministrationNav(),
         ...buildAcademicNav(),
+        ...buildInternshipNav(),
         ...buildStudentNav(),
     ].filter((item) => !item.items || item.items.length > 0);
 
@@ -52,7 +57,6 @@ export function AppSidebar() {
 
         const items: NavItem[] = [];
 
-        // Para jefes: mostrar todos los expedientes
         if (canManageMedical) {
             items.push({
                 icon: Stethoscope,
@@ -69,7 +73,6 @@ export function AppSidebar() {
             });
         }
 
-        // Asignaciones (visible para todos)
         items.push({
             icon: Users,
             href: '/dashboard/clinical-records/assignments',
@@ -113,6 +116,42 @@ export function AppSidebar() {
                 ],
             },
         ];
+    }
+
+    function buildInternshipNav(): NavItem[] {
+        const canViewModule =
+            hasPermission('internado:view') ||
+            hasPermission('internado:admin:view') ||
+            hasPermission('internado:asistencias:view');
+
+        if (!canViewModule) return [];
+
+        const items: NavItem[] = [
+            ...(hasPermission('internado:admin:view')
+                ? [
+                      { title: 'Selección FDTC', href: '/dashboard/internado-fdtc/seleccion', icon: UserPlus },
+                      { title: 'Participantes', href: '/dashboard/internado-fdtc/participantes', icon: Users },
+                      { title: 'Periodos', href: '/dashboard/internado-fdtc/periodos', icon: Calendar },
+                  ]
+                : []),
+            ...(hasPermission('internado:evaluaciones:view')
+                ? [{ title: 'Evaluaciones', href: '/dashboard/internado-fdtc/evaluaciones', icon: FileCheck }]
+                : []),
+            ...(hasPermission('internado:asistencias:view')
+                ? [
+                      { title: 'Asistencias', href: '/dashboard/internado-fdtc/asistencias', icon: UserCheck },
+                      { title: 'Reporte Asistencias', href: '/dashboard/internado-fdtc/asistencias/reporte', icon: FileBarChart },
+                  ]
+                : []),
+            ...(hasPermission('internado:conductas:view')
+                ? [
+                      { title: 'Conductas', href: '/dashboard/internado-fdtc/conductas', icon: ClipboardCheck },
+                      { title: 'Reporte Conductas', href: '/dashboard/internado-fdtc/conductas/reporte', icon: FileBarChart },
+                  ]
+                : []),
+        ];
+
+        return items.length > 0 ? [{ title: 'FDTC', icon: ShieldCheck, items }] : [];
     }
 
     function buildStudentNav(): NavItem[] {

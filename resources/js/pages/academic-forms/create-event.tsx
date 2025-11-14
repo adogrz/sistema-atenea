@@ -35,15 +35,15 @@ const EVENT_STATUSES = [
 
 export default function CreateEvent() {
     const form = useForm({
-        name: '',
-        type: '',
-        start_date: '',
-        end_date: '',
-        start_time: '',
-        end_time: '',
-        description: '',
-        location: '',
-        status: 'activo',
+        nombre: '',
+        clasificacion: '',
+        fecha_inicio: '',
+        fecha_fin: '',
+        hora_inicio: '',
+        hora_fin: '',
+        descripcion: '',
+        ubicacion: '',
+        estado: 'activo',
     });
 
     const { data, setData, post, processing } = form;
@@ -52,28 +52,28 @@ export default function CreateEvent() {
     useEffect(() => {
         const newErrors: Record<string, string> = {};
         
-        if (!data.name) {
-            newErrors.name = 'El nombre del evento es requerido';
+        if (!data.nombre) {
+            newErrors.nombre = 'El nombre del evento es requerido';
         }
         
-        if (!data.type) {
-            newErrors.type = 'El tipo de evento es requerido';
+        if (!data.clasificacion) {
+            newErrors.clasificacion = 'El tipo de evento es requerido';
+        }
+
+        if (!data.fecha_inicio) {
+            newErrors.fecha_inicio = 'La fecha de inicio es requerida';
         }
         
-        if (!data.start_date) {
-            newErrors.start_date = 'La fecha de inicio es requerida';
+        if (!data.fecha_fin) {
+            newErrors.fecha_fin = 'La fecha de fin es requerida';
         }
-        
-        if (!data.end_date) {
-            newErrors.end_date = 'La fecha de fin es requerida';
-        }
-        
-        if (data.start_date && data.end_date && new Date(data.start_date) > new Date(data.end_date)) {
-            newErrors.end_date = 'La fecha de fin debe ser posterior a la fecha de inicio';
+
+        if (data.fecha_inicio && data.fecha_fin && new Date(data.fecha_inicio) > new Date(data.fecha_fin)) {
+            newErrors.fecha_fin = 'La fecha de fin debe ser posterior a la fecha de inicio';
         }
         
         setValidationErrors(newErrors);
-    }, [data.name, data.type, data.start_date, data.end_date]);
+    }, [data.nombre, data.clasificacion, data.fecha_inicio, data.fecha_fin]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -82,53 +82,53 @@ export default function CreateEvent() {
 
     const isFormValid = () => {
         return (
-            data.name &&
-            data.type &&
-            data.start_date &&
-            data.end_date &&
+            data.nombre &&
+            data.clasificacion &&
+            data.fecha_inicio &&
+            data.fecha_fin &&
             Object.keys(validationErrors).length === 0
         );
     };
 
     const getFieldValidation = (field: string) => {
         switch (field) {
-            case 'name':
-                return { isValid: !!data.name, value: data.name || 'Sin especificar', isEmpty: !data.name };
-            case 'type':
+            case 'nombre':
+                return { isValid: !!data.nombre, value: data.nombre || 'Sin especificar', isEmpty: !data.nombre };
+            case 'clasificacion':
                 return { 
-                    isValid: !!data.type, 
-                    value: data.type ? EVENT_TYPES.find(t => t.value === data.type)?.label || 'Sin especificar' : 'Sin especificar', 
-                    isEmpty: !data.type 
+                    isValid: !!data.clasificacion, 
+                    value: data.clasificacion ? EVENT_TYPES.find(t => t.value === data.clasificacion)?.label || 'Sin especificar' : 'Sin especificar', 
+                    isEmpty: !data.clasificacion 
                 };
             case 'dates':
                 return {
-                    isValid: !!data.start_date && !!data.end_date && !validationErrors.end_date,
-                    value: data.start_date && data.end_date ? `${data.start_date} - ${data.end_date}` : 'Sin especificar',
-                    isEmpty: !data.start_date || !data.end_date,
+                    isValid: !!data.fecha_inicio && !!data.fecha_fin && !validationErrors.fecha_fin,
+                    value: data.fecha_inicio && data.fecha_fin ? `${data.fecha_inicio} - ${data.fecha_fin}` : 'Sin especificar',
+                    isEmpty: !data.fecha_inicio || !data.fecha_fin,
                 };
             case 'time':
                 return {
                     isValid: true,
-                    value: data.start_time && data.end_time ? `${data.start_time} - ${data.end_time}` : 'Sin especificar',
-                    isEmpty: !data.start_time || !data.end_time,
+                    value: data.hora_inicio && data.hora_fin ? `${data.hora_inicio} - ${data.hora_fin}` : 'Sin especificar',
+                    isEmpty: !data.hora_inicio || !data.hora_fin,
                 };
             case 'location':
                 return {
                     isValid: true,
-                    value: data.location || 'No especificada',
-                    isEmpty: !data.location,
+                    value: data.ubicacion || 'No especificada',
+                    isEmpty: !data.ubicacion,
                 };
             case 'description':
                 return {
                     isValid: true,
-                    value: data.description || 'Sin descripción',
-                    isEmpty: !data.description,
+                    value: data.descripcion || 'Sin descripción',
+                    isEmpty: !data.descripcion,
                 };
             case 'status':
                 return { 
-                    isValid: !!data.status, 
-                    value: data.status ? EVENT_STATUSES.find(s => s.value === data.status)?.label || 'Sin especificar' : 'Sin especificar', 
-                    isEmpty: !data.status 
+                    isValid: !!data.estado, 
+                    value: data.estado ? EVENT_STATUSES.find(s => s.value === data.estado)?.label || 'Sin especificar' : 'Sin especificar', 
+                    isEmpty: !data.estado 
                 };
             default:
                 return { isValid: false, value: '', isEmpty: true };
@@ -175,19 +175,19 @@ export default function CreateEvent() {
 
                                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                         <div className="space-y-2">
-                                            <Label htmlFor="name">Nombre del Evento *</Label>
+                                            <Label htmlFor="nombre">Nombre del Evento *</Label>
                                             <Input
-                                                id="name"
-                                                value={data.name}
-                                                onChange={(e) => setData('name', e.target.value)}
+                                                id="nombre"
+                                                value={data.nombre}
+                                                onChange={(e) => setData('nombre', e.target.value)}
                                                 placeholder="Nombre del evento"
                                             />
-                                            {validationErrors.name && <p className="text-sm text-red-600">{validationErrors.name}</p>}
+                                            {validationErrors.nombre && <p className="text-sm text-red-600">{validationErrors.nombre}</p>}
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="type">Tipo de Evento *</Label>
-                                            <Select value={data.type} onValueChange={(value) => setData('type', value)}>
+                                            <Label htmlFor="clasificacion">Tipo de Evento *</Label>
+                                            <Select value={data.clasificacion} onValueChange={(value) => setData('clasificacion', value)}>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Selecciona un tipo" />
                                                 </SelectTrigger>
@@ -199,11 +199,11 @@ export default function CreateEvent() {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            {validationErrors.type && <p className="text-sm text-red-600">{validationErrors.type}</p>}
+                                            {validationErrors.clasificacion && <p className="text-sm text-red-600">{validationErrors.clasificacion}</p>}
                                         </div>
                                         <div className="space-y-2 md:col-span-2">
-                                            <Label htmlFor="status">Estado del Evento *</Label>
-                                            <Select value={data.status} onValueChange={(value) => setData('status', value)}>
+                                            <Label htmlFor="estado">Estado del Evento *</Label>
+                                            <Select value={data.estado} onValueChange={(value) => setData('estado', value)}>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Selecciona un estado" />
                                                 </SelectTrigger>
@@ -238,44 +238,44 @@ export default function CreateEvent() {
 
                                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                         <div className="space-y-2">
-                                            <Label htmlFor="start_date">Fecha de Inicio *</Label>
+                                            <Label htmlFor="fecha_inicio">Fecha de Inicio *</Label>
                                             <Input
-                                                id="start_date"
+                                                id="fecha_inicio"
                                                 type="date"
-                                                value={data.start_date}
-                                                onChange={(e) => setData('start_date', e.target.value)}
+                                                value={data.fecha_inicio}
+                                                onChange={(e) => setData('fecha_inicio', e.target.value)}
                                             />
-                                            {validationErrors.start_date && <p className="text-sm text-red-600">{validationErrors.start_date}</p>}
+                                            {validationErrors.fecha_inicio && <p className="text-sm text-red-600">{validationErrors.fecha_inicio}</p>}
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="end_date">Fecha de Fin *</Label>
+                                            <Label htmlFor="fecha_fin">Fecha de Fin *</Label>
                                             <Input
-                                                id="end_date"
+                                                id="fecha_fin"
                                                 type="date"
-                                                value={data.end_date}
-                                                onChange={(e) => setData('end_date', e.target.value)}
+                                                value={data.fecha_fin}
+                                                onChange={(e) => setData('fecha_fin', e.target.value)}
                                             />
-                                            {validationErrors.end_date && <p className="text-sm text-red-600">{validationErrors.end_date}</p>}
+                                            {validationErrors.fecha_fin && <p className="text-sm text-red-600">{validationErrors.fecha_fin}</p>}
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="start_time">Hora de Inicio</Label>
+                                            <Label htmlFor="hora_inicio">Hora de Inicio</Label>
                                             <Input
-                                                id="start_time"
+                                                id="hora_inicio"
                                                 type="time"
-                                                value={data.start_time}
-                                                onChange={(e) => setData('start_time', e.target.value)}
+                                                value={data.hora_inicio}
+                                                onChange={(e) => setData('hora_inicio', e.target.value)}
                                             />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="end_time">Hora de Fin</Label>
+                                            <Label htmlFor="hora_fin">Hora de Fin</Label>
                                             <Input
-                                                id="end_time"
+                                                id="hora_fin"
                                                 type="time"
-                                                value={data.end_time}
-                                                onChange={(e) => setData('end_time', e.target.value)}
+                                                value={data.hora_fin}
+                                                onChange={(e) => setData('hora_fin', e.target.value)}
                                             />
                                         </div>
                                     </div>
@@ -292,21 +292,21 @@ export default function CreateEvent() {
 
                                     <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <Label htmlFor="location">Ubicación</Label>
+                                            <Label htmlFor="ubicacion">Ubicación</Label>
                                             <Input
-                                                id="location"
-                                                value={data.location}
-                                                onChange={(e) => setData('location', e.target.value)}
+                                                id="ubicacion"
+                                                value={data.ubicacion}
+                                                onChange={(e) => setData('ubicacion', e.target.value)}
                                                 placeholder="Ubicación del evento"
                                             />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="description">Descripción</Label>
+                                            <Label htmlFor="descripcion">Descripción</Label>
                                             <Textarea
-                                                id="description"
-                                                value={data.description}
-                                                onChange={(e) => setData('description', e.target.value)}
+                                                id="descripcion"
+                                                value={data.descripcion}
+                                                onChange={(e) => setData('descripcion', e.target.value)}
                                                 placeholder="Describe el evento..."
                                                 rows={4}
                                             />
@@ -321,13 +321,13 @@ export default function CreateEvent() {
                                         Resumen del evento
                                     </h4>
                                     <div className="space-y-2">
-                                        <SummaryItem label="Nombre" field="name" />
-                                        <SummaryItem label="Tipo" field="type" />
-                                        <SummaryItem label="Estado" field="status" />
-                                        <SummaryItem label="Fechas" field="dates" />
-                                        <SummaryItem label="Horario" field="time" />
-                                        <SummaryItem label="Ubicación" field="location" />
-                                        <SummaryItem label="Descripción" field="description" />
+                                        <SummaryItem label="Nombre" field="nombre" />
+                                        <SummaryItem label="Clasificación" field="clasificacion" />
+                                        <SummaryItem label="Estado" field="estado" />
+                                        <SummaryItem label="Fechas" field="fechas" />
+                                        <SummaryItem label="Horario" field="horario" />
+                                        <SummaryItem label="Ubicación" field="ubicacion" />
+                                        <SummaryItem label="Descripción" field="descripcion" />
                                     </div>
                                     {!isFormValid() && (
                                         <div className="mt-3 rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-950/30">

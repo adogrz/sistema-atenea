@@ -29,7 +29,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('academic:check-periods')
                  ->hourly()
                  ->withoutOverlapping()
-                 ->appendOutputTo(storage_path('logs/academic-periods.log'));
+                 ->appendOutputTo(storage_path('logs/academic-periods.log'))
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
     }
 
     /**

@@ -113,6 +113,14 @@ class PermissionSeeder extends Seeder
                 'academic:view',
                 'academic:manage',
             ],
+            'internado' => [
+                'internado:view',
+                'internado:manage',
+                'internado:asistencias:view',
+                'internado:conductas:view',
+                'internado:evaluaciones:view',
+                'internado:admin:view',  // Para selección, participantes y periodos
+            ],
         ];
     }
 
@@ -173,26 +181,24 @@ class PermissionSeeder extends Seeder
             ],
             'admin-academico' => [
                 'description' => 'Administrador Académico',
-                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic'],
+                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic', 'internado'],
                 'permissions' => ['users:view-all', 'roles:list', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []
             ],
             'admin-academico-sede' => [
                 'description' => 'Administrador Académico de Sede',
-                'groups' => ['general'],
+                'groups' => ['general', 'academic'],
                 'permissions' => [
                     'users:view-sede',
                     'users:list',
                     'roles:list',
                     'sedes:list',
                     'areas:list',
-                    'events:view',
-                    'events:create',
-                    'events:edit'
+                    'events:view'
                 ],
                 'inherits' => [],
-                'exclude_permissions' => []
+                'exclude_permissions' => ['events:delete', 'events:edit', 'events:create']
             ],
             'coordinador-area' => [
                 'description' => 'Coordinador de Área',
@@ -306,7 +312,14 @@ class PermissionSeeder extends Seeder
             'calificador' => [
                 'description' => 'Calificador',
                 'groups' => ['general'],
-                'permissions' => ['users:view-sede', 'users:view-area', 'users:list'],
+                'permissions' => [
+                    'users:view-sede', 
+                    'users:view-area', 
+                    'users:list',
+                    'internado:asistencias:view',
+                    'internado:conductas:view',
+                    'internado:evaluaciones:view',
+                ],
                 'inherits' => [],
                 'exclude_permissions' => []
             ],

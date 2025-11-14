@@ -66,7 +66,7 @@ class Estudiante extends Model
     ];
 
     /**
-     * Relación con el modelo User
+     * Relación con el usuario asociado al estudiante
      */
     public function user(): BelongsTo
     {
@@ -173,5 +173,24 @@ class Estudiante extends Model
     public function consentForms(): HasMany
     {
         return $this->hasMany(ConsentForm::class, 'student_nie', 'nie');
+    }
+  
+     /**
+     *  Relación con el internado FDTC
+     */
+    public function internadoParticipante(): HasOne
+    {
+        return $this->hasOne(InternadoParticipante::class, 'estudiante_codigo', 'codigo')
+            ->whereNull('deleted_at');
+    }
+
+    /**
+     * Verificar si está en el internado
+     */
+    public function estaEnInternado(): bool
+    {
+        return $this->internadoParticipante()
+            ->where('estado', 'activo')
+            ->exists();
     }
 }
