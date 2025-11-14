@@ -42,8 +42,16 @@ class Evento extends Model
     {
         $fecha = Carbon::parse($this->fecha_inicio);
         if ($this->hora_inicio) {
-            $hora = Carbon::createFromFormat('H:i', $this->hora_inicio);
-            return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(0);
+            try {
+                // Intentar parsear la hora de manera flexible (soporta H:i y H:i:s)
+                $horaStr = substr($this->hora_inicio, 0, 5); // Tomar solo H:i si tiene segundos
+                $hora = Carbon::createFromFormat('H:i', $horaStr);
+                return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(0);
+            } catch (\Exception $e) {
+                // Si falla, intentar parsear directamente
+                $hora = Carbon::parse($this->hora_inicio);
+                return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(0);
+            }
         }
         return $fecha->startOfDay();
     }
@@ -53,8 +61,16 @@ class Evento extends Model
     {
         $fecha = Carbon::parse($this->fecha_fin);
         if ($this->hora_fin) {
-            $hora = Carbon::createFromFormat('H:i', $this->hora_fin);
-            return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(59);
+            try {
+                // Intentar parsear la hora de manera flexible (soporta H:i y H:i:s)
+                $horaStr = substr($this->hora_fin, 0, 5); // Tomar solo H:i si tiene segundos
+                $hora = Carbon::createFromFormat('H:i', $horaStr);
+                return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(59);
+            } catch (\Exception $e) {
+                // Si falla, intentar parsear directamente
+                $hora = Carbon::parse($this->hora_fin);
+                return $fecha->setHour($hora->hour)->setMinute($hora->minute)->setSecond(59);
+            }
         }
         return $fecha->endOfDay();
     }
