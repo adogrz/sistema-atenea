@@ -16,6 +16,7 @@ use App\Services\ClinicalRecord\MedicalRecordCreator;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Inertia\Inertia;
 
 class MedicalRecordController extends Controller
@@ -183,6 +184,53 @@ class MedicalRecordController extends Controller
             ],
             'source' => $source,
         ]);
+    }
+
+    /**
+     * Genera y descarga el reporte PDF del expediente médico.
+     */
+    public function downloadReport(MedicalRecord $medicalRecord)
+    {
+        $this->authorize('view', $medicalRecord);
+
+        $medicalRecord->load([
+            'student.user',
+            'student.responsables',
+            'creator',
+            'medicalConsultations.doctor',
+            'medicalConsultations.consentForm.responsible',
+        ]);
+
+        $student = $medicalRecord->student;
+        $consultations = $medicalRecord->medicalConsultations
+            ->sortByDesc('consultation_date');
+
+        $pdf = Pdf::loadView('reports.medical-record-report', [
+            'record' => $medicalRecord,
+            'student' => $student,
+            'consultations' => $consultations,
+        ]);
+
+        $pdfPassword = $this->resolvePdfPassword($student, $medicalRecord->student_nie);
+
+        if ($pdfPassword) {
+            $pdf->setEncryption($pdfPassword);
+        }
+
+        $filename = sprintf('historial-medico-%s.pdf', $medicalRecord->student_nie);
+
+        return $pdf->download($filename);
+    }
+
+    private function resolvePdfPassword(?Estudiante $student, string $fallbackNie): string
+    {
+        $year = $student?->fecha_nacimiento?->format('Y');
+
+        if ($year) {
+            return sprintf('%s-%s', $fallbackNie, $year);
+        }
+
+        return $fallbackNie;
     }
 
     /**

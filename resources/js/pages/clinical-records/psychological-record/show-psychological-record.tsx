@@ -11,7 +11,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { ColumnFiltersState } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Brain, Calendar, CirclePlus, ClipboardList, FileText, Pencil, User } from 'lucide-react';
+import { Brain, Calendar, CirclePlus, ClipboardList, Download, FileText, Pencil, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -75,6 +75,10 @@ export default function ShowPsychologicalRecord({ psychologicalRecord, permissio
         router.get(route('clinical-records.psychological-records.sessions.create', psychologicalRecord.id));
     };
 
+    const handleDownloadReport = () => {
+        window.open(route('clinical-records.psychological-records.report', psychologicalRecord.id), '_blank');
+    };
+
     const handleEditAssessment = () => {
         setIsEditDialogOpen(true);
     };
@@ -114,16 +118,22 @@ export default function ShowPsychologicalRecord({ psychologicalRecord, permissio
             <div className="flex h-full flex-1 flex-col gap-8 overflow-x-auto rounded-xl p-6">
                 {/* Encabezado */}
                 <div className="flex flex-col gap-2 border-b border-muted/30 pb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                            <Brain className="h-5 w-5 text-primary" />
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                                <Brain className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
+                                <p className="text-sm text-muted-foreground">
+                                    Detalles del expediente psicológico de <span className="font-medium text-foreground">{studentName}</span>
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
-                            <p className="text-sm text-muted-foreground">
-                                Detalles del expediente psicológico de <span className="font-medium text-foreground">{studentName}</span>
-                            </p>
-                        </div>
+                        <Button variant="secondary" onClick={handleDownloadReport} className="w-full md:w-auto">
+                            <Download className="mr-2 h-4 w-4" />
+                            Descargar PDF
+                        </Button>
                     </div>
                 </div>
 

@@ -77,6 +77,9 @@ Route::middleware(['auth', 'verified', 'check.status'])
             Route::get('/{medical_record}', [MedicalRecordController::class, 'show'])
                 ->name('show');
 
+            Route::get('/{medical_record}/report', [MedicalRecordController::class, 'downloadReport'])
+                ->name('report');
+
             Route::get('/{medical_record}/edit', [MedicalRecordController::class, 'edit'])
                 ->name('edit');
 
@@ -130,6 +133,9 @@ Route::middleware(['auth', 'verified', 'check.status'])
 
             Route::get('/{psychological_record}', [PsychologicalRecordController::class, 'show'])
                 ->name('show');
+
+            Route::get('/{psychological_record}/report', [PsychologicalRecordController::class, 'downloadReport'])
+                ->name('report');
 
             Route::get('/{psychological_record}/edit', [PsychologicalRecordController::class, 'edit'])
                 ->name('edit');

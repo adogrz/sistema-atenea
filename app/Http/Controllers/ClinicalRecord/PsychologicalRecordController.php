@@ -16,6 +16,7 @@ use App\Services\ClinicalRecord\PsychologicalRecordCreator;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Inertia\Inertia;
 
 class PsychologicalRecordController extends Controller
@@ -186,6 +187,44 @@ class PsychologicalRecordController extends Controller
     }
 
     /**
+     * Genera y descarga el reporte PDF del expediente psicológico.
+     */
+    public function downloadReport(PsychologicalRecord $psychologicalRecord)
+    {
+        $this->authorize('view', $psychologicalRecord);
+
+        $psychologicalRecord->load([
+            'student.user',
+            'student.responsables',
+            'creator',
+            'psychologicalSessions.psychologist',
+            'psychologicalSessions.consentForm.responsible',
+        ]);
+
+        $student = $psychologicalRecord->student;
+        $sessions = $psychologicalRecord->psychologicalSessions
+            ->sortByDesc('session_date');
+
+        set_time_limit(120);
+
+        $pdf = Pdf::setPaper('letter', 'portrait')->loadView('reports.psychological-record-report', [
+            'record' => $psychologicalRecord,
+            'student' => $student,
+            'sessions' => $sessions,
+        ]);
+
+        $pdfPassword = $this->resolvePdfPassword($student, $psychologicalRecord->student_nie);
+
+        if ($pdfPassword) {
+            $pdf->setEncryption($pdfPassword);
+        }
+
+        $filename = sprintf('historial-psicologico-%s.pdf', $psychologicalRecord->student_nie);
+
+        return $pdf->download($filename);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      *
      * Este método no se utiliza ya que la edición se hace mediante un Dialog en el show.
@@ -233,5 +272,16 @@ class PsychologicalRecordController extends Controller
     {
         // Denegar siempre la eliminación de expedientes psicológicos
         abort(403, 'Los expedientes psicológicos no pueden ser eliminados por razones de auditoría y cumplimiento legal.');
+    }
+
+    private function resolvePdfPassword(?Estudiante $student, string $fallbackNie): string
+    {
+        $year = $student?->fecha_nacimiento?->format('Y');
+
+        if ($year) {
+            return sprintf('%s-%s', $fallbackNie, $year);
+        }
+
+        return $fallbackNie;
     }
 }
