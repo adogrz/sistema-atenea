@@ -105,7 +105,7 @@ export default function EditEventPage() {
             return;
         }
 
-        put(route('academic-forms.update', { id: event.id }), {
+        put(route('academic-forms.update', { event: event.id }), {
             onSuccess: () => {
                 // Éxito manejado por el redirect del controller
             },
