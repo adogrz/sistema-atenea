@@ -22,7 +22,6 @@ import { ReviewSection } from './sections/review';
 
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: '/dashboard' },
-    { title: 'Expediente Clínico', href: '/dashboard/clinical-records' },
     { title: 'Asignaciones', href: '/dashboard/clinical-records/assignments' },
     { title: 'Nuevo Expediente Médico', href: '/dashboard/clinical-records/medical-records/create' },
 ];
