@@ -16,6 +16,7 @@ class InternadoAsistencia extends Model
     protected $fillable = [
         'participante_id',
         'periodo_id',
+        'nivel_codigo',
         'fecha',
         'estado',
         'observaciones',
@@ -47,6 +48,14 @@ class InternadoAsistencia extends Model
     }
 
     /**
+     * Relación con nivel educativo
+     */
+    public function nivelEducativo(): BelongsTo
+    {
+        return $this->belongsTo(NivelEducativo::class, 'nivel_codigo', 'codigo');
+    }
+
+    /**
      * Scope por fecha
      */
     public function scopePorFecha($query, $fecha)
@@ -68,5 +77,13 @@ class InternadoAsistencia extends Model
     public function scopePorEstado($query, $estado)
     {
         return $query->where('estado', $estado);
+    }
+
+    /**
+     * Scope por nivel educativo
+     */
+    public function scopePorNivel($query, string $nivelCodigo)
+    {
+        return $query->where('nivel_codigo', $nivelCodigo);
     }
 }

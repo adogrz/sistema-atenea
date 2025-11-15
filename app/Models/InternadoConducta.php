@@ -16,6 +16,7 @@ class InternadoConducta extends Model
     protected $fillable = [
         'participante_id',
         'periodo_id',
+        'nivel_codigo',
         'calificacion',
         'descripcion',
     ];
@@ -42,6 +43,14 @@ class InternadoConducta extends Model
     public function periodo(): BelongsTo
     {
         return $this->belongsTo(InternadoPeriodo::class, 'periodo_id');
+    }
+
+    /**
+     * Relación con nivel educativo
+     */
+    public function nivelEducativo(): BelongsTo
+    {
+        return $this->belongsTo(NivelEducativo::class, 'nivel_codigo', 'codigo');
     }
 
     /**
@@ -73,5 +82,13 @@ class InternadoConducta extends Model
     public function scopePorCalificacion($query, $calificacion)
     {
         return $query->where('calificacion', $calificacion);
+    }
+
+    /**
+     * Scope por nivel educativo
+     */
+    public function scopePorNivel($query, string $nivelCodigo)
+    {
+        return $query->where('nivel_codigo', $nivelCodigo);
     }
 }

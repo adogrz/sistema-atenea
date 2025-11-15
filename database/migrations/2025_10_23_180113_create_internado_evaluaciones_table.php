@@ -23,6 +23,10 @@ return new class extends Migration
             $table->decimal('credito_extra_max', 3, 1)->default(0);
             $table->foreignId('periodo_id')->after('id')->nullable()->constrained('internado_periodos')->onDelete('cascade');
             $table->foreignId('materia_id')->after('periodo_id')->nullable()->constrained('materias')->onDelete('cascade');
+            
+            // Soporte para niveles educativos
+            $table->json('niveles_aplicables')->nullable()->comment('Array de niveles: [{"codigo":"n5","obligatoria":true,"notas":"..."}]');
+            
             $table->timestamps();
             $table->softDeletes();
         });
