@@ -39,6 +39,7 @@ class FaseOlimpiada extends Model
         'fecha_fin',
         'resultados_publicados',
         'orden',
+        'observaciones',
     ];
 
     /**
@@ -58,8 +59,8 @@ class FaseOlimpiada extends Model
         'activa' => 'boolean',
         'cupos' => 'integer',
         'nota_minima_aprobacion' => 'float',
-        'fecha_inicio_inscripcion' => 'datetime',
-        'fecha_fin_inscripcion' => 'datetime',
+        'fecha_inicio' => 'datetime',
+        'fecha_fin' => 'datetime',
         'resultados_publicados' => 'boolean',
     ];
 
@@ -71,8 +72,8 @@ class FaseOlimpiada extends Model
         'definicion_evaluacion_id',
         'cupos',
         'nota_minima_aprobacion',
-        'fecha_inicio_inscripcion',
-        'fecha_fin_inscripcion',
+        'fecha_inicio',
+        'fecha_fin',
         'resultados_publicados',
         'orden',
         'activa',

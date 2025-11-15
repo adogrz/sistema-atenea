@@ -127,8 +127,8 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
         setEditData({
             nombre: fase.nombre,
             orden: fase.orden,
-            fecha_inicio: fase.fecha_inicio ? fase.fecha_inicio.split('T')[0] : '',
-            fecha_fin: fase.fecha_fin ? fase.fecha_fin.split('T')[0] : '',
+            fecha_inicio: fase.fecha_inicio ? format(new Date(fase.fecha_inicio), 'yyyy-MM-dd') : '',
+            fecha_fin: fase.fecha_fin ? format(new Date(fase.fecha_fin), 'yyyy-MM-dd') : '',
             activa: fase.activa,
             observaciones: fase.observaciones || '',
             cupos: fase.cupos || 0,
@@ -196,13 +196,13 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {data.fecha_inicio ? format(new Date(data.fecha_inicio + 'T00:00:00'), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
+                                        {data.fecha_inicio ? format(new Date(data.fecha_inicio), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
                                     <Calendar
                                         mode="single"
-                                        selected={data.fecha_inicio ? new Date(data.fecha_inicio + 'T00:00:00') : undefined}
+                                        selected={data.fecha_inicio ? new Date(data.fecha_inicio) : undefined}
                                         onSelect={(date) => setData('fecha_inicio', date ? format(date, 'yyyy-MM-dd') : '')}
                                         initialFocus
                                     />
@@ -222,13 +222,13 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {data.fecha_fin ? format(new Date(data.fecha_fin + 'T00:00:00'), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
+                                        {data.fecha_fin ? format(new Date(data.fecha_fin), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
                                     <Calendar
                                         mode="single"
-                                        selected={data.fecha_fin ? new Date(data.fecha_fin + 'T00:00:00') : undefined}
+                                        selected={data.fecha_fin ? new Date(data.fecha_fin) : undefined}
                                         onSelect={(date) => setData('fecha_fin', date ? format(date, 'yyyy-MM-dd') : '')}
                                         initialFocus
                                     />
@@ -328,13 +328,13 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {editData.fecha_inicio ? format(new Date(editData.fecha_inicio + 'T00:00:00'), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
+                                            {editData.fecha_inicio ? format(new Date(editData.fecha_inicio), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
                                         <Calendar
                                             mode="single"
-                                            selected={editData.fecha_inicio ? new Date(editData.fecha_inicio + 'T00:00:00') : undefined}
+                                            selected={editData.fecha_inicio ? new Date(editData.fecha_inicio) : undefined}
                                             onSelect={(date) => setEditData('fecha_inicio', date ? format(date, 'yyyy-MM-dd') : '')}
                                             initialFocus
                                         />
@@ -354,13 +354,13 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {editData.fecha_fin ? format(new Date(editData.fecha_fin + 'T00:00:00'), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
+                                            {editData.fecha_fin ? format(new Date(editData.fecha_fin), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
                                         <Calendar
                                             mode="single"
-                                            selected={editData.fecha_fin ? new Date(editData.fecha_fin + 'T00:00:00') : undefined}
+                                            selected={editData.fecha_fin ? new Date(editData.fecha_fin) : undefined}
                                             onSelect={(date) => setEditData('fecha_fin', date ? format(date, 'yyyy-MM-dd') : '')}
                                             initialFocus
                                         />

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { format } from 'date-fns';
 
 // --- Subcomponente para cada fila de la fase ---
 interface FaseItemProps {
@@ -37,8 +38,11 @@ const FaseItem: React.FC<FaseItemProps> = ({ fase }) => {
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return 'N/A';
-        const date = new Date(dateString + 'T00:00:00');
-        return date.toLocaleDateString();
+        try {
+            return format(new Date(dateString), 'PPP');
+        } catch (error) {
+            return 'Fecha inválida';
+        }
     };
 
     return (

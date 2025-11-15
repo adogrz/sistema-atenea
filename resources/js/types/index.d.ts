@@ -166,10 +166,12 @@ export interface FaseOlimpiada {
     id: number;
     nombre: string;
     orden: number;
+    cupos: number;
     fecha_inicio: string;
     fecha_fin: string;
     activa: boolean;
-    observaciones: string;
+    observaciones?: string | null;
+    descripcion?: string | null;
     resultados_publicados?: boolean;
     nota_minima_aprobacion?: number | null;
     definicion_evaluacion?: DefinicionEvaluacion;
