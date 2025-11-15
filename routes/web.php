@@ -71,97 +71,61 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users:delete');
         Route::post('users/{id}/restore', [UserController::class, 'restore'])->name('users.restore')->middleware('permission:users:delete');
         // Olimpiadas
-        Route::prefix('olimpiadas')->name('olimpiadas.')->group(function () {
-            Route::get('/', [OlimpiadaController::class, 'index'])->name('index');
-            Route::get('/crear', [OlimpiadaController::class, 'create'])->name('create');
-            Route::post('/', [OlimpiadaController::class, 'store'])->name('store');
-            Route::get('/{olimpiada}/editar', [OlimpiadaController::class, 'edit'])->name('edit');
-            Route::put('/{olimpiada}', [OlimpiadaController::class, 'update'])->name('update');
-            Route::delete('/{olimpiada}', [OlimpiadaController::class, 'destroy'])->name('destroy');
-        });
+        Route::resource('olimpiadas', OlimpiadaController::class)->except(['show'])->middleware('can:olimpiada');
 
         // Fases de Olimpiadas
         Route::prefix('fases')->name('fases.')->group(function () {
-            Route::get('/', [FaseOlimpiadaController::class, 'index'])->name('index');
-            Route::get('/crear', [FaseOlimpiadaController::class, 'create'])->name('create');
-            Route::post('{olimpiada}', [FaseOlimpiadaController::class, 'store'])->name('store');
-            Route::put('{fase}', [FaseOlimpiadaController::class, 'update'])->name('update');
-            Route::patch('{fase}/details', [FaseOlimpiadaController::class, 'updateDetails'])->name('updateDetails');
-            Route::delete('{fase}', [FaseOlimpiadaController::class, 'destroy'])->name('destroy');
-            Route::put('/{fase}/gestion', [FaseGestionController::class, 'update'])->name('gestion.update');
-            Route::post('/{fase}/publish-results', [FaseGestionController::class, 'publishResults'])->name('gestion.publishResults');
-                    Route::post('/{fase}/assign-evaluation', [FaseOlimpiadaController::class, 'assignEvaluation'])->name('gestion.assignEvaluation')->middleware(['auth', 'role:coordinador-area']);
-                    Route::get('{fase}/resultados', [FaseOlimpiadaController::class, 'showResults'])->name('results');
-                    Route::get('{fase}/details', [FaseOlimpiadaController::class, 'getPhaseDetails'])->name('getPhaseDetails');
-                });
-                
-                // Inscripciones
-                Route::prefix('inscripciones')->name('inscripciones.')->group(function () {
-                    Route::get('/', [InscripcionOlimpiadaController::class, 'index'])->name('index');
-                    Route::get('/crear', [InscripcionOlimpiadaController::class, 'create'])->name('create');
-                    Route::post('/', [InscripcionOlimpiadaController::class, 'store'])->name('store');
-                    Route::get('/{inscripcion}', [InscripcionOlimpiadaController::class, 'show'])->name('show');
-                    Route::get('/gestion', [InscripcionOlimpiadaController::class, 'gestionIndex'])->name('gestion.index');
-                    Route::put('/{inscripcion}', [InscripcionOlimpiadaController::class, 'update'])->name('update');
-                    Route::delete('/{inscripcion}', [InscripcionOlimpiadaController::class, 'destroy'])->name('destroy');
-                });
-            
-                Route::get('/area', [AreaDashboardController::class, 'index'])
-                    ->name('area.dashboard');
-                    //->middleware('role:coordinador-area');
-            
-                Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
-                Route::get('/resultados/fase/{fase}', [ResultadoController::class, 'getResultsForFase'])->name('resultados.fase');
-                Route::get('/resultados/gestion', [ResultadoController::class, 'managementIndex'])->name('resultados.management');
-            
-                // Rutas para el panel de Aprobación Académica
-                Route::prefix('aprobacion-academica')->name('aprobacion-academica.')->group(function () {
-                    Route::get('/', [AprobacionAcademicaController::class, 'index'])->name('index');
-                    Route::post('/store-aprobacion', [AprobacionAcademicaController::class, 'store'])->name('store');
-                    Route::post('/generate-codes', [AprobacionAcademicaController::class, 'generateCodes'])->name('generateCodes');
-                    Route::get('/get-emails', [AprobacionAcademicaController::class, 'getEmails'])->name('getEmails');
-                    Route::put('/{aprobacionFinal}', [AprobacionAcademicaController::class, 'update'])->name('update');
-                });
-            
-                // Ruta para ver el detalle de una evaluación
-                Route::get('evaluaciones/{evaluacion}', [EvaluacionController::class, 'show'])->name('evaluaciones.show');
-            
-                /**
-                 * Calificaciones (dashboard del calificador + flujo de edición)
-                 * URL base: /dashboard/calificaciones/*
-                 * Nombres: dashboard.calificaciones.*
-                 *
-                 * Subrecurso: inscripciones
-                 * Nombres: dashboard.calificaciones.olimpiadas.
-                 *
-                 */
-                Route::prefix('calificaciones')->name('calificaciones.')->group(function () {
-            
-                    // Inscripción a calificar (editar/guardar/finalizar)
-                    Route::prefix('olimpiadas')->name('olimpiadas.')->controller(CalificacionOlimpiadaController::class)->group(function () {
-                        // Dashboard del calificador (lista reclamadas/finalizadas/disponibles + filtros)
-                        Route::get('/', 'index')->name('index');
-                        Route::get('evaluacion/{evaluacion}', 'edit')->name('edit');
-                        Route::put('evaluacion/{evaluacion}', 'update')->name('update');
-                    });
-                });
-            
-                Route::post('fases/{fase}/reorder', [FaseOlimpiadaController::class, 'reorder'])->name('fases.reorder');
-                Route::get('gestion-evaluacion', [AsignacionCalificadorController::class, 'index'])->name('gestion-evaluacion.index')->middleware(['auth', 'role:coordinador-area']);
-                Route::get('gestion-evaluacion/all-assignments', [AsignacionCalificadorController::class, 'getAllAssignments'])->name('gestion-evaluacion.all-assignments');
-                Route::post('asignaciones/sync-for-item', [AsignacionCalificadorController::class, 'syncForItem'])->name('asignaciones.syncForItem')->middleware(['auth', 'role:coordinador-area']);
+            // View any/list phases
+            Route::get('/', [FaseOlimpiadaController::class, 'index'])->name('index')->middleware('can:viewAny,App\Models\FaseOlimpiada');
+            Route::get('{fase}/resultados', [FaseOlimpiadaController::class, 'showResults'])->name('results')->middleware('can:view,fase');
+            Route::get('{fase}/details', [FaseOlimpiadaController::class, 'getPhaseDetails'])->name('getPhaseDetails')->middleware('can:view,fase');
+
+            // Create phases
+            Route::get('/crear', [FaseOlimpiadaController::class, 'create'])->name('create')->middleware('can:create,App\Models\FaseOlimpiada');
+            Route::post('{olimpiada}', [FaseOlimpiadaController::class, 'store'])->name('store')->middleware('can:create,App\Models\FaseOlimpiada');
+
+            // Update phases
+            Route::put('{fase}', [FaseOlimpiadaController::class, 'update'])->name('update')->middleware('can:update,fase');
+            Route::patch('{fase}/details', [FaseOlimpiadaController::class, 'updateDetails'])->name('updateDetails')->middleware('can:update,fase');
+            Route::put('/{fase}/gestion', [FaseGestionController::class, 'update'])->name('gestion.update')->middleware('can:update,fase');
+            Route::post('/{fase}/publish-results', [FaseGestionController::class, 'publishResults'])->name('gestion.publishResults')->middleware('can:update,fase');
+
+            // Delete phases
+            Route::delete('{fase}', [FaseOlimpiadaController::class, 'destroy'])->name('destroy')->middleware('can:delete,fase');
+
+            // Assign Nota Minima
+            Route::post('/{fase}/assign-evaluation', [FaseOlimpiadaController::class, 'assignEvaluation'])->name('gestion.assignEvaluation')->middleware('can:assignNotaMinima,fase');
+        });
+
+        // Reorder phases (outside the group, as it was before, but with policy)
+        Route::post('fases/{fase}/reorder', [FaseOlimpiadaController::class, 'reorder'])->name('fases.reorder')->middleware('can:reorder,fase');
         // Definiciones de Evaluación
         Route::prefix('definiciones-evaluacion')->name('definiciones-evaluacion.')->group(function () {
-            Route::get('/', [DefinicionEvaluacionController::class, 'index'])->name('index');
-            Route::get('/crear', [DefinicionEvaluacionController::class, 'create'])->name('create');
-            Route::post('/', [DefinicionEvaluacionController::class, 'store'])->name('store');
-            Route::get('/{definicionEvaluacion}/editar', [DefinicionEvaluacionController::class, 'edit'])->name('edit');
-            Route::put('/{definicionEvaluacion}', [DefinicionEvaluacionController::class, 'update'])->name('update');
-            Route::delete('/{definicionEvaluacion}', [DefinicionEvaluacionController::class, 'destroy'])->name('destroy');
+            Route::get('/', [DefinicionEvaluacionController::class, 'index'])->name('index')->middleware('permission:definiciones-evaluacion:list');
+            Route::get('/crear', [DefinicionEvaluacionController::class, 'create'])->name('create')->middleware('permission:definiciones-evaluacion:create');
+            Route::post('/', [DefinicionEvaluacionController::class, 'store'])->name('store')->middleware('permission:definiciones-evaluacion:create');
+            Route::get('/{definicionEvaluacion}/editar', [DefinicionEvaluacionController::class, 'edit'])->name('edit')->middleware('permission:definiciones-evaluacion:edit');
+            Route::put('/{definicionEvaluacion}', [DefinicionEvaluacionController::class, 'update'])->name('update')->middleware('permission:definiciones-evaluacion:edit');
+            Route::delete('/{definicionEvaluacion}', [DefinicionEvaluacionController::class, 'destroy'])->name('destroy')->middleware('permission:definiciones-evaluacion:delete');
         });
 
         // Grupos
         Route::resource('grupos', GrupoController::class)->middleware(['auth', 'role:coordinador-area']);
+
+        // Rutas para Resultados
+        Route::prefix('resultados')->name('resultados.')->group(function () {
+            Route::get('/', [ResultadoController::class, 'index'])->name('index')->middleware('permission:resultados:view');
+            Route::get('/emails', [ResultadoController::class, 'getEmailsForPassedStudents'])->name('emails')->middleware('permission:resultados:export-emails');
+        });
+
+        // Ruta para el Dashboard del Área
+        Route::get('area', [AreaDashboardController::class, 'index'])->name('area.dashboard')->middleware('permission:academic:view');
+
+        // Ruta para el Dashboard de Calificador de Olimpiadas
+        Route::get('calificaciones/olimpiadas', [CalificacionOlimpiadaController::class, 'index'])->name('calificaciones.olimpiadas.index')->middleware('role:calificador');
+
+        // Ruta para la Gestión de Evaluación (Asignación de Calificadores)
+        Route::get('gestion-evaluacion', [AsignacionCalificadorController::class, 'index'])->name('gestion-evaluacion.index')->middleware('permission:calificadores:assign');
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])

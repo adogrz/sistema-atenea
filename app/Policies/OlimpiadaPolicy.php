@@ -18,7 +18,7 @@ class OlimpiadaPolicy
      */
     public function viewAny(User $user)
     {
-        return $user->hasRole('admin-ti') || $user->hasRole('coordinador-area');
+        return $user->hasPermissionTo('olimpiadas:list');
     }
 
     /**
@@ -30,14 +30,14 @@ class OlimpiadaPolicy
      */
     public function view(User $user, Olimpiada $olimpiada)
     {
-        if ($user->hasRole('admin-ti')) {
-            return true;
+        if ($user->hasPermissionTo('olimpiadas:list')) {
+            if ($user->hasRole('admin-academico') || $user->hasRole('admin-ti')) {
+                return true; // Admins can view any olimpiada
+            }
+            if ($user->hasRole('coordinador-area')) {
+                return $user->primaryArea()->id === $olimpiada->area_id; // Coordinators can only view their area's olimpiadas
+            }
         }
-
-        if ($user->hasRole('coordinador-area')) {
-            return $user->primaryArea()->id === $olimpiada->area_id;
-        }
-
         return false;
     }
 
@@ -49,7 +49,7 @@ class OlimpiadaPolicy
      */
     public function create(User $user)
     {
-        return $user->hasRole('admin-ti') || $user->hasRole('coordinador-area');
+        return $user->hasPermissionTo('olimpiadas:create') && $user->hasRole('admin-academico');
     }
 
     /**
@@ -61,15 +61,7 @@ class OlimpiadaPolicy
      */
     public function update(User $user, Olimpiada $olimpiada)
     {
-        if ($user->hasRole('admin-ti')) {
-            return true;
-        }
-
-        if ($user->hasRole('coordinador-area')) {
-            return $user->primaryArea()->id === $olimpiada->area_id;
-        }
-
-        return false;
+        return $user->hasPermissionTo('olimpiadas:edit') && $user->hasRole('admin-academico');
     }
 
     /**
@@ -81,15 +73,7 @@ class OlimpiadaPolicy
      */
     public function delete(User $user, Olimpiada $olimpiada)
     {
-        if ($user->hasRole('admin-ti')) {
-            return true;
-        }
-
-        if ($user->hasRole('coordinador-area')) {
-            return $user->primaryArea()->id === $olimpiada->area_id;
-        }
-
-        return false;
+        return $user->hasPermissionTo('olimpiadas:delete') && $user->hasRole('admin-academico');
     }
 
     /**
@@ -101,15 +85,7 @@ class OlimpiadaPolicy
      */
     public function restore(User $user, Olimpiada $olimpiada)
     {
-        if ($user->hasRole('admin-ti')) {
-            return true;
-        }
-
-        if ($user->hasRole('coordinador-area')) {
-            return $user->primaryArea()->id === $olimpiada->area_id;
-        }
-
-        return false;
+        return $user->hasPermissionTo('olimpiadas:delete') && $user->hasRole('admin-academico');
     }
 
     /**
@@ -121,14 +97,6 @@ class OlimpiadaPolicy
      */
     public function forceDelete(User $user, Olimpiada $olimpiada)
     {
-        if ($user->hasRole('admin-ti')) {
-            return true;
-        }
-
-        if ($user->hasRole('coordinador-area')) {
-            return $user->primaryArea()->id === $olimpiada->area_id;
-        }
-
-        return false;
+        return $user->hasPermissionTo('olimpiadas:delete') && $user->hasRole('admin-academico');
     }
 }

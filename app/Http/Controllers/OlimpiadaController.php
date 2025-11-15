@@ -26,7 +26,7 @@ class OlimpiadaController extends Controller
 
         $olimpiadas = $query->orderBy('created_at', 'desc')->get();
 
-        return Inertia::render('Olimpiadas/index', [
+        return Inertia::render('Olimpiadas/Index', [
             'olimpiadas' => $olimpiadas,
             'areas' => Area::all(),
             'nivelesEducativos' => NivelEducativo::all(),

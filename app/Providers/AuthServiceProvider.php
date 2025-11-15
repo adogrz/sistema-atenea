@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Models\Olimpiada;
+use App\Models\FaseOlimpiada;
 use App\Policies\UserPolicy;
 use App\Policies\OlimpiadaPolicy;
+use App\Policies\FaseOlimpiadaPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -19,6 +21,7 @@ class AuthServiceProvider extends ServiceProvider
         // Aquí es donde registramos nuestras políticas
         User::class => UserPolicy::class,
         Olimpiada::class => OlimpiadaPolicy::class,
+        FaseOlimpiada::class => FaseOlimpiadaPolicy::class,
     ];
 
     /**

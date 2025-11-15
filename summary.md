@@ -147,47 +147,36 @@
     *   Se solucionaron varios errores de JavaScript en el frontend, incluyendo referencias no definidas (`useEffect`, `ClipboardCheck`), errores de renderizado de React y valores inválidos en componentes de UI.
     *   Se diagnosticó y orientó en la solución de un error de `php artisan route:list` debido a una importación faltante en los archivos de rutas de Laravel.
 
+## Resumen de Conversación - 15 de Noviembre de 2025
 
-
-*   **Refinamientos del Esquema de Base de Datos:**
-    *   Añadido `tipo` (enum: 'nivel', 'olimpico') a la migración de la tabla `olimpiadas`.
-    *   Renombrado `aprobado` a `nuevo_ingreso` y añadido `prueba_psicologica_aprobada` (boolean, default false) a la migración de la tabla `estudiantes`.
-    *   Eliminados campos de fecha redundantes (`fecha_inicio_inscripcion`, `fecha_fin_inscripcion`) de la migración de la tabla `fases_olimpiadas`.
-    *   Hechos `fecha_inicio`, `fecha_fin`, `cupos` y `nota_minima_aprobacion` no nulos en la migración de la tabla `fases_olimpiadas`.
-    *   Hechos `nombre` y `tipo` no nulos en la migración de la tabla `eventos`.
-    *   Hecho `email_responsable` no nulo en la migración de la tabla `responsables`.
-    *   Añadido `descripcion` (text, nullable) a la migración de la tabla `grupos`.
-    *   Creada migración para la tabla intermedia `olimpiada_aprobaciones_finales` con `estudiante_codigo`, `olimpiada_id`, `fase_id`, `grupo_id` (nullable), `fecha_aprobacion`, `estado_aceptacion`.
-
-*   **Actualizaciones de Modelos:**
-    *   Actualizado `Grupo.php` model con `$fillable` properties y `area` relationship.
-    *   Creado `OlimpiadaAprobacionFinal.php` model con `$fillable` properties y relationships (`estudiante`, `olimpiada`, `fase`, `grupo`).
-
-*   **Actualizaciones de Controladores:**
-    *   Actualizado `OlimpiadaController.php` con validación para `tipo`, `cupos`, y `nota_minima_aprobacion`.
-    *   Implementado `GrupoController.php` con lógica CRUD completa, pasando el área del usuario a las vistas, y manejando permisos basados en el área.
-    *   Creado `AprobacionAcademicaController.php` con `index`, `store`, `update`, `generateCodes`, y `getEmails` methods para el nuevo flujo de post-aprobación.
-    *   Refactorizado `ResultadoController.php` eliminando `generatePermanentCodes` y `getEmailsForPassedStudents` methods (movidos a `AprobacionAcademicaController`).
-
-*   **Actualizaciones de Frontend:**
-    *   Refactorizado `FasesPanel.tsx` para manejar fases localmente dentro del estado de `OlimpiadaForm.tsx`, eliminando llamadas directas a la API.
-    *   Actualizado `OlimpiadaForm.tsx` para incluir el nuevo campo `tipo`, manejar correctamente las fases, y mejorar el layout.
-    *   Implementación de breadcrumbs corregida en `OlimpiadaForm.tsx`, `Resultados/Index.tsx`, `Olimpiadas/index.tsx`, y `Inscripciones/Gestion.tsx`.
-    *   Creados `resources/js/Pages/Grupos/Index.tsx` y `resources/js/Pages/Grupos/Form.tsx` para la gestión de grupos.
-    *   Creado `resources/js/Pages/Resultados/Management.tsx` para generar códigos y correos (movido de `Resultados/Index.tsx`).
-    *   Reparado `Resultados/Index.tsx` eliminando la columna de asignación de grupo y asegurando una estructura correcta.
-    *   Añadida la etiqueta "Ver Resultados" al botón de acción en `Resultados/Index.tsx`.
-
-*   **Enrutamiento:**
-    *   Añadidas rutas de recurso para `grupos` y `aprobacion-academica` en `routes/web.php`.
-    *   Eliminadas rutas antiguas de `resultados.generatePermanentCodes` y `resultados.emailsPassed`.
-
-*   **Seeders:**
-    *   Actualizado `FaseOlimpiadaSeeder.php` para eliminar campos de fecha redundantes.
-    *   Actualizado `EstudianteFactory.php` para usar `nuevo_ingreso` y `prueba_psicologica_aprobada`.
-    *   Creado `GrupoSeeder.php` para sembrar grupos A-H.
-    *   Actualizado `DatabaseSeeder.php` para llamar a `GrupoSeeder`.
-    *   Actualizado `PermissionSeeder.php` para añadir el grupo de permisos `grupos` y asignarlo a `coordinador-area`.
-
-*   **Documentación:**
-    *   Añadido nuevo requerimiento detallado para el flujo de post-aprobación a `requerimientos.md`.
+*   **Corrección de Errores de Referencia:**
+    *   Se corrigió `ReferenceError: cn is not defined` en `resources/js/Pages/Olimpiadas/OlimpiadaForm.tsx` añadiendo la importación `import { cn } from '@/lib/utils';`.
+    *   Se corrigió `ReferenceError: useMemo is not defined` en `resources/js/Pages/Olimpiadas/FasesPanel.tsx` añadiendo `useMemo` a la importación de React.
+*   **Mejoras de UX en la Gestión de Fases:**
+    *   **Nota Descriptiva para Ordenamiento:** Se añadió una guía para el usuario sobre cómo ordenar las fases mediante arrastrar y soltar en `resources/js/Pages/Olimpiadas/FasesPanel.tsx`.
+    *   **Traducción de Fechas:** Se implementó la traducción de fechas al español en `resources/js/Pages/Olimpiadas/FasesPanel.tsx` y `resources/js/Pages/Olimpiadas/FasesList.tsx` utilizando el locale `es` de `date-fns`.
+    *   **Etiqueta para Cupos:** Se hizo visible la etiqueta del campo "Cupos" en `resources/js/Pages/Olimpiadas/FasesList.tsx`.
+    *   **Colores en Badges:** Se añadieron colores distintivos a los badges de "Orden", "Inicio" y "Fin" en `resources/js/Pages/Olimpiadas/FasesList.tsx` para mejorar su visibilidad.
+    *   **Ajuste de Nombre de Fase:** Se ajustó la visualización del nombre de la fase en `resources/js/Pages/Olimpiadas/FasesList.tsx` para usar un `span` con `text-base font-semibold` en lugar de un `h3`, haciéndolo menos prominente pero claro.
+*   **Implementación de Permisos de Acceso a Vistas (Middleware y Policies):**
+    *   **Definición de Nuevos Permisos:** Se definieron nuevos permisos granulares para Olimpiadas (`olimpiadas:list`, `olimpiadas:create`, `olimpiadas:edit`, `olimpiadas:delete`) y Fases (`fases:list`, `fases:create`, `fases:edit`, `fases:delete`, `fases:reorder`, `fases:assign-nota-minima`) en `database/seeders/PermissionSeeder.php`.
+    *   **Asignación de Permisos a Roles:** Se asignaron los nuevos permisos a los roles `admin-academico` y `coordinador-area` en `database/seeders/PermissionSeeder.php`, ajustando los permisos de `coordinador-area` según las especificaciones del usuario (solo `olimpiadas:list`, `fases:list`, `fases:assign-nota-minima`).
+    *   **Actualización de `OlimpiadaPolicy.php`:** Se modificaron los métodos de la política para utilizar los nuevos permisos granulares (`$user->hasPermissionTo(...)`) en lugar de las verificaciones de roles directas, manteniendo la lógica de restricción por área para `coordinador-area` donde aplica.
+    *   **Creación y Registro de `FaseOlimpiadaPolicy.php`:** Se creó una nueva política para el modelo `FaseOlimpiada` con métodos que utilizan los permisos de fases definidos. Esta política fue registrada en `app/Providers/AuthServiceProvider.php`.
+    *   **Aplicación de Políticas a Rutas (`routes/web.php`):**
+        *   Las rutas de Olimpiadas se refactorizaron para usar `Route::resource` con el middleware `can:olimpiada`, aplicando automáticamente las políticas a las acciones CRUD.
+        *   Las rutas de Fases se agruparon y se les aplicó el middleware `can` individualmente para cada acción (e.g., `can:viewAny,App\Models\FaseOlimpiada`, `can:create,App\Models\FaseOlimpiada`, `can:update,fase`, `can:delete,fase`, `can:reorder,fase`, `can:assignNotaMinima,fase`).
+    *   **Aplicación de Permisos en Vistas Frontend (React/Inertia):**
+        *   Se utilizó el hook `usePermissions` (`@/hooks/use-permissions`) en `resources/js/Pages/Olimpiadas/index.tsx`, `resources/js/Pages/Olimpiadas/OlimpiadaForm.tsx` y `resources/js/Pages/Olimpiadas/FasesPanel.tsx` para obtener los permisos del usuario.
+        *   Se implementó renderizado condicional para elementos de la UI (botones, formularios, campos) basándose en los permisos del usuario (`hasPermission('olimpiadas:create')`, `hasPermission('fases:edit')`, etc.) en los componentes mencionados.
+        *   En `Olimpiadas/index.tsx`, el botón "Crear Olimpiada" y los botones de acción (editar/eliminar) en la tabla se renderizan condicionalmente.
+        *   En `OlimpiadaForm.tsx`, la tarjeta de "Información General" y su botón de envío se renderizan condicionalmente.
+        *   En `FasesPanel.tsx`, el formulario "Crear Nueva Fase", los botones de editar/eliminar en `SortableFaseItem`, el `DndContext` para reordenar, y los campos/botón de "Actualizar" en el diálogo "Editar Fase" se renderizan/deshabilitan condicionalmente.
+*   **Problema con la Ruta `resultados.index` y la Herramienta `replace`:**
+    *   Se reportó que la ruta `resultados.index` no era reconocida por Ziggy en el frontend.
+    *   La verificación con `php artisan route:list --name=resultados.index` confirmó que Laravel tampoco registraba esta ruta.
+    *   Se identificó que las rutas `resultados` estaban definidas fuera del grupo `Route::prefix('dashboard')` en `routes/web.php`, lo que significaba que su URI no era `/dashboard/resultados` como se esperaba.
+    *   Se intentó reubicar el bloque de rutas `resultados` dentro del grupo `dashboard` en `routes/web.php` y aplicar los middlewares de permiso correspondientes.
+    *   Sin embargo, la herramienta `replace` falló repetidamente al intentar modificar `routes/web.php`, incluso cuando el `old_string` se copiaba directamente de la salida de `read_file`. Esto sugiere un problema persistente con la capacidad de la herramienta `replace` para hacer coincidir el contenido en este archivo, posiblemente debido a diferencias sutiles e invisibles en el formato o a que el archivo en disco no coincidía con la salida de `read_file`.
+    *   Como solución temporal para permitir al usuario continuar con sus cambios, se comentó la línea que hacía referencia a `resultados.index` y `resultados.management` en `resources/js/components/app-sidebar.tsx`.
+    *   La modificación automatizada de `routes/web.php` para las rutas `resultados` no pudo completarse debido a la falla de la herramienta `replace`.

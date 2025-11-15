@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 // --- Subcomponente para cada fila de la fase ---
 interface FaseItemProps {
@@ -39,7 +40,7 @@ const FaseItem: React.FC<FaseItemProps> = ({ fase }) => {
     const formatDate = (dateString: string | null) => {
         if (!dateString) return 'N/A';
         try {
-            return format(new Date(dateString), 'PPP');
+            return format(new Date(dateString), 'PPP', { locale: es });
         } catch (error) {
             return 'Fecha inválida';
         }
@@ -48,21 +49,21 @@ const FaseItem: React.FC<FaseItemProps> = ({ fase }) => {
     return (
         <li className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border rounded-md space-y-4 md:space-y-0">
             <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-lg font-medium">{fase.nombre}</h3>
-                <Badge variant="secondary">Orden: {fase.orden}</Badge>
-                <Badge variant="outline">Inicio: {formatDate(fase.fecha_inicio)}</Badge>
-                <Badge variant="outline">Fin: {formatDate(fase.fecha_fin)}</Badge>
+                <span className="text-base font-semibold">Nombre: {fase.nombre}</span>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">Orden: {fase.orden}</Badge>
+                <Badge variant="outline" className="bg-green-100 text-green-800">Inicio: {formatDate(fase.fecha_inicio)}</Badge>
+                <Badge variant="outline" className="bg-red-100 text-red-800">Fin: {formatDate(fase.fecha_fin)}</Badge>
             </div>
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                 <div className="w-full sm:w-auto">
-                    <label htmlFor={`cupos-${fase.id}`} className="text-sm font-medium sr-only">Cupos</label>
+                    <label htmlFor={`cupos-${fase.id}`} className="text-sm font-medium">Cupos</label>
                     <Input
                         id={`cupos-${fase.id}`}
                         type="number"
                         value={data.cupos}
                         onChange={(e) => setData('cupos', parseInt(e.target.value))}
                         className="w-full sm:w-24"
-                        min="0"
+                        min="1"
                         placeholder="Cupos"
                     />
                     {errors.cupos && <p className="text-xs text-red-500 mt-1">{errors.cupos}</p>}

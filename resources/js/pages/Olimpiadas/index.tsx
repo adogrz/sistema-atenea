@@ -33,7 +33,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 import { DataTableToolbar } from '@/components/ui/data-table-toolbar';
 
 const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEducativos, filters }) => {
-    const { flash } = usePage().props as any;
+    const { flash, auth } = usePage().props as PageProps;
+    const userPermissions = auth.user?.permissions || [];
+
+    const canCreateOlimpiada = userPermissions.includes('olimpiadas:create');
+    const canEditOlimpiada = userPermissions.includes('olimpiadas:edit');
+    const canDeleteOlimpiada = userPermissions.includes('olimpiadas:delete');
     const { delete: destroy, processing: deleting } = useForm();
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [selectedYear, setSelectedYear] = React.useState<string>(filters.anio || 'all');
@@ -105,7 +110,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
             id: 'year',
             header: 'Año',
             cell: ({ row }) => (
-                <Badge variant="outline" className="w-fit">
+                <Badge variant="outline" className="w-fit bg-gray-100 text-gray-800">
                     {row.original.anio}
                 </Badge>
             ),
@@ -123,7 +128,9 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
             accessorKey: 'nivel_educativo.nivel',
             id: 'nivel',
             header: 'Nivel',
-            cell: ({ row }) => row.original.nivel_educativo?.nivel || 'N/A',
+            cell: ({ row }) => {
+                return <Badge>{row.original.nivel_educativo?.nivel || 'N/A'}</Badge>;
+            },
             meta: {
                 title: 'Nivel',
             },
@@ -157,19 +164,23 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
                 const olimpiada = row.original;
                 return (
                     <div className="flex items-center space-x-2">
-                        <Button asChild variant="outline" size="icon">
-                            <Link href={route('olimpiadas.edit', olimpiada.id)}>
-                                <PencilIcon className="h-4 w-4" />
-                            </Link>
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => handleDelete(olimpiada)}
-                            disabled={deleting}
-                        >
-                            <Trash2Icon className="h-4 w-4" />
-                        </Button>
+                        {canEditOlimpiada && (
+                            <Button asChild variant="outline" size="icon">
+                                <Link href={route('olimpiadas.edit', olimpiada.id)}>
+                                    <PencilIcon className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                        )}
+                        {canDeleteOlimpiada && (
+                            <Button
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => handleDelete(olimpiada)}
+                                disabled={deleting}
+                            >
+                                <Trash2Icon className="h-4 w-4" />
+                            </Button>
+                        )}
                     </div>
                 );
             },
@@ -206,12 +217,14 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Button asChild>
-                            <Link href={route('olimpiadas.create')}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Crear Olimpiada
-                            </Link>
-                        </Button>
+                        {canCreateOlimpiada && (
+                            <Button asChild>
+                                <Link href={route('olimpiadas.create')}>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Crear Olimpiada
+                                </Link>
+                            </Button>
+                        )}
                     </div>
                 </div>
 

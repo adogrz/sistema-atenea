@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
-import { useForm, Link } from '@inertiajs/react';
-import { Olimpiada, Area, NivelEducativo, BreadcrumbItem as Breadcrumb } from '@/types';
+import { useForm, Link, usePage } from '@inertiajs/react';
+import { Olimpiada, Area, NivelEducativo, BreadcrumbItem as Breadcrumb, PageProps } from '@/types';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { Badge } from '@/components/ui/badge';
 import { Info, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface OlimpiadaFormProps {
     olimpiada?: Olimpiada;
@@ -23,6 +25,15 @@ interface OlimpiadaFormProps {
 }
 
 const OlimpiadaForm: React.FC<OlimpiadaFormProps> = ({ olimpiada, areas, nivelesEducativos }) => {
+    const { hasPermission } = usePermissions();
+
+    const isEditing = !!olimpiada;
+    const canManageOlimpiada = isEditing ? hasPermission('olimpiadas:edit') : hasPermission('olimpiadas:create');
+    const canCreateFase = hasPermission('fases:create');
+    const canEditFase = hasPermission('fases:edit');
+    const canDeleteFase = hasPermission('fases:delete');
+    const canReorderFase = hasPermission('fases:reorder');
+    const canAssignNotaMinimaFase = hasPermission('fases:assign-nota-minima');
     const { data, setData, post, put, processing, errors } = useForm({
         nombre: olimpiada?.nombre || '',
         descripcion: olimpiada?.descripcion || '',
@@ -73,106 +84,117 @@ const OlimpiadaForm: React.FC<OlimpiadaFormProps> = ({ olimpiada, areas, niveles
                 <h2 className="text-2xl font-bold tracking-tight flex items-center space-x-2 mb-6">
                     <span>{olimpiada ? 'Editar' : 'Crear'} Olimpiada</span>
                     {olimpiada?.anio && (
-                        <Badge variant="secondary">
+                        <Badge variant="secondary" className="bg-gray-100 text-gray-800">
                             Año: {olimpiada.anio}
                         </Badge>
                     )}
                 </h2>
                 <div className="space-y-8">
-                    <Card className="transition-all hover:shadow-md">
-                        <CardHeader>
-                            <CardTitle className="flex items-center"><Info className="mr-2 h-5 w-5" />Información General</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField label="Nombre" error={errors.nombre}>
-                                <Input
-                                    value={data.nombre}
-                                    onChange={(e) => setData('nombre', e.target.value)}
-                                />
-                            </FormField>
-                            <FormField label="Año" error={errors.anio}>
-                                <Select
-                                    value={String(data.anio)}
-                                    onValueChange={(value) => setData('anio', parseInt(value))}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un año" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {yearOptions.map((year) => (
-                                            <SelectItem key={year} value={String(year)}>
-                                                {year}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </FormField>
-                            <FormField label="Área" error={errors.area_id}>
-                                <Select
-                                    value={String(data.area_id)}
-                                    onValueChange={(value) => setData('area_id', value)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un área" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {areas.map((area) => (
-                                            <SelectItem key={area.id} value={String(area.id)}>
-                                                {area.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </FormField>
-                            <FormField label="Tipo de Olimpiada" error={errors.tipo}>
-                                <Select
-                                    value={data.tipo}
-                                    onValueChange={(value) => setData('tipo', value)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un tipo" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="nivel">Por Nivel</SelectItem>
-                                        <SelectItem value="olimpico">Olímpico</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </FormField>
-                            <FormField label="Nivel Educativo" error={errors.nivel_educativo_id}>
-                                <NivelEducativoComboBox
-                                    nivelesEducativos={nivelesEducativos}
-                                    value={String(data.nivel_educativo_id)}
-                                    onChange={(value) => setData('nivel_educativo_id', value)}
-                                />
-                            </FormField>
-                            <div className="flex items-center space-x-2 md:col-span-2">
-                                <Switch
-                                    checked={data.activa}
-                                    onCheckedChange={(checked) => setData('activa', checked)}
-                                    id="activa-olimpiada"
-                                />
-                                <label htmlFor="activa-olimpiada">Activa</label>
-                            </div>
-                            <div className="md:col-span-2">
-                                <FormField label="Descripción" error={errors.descripcion}>
-                                    <Textarea
-                                        value={data.descripcion}
-                                        onChange={(e) => setData('descripcion', e.target.value)}
+                    {canManageOlimpiada && (
+                        <Card className="transition-all hover:shadow-md">
+                            <CardHeader>
+                                <CardTitle className="flex items-center"><Info className="mr-2 h-5 w-5" />Información General</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField label="Nombre" error={errors.nombre}>
+                                    <Input
+                                        value={data.nombre}
+                                        onChange={(e) => setData('nombre', e.target.value)}
                                     />
                                 </FormField>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-end">
-                            <Button type="button" onClick={handleSubmit} disabled={processing}>{olimpiada ? 'Actualizar' : 'Crear'} Olimpiada</Button>
-                        </CardFooter>
-                    </Card>
+                                <FormField label="Año" error={errors.anio}>
+                                    <Select
+                                        value={String(data.anio)}
+                                        onValueChange={(value) => setData('anio', parseInt(value))}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un año" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {yearOptions.map((year) => (
+                                                <SelectItem key={year} value={String(year)}>
+                                                    {year}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </FormField>
+                                <FormField label="Área" error={errors.area_id}>
+                                    <Select
+                                        value={String(data.area_id)}
+                                        onValueChange={(value) => setData('area_id', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un área" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {areas.map((area) => (
+                                                <SelectItem key={area.id} value={String(area.id)}>
+                                                    {area.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </FormField>
+                                <FormField label="Tipo de Olimpiada" error={errors.tipo}>
+                                    <Select
+                                        value={data.tipo}
+                                        onValueChange={(value) => setData('tipo', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un tipo" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="nivel">Por Nivel</SelectItem>
+                                            <SelectItem value="olimpico">Olímpico</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </FormField>
+                                <FormField label="Nivel Educativo" error={errors.nivel_educativo_id}>
+                                    <NivelEducativoComboBox
+                                        nivelesEducativos={nivelesEducativos}
+                                        value={String(data.nivel_educativo_id)}
+                                        onChange={(value) => setData('nivel_educativo_id', value)}
+                                    />
+                                </FormField>
+                                <div className="flex items-center space-x-2 md:col-span-2">
+                                    <Switch
+                                        checked={data.activa}
+                                        onCheckedChange={(checked) => setData('activa', checked)}
+                                        id="activa-olimpiada"
+                                    />
+                                    <label htmlFor="activa-olimpiada" className={cn("text-sm font-medium", data.activa ? "text-green-600" : "text-red-600")}>Activa</label>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <FormField label="Descripción" error={errors.descripcion}>
+                                        <Textarea
+                                            value={data.descripcion}
+                                            onChange={(e) => setData('descripcion', e.target.value)}
+                                        />
+                                    </FormField>
+                                </div>
+                            </CardContent>
+                            <CardFooter className="flex justify-end">
+                                <Button type="button" onClick={handleSubmit} disabled={processing}>{olimpiada ? 'Actualizar' : 'Crear'} Olimpiada</Button>
+                            </CardFooter>
+                        </Card>
+                    )}
 
                     <Card className="transition-all hover:shadow-md">
                         <CardHeader>
                             <CardTitle className="flex items-center"><ListChecks className="mr-2 h-5 w-5" />Fases de la Olimpiada</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <FasesPanel fases={data.fases} setFases={(newFases) => setData('fases', newFases)} processing={processing} />
+                            <FasesPanel
+                                fases={data.fases}
+                                setFases={(newFases) => setData('fases', newFases)}
+                                processing={processing}
+                                canCreateFase={canCreateFase}
+                                canEditFase={canEditFase}
+                                canDeleteFase={canDeleteFase}
+                                canReorderFase={canReorderFase}
+                                canAssignNotaMinimaFase={canAssignNotaMinimaFase}
+                            />
                         </CardContent>
                     </Card>
                 </div>
