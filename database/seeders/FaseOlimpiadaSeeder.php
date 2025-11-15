@@ -18,18 +18,19 @@ class FaseOlimpiadaSeeder extends Seeder
             return;
         }
 
+        $startDate = Carbon::now()->addMonth(); // Start next month to have clean dates
+
         $fases = [
             [
                 'olimpiada_id' => $olimpiadaId,
                 'nombre' => 'Fase Municipal',
                 'orden' => 1,
-                'cupos' => 50, // Example value
-                'nota_minima_aprobacion' => 60.00, // Example value
+                'cupos' => 50,
                 'resultados_publicados' => false,
-                'fecha_inicio' => Carbon::now(),
-                'fecha_fin' => Carbon::now()->addDays(14),
+                'fecha_inicio' => $startDate,
+                'fecha_fin' => $startDate->copy()->addDays(14),
                 'activa' => true,
-                'definicion_evaluacion_id' => 1, // Link to the seeded evaluation definition
+                'definicion_evaluacion_id' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -37,11 +38,10 @@ class FaseOlimpiadaSeeder extends Seeder
                 'olimpiada_id' => $olimpiadaId,
                 'nombre' => 'Fase Departamental',
                 'orden' => 2,
-                'cupos' => 30, // Example value
-                'nota_minima_aprobacion' => 70.00, // Example value
+                'cupos' => 30,
                 'resultados_publicados' => false,
-                'fecha_inicio' => Carbon::now(),
-                'fecha_fin' => Carbon::now()->addDays(28),
+                'fecha_inicio' => $startDate->copy()->addDays(15),
+                'fecha_fin' => $startDate->copy()->addDays(29),
                 'activa' => true,
                 'definicion_evaluacion_id' => 1,
                 'created_at' => now(),
@@ -51,11 +51,10 @@ class FaseOlimpiadaSeeder extends Seeder
                 'olimpiada_id' => $olimpiadaId,
                 'nombre' => 'Fase Nacional',
                 'orden' => 3,
-                'cupos' => 10, // Example value
-                'nota_minima_aprobacion' => 80.00, // Example value
+                'cupos' => 10,
                 'resultados_publicados' => false,
-                'fecha_inicio' => Carbon::now(),
-                'fecha_fin' => Carbon::now()->addDays(42),
+                'fecha_inicio' => $startDate->copy()->addDays(30),
+                'fecha_fin' => $startDate->copy()->addDays(44),
                 'activa' => true,
                 'definicion_evaluacion_id' => 1,
                 'created_at' => now(),

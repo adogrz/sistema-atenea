@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useForm, Link } from '@inertiajs/react';
 import { Olimpiada, Area, NivelEducativo, BreadcrumbItem as Breadcrumb } from '@/types';
 import AppLayout from '@/layouts/app-layout';
@@ -14,6 +14,7 @@ import FasesPanel from './FasesPanel';
 import { Badge } from '@/components/ui/badge';
 import { Info, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 interface OlimpiadaFormProps {
     olimpiada?: Olimpiada;
@@ -29,18 +30,33 @@ const OlimpiadaForm: React.FC<OlimpiadaFormProps> = ({ olimpiada, areas, niveles
         activa: olimpiada?.activa ?? true,
         nivel_educativo_id: olimpiada?.nivel_educativo_id || (nivelesEducativos.length > 0 ? nivelesEducativos[0].codigo : ''),
         tipo: olimpiada?.tipo || 'nivel',
-        anio: olimpiada?.anio || new Date().getFullYear(), // Added anio
+        anio: olimpiada?.anio || new Date().getFullYear(),
         fases: olimpiada?.fases || [],
     });
 
-
+    const yearOptions = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+            years.push(i);
+        }
+        return years;
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const options = {
+            onSuccess: () => toast.success(olimpiada ? 'Olimpiada actualizada con éxito.' : 'Olimpiada creada con éxito.'),
+            onError: (e: any) => {
+                console.error(e);
+                toast.error('Error al guardar la olimpiada. Revisa los campos.');
+            },
+        };
+
         if (olimpiada) {
-            put(route('olimpiadas.update', olimpiada.id));
+            put(route('olimpiadas.update', olimpiada.id), options);
         } else {
-            post(route('olimpiadas.store'));
+            post(route('olimpiadas.store'), options);
         }
     };
 
@@ -53,12 +69,12 @@ const OlimpiadaForm: React.FC<OlimpiadaFormProps> = ({ olimpiada, areas, niveles
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={olimpiada ? 'Editar Olimpiada' : 'Crear Olimpiada'} />
-            <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div className="p-4 md:p-6 rounded-lg">
                 <h2 className="text-2xl font-bold tracking-tight flex items-center space-x-2 mb-6">
                     <span>{olimpiada ? 'Editar' : 'Crear'} Olimpiada</span>
-                    {olimpiada?.created_at && (
+                    {olimpiada?.anio && (
                         <Badge variant="secondary">
-                            Año: {new Date(olimpiada.created_at).getFullYear()}
+                            Año: {olimpiada.anio}
                         </Badge>
                     )}
                 </h2>
@@ -75,11 +91,21 @@ const OlimpiadaForm: React.FC<OlimpiadaFormProps> = ({ olimpiada, areas, niveles
                                 />
                             </FormField>
                             <FormField label="Año" error={errors.anio}>
-                                <Input
-                                    type="number"
-                                    value={data.anio}
-                                    onChange={(e) => setData('anio', parseInt(e.target.value))}
-                                />
+                                <Select
+                                    value={String(data.anio)}
+                                    onValueChange={(value) => setData('anio', parseInt(value))}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona un año" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {yearOptions.map((year) => (
+                                            <SelectItem key={year} value={String(year)}>
+                                                {year}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </FormField>
                             <FormField label="Área" error={errors.area_id}>
                                 <Select

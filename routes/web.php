@@ -86,6 +86,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
             Route::get('/crear', [FaseOlimpiadaController::class, 'create'])->name('create');
             Route::post('{olimpiada}', [FaseOlimpiadaController::class, 'store'])->name('store');
             Route::put('{fase}', [FaseOlimpiadaController::class, 'update'])->name('update');
+            Route::patch('{fase}/details', [FaseOlimpiadaController::class, 'updateDetails'])->name('updateDetails');
             Route::delete('{fase}', [FaseOlimpiadaController::class, 'destroy'])->name('destroy');
             Route::put('/{fase}/gestion', [FaseGestionController::class, 'update'])->name('gestion.update');
             Route::post('/{fase}/publish-results', [FaseGestionController::class, 'publishResults'])->name('gestion.publishResults');

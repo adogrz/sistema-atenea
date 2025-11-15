@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Area;
 use App\Models\Olimpiada;
 use App\Models\DefinicionEvaluacion;
+use App\Models\FaseOlimpiada;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\NivelEducativo;
@@ -15,15 +16,22 @@ class OlimpiadaController extends Controller
 {
     public function index(Request $request): Response
     {
-        $olimpiadas = Olimpiada::with('area', 'nivelEducativo', 'fases')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = Olimpiada::with(['area', 'nivelEducativo', 'fases' => function ($query) {
+                $query->orderBy('orden');
+            }]);
+
+        if ($request->has('anio')) {
+            $query->where('anio', $request->input('anio'));
+        }
+
+        $olimpiadas = $query->orderBy('created_at', 'desc')->get();
 
         return Inertia::render('Olimpiadas/index', [
             'olimpiadas' => $olimpiadas,
             'areas' => Area::all(),
             'nivelesEducativos' => NivelEducativo::all(),
             'definiciones_evaluacion' => DefinicionEvaluacion::all(),
+            'filters' => $request->only('anio'),
         ]);
     }
 
@@ -39,7 +47,9 @@ class OlimpiadaController extends Controller
 
     public function edit(Olimpiada $olimpiada)
     {
-        $olimpiada->load('fases');
+        $olimpiada->load(['fases' => function ($query) {
+            $query->orderBy('orden');
+        }]);
         return Inertia::render('Olimpiadas/OlimpiadaForm', [
             'olimpiada' => $olimpiada,
             'areas' => Area::all(),
@@ -53,6 +63,7 @@ class OlimpiadaController extends Controller
             'nombre' => ['required', 'string', 'max:255'],
             'descripcion' => ['nullable', 'string'],
             'area_id' => ['required', 'integer', 'exists:areas,id'],
+            'anio' => ['required', 'integer', 'digits:4'],
             'activa' => ['required', 'boolean'],
             'nivel_educativo_id' => ['required', 'integer', 'exists:niveles_educativos,codigo'],
             'tipo' => ['required', 'in:nivel,olimpico'],
@@ -61,8 +72,6 @@ class OlimpiadaController extends Controller
             'fases.*.orden' => ['required', 'integer', 'min:1'],
             'fases.*.fecha_inicio' => ['required', 'date'],
             'fases.*.fecha_fin' => ['required', 'date', 'after_or_equal:fases.*.fecha_inicio'],
-            'fases.*.cupos' => ['required', 'integer', 'min:0'],
-            'fases.*.nota_minima_aprobacion' => ['required', 'numeric', 'min:0'],
             'fases.*.activa' => ['required', 'boolean'],
             'fases.*.observaciones' => ['nullable', 'string'],
         ]);
@@ -72,6 +81,8 @@ class OlimpiadaController extends Controller
 
         if (isset($validated['fases'])) {
             foreach ($validated['fases'] as $faseData) {
+                // Set default values if not provided by frontend (which they won't be from FasesPanel)
+                $faseData['cupos'] = $faseData['cupos'] ?? 0;
                 $olimpiada->fases()->create($faseData);
             }
         }
@@ -85,6 +96,7 @@ class OlimpiadaController extends Controller
             'nombre' => ['required', 'string', 'max:255'],
             'descripcion' => ['nullable', 'string'],
             'area_id' => ['required', 'integer', 'exists:areas,id'],
+            'anio' => ['required', 'integer', 'digits:4'],
             'activa' => ['required', 'boolean'],
             'nivel_educativo_id' => ['required', 'integer', 'exists:niveles_educativos,codigo'],
             'tipo' => ['required', 'in:nivel,olimpico'],
@@ -94,8 +106,6 @@ class OlimpiadaController extends Controller
             'fases.*.orden' => ['required', 'integer', 'min:1'],
             'fases.*.fecha_inicio' => ['required', 'date'],
             'fases.*.fecha_fin' => ['required', 'date', 'after_or_equal:fases.*.fecha_inicio'],
-            'fases.*.cupos' => ['required', 'integer', 'min:0'],
-            'fases.*.nota_minima_aprobacion' => ['required', 'numeric', 'min:0'],
             'fases.*.activa' => ['required', 'boolean'],
             'fases.*.observaciones' => ['nullable', 'string'],
         ]);
@@ -112,6 +122,9 @@ class OlimpiadaController extends Controller
             FaseOlimpiada::destroy($phasesToDelete);
 
             foreach ($validated['fases'] as $faseData) {
+                // Set default values if not provided by frontend
+                $faseData['cupos'] = $faseData['cupos'] ?? 0;
+
                 if (isset($faseData['id'])) {
                     // Update existing phase
                     $fase = $olimpiada->fases()->where('id', $faseData['id'])->first();

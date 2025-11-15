@@ -65,6 +65,18 @@ class FaseOlimpiadaController extends Controller
         return redirect()->back()->with('success', 'Fase actualizada exitosamente.');
     }
 
+    public function updateDetails(Request $request, FaseOlimpiada $fase)
+    {
+        $validated = $request->validate([
+            'cupos' => ['sometimes', 'required', 'integer', 'min:0'],
+        ]);
+
+        $fase->update($validated);
+        activity()->performedOn($fase)->log('Detalles de Fase de Olimpiada actualizados');
+
+        return redirect()->back()->with('success', 'Fase actualizada exitosamente.');
+    }
+
     public function destroy(FaseOlimpiada $fase)
     {
         try {

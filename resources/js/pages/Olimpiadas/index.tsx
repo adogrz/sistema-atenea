@@ -9,14 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { PlusCircle, PencilIcon, Trash2Icon, ChevronDown, ChevronRight } from 'lucide-react';
-import { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
+import { ColumnDef, ColumnFiltersState } from '@tanstack/react-react-table';
 import { FasesList } from './FasesList';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { router } from '@inertiajs/react';
 
 interface OlimpiadasIndexProps extends PageProps {
     olimpiadas: Olimpiada[];
     areas: Area[];
     nivelesEducativos: NivelEducativo[];
+    filters: {
+        anio?: string;
+    };
 }
 
 import { BreadcrumbItem } from '@/types';
@@ -28,23 +32,20 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 import { DataTableToolbar } from '@/components/ui/data-table-toolbar';
 
-const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, areas, nivelesEducativos }) => {
+const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEducativos, filters }) => {
     const { flash } = usePage().props as any;
     const { delete: destroy, processing: deleting } = useForm();
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-    const [selectedYear, setSelectedYear] = React.useState<string>('all');
+    const [selectedYear, setSelectedYear] = React.useState<string>(filters.anio || 'all');
 
     const availableYears = useMemo(() => {
-        const years = initialOlimpiadas.map(olimpiada => olimpiada.anio);
-        return Array.from(new Set(years)).sort((a, b) => b - a);
-    }, [initialOlimpiadas]);
-
-    const filteredOlimpiadas = useMemo(() => {
-        if (selectedYear === 'all') {
-            return initialOlimpiadas;
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+            years.push(i);
         }
-        return initialOlimpiadas.filter(olimpiada => olimpiada.anio === parseInt(selectedYear));
-    }, [selectedYear, initialOlimpiadas]);
+        return years.sort((a, b) => b - a);
+    }, []);
 
     useEffect(() => {
         if (flash.success) {
@@ -54,6 +55,14 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, 
             toast.error(flash.error);
         }
     }, [flash]);
+
+    const handleYearChange = (year: string) => {
+        setSelectedYear(year);
+        router.get(route('olimpiadas.index', { anio: year === 'all' ? undefined : year }), {}, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
 
     const handleDelete = (olimpiada: Olimpiada) => {
         if (confirm('¿Estás seguro de que quieres eliminar esta olimpiada?')) {
@@ -169,7 +178,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, 
 
     const renderRowSubComponent = ({ row }: { row: any }) => (
         <div className="p-4 bg-muted/50">
-            <FasesList fases={row.original.fases} />
+            <FasesList fases={row.original.fases} olimpiadaId={row.original.id} />
         </div>
     );
 
@@ -186,7 +195,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, 
                         </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Select value={selectedYear} onValueChange={setSelectedYear}>
+                        <Select value={selectedYear} onValueChange={handleYearChange}>
                             <SelectTrigger className="w-40">
                                 <SelectValue placeholder="Filtrar por año..." />
                             </SelectTrigger>
@@ -209,7 +218,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas: initialOlimpiadas, 
                 <div className="mt-4">
                     <DataTable
                         columns={columns}
-                        data={filteredOlimpiadas}
+                        data={olimpiadas}
                         renderRowSubComponent={renderRowSubComponent}
                         getRowCanExpand={(row) => row.original.fases && row.original.fases.length > 0}
                         columnFilters={columnFilters}

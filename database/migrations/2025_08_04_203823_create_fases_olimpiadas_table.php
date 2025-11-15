@@ -22,7 +22,7 @@ return new class extends Migration {
 
             // Campos de gestión de fase
             $table->integer('cupos');
-            $table->decimal('nota_minima_aprobacion', 5, 2);
+            $table->decimal('nota_minima_aprobacion', 5, 2)->default(0.00);
             $table->boolean('resultados_publicados')->default(false);
             $table->foreignId('definicion_evaluacion_id')
                 ->nullable()

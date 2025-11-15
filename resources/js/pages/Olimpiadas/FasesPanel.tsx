@@ -70,6 +70,7 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
         fecha_fin: '',
         activa: true,
         observaciones: '',
+        cupos: 0,
     });
 
     const { data: editData, setData: setEditData, errors: editErrors } = useForm({
@@ -79,6 +80,7 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
         fecha_fin: '',
         activa: true,
         observaciones: '',
+        cupos: 0,
     });
 
     const sensors = useSensors(
@@ -125,10 +127,11 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
         setEditData({
             nombre: fase.nombre,
             orden: fase.orden,
-            fecha_inicio: fase.fecha_inicio ? new Date(fase.fecha_inicio).toISOString().split('T')[0] : '',
-            fecha_fin: fase.fecha_fin ? new Date(fase.fecha_fin).toISOString().split('T')[0] : '',
+            fecha_inicio: fase.fecha_inicio ? fase.fecha_inicio.split('T')[0] : '',
+            fecha_fin: fase.fecha_fin ? fase.fecha_fin.split('T')[0] : '',
             activa: fase.activa,
             observaciones: fase.observaciones || '',
+            cupos: fase.cupos || 0,
         });
         setIsEditModalOpen(true);
     };
@@ -157,7 +160,7 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
             <div>
                 <h4 className="font-semibold text-lg">Crear Nueva Fase</h4>
                 <form onSubmit={handleCreateSubmit} className="mt-4 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
                             <label htmlFor="nombre" className="block text-sm font-medium ">Nombre</label>
                             <Input
@@ -176,6 +179,8 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                 value={data.orden}
                                 onChange={(e) => setData('orden', parseInt(e.target.value))}
                                 className="mt-1"
+                                readOnly
+                                min="0"
                             />
                             {errors.orden && <p className="text-xs text-red-600 mt-1">{errors.orden}</p>}
                         </div>
@@ -191,13 +196,13 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {data.fecha_inicio ? format(new Date(data.fecha_inicio), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
+                                        {data.fecha_inicio ? format(new Date(data.fecha_inicio + 'T00:00:00'), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
                                     <Calendar
                                         mode="single"
-                                        selected={data.fecha_inicio ? new Date(data.fecha_inicio) : undefined}
+                                        selected={data.fecha_inicio ? new Date(data.fecha_inicio + 'T00:00:00') : undefined}
                                         onSelect={(date) => setData('fecha_inicio', date ? format(date, 'yyyy-MM-dd') : '')}
                                         initialFocus
                                     />
@@ -217,13 +222,13 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {data.fecha_fin ? format(new Date(data.fecha_fin), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
+                                        {data.fecha_fin ? format(new Date(data.fecha_fin + 'T00:00:00'), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
                                     <Calendar
                                         mode="single"
-                                        selected={data.fecha_fin ? new Date(data.fecha_fin) : undefined}
+                                        selected={data.fecha_fin ? new Date(data.fecha_fin + 'T00:00:00') : undefined}
                                         onSelect={(date) => setData('fecha_fin', date ? format(date, 'yyyy-MM-dd') : '')}
                                         initialFocus
                                     />
@@ -231,7 +236,18 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                             </Popover>
                             {errors.fecha_fin && <p className="text-xs text-red-600 mt-1">{errors.fecha_fin}</p>}
                         </div>
-
+                        <div>
+                            <label htmlFor="cupos" className="block text-sm font-medium ">Cupos</label>
+                            <Input
+                                id="cupos"
+                                type="number"
+                                value={data.cupos}
+                                onChange={(e) => setData('cupos', parseInt(e.target.value))}
+                                className="mt-1"
+                                min="0"
+                            />
+                            {errors.cupos && <p className="text-xs text-red-600 mt-1">{errors.cupos}</p>}
+                        </div>
                         <div className="flex items-center space-x-2 pt-6">
                             <Switch id="activa" checked={data.activa} onCheckedChange={(checked) => setData('activa', checked)} />
                             <label htmlFor="activa" className="text-sm font-medium ">Activa</label>
@@ -295,6 +311,8 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                     value={editData.orden}
                                     onChange={(e) => setEditData('orden', parseInt(e.target.value))}
                                     className="mt-1"
+                                    readOnly
+                                    min="0"
                                 />
                                 {editErrors.orden && <p className="text-xs text-red-600 mt-1">{editErrors.orden}</p>}
                             </div>
@@ -310,13 +328,13 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {editData.fecha_inicio ? format(new Date(editData.fecha_inicio), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
+                                            {editData.fecha_inicio ? format(new Date(editData.fecha_inicio + 'T00:00:00'), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
                                         <Calendar
                                             mode="single"
-                                            selected={editData.fecha_inicio ? new Date(editData.fecha_inicio) : undefined}
+                                            selected={editData.fecha_inicio ? new Date(editData.fecha_inicio + 'T00:00:00') : undefined}
                                             onSelect={(date) => setEditData('fecha_inicio', date ? format(date, 'yyyy-MM-dd') : '')}
                                             initialFocus
                                         />
@@ -336,19 +354,31 @@ const FasesPanel: React.FC<FasesPanelProps> = ({ fases, setFases, processing }) 
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {editData.fecha_fin ? format(new Date(editData.fecha_fin), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
+                                            {editData.fecha_fin ? format(new Date(editData.fecha_fin + 'T00:00:00'), "PPP") : <span className="text-muted-foreground">Seleccionar fecha</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
                                         <Calendar
                                             mode="single"
-                                            selected={editData.fecha_fin ? new Date(editData.fecha_fin) : undefined}
+                                            selected={editData.fecha_fin ? new Date(editData.fecha_fin + 'T00:00:00') : undefined}
                                             onSelect={(date) => setEditData('fecha_fin', date ? format(date, 'yyyy-MM-dd') : '')}
                                             initialFocus
                                         />
                                     </PopoverContent>
                                 </Popover>
                                 {editErrors.fecha_fin && <p className="text-xs text-red-600 mt-1">{editErrors.fecha_fin}</p>}
+                            </div>
+                            <div>
+                                <label htmlFor="edit-cupos" className="block text-sm font-medium ">Cupos</label>
+                                <Input
+                                    id="edit-cupos"
+                                    type="number"
+                                    value={editData.cupos}
+                                    onChange={(e) => setEditData('cupos', parseInt(e.target.value))}
+                                    className="mt-1"
+                                    min="0"
+                                />
+                                {editErrors.cupos && <p className="text-xs text-red-600 mt-1">{editErrors.cupos}</p>}
                             </div>
                             <div className="flex items-center space-x-2 pt-6">
                                 <Switch id="edit-activa" checked={editData.activa} onCheckedChange={(checked) => setEditData('activa', checked)} />
