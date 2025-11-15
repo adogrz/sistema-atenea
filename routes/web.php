@@ -233,10 +233,10 @@ Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->gr
 
 Route::middleware(['web'])->group(function () {
     // Página que contiene el formulario de carga
-    Route::get('/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create');
+    Route::get('/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create')->middleware('permission:centros-educativos:import');
 
     // Ruta POST que procesa el archivo Excel
-    Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store');
+    Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store')->middleware('permission:centros-educativos:import');
 
     // Página que contiene el formulario de admisión
     Route::get('/formulario-admision', [AdmisionController::class, 'create'])->name('admision.create');

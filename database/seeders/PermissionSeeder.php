@@ -104,6 +104,9 @@ class PermissionSeeder extends Seeder
                 'definiciones-evaluacion:edit',
                 'definiciones-evaluacion:delete',
             ],
+            'centros-educativos' => [ // New group for educational centers management
+                'centros-educativos:import',
+            ],
         ];
     }
 
@@ -164,7 +167,7 @@ class PermissionSeeder extends Seeder
             ],
             'admin-academico' => [
                 'description' => 'Administrador Académico',
-                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic', 'olimpiadas', 'fases', 'resultados', 'calificadores', 'definiciones-evaluacion'],
+                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic', 'olimpiadas', 'fases', 'resultados', 'calificadores', 'definiciones-evaluacion', 'centros-educativos'],
                 'permissions' => ['users:view-all', 'roles:list', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []

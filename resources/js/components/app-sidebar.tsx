@@ -10,7 +10,7 @@ import { BookOpen, Calendar, ClipboardListIcon, Clock, GraduationCap, HouseIcon,
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
-    const { hasPermission } = usePermissions();
+    const { hasPermission, hasRole } = usePermissions();
     const { url } = usePage();
 
     const isItemActive = (href: string | undefined) => {
@@ -36,6 +36,7 @@ export function AppSidebar() {
                           },
                       ]
                     : []),
+                ...(hasPermission('centros-educativos:import') ? [{ title: 'Importar Centros Educativos', href: route('centros.create'), icon: School }] : []),
             ],
         },
         {
@@ -43,6 +44,7 @@ export function AppSidebar() {
             icon: Trophy,
             items: [
                 ...(hasPermission('olimpiadas:list') ? [{ title: 'Olimpiadas y Fases', href: route('olimpiadas.index'), icon: GraduationCap }] : []),
+                ...(hasPermission('olimpiadas:list') ? [{ title: 'Inscripciones', href: '/dashboard/inscripciones', icon: LayoutDashboard }] : []), // Moved from Estudiante
                 ...(hasPermission('resultados:view') ? [{ title: 'Resultados', href: route('resultados.index'), icon: Trophy }] : []),
                 // { title: 'Gestión de Resultados', href: route('resultados.management'), icon: ClipboardListIcon }, // Commented out
                 ...(hasPermission('academic:view') ? [{ title: 'Centro de Control', href: route('area.dashboard'), icon: LayoutDashboard }] : []),
@@ -58,22 +60,21 @@ export function AppSidebar() {
             icon: School,
             items: [
                 ...(hasPermission('academic:view') ? [{ title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard }] : []),
-                ...(hasPermission('events:view') ? [{ title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays }] : []),
+                // Calendario moved to top-level Eventos
                 ...(hasPermission('users:list') ? [{ title: 'Datos Aspirantes', href: '/dashboard/academico/aspirantes', icon: Clock }] : []),
                 ...(hasPermission('users:list') ? [{ title: 'Estudiantes', href: '/dashboard/academico/estudiantes', icon: Users }] : []),
                 ...(hasPermission('academic:view') ? [{ title: 'Academia Sabatina', href: '/dashboard/academico/sabatina', icon: BookOpen }] : []),
                 ...(hasPermission('academic:view') ? [{ title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap }] : []),
             ],
         }] : []),
-        {
-            title: 'Estudiante',
-            icon: GraduationCapIcon,
+        ...(hasPermission('events:view') ? [{ // New top-level Eventos category
+            title: 'Eventos',
+            icon: CalendarDays,
             items: [
-                ...(hasPermission('profile:view') ? [{ title: 'Inscripciones', href: '/dashboard/inscripciones', icon: LayoutDashboard }] : []),
-                ...(hasPermission('profile:view') ? [{ title: 'Calendario', href: '/dashboard/calendario', icon: Calendar }] : []),
-                ...(hasPermission('profile:view') ? [{ title: 'FDTC', href: '/dashboard/academico/fdtc', icon: GraduationCap }] : []),
+                { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
             ],
-        },
+        }] : []),
+        // Estudiante category suppressed
     ];
 
     const mainNavItems = navStructure

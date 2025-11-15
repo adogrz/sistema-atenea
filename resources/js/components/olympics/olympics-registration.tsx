@@ -32,6 +32,7 @@ interface InscripcionOlimpiadaProps {
     nombre_completo: string
     nivel_educativo: string | null
     centro_educativo: string | null
+    es_nuevo_ingreso?: boolean; // Added for new entry status
   }
   inscripciones: Record<number, Inscripcion[]>
   puedeInscribirse: Record<number, boolean>
@@ -189,11 +190,23 @@ export default function InscripcionOlimpiada({
             Bienvenido, aquí puedes ver y gestionar tus inscripciones a las olimpiadas.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div><strong>Código:</strong> {estudiante.codigo}</div>
           <div><strong>Nombre:</strong> {estudiante.nombre_completo}</div>
-          <div><strong>Grado:</strong> {estudiante.nivel_educativo ?? <span className="text-destructive font-semibold">No asignado</span>}</div>
-          <div><strong>Centro:</strong> {estudiante?.centro_educativo ?? <span className="text-destructive font-semibold">No asignado</span>}</div>
+          <div><strong>Nivel Educativo:</strong> {estudiante.nivel_educativo ?? <span className="text-destructive font-semibold">No asignado</span>}</div>
+          <div><strong>Centro Educativo:</strong> {estudiante?.centro_educativo ?? <span className="text-destructive font-semibold">No asignado</span>}</div>
+          <div>
+            <strong>Nuevo Ingreso:</strong>{" "}
+            {estudiante.es_nuevo_ingreso !== undefined ? (
+              estudiante.es_nuevo_ingreso ? (
+                <Badge variant="success">Sí</Badge>
+              ) : (
+                <Badge variant="outline">No</Badge>
+              )
+            ) : (
+              <span className="text-muted-foreground">N/A</span>
+            )}
+          </div>
         </CardContent>
       </Card>
 
