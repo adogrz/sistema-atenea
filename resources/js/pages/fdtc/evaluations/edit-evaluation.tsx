@@ -11,19 +11,28 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { LoaderCircle, Award } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+
+interface NivelEducativo {
+  codigo: number;
+  descripcion: string;
+  nivel: string;
+}
 
 interface EvaluacionEdit extends InternadoEvaluacion {
     periodo_id?: number;
     materia_id?: number;
+    niveles_aplicables?: number[];
 }
 
 interface Props {
     evaluacion: EvaluacionEdit;
     periodos: InternadoPeriodo[];
     materias: InternadoMateria[];
+    niveles: NivelEducativo[];
 }
 
-export default function EditEvaluation({ evaluacion, periodos, materias }: Props) {
+export default function EditEvaluation({ evaluacion, periodos, materias, niveles }: Props) {
     const BREADCRUMBS: BreadcrumbItem[] = [
         { title: 'Inicio', href: '/dashboard' },
         { title: 'Internado FDTC', href: '/dashboard/internado-fdtc' },
@@ -42,6 +51,7 @@ export default function EditEvaluation({ evaluacion, periodos, materias }: Props
         fecha_fin: string;
         permite_credito_extra: boolean;
         credito_extra_max: string;
+        niveles_aplicables: number[];
     }>({
         periodo_id: evaluacion.periodo_id?.toString() || '',
         materia_id: evaluacion.materia_id?.toString() || '',
@@ -53,6 +63,7 @@ export default function EditEvaluation({ evaluacion, periodos, materias }: Props
         fecha_fin: evaluacion.fecha_fin || '',
         permite_credito_extra: !!evaluacion.permite_credito_extra,
         credito_extra_max: evaluacion.credito_extra_max?.toString() || '0',
+        niveles_aplicables: evaluacion.niveles_aplicables || [],
     });
 
     const submit: FormEventHandler = (e) => {
@@ -220,6 +231,51 @@ export default function EditEvaluation({ evaluacion, periodos, materias }: Props
                                             <p className="mt-1 text-sm text-red-600">{errors.fecha_fin as string}</p>
                                         )}
                                     </div>
+                                </div>
+
+                                {/* Niveles Aplicables */}
+                                <div className="space-y-4">
+                                    <Label className="text-base">Niveles Educativos *</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Selecciona a qué niveles aplica esta evaluación (al menos uno es requerido)
+                                    </p>
+
+                                    <div className="space-y-3">
+                                        {niveles.map((nivel) => {
+                                            const isSelected = data.niveles_aplicables.includes(nivel.codigo);
+
+                                            return (
+                                                <div key={nivel.codigo} className="rounded-lg border p-4">
+                                                    <div className="flex items-center space-x-3">
+                                                        <Checkbox
+                                                            id={`nivel-${nivel.codigo}`}
+                                                            checked={isSelected}
+                                                            onCheckedChange={(checked) => {
+                                                                if (checked) {
+                                                                    setData('niveles_aplicables', [
+                                                                        ...data.niveles_aplicables,
+                                                                        nivel.codigo,
+                                                                    ]);
+                                                                } else {
+                                                                    setData(
+                                                                        'niveles_aplicables',
+                                                                        data.niveles_aplicables.filter((c) => c !== nivel.codigo)
+                                                                    );
+                                                                }
+                                                            }}
+                                                        />
+                                                        <Label htmlFor={`nivel-${nivel.codigo}`} className="cursor-pointer flex-1">
+                                                            <span className="font-medium">{nivel.descripcion}</span>
+                                                            <span className="text-sm text-muted-foreground ml-2">({nivel.nivel})</span>
+                                                        </Label>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    {errors.niveles_aplicables && (
+                                        <p className="text-sm text-red-600">{errors.niveles_aplicables as string}</p>
+                                    )}
                                 </div>
 
                                 {/* Crédito Extra */}

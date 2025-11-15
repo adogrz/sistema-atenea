@@ -63,6 +63,8 @@ export interface InternadoEvaluacion {
     total_estudiantes: number;
     estudiantes_calificados: number;
     promedio: number;
+    niveles_aplicables?: number[];
+    niveles_text?: string;
     created_at?: string;
 }
 

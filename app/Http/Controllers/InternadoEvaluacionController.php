@@ -7,8 +7,10 @@ use App\Models\InternadoEvaluacion;
 use App\Models\InternadoMateria;
 use App\Models\InternadoParticipante;
 use App\Models\InternadoPeriodo;
+use App\Models\NivelEducativo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,12 +22,8 @@ class InternadoEvaluacionController extends Controller
         $materiaId = $request->integer('materia_id');
 
         $query = InternadoEvaluacion::query()
-            ->with(['periodo:id,nombre', 'materia:id,nombre,codigo'])
-            ->withCount([
-                'calificaciones as total_estudiantes',
-                'calificaciones as estudiantes_calificados' => fn($q) => $q->whereNotNull('nota'),
-            ])
-            ->withAvg(['calificaciones as promedio' => fn($q) => $q->whereNotNull('nota')], 'nota');
+            ->with(['periodo:id,nombre', 'materia:id,nombre,codigo', 'calificaciones.participante.estudiante'])
+            ->orderByDesc('created_at');
 
         if ($periodoId) {
             $query->where('periodo_id', $periodoId);
@@ -34,9 +32,20 @@ class InternadoEvaluacionController extends Controller
             $query->where('materia_id', $materiaId);
         }
 
-        $evaluaciones = $query->orderByDesc('created_at')
-            ->get()
-            ->map(fn($e) => [
+        $evaluaciones = $query->get()->map(function($e) {
+            $nivelesAplicables = $e->niveles_aplicables ?? [];
+            
+            // Filtrar calificaciones solo de estudiantes de los niveles aplicables
+            $calificacionesFiltradas = $e->calificaciones->filter(function($calificacion) use ($nivelesAplicables) {
+                $nivelEstudiante = $calificacion->participante?->estudiante?->nivel_educativo;
+                return $nivelEstudiante && in_array($nivelEstudiante, $nivelesAplicables);
+            });
+
+            $totalEstudiantes = $calificacionesFiltradas->count();
+            $estudiantesCalificados = $calificacionesFiltradas->whereNotNull('nota')->count();
+            $promedio = $calificacionesFiltradas->whereNotNull('nota')->avg('nota') ?? 0;
+
+            return [
                 'id' => $e->id,
                 'periodo' => $e->periodo?->nombre,
                 'materia_id' => $e->materia_id,
@@ -50,19 +59,24 @@ class InternadoEvaluacionController extends Controller
                 'fecha_fin' => $e->fecha_fin?->format('Y-m-d'),
                 'permite_credito_extra' => (bool) $e->permite_credito_extra,
                 'credito_extra_max' => (float) $e->credito_extra_max,
-                'total_estudiantes' => (int) $e->total_estudiantes,
-                'estudiantes_calificados' => (int) $e->estudiantes_calificados,
-                'promedio' => (float) ($e->promedio ?? 0),
+                'total_estudiantes' => $totalEstudiantes,
+                'estudiantes_calificados' => $estudiantesCalificados,
+                'promedio' => (float) $promedio,
                 'created_at' => $e->created_at?->format('d/m/Y'),
-            ]);
+                'niveles_aplicables' => $nivelesAplicables,
+                'niveles_text' => $e->niveles_text ?? 'Todos',
+            ];
+        });
 
         $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id', 'nombre', 'es_vigente']);
         $materias = InternadoMateria::orderBy('nombre')->get(['id', 'nombre', 'codigo']);
+        $niveles = NivelEducativo::orderBy('nivel')->get(['codigo', 'descripcion', 'nivel']);
 
         return Inertia::render('fdtc/evaluations/evaluations-management', [
             'evaluaciones' => $evaluaciones,
             'periodos' => $periodos,
             'materias' => $materias,
+            'niveles' => $niveles,
             'filtros' => [
                 'periodo_id' => $periodoId,
                 'materia_id' => $materiaId,
@@ -74,10 +88,12 @@ class InternadoEvaluacionController extends Controller
     {
         $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id', 'nombre', 'es_vigente']);
         $materias = InternadoMateria::orderBy('nombre')->get(['id', 'nombre', 'codigo']);
+        $niveles = NivelEducativo::orderBy('nivel')->get(['codigo', 'descripcion', 'nivel']);
 
         return Inertia::render('fdtc/evaluations/create-evaluation', [
             'periodos' => $periodos,
             'materias' => $materias,
+            'niveles' => $niveles,
         ]);
     }
 
@@ -94,38 +110,55 @@ class InternadoEvaluacionController extends Controller
             'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
             'permite_credito_extra' => 'boolean',
             'credito_extra_max' => 'nullable|numeric|min:0|max:5',
+            'niveles_aplicables' => 'required|array|min:1',
+            'niveles_aplicables.*' => 'required|integer|exists:niveles_educativos,codigo',
         ]);
 
-        DB::transaction(function () use ($validated) {
-            $eva = InternadoEvaluacion::create([
-                'periodo_id' => (int) $validated['periodo_id'],
-                'materia_id' => (int) $validated['materia_id'],
-                'nombre' => $validated['nombre'],
-                'descripcion' => $validated['descripcion'] ?? null,
-                'peso_porcentual' => (float) $validated['peso_porcentual'],
-                'nota_maxima' => (float) $validated['nota_maxima'],
-                'fecha_inicio' => $validated['fecha_inicio'] ?? null,
-                'fecha_fin' => $validated['fecha_fin'] ?? null,
-                'permite_credito_extra' => (bool) ($validated['permite_credito_extra'] ?? false),
-                'credito_extra_max' => isset($validated['credito_extra_max']) ? (float) $validated['credito_extra_max'] : 0,
-            ]);
-
-            $participantes = InternadoParticipante::where('estado', 'activo')->get(['id']);
-            foreach ($participantes as $p) {
-                InternadoCalificacion::create([
-                    'evaluacion_id' => $eva->id,
-                    'participante_id' => $p->id,
+        try {
+            DB::transaction(function () use ($validated) {
+                $eva = InternadoEvaluacion::create([
+                    'periodo_id' => (int) $validated['periodo_id'],
+                    'materia_id' => (int) $validated['materia_id'],
+                    'nombre' => $validated['nombre'],
+                    'descripcion' => $validated['descripcion'] ?? null,
+                    'peso_porcentual' => (float) $validated['peso_porcentual'],
+                    'nota_maxima' => (float) $validated['nota_maxima'],
+                    'fecha_inicio' => $validated['fecha_inicio'] ?? null,
+                    'fecha_fin' => $validated['fecha_fin'] ?? null,
+                    'permite_credito_extra' => (bool) ($validated['permite_credito_extra'] ?? false),
+                    'credito_extra_max' => isset($validated['credito_extra_max']) ? (float) $validated['credito_extra_max'] : 0,
+                    'niveles_aplicables' => $validated['niveles_aplicables'],
                 ]);
-            }
-        });
 
-        return redirect()->route('internado-fdtc.evaluaciones')->with('success', 'Evaluación creada exitosamente');
+                // Obtener solo los participantes activos de los niveles seleccionados
+                $nivelesAplicables = $validated['niveles_aplicables'];
+                $participantes = InternadoParticipante::where('estado', 'activo')
+                    ->with('estudiante')
+                    ->get()
+                    ->filter(function ($participante) use ($nivelesAplicables) {
+                        $nivelEstudiante = $participante->estudiante?->nivel_educativo;
+                        return $nivelEstudiante && in_array($nivelEstudiante, $nivelesAplicables);
+                    });
+                
+                foreach ($participantes as $p) {
+                    InternadoCalificacion::create([
+                        'evaluacion_id' => $eva->id,
+                        'participante_id' => $p->id,
+                    ]);
+                }
+            });
+
+            return redirect()->route('internado-fdtc.evaluaciones')->with('success', 'Evaluación creada exitosamente');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Error al crear la evaluación: ' . $e->getMessage()]);
+        }
     }
 
     public function edit(InternadoEvaluacion $evaluacion): Response
     {
         $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id', 'nombre', 'es_vigente']);
         $materias = InternadoMateria::orderBy('nombre')->get(['id', 'nombre', 'codigo']);
+        $niveles = NivelEducativo::orderBy('nivel')->get(['codigo', 'descripcion', 'nivel']);
 
         $total = $evaluacion->calificaciones()->count();
         $calificados = $evaluacion->calificaciones()->whereNotNull('nota')->count();
@@ -147,9 +180,11 @@ class InternadoEvaluacionController extends Controller
                 'total_estudiantes' => $total,
                 'estudiantes_calificados' => $calificados,
                 'promedio' => $promedio,
+                'niveles_aplicables' => $evaluacion->niveles_aplicables ?? [],
             ],
             'periodos' => $periodos,
             'materias' => $materias,
+            'niveles' => $niveles,
         ]);
     }
 
@@ -166,6 +201,8 @@ class InternadoEvaluacionController extends Controller
             'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
             'permite_credito_extra' => 'boolean',
             'credito_extra_max' => 'nullable|numeric|min:0|max:5',
+            'niveles_aplicables' => 'required|array|min:1',
+            'niveles_aplicables.*' => 'required|integer|exists:niveles_educativos,codigo',
         ]);
 
         $evaluacion->update([
@@ -179,6 +216,7 @@ class InternadoEvaluacionController extends Controller
             'fecha_fin' => $validated['fecha_fin'] ?? null,
             'permite_credito_extra' => (bool) ($validated['permite_credito_extra'] ?? false),
             'credito_extra_max' => isset($validated['credito_extra_max']) ? (float) $validated['credito_extra_max'] : 0,
+            'niveles_aplicables' => $validated['niveles_aplicables'],
         ]);
 
         return redirect()->route('internado-fdtc.evaluaciones')->with('success', 'Evaluación actualizada exitosamente');
@@ -192,9 +230,23 @@ class InternadoEvaluacionController extends Controller
 
     public function show(InternadoEvaluacion $evaluacion): Response
     {
-        // Asegurar calificaciones para todos los participantes activos
-        $activos = InternadoParticipante::where('estado', 'activo')->pluck('id');
-        $existentes = InternadoCalificacion::where('evaluacion_id', $evaluacion->id)->pluck('participante_id');
+        // Obtener los niveles aplicables de la evaluación
+        $nivelesAplicables = $evaluacion->niveles_aplicables ?? [];
+        
+        // Obtener participantes activos que pertenecen a los niveles de esta evaluación
+        $activos = InternadoParticipante::where('estado', 'activo')
+            ->with('estudiante')
+            ->get()
+            ->filter(function ($participante) use ($nivelesAplicables) {
+                $nivelEstudiante = $participante->estudiante?->nivel_educativo;
+                return $nivelEstudiante && in_array($nivelEstudiante, $nivelesAplicables);
+            })
+            ->pluck('id');
+
+        // Asegurar calificaciones para los participantes filtrados
+        $existentes = InternadoCalificacion::where('evaluacion_id', $evaluacion->id)
+            ->pluck('participante_id');
+        
         $faltantes = $activos->diff($existentes);
 
         foreach ($faltantes as $pid) {
@@ -204,7 +256,9 @@ class InternadoEvaluacionController extends Controller
             ]);
         }
 
+        // Obtener calificaciones solo de los participantes filtrados
         $calificaciones = InternadoCalificacion::where('evaluacion_id', $evaluacion->id)
+            ->whereIn('participante_id', $activos)
             ->with(['participante.estudiante.user', 'participante.estudiante.centroEducativo'])
             ->get()
             ->map(function ($calificacion) {
@@ -229,7 +283,10 @@ class InternadoEvaluacionController extends Controller
                 ];
             });
 
-        $promedio = (float) ($evaluacion->calificaciones()->whereNotNull('nota')->avg('nota') ?? 0);
+        $promedio = (float) ($evaluacion->calificaciones()
+            ->whereIn('participante_id', $activos)
+            ->whereNotNull('nota')
+            ->avg('nota') ?? 0);
 
         return Inertia::render('fdtc/calification/calification-show', [
             'evaluacion' => [

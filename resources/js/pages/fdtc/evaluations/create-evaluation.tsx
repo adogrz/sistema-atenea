@@ -11,6 +11,13 @@ import { AlertCircle, AlertTriangle, Check, LoaderCircle, Award } from 'lucide-r
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { InternadoPeriodo, InternadoMateria } from '@/types/fdtc/internado';
+import { Checkbox } from '@/components/ui/checkbox';
+
+interface NivelEducativo {
+  codigo: number;
+  descripcion: string;
+  nivel: string;
+}
 
 const BREADCRUMBS: BreadcrumbItem[] = [
   { title: 'Inicio', href: '/dashboard' },
@@ -22,9 +29,10 @@ const BREADCRUMBS: BreadcrumbItem[] = [
 interface Props {
   periodos: InternadoPeriodo[];
   materias: InternadoMateria[];
+  niveles: NivelEducativo[];
 }
 
-export default function CreateEvaluation({ periodos, materias }: Props) {
+export default function CreateEvaluation({ periodos, materias, niveles }: Props) {
   const { data, setData, post, processing, errors } = useForm<{
     periodo_id: string;
     materia_id: string;
@@ -36,6 +44,7 @@ export default function CreateEvaluation({ periodos, materias }: Props) {
     fecha_fin: string;
     permite_credito_extra: boolean;
     credito_extra_max: string;
+    niveles_aplicables: number[];
   }>({
     periodo_id: '',
     materia_id: '',
@@ -47,6 +56,7 @@ export default function CreateEvaluation({ periodos, materias }: Props) {
     fecha_fin: '',
     permite_credito_extra: false,
     credito_extra_max: '0',
+    niveles_aplicables: [],
   });
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -73,6 +83,10 @@ export default function CreateEvaluation({ periodos, materias }: Props) {
 
     if (data.fecha_inicio && data.fecha_fin && new Date(data.fecha_inicio) > new Date(data.fecha_fin)) {
       newErrors.fecha_fin = 'La fecha de fin debe ser posterior a la fecha de inicio';
+    }
+
+    if (data.niveles_aplicables.length === 0) {
+      newErrors.niveles_aplicables = 'Debes seleccionar al menos un nivel educativo';
     }
 
     if (data.permite_credito_extra) {
@@ -344,6 +358,52 @@ export default function CreateEvaluation({ periodos, materias }: Props) {
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* Niveles Aplicables */}
+                <div className="space-y-6">
+                  <div className="border-b pb-4">
+                    <h3 className="text-lg font-semibold">Niveles Educativos *</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Selecciona a qué niveles aplica esta evaluación (al menos uno es requerido)
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {niveles.map((nivel) => {
+                      const isSelected = data.niveles_aplicables.includes(nivel.codigo);
+
+                      return (
+                        <div key={nivel.codigo} className="rounded-lg border p-4">
+                          <div className="flex items-center space-x-3">
+                            <Checkbox
+                              id={`nivel-${nivel.codigo}`}
+                              checked={isSelected}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setData('niveles_aplicables', [...data.niveles_aplicables, nivel.codigo]);
+                                } else {
+                                  setData(
+                                    'niveles_aplicables',
+                                    data.niveles_aplicables.filter((c) => c !== nivel.codigo)
+                                  );
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`nivel-${nivel.codigo}`} className="cursor-pointer flex-1">
+                              <span className="font-medium">{nivel.descripcion}</span>
+                              <span className="text-sm text-muted-foreground ml-2">({nivel.nivel})</span>
+                            </Label>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {(validationErrors.niveles_aplicables || errors.niveles_aplicables) && (
+                    <p className="text-sm text-red-600">
+                      {validationErrors.niveles_aplicables || (errors.niveles_aplicables as string)}
+                    </p>
+                  )}
                 </div>
 
                 {/* Crédito Extra */}

@@ -12,6 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('participante_id')->constrained('internado_participantes')->onDelete('cascade');
             $table->foreignId('periodo_id')->constrained('internado_periodos')->onDelete('cascade');
+            $table->string('nivel_codigo')->nullable();
+            $table->foreign('nivel_codigo')->references('codigo')->on('niveles_educativos')->onDelete('set null');
             $table->date('fecha');
             $table->enum('estado', ['presente', 'ausente', 'justificada'])->default('presente');
             $table->text('observaciones')->nullable();
@@ -19,6 +21,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['participante_id', 'periodo_id']);
+            $table->index(['nivel_codigo', 'periodo_id', 'fecha']);
             $table->index('fecha');
             $table->unique(['participante_id', 'fecha'], 'unique_asistencia_dia');
         });

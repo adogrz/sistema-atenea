@@ -15,13 +15,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Eye, FileText, Calendar, Award } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, FileText, Calendar, Award, GraduationCap } from 'lucide-react';
 import { type BreadcrumbItem } from '@/types';
 import { InternadoEvaluacion, InternadoMateria } from '@/types/fdtc/internado';
+import { NivelEducativo } from '@/types/admission/education';
 
 interface Props {
     evaluaciones: InternadoEvaluacion[];
     materias: InternadoMateria[];
+    niveles: NivelEducativo[];
     filtros?: {
         materia_id?: number | null;
         periodo_id?: number | null;
@@ -34,7 +36,7 @@ const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Evaluaciones', href: '/dashboard/internado-fdtc/evaluaciones' },
 ];
 
-export default function EvaluationsList({ evaluaciones, materias, filtros }: Props) {
+export default function EvaluationsList({ evaluaciones, materias, niveles, filtros }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [selectedEvaluacion, setSelectedEvaluacion] = useState<InternadoEvaluacion | null>(null);
     const [materiaId, setMateriaId] = useState<string>(filtros?.materia_id ? String(filtros.materia_id) : '');
@@ -50,6 +52,31 @@ export default function EvaluationsList({ evaluaciones, materias, filtros }: Pro
         }
         return map;
     }, [evaluaciones]);
+
+    // Calcular estadísticas por nivel y materia
+    const estadisticasPorNivel = useMemo(() => {
+        const stats = new Map<number, { nivel: NivelEducativo; porMateria: Map<number, number> }>();
+        
+        niveles.forEach(nivel => {
+            stats.set(nivel.codigo, {
+                nivel,
+                porMateria: new Map()
+            });
+        });
+
+        evaluaciones.forEach(ev => {
+            const nivelesEv = ev.niveles_aplicables || [];
+            nivelesEv.forEach(nivelCodigo => {
+                const stat = stats.get(nivelCodigo);
+                if (stat && ev.materia_id) {
+                    const current = stat.porMateria.get(ev.materia_id) || 0;
+                    stat.porMateria.set(ev.materia_id, current + 1);
+                }
+            });
+        });
+
+        return stats;
+    }, [evaluaciones, niveles]);
 
     const totalPesoMateriaSeleccionada = useMemo(() => {
         if (!materiaId) return 0;
@@ -149,31 +176,18 @@ export default function EvaluationsList({ evaluaciones, materias, filtros }: Pro
 
                         <Card>
                             <CardHeader className="pb-3">
-                                <CardTitle className="text-sm font-medium">Peso Total</CardTitle>
+                                <CardTitle className="text-sm font-medium">Niveles Activos</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {materiaId ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="text-2xl font-bold">{totalPesoMateriaSeleccionada.toFixed(1)}%</div>
-                                        {totalPesoMateriaSeleccionada !== 100 && totalPesoMateriaSeleccionada > 0 && (
-                                            <Badge variant="outline" className="text-yellow-600">
-                                                No suma 100%
-                                            </Badge>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-wrap gap-2">
-                                        {materias.map((m) => {
-                                            const total = Number(pesosPorMateria.get(m.id) || 0);
-                                            const warn = total !== 100 && total > 0;
-                                            return (
-                                                <Badge key={m.id} variant={warn ? 'outline' : 'secondary'}>
-                                                    {m.nombre}: {total.toFixed(1)}%
-                                                </Badge>
-                                            );
-                                        })}
-                                    </div>
-                                )}
+                                <div className="text-2xl font-bold">
+                                    {Array.from(estadisticasPorNivel.entries()).filter(([_, stat]) => {
+                                        const evaluacionesDelNivel = evaluaciones.filter(ev => 
+                                            ev.niveles_aplicables?.includes(_)
+                                        );
+                                        return evaluacionesDelNivel.length > 0;
+                                    }).length}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">con evaluaciones</p>
                             </CardContent>
                         </Card>
 
@@ -185,12 +199,142 @@ export default function EvaluationsList({ evaluaciones, materias, filtros }: Pro
                                 <div className="text-2xl font-bold">
                                     {promedioGeneral.toFixed(1)}
                                 </div>
+                                <p className="text-xs text-muted-foreground mt-1">de todas las evaluaciones</p>
                             </CardContent>
                         </Card>
                     </div>
 
-                    {/* Lista de Evaluaciones */}
-                    {evaluaciones.length === 0 ? (
+                    {/* Resumen por Nivel */}
+                    {estadisticasPorNivel.size > 0 && (
+                        <div className="mb-6 space-y-4">
+                            <h2 className="text-xl font-semibold">Evaluaciones por Nivel Educativo</h2>
+                            {Array.from(estadisticasPorNivel.entries()).map(([codigo, stat]) => {
+                                const evaluacionesDelNivel = evaluaciones.filter(ev => 
+                                    ev.niveles_aplicables?.includes(codigo)
+                                );
+                                
+                                if (evaluacionesDelNivel.length === 0) return null;
+
+                                return (
+                                    <Card key={codigo}>
+                                        <CardHeader className="pb-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <GraduationCap className="h-5 w-5" />
+                                                    <CardTitle>{stat.nivel.descripcion}</CardTitle>
+                                                </div>
+                                                <Badge variant="secondary">{evaluacionesDelNivel.length} evaluación(es)</Badge>
+                                            </div>
+                                            <CardDescription>
+                                                <div className="space-y-1">
+                                                    {Array.from(stat.porMateria.entries()).map(([materiaId, count]) => {
+                                                        const materia = materias.find(m => m.id === materiaId);
+                                                        if (!materia) return null;
+                                                        
+                                                        // Calcular peso total de esta materia en este nivel
+                                                        const pesoTotal = evaluacionesDelNivel
+                                                            .filter(ev => ev.materia_id === materiaId)
+                                                            .reduce((sum, ev) => sum + Number(ev.peso_porcentual || 0), 0);
+                                                        
+                                                        const esCompleto = pesoTotal === 100;
+                                                        const colorClase = esCompleto ? 'text-green-600' : pesoTotal > 0 ? 'text-yellow-600' : '';
+                                                        
+                                                        return (
+                                                            <div key={materiaId} className="flex items-center gap-2">
+                                                                <span>{materia.nombre}: {count} evaluación(es)</span>
+                                                                <Badge variant={esCompleto ? 'secondary' : 'outline'} className={colorClase}>
+                                                                    Peso: {pesoTotal.toFixed(1)}%
+                                                                </Badge>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                                {evaluacionesDelNivel.map((evaluacion) => (
+                                                    <Card key={evaluacion.id} className="border-muted">
+                                                        <CardHeader>
+                                                            <div className="flex items-start justify-between">
+                                                                <div className="flex-1">
+                                                                    <CardTitle className="flex items-center gap-2 text-base">
+                                                                        {evaluacion.nombre}
+                                                                        <Badge variant="secondary">{evaluacion.peso_porcentual}%</Badge>
+                                                                        {evaluacion.permite_credito_extra && (
+                                                                            <Badge variant="outline" className="gap-1">
+                                                                                <Award className="h-3 w-3" />
+                                                                                +{evaluacion.credito_extra_max}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </CardTitle>
+                                                                    {evaluacion.materia && (
+                                                                        <CardDescription className="mt-1">
+                                                                            {evaluacion.materia} {evaluacion.materia_codigo ? `(${evaluacion.materia_codigo})` : ''}
+                                                                        </CardDescription>
+                                                                    )}
+                                                                    {evaluacion.descripcion && (
+                                                                        <CardDescription className="mt-1">
+                                                                            {evaluacion.descripcion}
+                                                                        </CardDescription>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex gap-1">
+                                                                    <Button variant="ghost" size="icon" asChild>
+                                                                        <Link href={route('internado-fdtc.evaluaciones.edit', evaluacion.id)}>
+                                                                            <Edit className="h-4 w-4" />
+                                                                        </Link>
+                                                                    </Button>
+                                                                    <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(evaluacion)}>
+                                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        </CardHeader>
+                                                        <CardContent>
+                                                            {(evaluacion.fecha_inicio || evaluacion.fecha_fin) && (
+                                                                <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                                                                    <Calendar className="h-4 w-4" />
+                                                                    <span>
+                                                                        {evaluacion.fecha_inicio} - {evaluacion.fecha_fin}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            <div className="mb-4 grid grid-cols-3 gap-4 text-sm">
+                                                                <div>
+                                                                    <p className="text-muted-foreground">Calificados</p>
+                                                                    <p className="font-semibold">
+                                                                        {evaluacion.estudiantes_calificados} / {evaluacion.total_estudiantes}
+                                                                    </p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-muted-foreground">Nota Máxima</p>
+                                                                    <p className="font-semibold">{evaluacion.nota_maxima}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-muted-foreground">Promedio</p>
+                                                                    <p className="font-semibold">{evaluacion.promedio.toFixed(1)}</p>
+                                                                </div>
+                                                            </div>
+                                                            <Button asChild className="w-full" size="sm">
+                                                                <Link href={route('internado-fdtc.evaluaciones.show', evaluacion.id)}>
+                                                                    <Eye className="mr-2 h-4 w-4" />
+                                                                    Ver Calificaciones
+                                                                </Link>
+                                                            </Button>
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Lista de Evaluaciones sin agrupar (cuando no hay filtro) */}
+                    {evaluaciones.length === 0 && (
                         <Card>
                             <CardContent className="flex flex-col items-center justify-center py-12">
                                 <FileText className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -200,83 +344,6 @@ export default function EvaluationsList({ evaluaciones, materias, filtros }: Pro
                                 </p>
                             </CardContent>
                         </Card>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                            {evaluaciones.map((evaluacion) => (
-                                <Card key={evaluacion.id}>
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <CardTitle className="flex items-center gap-2">
-                                                    {evaluacion.nombre}
-                                                    <Badge variant="secondary">{evaluacion.peso_porcentual}%</Badge>
-                                                    {evaluacion.permite_credito_extra && (
-                                                        <Badge variant="outline" className="gap-1">
-                                                            <Award className="h-3 w-3" />
-                                                            +{evaluacion.credito_extra_max}
-                                                        </Badge>
-                                                    )}
-                                                </CardTitle>
-                                                {/* Mostrar materia */}
-                                                {evaluacion.materia && (
-                                                    <CardDescription className="mt-1">
-                                                        {evaluacion.materia} {evaluacion.materia_codigo ? `(${evaluacion.materia_codigo})` : ''}
-                                                    </CardDescription>
-                                                )}
-                                                {/* Descripción */}
-                                                {evaluacion.descripcion && (
-                                                    <CardDescription className="mt-1">
-                                                        {evaluacion.descripcion}
-                                                    </CardDescription>
-                                                )}
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <Button variant="ghost" size="icon" asChild>
-                                                    <Link href={route('internado-fdtc.evaluaciones.edit', evaluacion.id)}>
-                                                        <Edit className="h-4 w-4" />
-                                                    </Link>
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(evaluacion)}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        {(evaluacion.fecha_inicio || evaluacion.fecha_fin) && (
-                                            <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-                                                <Calendar className="h-4 w-4" />
-                                                <span>
-                                                    {evaluacion.fecha_inicio} - {evaluacion.fecha_fin}
-                                                </span>
-                                            </div>
-                                        )}
-                                        <div className="mb-4 grid grid-cols-3 gap-4 text-sm">
-                                            <div>
-                                                <p className="text-muted-foreground">Calificados</p>
-                                                <p className="font-semibold">
-                                                    {evaluacion.estudiantes_calificados} / {evaluacion.total_estudiantes}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-muted-foreground">Nota Máxima</p>
-                                                <p className="font-semibold">{evaluacion.nota_maxima}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-muted-foreground">Promedio</p>
-                                                <p className="font-semibold">{evaluacion.promedio.toFixed(1)}</p>
-                                            </div>
-                                        </div>
-                                        <Button asChild className="w-full">
-                                            <Link href={route('internado-fdtc.evaluaciones.show', evaluacion.id)}>
-                                                <Eye className="mr-2 h-4 w-4" />
-                                                Ver Calificaciones
-                                            </Link>
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
                     )}
 
                     {/* Dialog Eliminar */}
