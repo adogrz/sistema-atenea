@@ -1,14 +1,14 @@
-import React, { useState, useRef } from 'react';
+import { FaseGestionModal } from '@/components/FaseGestionModal';
 import AppLayout from '@/layouts/app-layout';
-import { Head, usePage, router } from '@inertiajs/react';
 import { type BreadcrumbItem, FaseOlimpiada } from '@/types';
-import FullCalendar from '@fullcalendar/react';
+import { EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin, { EventDropArg } from '@fullcalendar/interaction';
-import { EventInput } from '@fullcalendar/core';
-import { toast } from 'sonner';
-import { FaseGestionModal } from '@/components/FaseGestionModal';
+import FullCalendar from '@fullcalendar/react';
+import { Head, router } from '@inertiajs/react';
 import { Calendar as CalendarIcon } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface CalendarPageProps {
     events: EventInput[];
@@ -17,7 +17,7 @@ interface CalendarPageProps {
 const BREADCRUMBS: BreadcrumbItem[] = [
     { title: 'Inicio', href: route('dashboard') },
     { title: 'Olimpiadas', href: route('olimpiadas.index') },
-    { title: 'Calendario de Fases' },
+    { title: 'Calendario de Fases', href: route('calendario.index') },
 ];
 
 export default function CalendarioPage({ events: initialEvents }: CalendarPageProps) {
@@ -34,30 +34,34 @@ export default function CalendarioPage({ events: initialEvents }: CalendarPagePr
         // Revert the event's position if the update fails
         info.revert();
 
-        router.put(route('fases.gestion.update', { fase: faseId }), {
-            fecha_inicio: newStartDate,
-            fecha_fin: newEndDate,
-            // Keep other properties as they are not changed by drag-and-drop
-            cupos: event.extendedProps?.cupos,
-            nota_minima_aprobacion: event.extendedProps?.nota_minima_aprobacion,
-        }, {
-            onSuccess: () => {
-                toast.success('Fechas de fase actualizadas exitosamente.');
-                // Manually update the event in the calendar if successful
-                if (calendarRef.current) {
-                    const calendarApi = calendarRef.current.getApi();
-                    const calendarEvent = calendarApi.getEventById(event.id);
-                    if (calendarEvent) {
-                        calendarEvent.setDates(event.start, event.end);
+        router.put(
+            route('fases.gestion.update', { fase: faseId }),
+            {
+                fecha_inicio: newStartDate,
+                fecha_fin: newEndDate,
+                // Keep other properties as they are not changed by drag-and-drop
+                cupos: event.extendedProps?.cupos,
+                nota_minima_aprobacion: event.extendedProps?.nota_minima_aprobacion,
+            },
+            {
+                onSuccess: () => {
+                    toast.success('Fechas de fase actualizadas exitosamente.');
+                    // Manually update the event in the calendar if successful
+                    if (calendarRef.current) {
+                        const calendarApi = calendarRef.current.getApi();
+                        const calendarEvent = calendarApi.getEventById(event.id);
+                        if (calendarEvent) {
+                            calendarEvent.setDates(event.start, event.end);
+                        }
                     }
-                }
+                },
+                onError: (err) => {
+                    toast.error('Error al actualizar las fechas de la fase.');
+                    console.error(err);
+                },
+                preserveScroll: true,
             },
-            onError: (err) => {
-                toast.error('Error al actualizar las fechas de la fase.');
-                console.error(err);
-            },
-            preserveScroll: true,
-        });
+        );
     };
 
     const handleEventClick = (info: any) => {
@@ -83,7 +87,7 @@ export default function CalendarioPage({ events: initialEvents }: CalendarPagePr
                 nivel_educativo_id: 0,
                 tipo: 'nivel',
                 anio: 0,
-            }
+            },
         };
         setEditingFase(fase);
         setIsEditModalOpen(true);
@@ -101,16 +105,14 @@ export default function CalendarioPage({ events: initialEvents }: CalendarPagePr
             <Head title="Calendario de Fases" />
             <div className="p-4 md:p-8">
                 <div className="mb-6">
-                    <h2 className="text-2xl font-bold tracking-tight flex items-center">
+                    <h2 className="flex items-center text-2xl font-bold tracking-tight">
                         <CalendarIcon className="mr-2 h-6 w-6" />
                         Calendario de Fases de Olimpiadas
                     </h2>
-                    <p className="text-muted-foreground mt-2">
-                        Visualiza y gestiona las fechas de las fases de las olimpiadas.
-                    </p>
+                    <p className="mt-2 text-muted-foreground">Visualiza y gestiona las fechas de las fases de las olimpiadas.</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="rounded-lg bg-white p-4 shadow-sm">
                     <FullCalendar
                         ref={calendarRef}
                         plugins={[dayGridPlugin, interactionPlugin]}
@@ -118,7 +120,7 @@ export default function CalendarioPage({ events: initialEvents }: CalendarPagePr
                         headerToolbar={{
                             left: 'prev,next today',
                             center: 'title',
-                            right: 'dayGridMonth,dayGridWeek,dayGridDay'
+                            right: 'dayGridMonth,dayGridWeek,dayGridDay',
                         }}
                         locale="es"
                         editable={true}
@@ -142,7 +144,9 @@ export default function CalendarioPage({ events: initialEvents }: CalendarPagePr
                 isOpen={isEditModalOpen}
                 onClose={handleCloseModal}
                 fase={editingFase}
-                onUpdate={() => { /* Data is refreshed by router.reload in handleCloseModal */ }}
+                onUpdate={() => {
+                    /* Data is refreshed by router.reload in handleCloseModal */
+                }}
             />
         </AppLayout>
     );

@@ -5,13 +5,11 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
-    BookOpen,
     Brain,
     Calendar,
     CalendarDays,
     ClipboardCheck,
     ClipboardListIcon,
-    Trophy,
     FileBarChart,
     FileCheck,
     FileHeart,
@@ -22,6 +20,7 @@ import {
     School,
     ShieldCheck,
     Stethoscope,
+    Trophy,
     UserCheck,
     UserPlus,
     Users,
@@ -34,10 +33,18 @@ export function AppSidebar() {
     const { url } = usePage();
 
     const isItemActive = (href: string | undefined) => {
-        if (href === '/' || href === '/dashboard') {
-            return url === href;
+        if (!href) return false;
+
+        // Normalizar la URL removiendo el dominio si existe
+        const normalizedHref = href.startsWith('http') ? new URL(href).pathname : href;
+
+        const normalizedUrl = url.startsWith('http') ? new URL(url, window.location.origin).pathname : url;
+
+        if (normalizedHref === '/' || normalizedHref === '/dashboard') {
+            return normalizedUrl === normalizedHref;
         }
-        return url.startsWith(href as string);
+
+        return normalizedUrl.startsWith(normalizedHref);
     };
 
     const navStructure: NavItem[] = [
@@ -116,65 +123,62 @@ export function AppSidebar() {
     }
 
     function buildOlimpiadasNav(): NavItem[] {
-    // Si no tiene ningún permiso relevante, no mostramos nada
-    const canView = 
-        hasPermission('olimpiadas:list') ||
-        hasPermission('resultados:view') ||
-        hasPermission('academic:view') ||
-        hasRole('calificador') ||
-        hasPermission('calificadores:assign') ||
-        hasPermission('definiciones-evaluacion:list') ||
-        hasPermission('grupos:list');
+        // Si no tiene ningún permiso relevante, no mostramos nada
+        const canView =
+            hasPermission('olimpiadas:list') ||
+            hasPermission('resultados:view') ||
+            hasPermission('academic:view') ||
+            hasRole('calificador') ||
+            hasPermission('calificadores:assign') ||
+            hasPermission('definiciones-evaluacion:list') ||
+            hasPermission('grupos:list');
 
-    if (!canView) return [];
+        if (!canView) return [];
 
-    const items = [];
+        const items = [];
 
-    if (hasPermission('olimpiadas:list')) {
-        items.push(
-            { title: 'Olimpiadas y Fases', href: route('olimpiadas.index'), icon: GraduationCap },
-            { title: 'Inscripciones', href: route('inscripciones.gestion'), icon: LayoutDashboard }
-        );
+        if (hasPermission('olimpiadas:list')) {
+            items.push(
+                { title: 'Olimpiadas y Fases', href: '/dashboard/olimpiadas', icon: GraduationCap },
+                { title: 'Inscripciones', href: '/dashboard/inscripciones', icon: LayoutDashboard },
+            );
+        }
+
+        if (hasPermission('resultados:view')) {
+            items.push({ title: 'Resultados', href: '/dashboard/resultados', icon: Trophy });
+        }
+
+        if (hasPermission('academic:view')) {
+            items.push({ title: 'Centro de Control', href: '/dashboard/area', icon: LayoutDashboard });
+        }
+
+        if (hasRole('calificador')) {
+            items.push({ title: 'Dashboard de Calificador', href: '/dashboard/calificaciones/olimpiadas', icon: ClipboardListIcon });
+        }
+
+        if (hasPermission('calificadores:assign')) {
+            items.push({ title: 'Asignación de Evaluadores', href: '/dashboard/gestion-evaluacion', icon: ShieldCheck });
+        }
+
+        if (hasPermission('definiciones-evaluacion:list')) {
+            items.push({ title: 'Definiciones de Evaluación', href: '/dashboard/definiciones-evaluacion', icon: ClipboardListIcon });
+        }
+
+        if (hasPermission('grupos:list')) {
+            items.push({ title: 'Gestión de Grupos', href: '/dashboard/grupos', icon: Users });
+        }
+
+        return [
+            {
+                title: 'Olimpiadas',
+                icon: Trophy,
+                items,
+            },
+        ];
     }
-
-    if (hasPermission('resultados:view')) {
-        items.push({ title: 'Resultados', href: route('resultados.index'), icon: Trophy });
-    }
-
-    if (hasPermission('academic:view')) {
-        items.push({ title: 'Centro de Control', href: route('area.dashboard'), icon: LayoutDashboard });
-    }
-
-    if (hasRole('calificador')) {
-        items.push({ title: 'Dashboard de Calificador', href: route('calificaciones.olimpiadas.index'), icon: ClipboardListIcon });
-    }
-
-    if (hasPermission('calificadores:assign')) {
-        items.push({ title: 'Asignación de Evaluadores', href: route('gestion-evaluacion.index'), icon: ShieldCheck });
-    }
-
-    if (hasPermission('definiciones-evaluacion:list')) {
-        items.push({ title: 'Definiciones de Evaluación', href: route('definiciones-evaluacion.index'), icon: ClipboardListIcon });
-    }
-
-    if (hasPermission('grupos:list')) {
-        items.push({ title: 'Gestión de Grupos', href: route('grupos.index'), icon: Users });
-    }
-
-    return [
-        {
-            title: 'Olimpiadas',
-            icon: Trophy,
-            items,
-        },
-    ];
-}
 
     function buildInternshipNav(): NavItem[] {
-        const canViewModule =
-            hasPermission('internado:view') ||
-            hasPermission('internado:admin:view') ||
-            hasPermission('internado:asistencias:view');
+        const canViewModule = hasPermission('internado:view') || hasPermission('internado:admin:view') || hasPermission('internado:asistencias:view');
 
         if (!canViewModule) return [];
 
@@ -207,7 +211,12 @@ export function AppSidebar() {
     }
 
     function buildStudentNav(): NavItem[] {
-        if (!hasPermission('profile:view')) return [];
+        // Solo mostrar este grupo si el usuario SOLO tiene permisos de estudiante
+        // y NO tiene permisos administrativos o académicos
+        const hasAdminPermissions =
+            hasPermission('academic:view') || hasPermission('olimpiadas:list') || hasPermission('academic:manage') || hasPermission('users:list');
+
+        if (!hasPermission('profile:view') || hasAdminPermissions) return [];
 
         return [
             {
