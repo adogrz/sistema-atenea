@@ -2,7 +2,19 @@
 
 namespace App\Providers;
 
+use App\Models\ClinicalRecord\Assignment;
+use App\Models\ClinicalRecord\ConsentForm;
+use App\Models\ClinicalRecord\MedicalConsultation;
+use App\Models\ClinicalRecord\MedicalRecord;
+use App\Models\ClinicalRecord\PsychologicalRecord;
+use App\Models\ClinicalRecord\PsychologicalSession;
 use App\Models\User;
+use App\Policies\ClinicalRecord\AssignmentPolicy;
+use App\Policies\ClinicalRecord\ConsentFormPolicy;
+use App\Policies\ClinicalRecord\MedicalConsultationPolicy;
+use App\Policies\ClinicalRecord\MedicalRecordPolicy;
+use App\Policies\ClinicalRecord\PsychologicalRecordPolicy;
+use App\Policies\ClinicalRecord\PsychologicalSessionPolicy;
 use App\Models\Olimpiada;
 use App\Models\FaseOlimpiada;
 use App\Policies\UserPolicy;
@@ -20,6 +32,12 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         // Aquí es donde registramos nuestras políticas
         User::class => UserPolicy::class,
+        Assignment::class => AssignmentPolicy::class,
+        MedicalRecord::class => MedicalRecordPolicy::class,
+        MedicalConsultation::class => MedicalConsultationPolicy::class,
+        PsychologicalRecord::class => PsychologicalRecordPolicy::class,
+        PsychologicalSession::class => PsychologicalSessionPolicy::class,
+        ConsentForm::class => ConsentFormPolicy::class,
         Olimpiada::class => OlimpiadaPolicy::class,
         FaseOlimpiada::class => FaseOlimpiadaPolicy::class,
     ];

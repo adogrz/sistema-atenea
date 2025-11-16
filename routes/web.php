@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CentroEducativoController;
 use App\Http\Controllers\AdmisionController;
+use App\Http\Controllers\CalificacionInscripcionController;
 use App\Http\Controllers\AsignacionCalificadorController;
 use App\Models\Evento;
 use App\Http\Controllers\EventController;
@@ -40,6 +41,8 @@ Route::get('/', static function () {
 })->name('home');
 
 Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
+    // Dashboard principal (contextual)
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/calificaciones', [CalificacionController::class, 'index'])->name('calificaciones.index'); //->middleware('role:Calificador')
     Route::post('/calificaciones', [CalificacionController::class, 'store'])->name('calificaciones.store');
     // Dashboard principal
@@ -152,176 +155,24 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
     Route::get('/users/{user}/debug', [UserController::class, 'debug'])
         ->name('users.debug')
         ->middleware('permission:users:view-all');
-    // Rutas para gestión de eventos académicos
-    Route::middleware(['auth', 'permission:academic:view'])->group(function () {
-
-        Route::get('/dashboard/calendario', function () {
-            $events = Evento::orderBy('fecha_inicio', 'asc')->get()->map(function ($evento) {
-                return [
-                    'id' => $evento->id,
-                    'nombre' => $evento->nombre,
-                    'clasificacion' => $evento->clasificacion,
-                    'fecha_inicio' => $evento->fecha_inicio?->format('Y-m-d'),
-                    'fecha_fin' => $evento->fecha_fin?->format('Y-m-d'),
-                    'hora_inicio' => $evento->hora_inicio,
-                    'hora_fin' => $evento->hora_fin,
-                    'descripcion' => $evento->descripcion,
-                    'ubicacion' => $evento->ubicacion,
-                    'estado' => $evento->estado,
-                    'created_at' => $evento->created_at,
-                    'updated_at' => $evento->updated_at,
-                ];
-            });
-
-            return Inertia::render('academic-forms/calendar', [
-                'events' => $events,
-            ]);
-        })->name('calendario');
-
-        Route::get('/dashboard/academico', function () {
-            $events = Evento::orderBy('created_at', 'desc')->get()->map(function ($evento) {
-                return [
-                    'id' => $evento->id,
-                    'nombre' => $evento->nombre,
-                    'clasificacion' => $evento->clasificacion,
-                    'fecha_inicio' => $evento->fecha_inicio?->format('Y-m-d'),
-                    'fecha_fin' => $evento->fecha_fin?->format('Y-m-d'),
-                    'hora_inicio' => $evento->hora_inicio,
-                    'hora_fin' => $evento->hora_fin,
-                    'descripcion' => $evento->descripcion,
-                    'ubicacion' => $evento->ubicacion,
-                    'estado' => $evento->estado,
-                    'created_at' => $evento->created_at,
-                    'updated_at' => $evento->updated_at,
-                ];
-            });
-
-            return Inertia::render('dashboard-academico', [
-                'events' => $events,
-            ]);
-        })->name('dashboard_academico');
-
-        // Rutas de gestión de eventos
-        Route::middleware('permission:events:create')->group(function () {
-            Route::post('/dashboard/academic-forms', [EventController::class, 'store'])
-                ->name('academic-forms.store');
-        });
-
-        Route::middleware('permission:events:edit')->group(function () {
-            Route::put('/dashboard/academic-forms/{event}', [EventController::class, 'update'])
-                ->name('academic-forms.update');
-        });
-
-        Route::middleware('permission:events:delete')->group(function () {
-            Route::delete('/dashboard/academic-forms/{event}', [EventController::class, 'destroy'])
-                ->name('academic-forms.destroy');
-        });
-
-        // Rutas para formularios
-        Route::get('/dashboard/academic-forms/create-event', function () {
-            return Inertia::render('academic-forms/create-event');
-        })->name('academic-forms.create-event');
-
-        Route::get('/dashboard/academic-forms/{event}/edit', function (Evento $event) {
-            $mappedEvent = [
-                'id' => $event->id,
-                'name' => $event->nombre,
-                'type' => $event->clasificacion,
-                'start_date' => $event->fecha_inicio,
-                'end_date' => $event->fecha_fin,
-                'start_time' => $event->hora_inicio,
-                'end_time' => $event->hora_fin,
-                'description' => $event->descripcion,
-                'location' => $event->ubicacion,
-                'status' => $event->estado,
-                'created_at' => $event->created_at,
-                'updated_at' => $event->updated_at,
-            ];
-
-            return Inertia::render('academic-forms/edit-event', [
-                'event' => $mappedEvent,
-            ]);
-        })->name('academic-forms.edit');
-    });
 });
 
-Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {});
-
-Route::middleware(['web'])->group(function () {
+// Rutas de carga de centros educativos (requiere autenticación y evento activo)
+Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {
     // Página que contiene el formulario de carga
     Route::get('/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create')->middleware('permission:centros-educativos:import');
 
     // Ruta POST que procesa el archivo Excel
     Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store')->middleware('permission:centros-educativos:import');
 
+// Rutas públicas de admisión de aspirantes (sin autenticación, solo verificar evento activo)
+Route::middleware(['web', 'check.event.period:registro-aspirantes'])->group(function () {
     // Página que contiene el formulario de admisión
     Route::get('/formulario-admision', [AdmisionController::class, 'create'])->name('admision.create');
 
     // Ruta POST que procesa el formulario de admision
     Route::post('/admision', [AdmisionController::class, 'store'])->name('admision.store');
 });
-
-Route::get('/dashboard/academico', function () {
-    // Datos de ejemplo para mostrar en la vista
-    $sampleEvents = [
-        [
-            'id' => 1,
-            'name' => 'Registro de Aspirantes 2025',
-            'type' => 'registro-aspirantes',
-            'start_date' => '2025-01-15',
-            'end_date' => '2025-01-30',
-            'start_time' => '09:00',
-            'end_time' => '17:00',
-            'description' => 'Periodo de registro para nuevos aspirantes',
-            'location' => 'Campus Principal',
-            'status' => 'activo',
-            'created_at' => '2025-01-01 10:00:00',
-        ],
-        [
-            'id' => 2,
-            'name' => 'Academia Sabatina',
-            'type' => 'academia-sabatina',
-            'start_date' => '2025-02-01',
-            'end_date' => '2025-02-28',
-            'start_time' => '08:00',
-            'end_time' => '12:00',
-            'description' => 'Clases de fin de semana',
-            'location' => 'Aula 101',
-            'status' => 'activo',
-            'created_at' => '2025-01-02 14:30:00',
-        ],
-        [
-            'id' => 3,
-            'name' => 'Examen Final FDTC',
-            'type' => 'examen',
-            'start_date' => '2025-03-15',
-            'end_date' => '2025-03-15',
-            'start_time' => '10:00',
-            'end_time' => '12:00',
-            'description' => 'Examen final del programa FDTC',
-            'location' => 'Auditorio Principal',
-            'status' => 'inactivo',
-            'created_at' => '2025-01-03 16:45:00',
-        ],
-        [
-            'id' => 4,
-            'name' => 'Graduación 2025',
-            'type' => 'graduacion',
-            'start_date' => '2025-04-20',
-            'end_date' => '2025-04-20',
-            'start_time' => '18:00',
-            'end_time' => '21:00',
-            'description' => 'Ceremonia de graduación',
-            'location' => 'Teatro Municipal',
-            'status' => 'completado',
-            'created_at' => '2025-01-04 12:15:00',
-        ],
-    ];
-
-    return Inertia::render('dashboard-academico', [
-        'events' => $sampleEvents,
-    ]);
-})->name('dashboard_academico');
 
 Route::get('/health', function () {
     try {
@@ -342,5 +193,20 @@ Route::get('/health', function () {
     }
 });
 
+// Rutas de API públicas para el formulario de admisión (sin CSRF)
+Route::withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->group(function () {
+    Route::post('api/check-duplicate', [App\Http\Controllers\Api\DuplicateCheckController::class, 'checkDuplicate']);
+});
+
+
+
+// Rutas de eventos académicos
+require __DIR__ . '/academic.php';
+
+// Rutas del internado FDTC
+require __DIR__ . '/internado.php';
+
 require __DIR__ . '/auth.php';
 require __DIR__ . '/settings.php';
+require __DIR__ . '/clinical-records.php';
+

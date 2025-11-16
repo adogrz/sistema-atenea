@@ -1,7 +1,15 @@
 {
     "listeners": {
         "*:8000": {
-            "pass": "routes"
+            "pass": "routes",
+            "forwarded": {
+                "protocol": "X-Forwarded-Proto",
+                "source": [
+                    "172.16.0.0/12",
+                    "192.168.0.0/16",
+                    "10.0.0.0/8"
+                ]
+            }
         }
     },
     "routes": [
@@ -24,15 +32,6 @@
             "script": "index.php",
             "user": "unit",
             "group": "unit"
-        }
-    },
-    "settings": {
-        "http": {
-            "log_stream": "stderr" 
-        },
-        "php": {
-            "log_errors": true,
-            "error_log": "stderr" 
         }
     }
 }

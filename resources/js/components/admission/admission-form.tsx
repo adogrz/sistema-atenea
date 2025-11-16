@@ -1,515 +1,640 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { FormProvider, useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import axios from "axios";
-import { Loader2, Save, Send, AlertCircle, CheckCircle2 } from "lucide-react"
+import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
+import { AlertCircle, CheckCircle2, FileText, Loader2, Send, X } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { FieldValues, FormProvider, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Toaster, toast } from "sonner"
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Toaster } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
-import DatosPersonales from "./sections/personal-data"
-import DatosResponsable from "./sections/responsible"
-import Direccion from "./sections/address"
-import Educacion from "./sections/education"
-import ResumenSolicitud from "./sections/summary"
-import BarraProgreso from "./progress-bar"
-import Captcha from "./captcha"
-import { usePage } from "@inertiajs/react"
-import { Departamento, Municipio, Distrito } from "@/types/admission/address"
-import { CentroEducativo, NivelEducativo } from "@/types/admission/education"
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
+import AdmissionLayout from '@/layouts/admission/admission-layout';
+import { fullFormSchema, getErrorsBySection } from '@/lib/validations/admission-schemas';
+import { Departamento, Distrito, Municipio } from '@/types/admission/address';
+import { CentroEducativo, NivelEducativo } from '@/types/admission/education';
+import AdmissionSidebar from './admission-sidebar';
+import Captcha from './captcha';
+import ErrorModal from './error-modal';
+import Direccion from './sections/address';
+import Educacion from './sections/education';
+import DatosPersonales from './sections/personal-data';
+import DatosResponsable from './sections/responsible';
+import ResumenSolicitud from './sections/summary';
+import SuccessAlert from './success-alert';
+import SuccessModal from './success-modal';
 
-// Esquema de validación completo para todo el formulario
-export const formSchema = z.object({
+type FormData = z.infer<typeof fullFormSchema>;
 
-  // Datos del estudiante
-  codigo: z.string().min(1).regex(/^\d{5,10}$/, {
-    message: "Código debe ser numérico entre 5 y 10 dígitos",
-  }),
-  primer_nombre: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-    message: "Nombre no válido",
-  }),
-  segundo_nombre: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-    message: "Segundo nombre no válido",
-  }),
-  primer_apellido: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-    message: "Apellido no válido",
-  }),
-  segundo_apellido: z.string().min(1).max(50).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-    message: "Segundo apellido no válido",
-  }),
-  sexo: z.enum(["H", "M"]),
-  fecha_nacimiento: z.string().refine((val) => {
-    const parsed = Date.parse(val);
-    return !isNaN(parsed) && new Date(parsed) < new Date();
-  }, { message: "Fecha inválida o en el futuro" }),
-  nie: z.string().regex(/^\d{7,10}$/, {
-    message: "NIE debe ser numérico entre 7 y 10 dígitos",
-  }),
-  email: z.string().email(),
-
-  // Dirección  
-  telefono_casa: z.string().regex(/^[267]\d{7}$/).nullable().optional(),
-  direccion: z.string().min(5).max(255),
-  distrito: z.string().regex(/^\d+$/, {
-    message: "Debes seleccionar un distrito",
-  }),
-
-  departamento: z.string().min(1, {
-    message: "Debes seleccionar un departamento",
-  }),
-
-  municipio: z.string().min(1, {
-    message: "Debes seleccionar un municipio",
-  }),
-
-  // Datos del responsable 1
-  dui_responsable_1: z.string().regex(/^\d{9}$/, {
-    message: "DUI debe tener 9 dígitos numéricos",
-  }),
-  nombres_responsable_1: z.string().min(1).max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-    message: "Nombre del responsable no válido",
-  }),
-  apellidos_responsable_1: z.string().min(1).max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-    message: "Apellido del responsable no válido",
-  }),
-  email_responsable_1: z.string().email().nullable().optional(),
-  telefono_responsable_1: z.string().regex(/^[267]\d{7}$/, {
-    message: "Teléfono del responsable inválido",
-  }),
-  tipo_parentesco_1: z.enum(["Madre", "Padre", "Abuelo", "Tio", "Tutor legal"]),
-
-  // Datos del responsable 2
-  dui_responsable_2: z.string().regex(/^\d{9}$/, {
-    message: "DUI debe tener 9 dígitos numéricos",
-  }).optional(),
-  nombres_responsable_2: z.string().max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-    message: "Nombre del responsable no válido",
-  }).optional(),
-  apellidos_responsable_2: z.string().max(100).regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s'-]+$/, {
-    message: "Apellido del responsable no válido",
-  }).optional(),
-  email_responsable_2: z.string().email().nullable().optional(),
-  telefono_responsable_2: z.string().regex(/^[267]\d{7}$/, {
-    message: "Teléfono del responsable inválido",
-  }).optional(),
-  tipo_parentesco_2: z.enum(["Madre", "Padre", "Abuelo", "Tio", "Tutor legal"]).optional(),
-
-  // Nombre del centro educativo (valida texto con acentos y símbolos comunes)
-  centro_educativo: z.string()
-    .min(5, { message: "El nombre debe tener al menos 5 caracteres" })
-    .max(100)
-    .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9"'\s\-\.]+$/, {
-      message: "Formato de nombre inválido",
-    }),
-
-  // Sector educativo (PÚBLICO o PRIVADO)
-  sector: z.enum(["PÚBLICO", "PRIVADO"], {
-    required_error: "Selecciona el sector",
-  }),
-
-  // Zona geográfica (Rural o Urbana)
-  zona: z.enum(["Rural", "Urbana"], {
-    required_error: "Selecciona la zona",
-  }),
-
-  // Internacional (SI o NO)
-  internacional: z.enum(["SI", "NO"], {
-    required_error: "Selecciona si el centro es internacional",
-  }),
-
-  // Nivel de estudios (valores de primaria)
-  nivel_educativo: z.enum([
-    '0',
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-  ], {
-    required_error: "Selecciona tu nivel de estudios",
-  }),
-
-  /*
-  // Consentimientos
-  aceptoTerminos: z.literal(true, {
-    errorMap: () => ({ message: "Debes aceptar los términos y condiciones" }),
-  }),
-  autorizoMoodle: z.literal(true, {
-    errorMap: () => ({ message: "Debes autorizar el uso de datos para Moodle" }),
-  }),
-  */
-});
-
-
-type FormValues = z.infer<typeof formSchema>
-
-export default function FormularioAdmision() {
-  const [activeTab, setActiveTab] = useState("datos-personales")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [formStatus, setFormStatus] = useState<"idle" | "success" | "error">("idle")
-  const [captchaVerified, setCaptchaVerified] = useState(false)
-
-  const {
-    departamentos,
-    municipiosPorDepartamento,
-    distritosPorMunicipio,
-    centrosEducativos,
-    nivelesEducativos,
-  } = usePage<{
+export default function FormularioAdmision(props: {
     departamentos: Departamento[];
-    municipiosPorDepartamento: Record<string, Municipio[]>;
-    distritosPorMunicipio: Record<string, Distrito[]>;
-    centrosEducativos: CentroEducativo[];
-    nivelesEducativos: NivelEducativo[];
-  }>().props;
+    municipios: Municipio[];
+    distritos: Distrito[];
+    centros_educativos: CentroEducativo[];
+    niveles_educativos: NivelEducativo[];
+}) {
+    const { departamentos, municipios, distritos, centros_educativos, niveles_educativos } = props;
+    const [activeTab, setActiveTab] = useState('datos-personales');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [captchaVerified, setCaptchaVerified] = useState(false);
+    const [captchaKey, setCaptchaKey] = useState(0);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      // Datos personales
-      primer_nombre: "",
-      segundo_nombre: "",
-      primer_apellido: "",
-      segundo_apellido: "",
-      sexo: undefined,
-      fecha_nacimiento: "",
-      nie: "",
-      email: "",
+    // Función para manejar cambios en el estado del captcha
+    const handleCaptchaVerification = useCallback((verified: boolean) => {
+        setCaptchaVerified(verified);
+    }, []);
 
-      // Dirección
-      telefono_casa: "",
-      direccion: "",
-      distrito: "",
-      departamento: "",
-      municipio: "",
+    const [formStatus, setFormStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
+    const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
+    const [submissionData, setSubmissionData] = useState<{
+        estudiante: {
+            codigo: string;
+            primer_nombre: string;
+            primer_apellido: string;
+            email: string;
+        };
+        submissionDate: Date;
+    } | null>(null);
 
-      // Educación
-      codigo: "",
-      centro_educativo: "",
-      sector: 'PÚBLICO',
-      zona: 'Rural',
-      internacional: 'NO',
-      nivel_educativo: undefined,      // Se define vacío para forzar selección
-
-      // Responsable 1
-      dui_responsable_1: "",
-      nombres_responsable_1: "",
-      apellidos_responsable_1: "",
-      email_responsable_1: "",
-      telefono_responsable_1: "",
-      tipo_parentesco_1: undefined,
-
-      // Responsable 2
-      dui_responsable_2: undefined,
-      nombres_responsable_2: undefined,
-      apellidos_responsable_2: undefined,
-      email_responsable_2: undefined,
-      telefono_responsable_2: undefined,
-      tipo_parentesco_2: undefined,
-    },
-    mode: 'onBlur',
-  });
-
-  const { formState } = form
-  const { errors } = formState
-
-  // Calcular el número de errores por sección
-  const erroresPorSeccion = {
-    "datos-personales": Object.keys(errors).filter((key) =>
-      [
-        "primer_nombre",
-        "segundo_nombre",
-        "primer_apellido",
-        "segundo_apellido",
-        "sexo",
-        "fecha_nacimiento",
-        "nie",
-        "email",
-      ].includes(key)
-    ).length,
-
-    "direccion": Object.keys(errors).filter((key) =>
-      ["telefono_casa", "direccion", "distrito", "departamento", "municipio"].includes(key)
-    ).length,
-
-    "educacion": Object.keys(errors).filter((key) =>
-      ["codigo", "centro_educativo", "sector", "zona", "internacional", "nivel_educativo"].includes(key)
-    ).length,
-
-    "datos-responsables": Object.keys(errors).filter((key) =>
-      [
-        "dui_responsable_1",
-        "nombres_responsable_1",
-        "apellidos_responsable_1",
-        "email_responsable_1",
-        "telefono_responsable_1",
-        "tipo_parentesco_1",
-
-        "dui_responsable_2",
-        "nombres_responsable_2",
-        "apellidos_responsable_2",
-        "email_responsable_2",
-        "telefono_responsable_2",
-        "tipo_parentesco_2",
-      ].includes(key)
-    ).length,
-
-    "resumen": 0, // Contador en resumen.
-  };
-
-  const totalErrores = Object.values(erroresPorSeccion).reduce((a, b) => a + b, 0)
-
-  const tabs = [
-    { id: "datos-personales", label: "Datos Personales" },
-    { id: "datos-responsables", label: "Datos de los Responsables" },
-    { id: "direccion", label: "Dirección" },
-    { id: "educacion", label: "Educación" },
-    { id: "resumen", label: "Resumen" },
-  ]
-
-  const currentTabIndex = tabs.findIndex((tab) => tab.id === activeTab)
-  const progress = ((currentTabIndex + 1) / tabs.length) * 100
-
-  const handleNext = () => {
-    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab)
-    if (currentIndex < tabs.length - 1) {
-      setActiveTab(tabs[currentIndex + 1].id)
-      window.scrollTo(0, 0)
-    }
-  }
-
-  const handlePrevious = () => {
-    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab)
-    if (currentIndex > 0) {
-      setActiveTab(tabs[currentIndex - 1].id)
-      window.scrollTo(0, 0)
-    }
-  }
-
-  const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
-    try {
-      const response = await axios.post("/admision", {
-        ...data,
-      }, {
-        headers: {
-          Accept: "application/json",
+    const methods = useForm<FormData>({
+        resolver: zodResolver(fullFormSchema),
+        defaultValues: {
+            primer_nombre: '',
+            segundo_nombre: '',
+            primer_apellido: '',
+            segundo_apellido: '',
+            sexo: '',
+            fecha_nacimiento: '',
+            nie: '',
+            telefono_estudiante: '',
+            email: '',
+            telefono_casa: '',
+            colonia: '',
+            calle: '',
+            numero_casa: '',
+            punto_referencia: '',
+            direccion: '',
+            distrito: '',
+            departamento: '',
+            municipio: '',
+            centro_educativo: '',
+            sector: 'PÚBLICO',
+            zona: 'Rural',
+            internacional: 'NO',
+            nivel_educativo: undefined,
+            dui_responsable_1: '',
+            nombres_responsable_1: '',
+            apellidos_responsable_1: '',
+            email_responsable_1: '',
+            telefono_responsable_1: '',
+            tipo_parentesco_1: '',
+            otro_parentesco_1: '',
+            dui_responsable_2: '',
+            nombres_responsable_2: '',
+            apellidos_responsable_2: '',
+            email_responsable_2: '',
+            telefono_responsable_2: '',
+            tipo_parentesco_2: '',
+            otro_parentesco_2: '',
         },
-      });
+        mode: 'onTouched',
+    });
 
-      toast.success("Solicitud enviada ¡Tu postulación ha sido registrada correctamente!");
+    const {
+        formState: { errors },
+        trigger,
+        getValues,
+        clearErrors,
+        setValue,
+        watch,
+    } = methods;
 
-      setFormStatus("success");
-    } catch (error) {
-      console.error("Error al enviar:", error);
-      toast.error("No se pudo procesar tu solicitud! Intenta nuevamente más tarde.");
-      setFormStatus("error");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // Usar el hook personalizado para validación
+    const { validateStep, isValidating } = useStepValidation({ getValues, trigger, clearErrors });
 
-  const handleSaveDraft = async () => {
-    setIsSaving(true)
-    try {
-      const formData = form.getValues()
-      console.log("Guardando borrador:", formData)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      toast.success("Borrador guardado! Podrás continuar con tu solicitud más tarde.");
-    } catch (error) {
-      console.error("Error al guardar el borrador:", error)
-      toast.error("No se pudo guardar el borrador! Por favor inténtalo de nuevo.");
-    } finally {
-      setIsSaving(false)
-    }
-  }
+    // Función para manejar borrador encontrado
+    const handleDraftFound = useCallback(
+        (draft: { data: FieldValues; timeAgo: string }) => {
+            toast.custom(
+                (t) => (
+                    <div className="relative flex w-full max-w-sm items-center space-x-3 rounded-md border border-border bg-background p-4 shadow-md">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+                            <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                            <p className="text-sm leading-none font-medium">Borrador encontrado</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Guardado {draft.timeAgo}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => {
+                                    Object.keys(draft.data).forEach((key) => {
+                                        const value = draft.data[key];
+                                        if (value !== '' && value !== null && value !== undefined) {
+                                            (setValue as (name: string, value: unknown) => void)(key, value);
+                                        }
+                                    });
+                                    toast.success('Borrador restaurado', {
+                                        duration: 2000,
+                                    });
+                                    toast.dismiss(t);
+                                }}
+                            >
+                                Restaurar
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0"
+                                onClick={() => {
+                                    localStorage.removeItem('admission_form_draft');
+                                    localStorage.removeItem('admission_form_draft_timestamp');
+                                    toast.dismiss(t);
+                                }}
+                            >
+                                <X className="h-3 w-3" />
+                                <span className="sr-only">Descartar</span>
+                            </Button>
+                        </div>
+                    </div>
+                ),
+                {
+                    duration: 12000,
+                    position: 'top-right',
+                },
+            );
+        },
+        [setValue],
+    );
 
-  if (formStatus === "success") {
+    // Usar el hook de auto guardado
+    const { saveManually, clearDraft } = useAutoSave({
+        getValues,
+        setValue,
+        watch,
+        onDraftFound: handleDraftFound,
+    });
+
+    const steps = useMemo(() => ['datos-personales', 'datos-responsables', 'direccion', 'educacion', 'resumen'], []);
+    const currentStepIndex = steps.indexOf(activeTab);
+
+    // Función simplificada usando el hook
+    const handleNext = async () => {
+        const isValid = await validateStep(activeTab);
+        if (isValid && currentStepIndex < steps.length - 1) {
+            // Marcar el paso actual como completado
+            setCompletedSteps((prev) => new Set(prev).add(activeTab));
+            setActiveTab(steps[currentStepIndex + 1]);
+        }
+    };
+
+    const handlePrevious = () => {
+        if (currentStepIndex > 0) {
+            setActiveTab(steps[currentStepIndex - 1]);
+        }
+    };
+
+    // Función de validación que se pasa al stepper
+    const handleValidateStep = async (stepId: string): Promise<boolean> => {
+        const isValid = await validateStep(stepId);
+        if (isValid) {
+            // Marcar el paso como completado si es válido
+            setCompletedSteps((prev) => new Set(prev).add(stepId));
+        }
+        return isValid;
+    };
+
+    // Función para manejar el cambio de tab desde el stepper
+    const handleTabChange = (newTab: string) => {
+        // Si el usuario sale del resumen y regresa, resetear captcha para mayor seguridad
+        if (activeTab !== 'resumen' && newTab === 'resumen') {
+            setCaptchaVerified(false);
+            setCaptchaKey((prev) => prev + 1);
+        }
+        setActiveTab(newTab);
+    };
+
+    // Usar la función helper para calcular errores por sección
+    const erroresPorSeccion = getErrorsBySection(errors);
+
+    const totalErrors = Object.values(erroresPorSeccion).reduce((acc, curr) => acc + curr, 0);
+
+    const onSubmit = async (data: FormData) => {
+        setIsSubmitting(true);
+        try {
+            console.log('=== INICIO DEL ENVÍO ===');
+            console.log('Datos del formulario a enviar:', data);
+
+            const response = await axios.post('/admision', data, {
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            console.log('=== RESPUESTA COMPLETA ===');
+            console.log('Status:', response.status);
+            console.log('Headers:', response.headers);
+            console.log('Data:', response.data);
+            console.log('========================');
+
+            // Verificar que la respuesta sea exitosa
+            if (response.status < 200 || response.status >= 300) {
+                throw new Error(`Status HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            // Verificar que tenemos los datos necesarios
+            if (!response.data || !response.data.estudiante) {
+                throw new Error('Respuesta del servidor incompleta - falta información del estudiante');
+            }
+
+            console.log('Procesando respuesta exitosa...');
+
+            // Limpiar borrador al enviar exitosamente
+            try {
+                clearDraft();
+                console.log('Borrador limpiado exitosamente');
+            } catch (draftError) {
+                console.warn('Error al limpiar borrador:', draftError);
+                // No es crítico, continuar
+            }
+
+            // Configurar datos de la respuesta de manera más robusta
+            const submissionDate = new Date();
+            const estudianteData = response.data.estudiante;
+
+            setSubmissionData({
+                estudiante: {
+                    codigo: estudianteData?.codigo || 'N/A',
+                    primer_nombre: data.primer_nombre,
+                    primer_apellido: data.primer_apellido,
+                    email: data.email,
+                },
+                submissionDate,
+            });
+
+            console.log('Datos de envío configurados, mostrando modal de éxito...');
+
+            // Mostrar modal de éxito
+            setShowSuccessModal(true);
+            setFormStatus('success');
+            setValidationErrors({});
+
+            console.log('Solicitud procesada exitosamente');
+        } catch (error) {
+            console.error('=== ERROR DETALLADO ===');
+            console.error('Error completo:', error);
+
+            // Análisis más detallado del error
+            let errorMessage = 'No se pudo procesar tu solicitud. Intenta nuevamente más tarde.';
+            let errorDetails = '';
+
+            if (axios.isAxiosError(error)) {
+                console.error('Es un error de Axios');
+
+                if (error.response) {
+                    // Error de respuesta del servidor
+                    console.error('Error de respuesta del servidor:');
+                    console.error('- Status:', error.response.status);
+                    console.error('- Data:', error.response.data);
+                    console.error('- Headers:', error.response.headers);
+
+                    if (error.response.status === 419) {
+                        errorMessage = 'Error de seguridad (CSRF). Por favor, recarga la página e intenta nuevamente.';
+                        errorDetails = 'Token CSRF expirado o inválido';
+                    } else if (error.response.status === 422) {
+                        errorMessage = 'Hay errores en los datos del formulario. Por favor revisa la información marcada.';
+
+                        // Extraer errores de validación si están disponibles
+                        if (error.response.data.errors) {
+                            setValidationErrors(error.response.data.errors);
+                            errorDetails = `Errores encontrados en ${Object.keys(error.response.data.errors).length} campo(s)`;
+                        } else {
+                            errorDetails = JSON.stringify(error.response.data.errors || error.response.data, null, 2);
+                        }
+                    } else if (error.response.status >= 500) {
+                        errorMessage = 'Error interno del servidor. Por favor intenta más tarde.';
+                        errorDetails = error.response.data.message || 'Error del servidor';
+                    } else if (error.response.status === 404) {
+                        errorMessage = 'La ruta del formulario no fue encontrada. Contacta al administrador.';
+                        errorDetails = 'Ruta /admision no encontrada';
+                    } else {
+                        errorMessage = `Error del servidor (${error.response.status}). Por favor intenta más tarde.`;
+                        errorDetails = error.response.statusText;
+                    }
+                } else if (error.request) {
+                    // Error de red/conexión
+                    console.error('Error de conexión:', error.request);
+                    errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+                    errorDetails = 'Sin respuesta del servidor';
+                } else {
+                    // Error de configuración
+                    console.error('Error de configuración:', error.message);
+                    errorMessage = 'Error en la configuración de la petición.';
+                    errorDetails = error.message;
+                }
+            } else if (error instanceof Error) {
+                // Error personalizado que lanzamos
+                console.error('Error personalizado:', error.message);
+                errorMessage = error.message;
+                errorDetails = error.stack || '';
+            }
+
+            console.error('Mensaje de error final:', errorMessage);
+            console.error('Detalles del error:', errorDetails);
+            console.error('====================');
+
+            toast.error(errorMessage);
+            setErrorMessage(errorMessage + (errorDetails ? '\n\nDetalles técnicos:\n' + errorDetails : ''));
+            setShowErrorModal(true);
+            setFormStatus('error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Función para cerrar el modal de error y volver al formulario
+    const handleCloseErrorModal = () => {
+        setShowErrorModal(false);
+        setFormStatus('idle');
+        setValidationErrors({});
+        // Resetear captcha cuando se cierra el modal de error
+        setCaptchaVerified(false);
+        setCaptchaKey((prev) => prev + 1); // Forzar recreación del componente
+    };
+
+    // Función para reintentar el envío
+    const handleRetrySubmission = async () => {
+        setShowErrorModal(false);
+        setFormStatus('idle');
+        setValidationErrors({});
+        // Resetear captcha cuando se reintenta el envío
+        setCaptchaVerified(false);
+        setCaptchaKey((prev) => prev + 1); // Forzar recreación del componente
+        // Intentar enviar nuevamente
+        await methods.handleSubmit(onSubmit)();
+    };
+
+    // Función para navegar a un campo específico con error
+    const handleNavigateToField = (fieldName: string) => {
+        // Mapear campos a secciones
+        const fieldToSectionMap: Record<string, string> = {
+            primer_nombre: 'datos-personales',
+            segundo_nombre: 'datos-personales',
+            primer_apellido: 'datos-personales',
+            segundo_apellido: 'datos-personales',
+            sexo: 'datos-personales',
+            fecha_nacimiento: 'datos-personales',
+            nie: 'datos-personales',
+            telefono_estudiante: 'datos-personales',
+            email: 'datos-personales',
+            dui_responsable_1: 'datos-responsables',
+            nombres_responsable_1: 'datos-responsables',
+            apellidos_responsable_1: 'datos-responsables',
+            telefono_responsable_1: 'datos-responsables',
+            email_responsable_1: 'datos-responsables',
+            tipo_parentesco_1: 'datos-responsables',
+            dui_responsable_2: 'datos-responsables',
+            nombres_responsable_2: 'datos-responsables',
+            apellidos_responsable_2: 'datos-responsables',
+            telefono_responsable_2: 'datos-responsables',
+            email_responsable_2: 'datos-responsables',
+            tipo_parentesco_2: 'datos-responsables',
+            telefono_casa: 'direccion',
+            colonia: 'direccion',
+            calle: 'direccion',
+            numero_casa: 'direccion',
+            distrito: 'direccion',
+            departamento: 'direccion',
+            municipio: 'direccion',
+            centro_educativo: 'educacion',
+            nivel_educativo: 'educacion',
+        };
+
+        const targetSection = fieldToSectionMap[fieldName];
+        if (targetSection) {
+            setActiveTab(targetSection);
+
+            // Enfocar el campo después de cambiar la sección
+            setTimeout(() => {
+                const fieldElement =
+                    document.querySelector(`[name="${fieldName}"]`) ||
+                    document.querySelector(`#${fieldName}`) ||
+                    document.querySelector(`[data-field="${fieldName}"]`);
+
+                if (fieldElement && fieldElement instanceof HTMLElement) {
+                    fieldElement.focus();
+                    fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // Destacar temporalmente el campo
+                    fieldElement.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.5)';
+                    setTimeout(() => {
+                        fieldElement.style.boxShadow = '';
+                    }, 3000);
+                }
+            }, 100);
+        }
+    };
+
+    // Función para cerrar el modal y mostrar la alerta persistente
+    const handleCloseSuccessModal = () => {
+        setShowSuccessModal(false);
+        setShowSuccessAlert(true);
+    };
+
+    // Función para cerrar la alerta persistente
+    const handleDismissAlert = () => {
+        setShowSuccessAlert(false);
+    };
+
     return (
-      <Card className="p-6">
-        <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <div className="rounded-full bg-green-100 p-3">
-            <CheckCircle2 className="h-10 w-10 text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold">¡Solicitud enviada con éxito!</h2>
-          <p className="max-w-md text-muted-foreground">
-            Tu solicitud ha sido recibida correctamente. Te hemos enviado un correo de confirmación con los detalles de
-            tu postulación.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Número de referencia: {Math.random().toString(36).substring(2, 10).toUpperCase()}
-          </p>
-          <Button className="mt-4" onClick={() => (window.location.href = "/")}>
-            Volver al inicio
-          </Button>
-        </div>
-      </Card>
-    )
-  }
+        <FormProvider {...methods}>
+            <AdmissionLayout
+                sidebar={
+                    <AdmissionSidebar
+                        activeTab={activeTab}
+                        onTabChange={handleTabChange}
+                        erroresPorSeccion={erroresPorSeccion}
+                        isLoading={isValidating}
+                        disabled={formStatus === 'success'}
+                        onValidateStep={handleValidateStep}
+                        completedSteps={completedSteps}
+                    />
+                }
+            >
+                <div className="flex h-full flex-1 flex-col gap-6 p-4">
+                    <div className="mx-auto w-full max-w-4xl">
+                        {/* Alerta de éxito persistente */}
+                        {showSuccessAlert && submissionData && (
+                            <div className="mb-6">
+                                <SuccessAlert
+                                    isVisible={showSuccessAlert}
+                                    onDismiss={handleDismissAlert}
+                                    submissionDate={submissionData.submissionDate}
+                                    studentName={`${submissionData.estudiante.primer_nombre} ${submissionData.estudiante.primer_apellido}`}
+                                />
+                            </div>
+                        )}
 
-  if (formStatus === "error") {
-    return (
-      <Card className="p-6">
-        <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <div className="rounded-full bg-red-100 p-3">
-            <AlertCircle className="h-10 w-10 text-red-600" />
-          </div>
-          <h2 className="text-2xl font-bold">Error al enviar la solicitud</h2>
-          <p className="max-w-md text-muted-foreground">
-            Ocurrió un problema al enviar tu solicitud. Por favor inténtalo de nuevo más tarde.
-          </p>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={() => setFormStatus("idle")}>
-              Volver al formulario
-            </Button>
-            <Button onClick={() => window.location.reload()}>Reintentar</Button>
-          </div>
-        </div>
-      </Card>
-    )
-  }
+                        {/* Encabezado global - siempre visible */}
+                        <div className="mb-6 text-start">
+                            <h1 className="text-3xl font-bold tracking-tight">Postulación Jóvenes Talento</h1>
+                            <p className="mt-2 text-base text-muted-foreground">
+                                {currentStepIndex + 1 === 1 && 'Paso 1 de 5: Ingresa los datos personales del aspirante'}
+                                {currentStepIndex + 1 === 2 && 'Paso 2 de 5: Proporciona los datos de contacto de los responsables'}
+                                {currentStepIndex + 1 === 3 && 'Paso 3 de 5: Ingresa la dirección de residencia del aspirante'}
+                                {currentStepIndex + 1 === 4 && 'Paso 4 de 5: Selecciona el centro educativo y nivel de estudios'}
+                                {currentStepIndex + 1 === 5 && 'Paso 5 de 5: Revisa toda la información y envía la solicitud'}
+                            </p>
+                        </div>
 
-  return (
-    <FormProvider {...form}>
+                        {/* Overlay para formulario bloqueado */}
+                        <div className={`relative ${formStatus === 'success' ? 'pointer-events-none' : ''}`}>
+                            {formStatus === 'success' && <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[1px]" />}
 
-      <Toaster position="bottom-right" richColors />
+                            <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
+                                {/* Contenido del formulario - cada sección con su propia Card */}
+                                <div>
+                                    {activeTab === 'datos-personales' && <DatosPersonales />}
+                                    {activeTab === 'datos-responsables' && <DatosResponsable />}
+                                    {activeTab === 'direccion' && (
+                                        <Direccion departamentos={departamentos} municipios={municipios} distritos={distritos} />
+                                    )}
+                                    {activeTab === 'educacion' && (
+                                        <Educacion centros_educativos={centros_educativos} niveles_educativos={niveles_educativos} />
+                                    )}
+                                    {activeTab === 'resumen' && (
+                                        <ResumenSolicitud
+                                            departamentos={departamentos}
+                                            municipios={municipios}
+                                            distritos={distritos}
+                                            niveles_educativos={niveles_educativos}
+                                            centros_educativos={centros_educativos}
+                                            onNavigateToSection={setActiveTab}
+                                            onSaveManually={saveManually}
+                                        />
+                                    )}
+                                </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {totalErrores > 0 && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error en el formulario</AlertTitle>
-            <AlertDescription>
-              Hay {totalErrores} {totalErrores === 1 ? "error" : "errores"} en el formulario. Por favor revisa los
-              campos marcados.
-            </AlertDescription>
-          </Alert>
-        )}
+                                {/* Captcha solo en el paso resumen */}
+                                {activeTab === 'resumen' && formStatus !== 'success' && (
+                                    <div className="space-y-6">
+                                        <Captcha key={captchaKey} onVerify={handleCaptchaVerification} />
+                                    </div>
+                                )}
 
-        <BarraProgreso progress={progress} />
+                                {/* Alertas de errores y estado */}
+                                {totalErrors > 0 && activeTab === 'resumen' && formStatus !== 'success' && (
+                                    <Alert variant="destructive">
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertTitle>Error</AlertTitle>
+                                        <AlertDescription>
+                                            Hay {totalErrors} error(es) en el formulario. Por favor, revisa las secciones anteriores.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-7">
-            {tabs.map((tab) => (
-              <TabsTrigger key={tab.id} value={tab.id} className="relative">
-                {tab.label}
-                {erroresPorSeccion[tab.id as keyof typeof erroresPorSeccion] > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                    {erroresPorSeccion[tab.id as keyof typeof erroresPorSeccion]}
-                  </span>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                                {isSubmitting && (
+                                    <Alert>
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        <AlertTitle>Enviando...</AlertTitle>
+                                        <AlertDescription>Tu solicitud está siendo procesada.</AlertDescription>
+                                    </Alert>
+                                )}
 
-          <TabsContent value="datos-personales">
-            <DatosPersonales />
-          </TabsContent>
+                                {/* Botones de navegación - fuera de cualquier Card */}
+                                {formStatus !== 'success' && (
+                                    <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-background pt-6">
+                                        {currentStepIndex > 0 && (
+                                            <Button type="button" variant="outline" onClick={handlePrevious} disabled={isSubmitting || isValidating}>
+                                                Anterior
+                                            </Button>
+                                        )}
 
-          <TabsContent value="datos-responsables">
-            <DatosResponsable />
-          </TabsContent>
+                                        {currentStepIndex === 0 && <div />}
 
-          <TabsContent value="direccion">
-            <Direccion
-              departamentos={departamentos}
-              municipiosPorDepartamento={municipiosPorDepartamento}
-              distritosPorMunicipio={distritosPorMunicipio}
-            />
-          </TabsContent>
+                                        {activeTab !== 'resumen' ? (
+                                            <Button
+                                                type="button"
+                                                onClick={handleNext}
+                                                disabled={isSubmitting || isValidating}
+                                                className="min-w-[120px]"
+                                            >
+                                                {isValidating ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Validando...
+                                                    </>
+                                                ) : (
+                                                    'Siguiente'
+                                                )}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="submit"
+                                                disabled={isSubmitting || !captchaVerified || totalErrors > 0}
+                                                className="min-w-[160px]"
+                                            >
+                                                {isSubmitting ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Enviando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Send className="mr-2 h-4 w-4" />
+                                                        Enviar Solicitud
+                                                    </>
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </AdmissionLayout>
 
-          <TabsContent value="educacion">
-            <Educacion
-              centros_educativos={centrosEducativos}
-              niveles_educativos={nivelesEducativos}
-            />
-          </TabsContent>
-
-          <TabsContent value="resumen">
-            <ResumenSolicitud
-              centros_educativos={centrosEducativos}
-              niveles_educativos={nivelesEducativos}
-              departamentos={departamentos}
-              municipios={municipiosPorDepartamento}
-              distritos={distritosPorMunicipio}
-            />
-            <Captcha onVerify={() => setCaptchaVerified(true)} />
-          </TabsContent>
-        </Tabs>
-
-        <div className="flex justify-between pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={activeTab === "datos-personales"}
-          >
-            Anterior
-          </Button>
-
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={handleSaveDraft} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Guardar borrador
-                </>
-              )}
-            </Button>
-
-            {activeTab === "resumen" ? (
-              <Button
-                type="submit"
-                disabled={isSubmitting || !captchaVerified || totalErrores > 0}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Enviar solicitud
-                  </>
-                )}
-              </Button>
-            ) : (
-              <Button type="button" onClick={handleNext}>
-                Siguiente
-              </Button>
+            {/* Modal de éxito */}
+            {submissionData && (
+                <SuccessModal
+                    isOpen={showSuccessModal}
+                    onClose={handleCloseSuccessModal}
+                    studentData={{
+                        nombre: `${submissionData.estudiante.primer_nombre} ${submissionData.estudiante.primer_apellido}`,
+                        codigo: submissionData.estudiante.codigo,
+                        email: submissionData.estudiante.email,
+                    }}
+                    submissionDate={submissionData.submissionDate}
+                />
             )}
 
-            <Button
-              type="button"
-              onClick={() => {
-                form.handleSubmit(onSubmit, (errors) => {
-                  console.log("Errores detectados:", errors);
-                  toast.warning("Errores en formulario! Revisa los campos marcados antes de enviar.");
-                })();
-              }}
-            >
-              Test Submit
-            </Button>
+            {/* Modal de error */}
+            <ErrorModal
+                isOpen={showErrorModal}
+                onClose={handleCloseErrorModal}
+                title="Error al procesar la solicitud"
+                message={errorMessage}
+                onRetry={handleRetrySubmission}
+                showRetry={true}
+                errors={validationErrors}
+                onNavigateToField={handleNavigateToField}
+            />
 
-          </div>
-        </div>
-      </form>
-    </FormProvider >
-  )
+            <Toaster position="top-right" richColors />
+        </FormProvider>
+    );
 }

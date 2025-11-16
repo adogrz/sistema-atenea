@@ -20,6 +20,7 @@
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-tailwindcss": "^0.6.11",
+        "shadcn": "^3.5.0",
         "typescript-eslint": "^8.23.0"
     },
     "dependencies": {
@@ -30,6 +31,7 @@
         "@headlessui/react": "^2.2.0",
         "@hookform/resolvers": "^5.1.1",
         "@inertiajs/react": "^2.0.0",
+        "@internationalized/date": "^3.8.2",
         "@nivo/pie": "^0.99.0",
         "@radix-ui/react-accordion": "^1.2.12",
         "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -59,6 +61,7 @@
         "@types/react": "^19.0.3",
         "@types/react-dom": "^19.0.2",
         "@vitejs/plugin-react": "^4.3.4",
+        "canvas-confetti": "^1.9.3",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",
@@ -68,8 +71,9 @@
         "globals": "^15.14.0",
         "laravel-vite-plugin": "^1.0",
         "lucide-react": "^0.475.0",
-        "radix-ui": "^1.4.2",
+        "radix-ui": "^1.4.3",
         "react": "^19.0.0",
+        "react-aria-components": "^1.11.0",
         "react-day-picker": "^9.8.1",
         "react-dom": "^19.0.0",
         "react-hook-form": "^7.60.0",
@@ -81,7 +85,7 @@
         "tailwindcss": "^4.0.0",
         "tailwindcss-animate": "^1.0.7",
         "typescript": "^5.7.2",
-        "vite": "6.3.4",
+        "vite": "^6.3.7",
         "zod": "^3.25.75"
     },
     "optionalDependencies": {
@@ -91,5 +95,6 @@
     },
     "overrides": {
         "react-is": "^19.0.0-rc-69d4b800-20241021"
-    }
+    },
+    "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c"
 }

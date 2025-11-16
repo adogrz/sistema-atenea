@@ -42,6 +42,7 @@ export default function DashboardAcademico() {
     const canCreateEvent = hasPermission('events:create');
     const canEditEvent = hasPermission('events:edit');
     const canDeleteEvent = hasPermission('events:delete');
+    const canViewEvents = hasPermission('events:view');
 
     // Estados
     const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
@@ -50,8 +51,13 @@ export default function DashboardAcademico() {
 
     const selectedEvent = selectedEventId ? events.find((e) => e.id === selectedEventId) || null : null;
 
-    // FUNCIÓN PARA EDITAR EVENTO
+    // Función para editar evento
     const handleEdit = () => {
+        if (!canEditEvent) {
+            alert('No tienes permisos para editar eventos');
+            return;
+        }
+        
         if (!selectedEventId) {
             alert('Por favor selecciona un evento primero');
             return;
@@ -60,8 +66,13 @@ export default function DashboardAcademico() {
         router.get(`/dashboard/academic-forms/${selectedEventId}/edit`);
     };
 
-    // FUNCIÓN PARA ELIMINAR EVENTO
+    // Función para eliminar evento
     const handleDelete = () => {
+        if (!canDeleteEvent) {
+            alert('No tienes permisos para eliminar eventos');
+            return;
+        }
+
         if (selectedEventId) {
             router.delete(`/dashboard/academic-forms/${selectedEventId}`, {
                 onSuccess: () => {
@@ -75,7 +86,16 @@ export default function DashboardAcademico() {
         }
     };
 
-    //FUNCIÓN PARA LIMPIAR FILTROS
+    // Función para crear evento
+    const handleCreate = () => {
+        if (!canCreateEvent) {
+            alert('No tienes permisos para crear eventos');
+            return;
+        }
+        router.get('/dashboard/academic-forms/create-event');
+    };
+
+    // Función para limpiar filtros
     const handleClearAllFilters = () => {
         setColumnFilters([]);
     };
@@ -87,7 +107,6 @@ export default function DashboardAcademico() {
     const activeEvents = events.filter(e => e.estado === 'activo').length;
     const inactiveEvents = events.filter(e => e.estado === 'inactivo').length;
     const completedEvents = events.filter(e => e.estado === 'completado').length;
-    const upcomingEvents = events.filter(e => new Date(e.fecha_inicio) > new Date()).length;
 
     return (
         <AppLayout breadcrumbs={BREADCRUMBS}>
@@ -99,10 +118,12 @@ export default function DashboardAcademico() {
                         <Button
                             variant="ghost"
                             className="flex items-center gap-2"
-                            asChild
+                            onClick={handleCreate}
                             disabled={!canCreateEvent}
+                            title={!canCreateEvent ? "No tienes permisos para crear eventos" : "Crear nuevo evento"}
+                            asChild
                         >
-                            <Link href="/dashboard/academic-forms/create-event">
+                            <Link href="/dashboard/academic-forms/create-event" className="flex items-center gap-2">
                                 <Plus className="h-4 w-4" />
                                 <span>Agregar Evento</span>
                             </Link>
@@ -112,6 +133,7 @@ export default function DashboardAcademico() {
                             onClick={handleEdit}
                             disabled={!selectedEventId || !canEditEvent}
                             variant="outline"
+                            title={!canEditEvent ? "No tienes permisos para editar eventos" : !selectedEventId ? "Selecciona un evento primero" : "Editar evento seleccionado"}
                         >
                             <Edit className="h-4 w-4" />
                             Editar Evento
@@ -122,6 +144,7 @@ export default function DashboardAcademico() {
                             className="flex items-center gap-2 text-red-600 hover:text-red-600"
                             onClick={() => setShowDeleteModal(true)}
                             disabled={!selectedEventId || !canDeleteEvent}
+                            title={!canDeleteEvent ? "No tienes permisos para eliminar eventos" : !selectedEventId ? "Selecciona un evento primero" : "Eliminar evento seleccionado"}
                         >
                             <Trash2 className="h-4 w-4" />
                             <span>Eliminar Evento</span>

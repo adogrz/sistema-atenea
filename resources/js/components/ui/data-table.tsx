@@ -29,33 +29,33 @@ interface DataTableProps<TData, TValue> {
     getRowId?: (row: TData) => string | number;
     columnFilters: ColumnFiltersState;
     setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
-    toolbarOptions?: {
-        searchableColumnId?: string;
-        filters?: {
-            columnId: string;
-            title: string;
-            options: { label: string; value: string }[];
-        }[];
-    };
-    renderRowSubComponent?: (props: { row: Row<TData> }) => React.ReactElement;
-    getRowCanExpand?: (row: Row<TData>) => boolean;
+    globalFilter?: string;
+    onGlobalFilterChange?: (value: string) => void;
+    searchPlaceholder?: string;
 }
 
 export function DataTable<TData, TValue>({
-                                             columns,
-                                             data,
-                                             selectedRowId,
-                                             onRowClick,
-                                             getRowId = (row: TData) => (row as { id: string | number }).id,
-                                             columnFilters,
-                                             setColumnFilters,
-                                             toolbarOptions,
-                                             renderRowSubComponent,
-                                             getRowCanExpand
-                                         }: DataTableProps<TData, TValue>) {
+    columns,
+    data,
+    selectedRowId,
+    onRowClick,
+    getRowId = (row: TData) => (row as { id: string | number }).id,
+    columnFilters,
+    setColumnFilters,
+    globalFilter: externalGlobalFilter,
+    onGlobalFilterChange: externalOnGlobalFilterChange,
+    searchPlaceholder = 'Buscar...',
+}: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
-    const [globalFilter, setGlobalFilter] = useState('');
+    const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+    // Usar el filtro externo si existe, sino el interno
+    const globalFilter = externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;
+    const setGlobalFilter = externalOnGlobalFilterChange || setInternalGlobalFilter;
+
+    // Si hay un handler externo, significa que el filtrado es del lado del servidor
+    const isServerSideFiltering = externalOnGlobalFilterChange !== undefined;
 
     const table = useReactTable({
         data,
@@ -64,7 +64,7 @@ export function DataTable<TData, TValue>({
             sorting,
             globalFilter,
             columnFilters,
-            columnVisibility
+            columnVisibility,
         },
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
@@ -73,14 +73,25 @@ export function DataTable<TData, TValue>({
         onColumnVisibilityChange: setColumnVisibility,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getRowCanExpand,
+        // Solo usar filtrado del cliente si NO es filtrado del servidor
+        ...(isServerSideFiltering ? {} : { getFilteredRowModel: getFilteredRowModel() }),
+        // Deshabilitar el filtrado automático del cliente cuando es del servidor
+        manualFiltering: isServerSideFiltering,
     });
 
     return (
         <div>
             {/* Búsqueda Global */}
-            <DataTableToolbar table={table} toolbarOptions={toolbarOptions} />
+            <div className="flex items-center py-4">
+                <Input
+                    type="search"
+                    placeholder={searchPlaceholder}
+                    value={globalFilter ?? ''}
+                    onChange={(event) => setGlobalFilter(event.target.value)}
+                    className="max-w-sm"
+                />
+                <DataTableViewOptions table={table} />
+            </div>
 
             {/* Tabla */}
             <div className="rounded-md border">

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Estudiante;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -15,25 +14,29 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             SedeSeeder::class,
             AreaSeeder::class,
-            EssentialUserSeeder::class, // Includes admins and calificadores
-
-            // --- CATÁLOGOS ---
+            // Ususarios esenciales
+            EssentialUserSeeder::class,
+            // Catalogos
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
             DistritoSeeder::class,
             NivelEducativoSeeder::class,
             CentroEducativoSeeder::class,
-            EstadoInscripcionSeeder::class,
-            GrupoSeeder::class,
 
-            // --- DATOS DE OLIMPIADA BASE ---
             OlimpiadaSeeder::class,
-            DefinicionEvaluacionSeeder::class, // Defines the rubric
-            ItemDefinidoSeeder::class, // Defines the items for the rubric
-            FaseOlimpiadaSeeder::class, // Creates phases and links them to the rubric
+            FaseOlimpiadaSeeder::class,
+            EstadoInscripcionSeeder::class,
+            DefinicionEvaluacionSeeder::class,
+            InscripcionOlimpiadaSeeder::class,
+            ItemDefinidoSeeder::class,
+            EvaluacionFaseSeeder::class,
+            ItemEvaluadoSeeder::class,
 
-            // --- DATOS DE PRUEBA INTERCONECTADOS ---
-            TestDataSeeder::class, // Creates students, enrollments, evaluations, and assignments
+            // Estudiantes de prueba
+            TestStudentsSeeder::class,
+
+            //Materias
+            MateriaSeeder::class,
         ]);
     }
 }
