@@ -1,86 +1,80 @@
-import { router } from '@inertiajs/react';
-import { PageProps } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
+import React from 'react';
+import AppLayout from '@/layouts/app-layout';
+import { Head, Link } from '@inertiajs/react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
-import React from 'react';
-import { EvaluacionFase, Inscripcion } from '@/types/cal/register';
+import { BreadcrumbItem } from '@/types';
 
-interface Props extends PageProps {
-  yaCalificadas: EvaluacionFase[];
-  reclamadas: EvaluacionFase[];
-  noReclamadas: Inscripcion[];
-  stats: {
-    finalizadas: number;
-    enProceso: number;
-    disponibles: number;
-  };
-}
+const DashboardCalificador = ({ evaluaciones }) => {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Inicio', href: route('dashboard') },
+        { title: 'Olimpiadas', href: route('olimpiadas.index') }, // Placeholder route
+        { title: 'Dashboard de Calificador', href: route('calificaciones.olimpiadas.index') },
+    ];
 
-/**
- * Dashboard del calificador
- * Muestra tres listas: evaluaciones en proceso, finalizadas, y disponibles.
- */
-export default function DashboardCalificador({ yaCalificadas, reclamadas, noReclamadas, stats }: Props) {
-  const handleClaim = (inscripcionId: number) => {
-    router.post(`/calificaciones/inscripciones/${inscripcionId}/claim`);
-  };
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Dashboard del Calificador" />
+            <div className="p-4 md:p-8">
+                <Card className="mt-4">
+                    <CardHeader>
+                        <CardTitle>Evaluaciones Pendientes</CardTitle>
+                        <CardDescription>
+                            Aquí se listan las evaluaciones de los estudiantes que tienes asignadas para calificar.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Estudiante</TableHead>
+                                    <TableHead>Olimpiada</TableHead>
+                                    <TableHead>Fase</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                    <TableHead className="text-right">Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {evaluaciones.length > 0 ? (
+                                    evaluaciones.map(evaluacion => (
+                                        <TableRow key={evaluacion.id}>
+                                            <TableCell className="font-medium">
+                                                {evaluacion.inscripcion?.estudiante?.nombre_completo || 'N/A'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {evaluacion.fase_olimpiada?.olimpiada?.nombre || 'N/A'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {evaluacion.fase_olimpiada?.nombre || 'N/A'}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={evaluacion.status_text === 'Finalizada' ? 'default' : 'secondary'}>
+                                                    {evaluacion.status_text}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Link href={route('calificaciones.olimpiadas.edit', { evaluacion: evaluacion.id })}>
+                                                    <Button variant="outline">Calificar</Button>
+                                                </Link>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center h-24">
+                                            No tienes evaluaciones pendientes asignadas.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
+        </AppLayout>
+    );
+};
 
-  return (
-    <AppLayout>
-      <Head title="Mis Evaluaciones" />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Reclamadas */}
-        <Card>
-          <CardContent>
-            <h2 className="text-lg font-bold mb-2">En proceso</h2>
-            {reclamadas.length === 0 && <p className="text-gray-500">Sin evaluaciones reclamadas.</p>}
-            {reclamadas.map(({ id, inscripcion }) => (
-              <div key={id} className="mb-4 border p-2 rounded">
-                <p><strong>{inscripcion?.participante?.nombre_completo}</strong></p>
-                <p>Fase: {inscripcion?.fase?.nombre}</p>
-                <Badge variant="secondary">Estado: En proceso</Badge>
-                <Button className="mt-2" onClick={() => router.visit(`/calificaciones/inscripciones/${inscripcion.id}/edit`)}>Continuar</Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* No reclamadas */}
-        <Card>
-          <CardContent>
-            <h2 className="text-lg font-bold mb-2">Disponibles</h2>
-            {noReclamadas.length === 0 && <p className="text-gray-500">Sin evaluaciones disponibles.</p>}
-            {noReclamadas.map(({ id, participante, fase }) => (
-              <div key={id} className="mb-4 border p-2 rounded">
-                <p><strong>{participante?.nombre_completo}</strong></p>
-                <p>Fase: {fase?.nombre}</p>
-                <Badge variant="outline">Pendiente</Badge>
-                <Button className="mt-2" onClick={() => handleClaim(id)}>Reclamar</Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Ya calificadas */}
-        <Card>
-          <CardContent>
-            <h2 className="text-lg font-bold mb-2">Finalizadas</h2>
-            {yaCalificadas.length === 0 && <p className="text-gray-500">Aún no has finalizado evaluaciones.</p>}
-            {yaCalificadas.map(({ id, inscripcion, total }) => (
-              <div key={id} className="mb-4 border p-2 rounded">
-                <p><strong>{inscripcion?.participante?.nombre_completo}</strong></p>
-                <p>Fase: {inscripcion?.fase?.nombre}</p>
-                <p>Total: <strong>{total}</strong></p>
-                <Badge variant="default">Finalizado</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-    </AppLayout>
-  );
-}
+export default DashboardCalificador;

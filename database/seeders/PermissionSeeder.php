@@ -121,6 +121,42 @@ class PermissionSeeder extends Seeder
                 'internado:evaluaciones:view',
                 'internado:admin:view',  // Para selección, participantes y periodos
             ],
+            'olimpiadas' => [
+                'olimpiadas:list',
+                'olimpiadas:create',
+                'olimpiadas:edit',
+                'olimpiadas:delete',
+            ],
+            'fases' => [ 
+                'fases:list',
+                'fases:create',
+                'fases:edit',
+                'fases:delete',
+                'fases:reorder',
+                'fases:assign-nota-minima', 
+            ],
+            'grupos' => [
+                'grupos:list',
+                'grupos:create',
+                'grupos:edit',
+                'grupos:delete',
+            ],
+            'resultados' => [ 
+                'resultados:view',
+                'resultados:export-emails',
+            ],
+            'calificadores' => [ 
+                'calificadores:assign',
+            ],
+            'definiciones-evaluacion' => [ 
+                'definiciones-evaluacion:list',
+                'definiciones-evaluacion:create',
+                'definiciones-evaluacion:edit',
+                'definiciones-evaluacion:delete',
+            ],
+            'centros-educativos' => [ 
+                'centros-educativos:import',
+            ],
         ];
     }
 
@@ -182,6 +218,7 @@ class PermissionSeeder extends Seeder
             'admin-academico' => [
                 'description' => 'Administrador Académico',
                 'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic', 'internado'],
+                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic', 'olimpiadas', 'fases', 'resultados', 'calificadores', 'definiciones-evaluacion', 'centros-educativos'],
                 'permissions' => ['users:view-all', 'roles:list', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []
@@ -202,6 +239,22 @@ class PermissionSeeder extends Seeder
             ],
             'coordinador-area' => [
                 'description' => 'Coordinador de Área',
+                'groups' => ['general', 'grupos', 'definiciones-evaluacion'], // Added definiciones-evaluacion group
+                'permissions' => [
+                    'users:view-sede', 'users:view-area', 'users:list',
+                    'users:create', 'users:edit', 'roles:assign',
+                    'olimpiadas:list',
+                    'fases:list',
+                    'fases:assign-nota-minima',
+                    'resultados:view',
+                    'academic:view',
+                    'calificadores:assign' // Added calificadores:assign permission
+                ],
+                'inherits' => [],
+                'exclude_permissions' => []
+            ],
+            'jefe-psicologia' => [
+                'description' => 'Jefe de Psicología',
                 'groups' => ['general'],
                 'permissions' => [
                     'users:view-sede',

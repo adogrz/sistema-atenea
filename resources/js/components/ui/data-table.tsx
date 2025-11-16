@@ -1,3 +1,4 @@
+import React from 'react';
 import {
     ColumnDef,
     SortingState,
@@ -8,15 +9,16 @@ import {
     getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
-    VisibilityState
+    VisibilityState,
+    Row
 } from '@tanstack/react-table';
 import { Dispatch, SetStateAction, useState } from 'react';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-import { Input } from '@/components/ui/input';
 import { DataTablePagination } from './data-table-pagination';
-import { DataTableViewOptions } from './data-table-view-options';
+
+import { DataTableToolbar } from './data-table-toolbar';
 
 // Definición de las propiedades del componente DataTable
 interface DataTableProps<TData, TValue> {
@@ -115,18 +117,26 @@ export function DataTable<TData, TValue>({
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={selectedRowId === getRowId(row.original) ? 'selected' : undefined}
-                                    onClick={() => onRowClick?.(row.original)}
-                                    className="cursor-pointer hover:bg-muted"
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
+                                <React.Fragment key={row.id}>
+                                    <TableRow
+                                        data-state={selectedRowId === getRowId(row.original) ? 'selected' : undefined}
+                                        onClick={() => onRowClick?.(row.original)}
+                                        className="cursor-pointer hover:bg-muted"
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                    {row.getIsExpanded() && (
+                                        <TableRow>
+                                            <TableCell colSpan={columns.length}>
+                                                {renderRowSubComponent?.({ row })}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </React.Fragment>
                             ))
                         ) : (
                             <TableRow>

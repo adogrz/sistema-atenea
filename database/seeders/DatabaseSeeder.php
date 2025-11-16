@@ -10,7 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         // Generar datos de prueba
         $this->call([
-            // No modificar orden de carga
+            // --- ESTRUCTURA BASE ---
             PermissionSeeder::class,
             SedeSeeder::class,
             AreaSeeder::class,

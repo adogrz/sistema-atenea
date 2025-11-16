@@ -13,17 +13,16 @@ return new class extends Migration
     {
         Schema::create('eventos', function (Blueprint $table) {
             $table->id();
+            $table->string('nombre');
+            $table->string('tipo');
             $table->string('clasificacion');
             $table->text('descripcion');
+            $table->string('ubicacion')->nullable();
             $table->date('fecha_inicio');
             $table->time('hora_inicio');
             $table->date('fecha_fin');
             $table->time('hora_fin');
-            $table->string('nombre')->nullable()->after('descripcion');
-            $table->string('tipo')->nullable()->after('nombre');
-            $table->string('ubicacion')->nullable()->after('tipo');
-            $table->enum('estado', ['activo', 'inactivo', 'completado'])->default('activo')->after('ubicacion');
-
+            $table->enum('estado', ['activo', 'inactivo', 'completado'])->default('activo');
             $table->timestamps();
         });
     }
