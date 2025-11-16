@@ -15,9 +15,10 @@ import {
 import { Dispatch, SetStateAction, useState } from 'react';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
 
 import { DataTablePagination } from './data-table-pagination';
-
+import { DataTableViewOptions } from './data-table-view-options';
 import { DataTableToolbar } from './data-table-toolbar';
 
 // Definición de las propiedades del componente DataTable

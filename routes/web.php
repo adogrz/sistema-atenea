@@ -164,6 +164,7 @@ Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->gr
 
     // Ruta POST que procesa el archivo Excel
     Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store')->middleware('permission:centros-educativos:import');
+});
 
 // Rutas públicas de admisión de aspirantes (sin autenticación, solo verificar evento activo)
 Route::middleware(['web', 'check.event.period:registro-aspirantes'])->group(function () {
@@ -209,4 +210,3 @@ require __DIR__ . '/internado.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/settings.php';
 require __DIR__ . '/clinical-records.php';
-

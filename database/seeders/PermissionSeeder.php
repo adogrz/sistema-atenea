@@ -217,8 +217,7 @@ class PermissionSeeder extends Seeder
             ],
             'admin-academico' => [
                 'description' => 'Administrador Académico',
-                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic', 'internado'],
-                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic', 'olimpiadas', 'fases', 'resultados', 'calificadores', 'definiciones-evaluacion', 'centros-educativos'],
+                'groups' => ['general', 'users', 'sedes', 'areas', 'events', 'academic', 'internado', 'olimpiadas', 'fases', 'resultados', 'calificadores', 'definiciones-evaluacion', 'centros-educativos'],
                 'permissions' => ['users:view-all', 'roles:list', 'roles:assign'],
                 'inherits' => [],
                 'exclude_permissions' => []
