@@ -7,6 +7,7 @@ use App\Models\Area;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class GrupoController extends Controller
 {
@@ -39,8 +40,17 @@ class GrupoController extends Controller
 
     public function store(Request $request)
     {
-        $userAreaId = Auth::user()->primaryArea()->id ?? null;
-        if (!$userAreaId) {
+        $user = Auth::user();
+        $primaryArea = $user->primaryArea();
+        
+        Log::info('Intentando crear grupo', [
+            'user_id' => $user->id,
+            'primary_area' => $primaryArea,
+            'request_data' => $request->all()
+        ]);
+        
+        if (!$primaryArea) {
+            Log::error('Usuario sin área principal', ['user_id' => $user->id]);
             return redirect()->back()->withErrors(['area_id' => 'El usuario no tiene un área principal asignada.']);
         }
 
@@ -50,7 +60,9 @@ class GrupoController extends Controller
             'horario' => 'required|in:mañana,tarde',
         ]);
 
-        Grupo::create(array_merge($validated, ['area_id' => $userAreaId]));
+        $grupo = Grupo::create(array_merge($validated, ['area_id' => $primaryArea->id]));
+        
+        Log::info('Grupo creado exitosamente', ['grupo_id' => $grupo->id]);
 
         return redirect()->route('grupos.index')->with('success', 'Grupo creado exitosamente.');
     }

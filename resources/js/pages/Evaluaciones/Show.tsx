@@ -14,12 +14,27 @@ interface EvaluacionShowProps {
 }
 
 const Show: React.FC<EvaluacionShowProps> = ({ evaluacion }) => {
+    // Verificar que evaluacion existe
+    if (!evaluacion) {
+        return (
+            <AppLayout>
+                <Head title="Error" />
+                <div className="p-4 md:p-6">
+                    <div className="text-center text-red-500">
+                        <p className="text-xl font-semibold">No se pudo cargar la evaluación.</p>
+                        <p className="text-sm mt-2">La evaluación no existe o no tienes permisos para verla.</p>
+                    </div>
+                </div>
+            </AppLayout>
+        );
+    }
+
     // Destructure for easier access and provide default values
     const { estudiante, faseOlimpiada, observaciones_generales, finalizada_at, estado, items_evaluados } = evaluacion;
 
     // Calculate scores
-    const totalScore = items_evaluados.reduce((acc, item) => acc + (item.puntaje || 0), 0);
-    const maxScore = items_evaluados.reduce((acc, item) => acc + (item.item_definido?.puntos_maximos || 0), 0);
+    const totalScore = items_evaluados?.reduce((acc, item) => acc + (item.puntaje || 0), 0) || 0;
+    const maxScore = items_evaluados?.reduce((acc, item) => acc + (item.item_definido?.puntos_maximos || 0), 0) || 0;
     const percentageScore = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
 
     // Safely access nota_minima_aprobacion
@@ -27,7 +42,7 @@ const Show: React.FC<EvaluacionShowProps> = ({ evaluacion }) => {
     const aprobado = totalScore >= notaMinimaAprobacion;
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Evaluación de ${estudiante?.nombre_completo || 'Estudiante'}`} />
             <div className="p-4 md:p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -105,7 +120,7 @@ const Show: React.FC<EvaluacionShowProps> = ({ evaluacion }) => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {items_evaluados.length > 0 ? (items_evaluados.map((item: ItemEvaluado) => (
+                                    {items_evaluados && items_evaluados.length > 0 ? (items_evaluados.map((item: ItemEvaluado) => (
                                         <TableRow key={item.id}>
                                             <TableCell>
                                                 <p className="font-medium">{item.item_definido?.nombre || 'N/A'}</p>
@@ -129,7 +144,7 @@ const Show: React.FC<EvaluacionShowProps> = ({ evaluacion }) => {
                     </Card>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 };
 

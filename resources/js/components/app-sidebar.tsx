@@ -44,15 +44,13 @@ export function AppSidebar() {
             icon: Trophy,
             items: [
                 ...(hasPermission('olimpiadas:list') ? [{ title: 'Olimpiadas y Fases', href: route('olimpiadas.index'), icon: GraduationCap }] : []),
-                ...(hasPermission('olimpiadas:list') ? [{ title: 'Inscripciones', href: '/dashboard/inscripciones', icon: LayoutDashboard }] : []), // Moved from Estudiante
+                ...(hasPermission('olimpiadas:list') ? [{ title: 'Inscripciones', href: route('inscripciones.gestion'), icon: LayoutDashboard }] : []),
                 ...(hasPermission('resultados:view') ? [{ title: 'Resultados', href: route('resultados.index'), icon: Trophy }] : []),
-                // { title: 'Gestión de Resultados', href: route('resultados.management'), icon: ClipboardListIcon }, // Commented out
                 ...(hasPermission('academic:view') ? [{ title: 'Centro de Control', href: route('area.dashboard'), icon: LayoutDashboard }] : []),
                 ...(hasRole('calificador') ? [{ title: 'Dashboard de Calificador', href: route('calificaciones.olimpiadas.index'), icon: ClipboardListIcon }] : []),
                 ...(hasPermission('calificadores:assign') ? [{ title: 'Asignación de Evaluadores', href: route('gestion-evaluacion.index'), icon: ShieldCheck }] : []),
                 ...(hasPermission('definiciones-evaluacion:list') ? [{ title: 'Definiciones de Evaluación', href: route('definiciones-evaluacion.index'), icon: ClipboardListIcon }] : []),
                 ...(hasPermission('grupos:list') ? [{ title: 'Gestión de Grupos', href: route('grupos.index'), icon: Users }] : []),
-                ...(hasPermission('academic:manage') ? [{ title: 'Aprobación Académica', href: route('aprobacion-academica.index'), icon: Award }] : []),
             ],
         },
         ...(hasPermission('academic:view') ? [{

@@ -8,6 +8,7 @@ use App\Models\FaseOlimpiada;
 use App\Models\Olimpiada;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\DefinicionEvaluacion;
 use Inertia\Inertia;
 
@@ -16,10 +17,32 @@ class AsignacionCalificadorController extends Controller
     public function index()
     {
         $olimpiadas = Olimpiada::with([
-            'fases.definicionEvaluacion.itemsDefinidos.calificadores',
+            'fases.definicionEvaluacion.itemsDefinidos',
             'area',
             'nivelEducativo'
         ])->orderBy('nombre')->get();
+
+        // Cargar los calificadores asignados para cada item en cada fase
+        foreach ($olimpiadas as $olimpiada) {
+            foreach ($olimpiada->fases as $fase) {
+                if ($fase->definicionEvaluacion && $fase->definicionEvaluacion->itemsDefinidos) {
+                    foreach ($fase->definicionEvaluacion->itemsDefinidos as $item) {
+                        // Cargar calificadores específicos de esta fase y este item
+                        $item->calificadores = User::select('users.id', 'users.name')
+                            ->join('calificador_item_asignado', 'users.id', '=', 'calificador_item_asignado.calificador_id')
+                            ->where('calificador_item_asignado.fase_olimpiada_id', $fase->id)
+                            ->where('calificador_item_asignado.item_definido_id', $item->id)
+                            ->get();
+                        
+                        Log::info('Loaded calificadores for item', [
+                            'fase_id' => $fase->id,
+                            'item_id' => $item->id,
+                            'calificadores_count' => $item->calificadores->count()
+                        ]);
+                    }
+                }
+            }
+        }
 
         $calificadores = User::role('calificador')->with('areas')->orderBy('name')->get(['id', 'name']);
         $definicionesEvaluacion = DefinicionEvaluacion::with('itemsDefinidos')->get();
@@ -78,12 +101,20 @@ class AsignacionCalificadorController extends Controller
         $itemId = $request->input('item_definido_id');
         $calificadorIds = $request->input('calificador_ids');
 
+        Log::info('Sync for item', [
+            'fase_id' => $faseId,
+            'item_id' => $itemId,
+            'calificador_ids' => $calificadorIds
+        ]);
+
         // Start a transaction to ensure atomicity
         DB::transaction(function () use ($faseId, $itemId, $calificadorIds) {
             // 1. Delete all existing assignments for this item in this phase
-            CalificadorItemAsignado::where('fase_olimpiada_id', $faseId)
+            $deleted = CalificadorItemAsignado::where('fase_olimpiada_id', $faseId)
                 ->where('item_definido_id', $itemId)
                 ->delete();
+            
+            Log::info('Deleted assignments', ['count' => $deleted]);
 
             // 2. Create the new assignments
             $newAssignments = [];
@@ -99,6 +130,7 @@ class AsignacionCalificadorController extends Controller
 
             if (!empty($newAssignments)) {
                 CalificadorItemAsignado::insert($newAssignments);
+                Log::info('Inserted assignments', ['count' => count($newAssignments)]);
             }
         });
 
@@ -111,7 +143,7 @@ class AsignacionCalificadorController extends Controller
             'calificador:id,name',
             'itemDefinido:id,nombre',
             'faseOlimpiada:id,nombre,olimpiada_id',
-            'faseOlimpiada.olimpiada:id,nombre,area_id,created_at,tipo',
+            'faseOlimpiada.olimpiada:id,nombre,area_id,anio,created_at,tipo',
             'faseOlimpiada.olimpiada.area:id,name',
         ])->get()->map(function ($assignment) {
             return [

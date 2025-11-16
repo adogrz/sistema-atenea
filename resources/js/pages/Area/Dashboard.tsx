@@ -89,11 +89,11 @@ const AreaDashboard: React.FC<AreaDashboardProps> = ({ olimpiadasWithStats, avai
     };
 
     const summaryStats = useMemo(() => {
-        const totalOlimpiadas = olimpiadasWithStats.length;
-        const totalFases = olimpiadasWithStats.reduce((acc, olimpiada) => acc + olimpiada.fases.length, 0);
-        const totalInscripciones = olimpiadasWithStats.reduce((acc, olimpiada) =>
+        const totalOlimpiadas = filteredOlimpiadas.length;
+        const totalFases = filteredOlimpiadas.reduce((acc, olimpiada) => acc + olimpiada.fases.length, 0);
+        const totalInscripciones = filteredOlimpiadas.reduce((acc, olimpiada) =>
             acc + olimpiada.fases.reduce((phaseAcc, phase) => phaseAcc + phase.total_inscripciones, 0), 0);
-        const totalEvaluacionesCompletadas = olimpiadasWithStats.reduce((acc, olimpiada) =>
+        const totalEvaluacionesCompletadas = filteredOlimpiadas.reduce((acc, olimpiada) =>
             acc + olimpiada.fases.reduce((phaseAcc, phase) => phaseAcc + phase.evaluaciones_completadas, 0), 0);
 
         return {
@@ -102,7 +102,7 @@ const AreaDashboard: React.FC<AreaDashboardProps> = ({ olimpiadasWithStats, avai
             totalInscripciones,
             totalEvaluacionesCompletadas,
         };
-    }, [olimpiadasWithStats]);
+    }, [filteredOlimpiadas]);
 
     return (
         <AppLayout>

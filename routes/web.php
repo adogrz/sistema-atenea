@@ -71,7 +71,12 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users:delete');
         Route::post('users/{id}/restore', [UserController::class, 'restore'])->name('users.restore')->middleware('permission:users:delete');
         // Olimpiadas
-        Route::resource('olimpiadas', OlimpiadaController::class)->except(['show'])->middleware('can:olimpiada');
+        Route::get('olimpiadas', [OlimpiadaController::class, 'index'])->name('olimpiadas.index')->middleware('can:viewAny,App\Models\Olimpiada');
+        Route::get('olimpiadas/create', [OlimpiadaController::class, 'create'])->name('olimpiadas.create')->middleware('can:create,App\Models\Olimpiada');
+        Route::post('olimpiadas', [OlimpiadaController::class, 'store'])->name('olimpiadas.store')->middleware('can:create,App\Models\Olimpiada');
+        Route::get('olimpiadas/{olimpiada}/edit', [OlimpiadaController::class, 'edit'])->name('olimpiadas.edit')->middleware('can:update,olimpiada');
+        Route::put('olimpiadas/{olimpiada}', [OlimpiadaController::class, 'update'])->name('olimpiadas.update')->middleware('can:update,olimpiada');
+        Route::delete('olimpiadas/{olimpiada}', [OlimpiadaController::class, 'destroy'])->name('olimpiadas.destroy')->middleware('can:delete,olimpiada');
 
         // Fases de Olimpiadas
         Route::prefix('fases')->name('fases.')->group(function () {
@@ -110,22 +115,33 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         });
 
         // Grupos
-        Route::resource('grupos', GrupoController::class)->middleware(['auth', 'role:coordinador-area']);
+        Route::resource('grupos', GrupoController::class)->middleware(['auth', 'role:coordinador-area|admin-academico']);
+
+        // Inscripciones
+        Route::get('inscripciones', [InscripcionOlimpiadaController::class, 'gestionIndex'])->name('inscripciones.gestion')->middleware('permission:olimpiadas:list');
 
         // Rutas para Resultados
         Route::prefix('resultados')->name('resultados.')->group(function () {
             Route::get('/', [ResultadoController::class, 'index'])->name('index')->middleware('permission:resultados:view');
+            Route::get('/{fase}', [ResultadoController::class, 'getResultsForFase'])->name('fase')->middleware('permission:resultados:view');
             Route::get('/emails', [ResultadoController::class, 'getEmailsForPassedStudents'])->name('emails')->middleware('permission:resultados:export-emails');
         });
 
         // Ruta para el Dashboard del Área
         Route::get('area', [AreaDashboardController::class, 'index'])->name('area.dashboard')->middleware('permission:academic:view');
 
-        // Ruta para el Dashboard de Calificador de Olimpiadas
-        Route::get('calificaciones/olimpiadas', [CalificacionOlimpiadaController::class, 'index'])->name('calificaciones.olimpiadas.index')->middleware('role:calificador');
+        // Rutas para el Dashboard de Calificador de Olimpiadas
+        Route::get('calificaciones/olimpiadas', [CalificacionOlimpiadaController::class, 'index'])->name('calificaciones.olimpiadas.index')->middleware('role:calificador|admin-academico');
+        Route::get('calificaciones/olimpiadas/{evaluacion}/edit', [CalificacionOlimpiadaController::class, 'edit'])->name('calificaciones.olimpiadas.edit')->middleware('role:calificador|admin-academico');
+        Route::put('calificaciones/olimpiadas/{evaluacion}', [CalificacionOlimpiadaController::class, 'update'])->name('calificaciones.olimpiadas.update')->middleware('role:calificador|admin-academico');
 
         // Ruta para la Gestión de Evaluación (Asignación de Calificadores)
         Route::get('gestion-evaluacion', [AsignacionCalificadorController::class, 'index'])->name('gestion-evaluacion.index')->middleware('permission:calificadores:assign');
+        Route::post('asignaciones/sync-for-item', [AsignacionCalificadorController::class, 'syncForItem'])->name('asignaciones.syncForItem')->middleware('permission:calificadores:assign');
+        Route::post('asignaciones', [AsignacionCalificadorController::class, 'store'])->name('asignaciones.store')->middleware('permission:calificadores:assign');
+        
+        // Ruta para mostrar detalles de evaluación
+        Route::get('evaluaciones/{evaluacion}', [EvaluacionController::class, 'show'])->name('evaluaciones.show')->middleware('permission:resultados:view');
     });
 
     Route::post('/users/{user}/send-reset-link', [UserController::class, 'sendResetLink'])

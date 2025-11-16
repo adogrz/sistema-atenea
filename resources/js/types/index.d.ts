@@ -75,6 +75,7 @@ export interface ItemDefinido {
     puntos_maximos: number;
     created_at: string;
     updated_at: string;
+    calificadores?: User[];
     // Frontend-only property for DND
     local_id?: string;
 }
@@ -247,6 +248,17 @@ export interface ChartData {
     assignmentsByYearAndArea: { [year: string]: { [areaName: string]: number } };
     assignmentsByYearAndCalificador: { [year: string]: { [calificadorName: string]: number } };
     totalAssignmentsByYear: { [year: string]: number };
+}
+
+export interface Grupo {
+    id: number;
+    nombre: string;
+    descripcion: string | null;
+    horario: 'máñana' | 'tarde';
+    area_id: number;
+    area?: Area;
+    created_at: string;
+    updated_at: string;
 }
 
 export type PageProps = SharedData & {

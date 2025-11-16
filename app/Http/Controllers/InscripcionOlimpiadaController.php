@@ -51,7 +51,7 @@ class InscripcionOlimpiadaController extends Controller
 
     public function gestionIndex(): Response
     {
-        $inscripciones = InscripcionOlimpiada::with(['estudiante', 'olimpiada', 'faseOlimpiada', 'estadoInscripcion'])
+        $inscripciones = InscripcionOlimpiada::with(['estudiante', 'olimpiada', 'estado'])
             ->orderBy('created_at', 'desc')
             ->get();
 

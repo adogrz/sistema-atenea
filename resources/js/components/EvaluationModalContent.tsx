@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import EvaluationShow from '@/pages/Evaluaciones/Show';
-import { Evaluacion } from '@/types'; // Assuming you have an Evaluacion type defined
+import { Evaluacion } from '@/types';
 
 interface EvaluationModalContentProps {
     evaluationId: number;
 }
 
 const EvaluationModalContent: React.FC<EvaluationModalContentProps> = ({ evaluationId }) => {
-    const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
+    const [evaluation, setEvaluation] = useState<Evaluacion | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -17,7 +17,7 @@ const EvaluationModalContent: React.FC<EvaluationModalContentProps> = ({ evaluat
             setIsLoading(true);
             axios.get(route('evaluaciones.show', evaluationId))
                 .then(response => {
-                    setEvaluation(response.data.evaluation);
+                    setEvaluation(response.data.evaluacion);
                 })
                 .catch(error => {
                     toast.error('Error al cargar la evaluación.');
@@ -37,7 +37,7 @@ const EvaluationModalContent: React.FC<EvaluationModalContentProps> = ({ evaluat
         return <div className="text-center p-4 text-red-500">No se pudo cargar la evaluación.</div>;
     }
 
-    return <EvaluationShow evaluation={evaluation} />;
+    return <EvaluationShow evaluacion={evaluation} />;
 };
 
 export default EvaluationModalContent;

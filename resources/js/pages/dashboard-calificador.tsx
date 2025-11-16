@@ -40,16 +40,22 @@ const DashboardCalificador = ({ evaluaciones }) => {
                                 {evaluaciones.length > 0 ? (
                                     evaluaciones.map(evaluacion => (
                                         <TableRow key={evaluacion.id}>
-                                            <TableCell className="font-medium">{evaluacion.inscripcion.estudiante.nombre_completo}</TableCell>
-                                            <TableCell>{evaluacion.fase_olimpiada.olimpiada.nombre}</TableCell>
-                                            <TableCell>{evaluacion.fase_olimpiada.nombre}</TableCell>
+                                            <TableCell className="font-medium">
+                                                {evaluacion.inscripcion?.estudiante?.nombre_completo || 'N/A'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {evaluacion.fase_olimpiada?.olimpiada?.nombre || 'N/A'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {evaluacion.fase_olimpiada?.nombre || 'N/A'}
+                                            </TableCell>
                                             <TableCell>
                                                 <Badge variant={evaluacion.status_text === 'Finalizada' ? 'default' : 'secondary'}>
                                                     {evaluacion.status_text}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Link href={route('dashboard.calificaciones.olimpiadas.edit', { evaluacion: evaluacion.id })}>
+                                                <Link href={route('calificaciones.olimpiadas.edit', { evaluacion: evaluacion.id })}>
                                                     <Button variant="outline">Calificar</Button>
                                                 </Link>
                                             </TableCell>

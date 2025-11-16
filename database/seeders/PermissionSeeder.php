@@ -71,19 +71,19 @@ class PermissionSeeder extends Seeder
                 'academic:view',
                 'academic:manage',
             ],
-            'olimpiadas' => [ // New group
+            'olimpiadas' => [
                 'olimpiadas:list',
                 'olimpiadas:create',
                 'olimpiadas:edit',
                 'olimpiadas:delete',
             ],
-            'fases' => [ // New group
+            'fases' => [ 
                 'fases:list',
                 'fases:create',
                 'fases:edit',
                 'fases:delete',
                 'fases:reorder',
-                'fases:assign-nota-minima', // New permission
+                'fases:assign-nota-minima', 
             ],
             'grupos' => [
                 'grupos:list',
@@ -91,20 +91,20 @@ class PermissionSeeder extends Seeder
                 'grupos:edit',
                 'grupos:delete',
             ],
-            'resultados' => [ // New group for results management
+            'resultados' => [ 
                 'resultados:view',
                 'resultados:export-emails',
             ],
-            'calificadores' => [ // New group for qualifier management
+            'calificadores' => [ 
                 'calificadores:assign',
             ],
-            'definiciones-evaluacion' => [ // New group for evaluation definitions management
+            'definiciones-evaluacion' => [ 
                 'definiciones-evaluacion:list',
                 'definiciones-evaluacion:create',
                 'definiciones-evaluacion:edit',
                 'definiciones-evaluacion:delete',
             ],
-            'centros-educativos' => [ // New group for educational centers management
+            'centros-educativos' => [ 
                 'centros-educativos:import',
             ],
         ];

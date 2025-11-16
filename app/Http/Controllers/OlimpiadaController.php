@@ -26,7 +26,7 @@ class OlimpiadaController extends Controller
 
         $olimpiadas = $query->orderBy('created_at', 'desc')->get();
 
-        return Inertia::render('Olimpiadas/Index', [
+        return Inertia::render('Olimpiadas/index', [
             'olimpiadas' => $olimpiadas,
             'areas' => Area::all(),
             'nivelesEducativos' => NivelEducativo::all(),
@@ -138,7 +138,7 @@ class OlimpiadaController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Olimpiada actualizada exitosamente.');
+        return redirect()->route('olimpiadas.index')->with('success', 'Olimpiada actualizada exitosamente.');
     }
 
     public function destroy(Olimpiada $olimpiada)

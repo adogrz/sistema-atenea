@@ -25,13 +25,14 @@ class CalificacionOlimpiadaController extends Controller
             ->distinct()
             ->pluck('fase_olimpiada_id');
 
-        // Get all evaluations from those phases
-        $evaluaciones = Evaluacion::with(['inscripcion.estudiante', 'faseOlimpiada.olimpiada'])
+        // Get all evaluations from those phases with nested relations
+        $evaluaciones = Evaluacion::with([
+                'inscripcion.estudiante.user',
+                'faseOlimpiada.olimpiada'
+            ])
             ->whereIn('fase_olimpiada_id', $faseIds)
             ->get()
             ->map(function ($evaluacion) {
-                // For each evaluation, we can add a status like 'Graded', 'Partially Graded', etc.
-                // This is a placeholder for more complex logic if needed.
                 $evaluacion->status_text = $evaluacion->finalizada_at ? 'Finalizada' : 'Pendiente';
                 return $evaluacion;
             });
@@ -66,8 +67,13 @@ class CalificacionOlimpiadaController extends Controller
     {
         $validated = $request->validate([
             'scores' => ['required', 'array'],
-            'scores.*.item_evaluado_id' => ['required', 'integer', 'exists:item_evaluados,id'],
-            'scores.*.puntaje' => ['nullable', 'numeric', 'min:0'],
+            'scores.*.item_evaluado_id' => ['required', 'integer', 'exists:items_evaluados,id'],
+            'scores.*.puntaje' => ['required', 'numeric', 'min:0', 'max:10'],
+        ], [
+            'scores.*.puntaje.required' => 'El puntaje es obligatorio.',
+            'scores.*.puntaje.max' => 'El puntaje no puede ser mayor a 10.',
+            'scores.*.puntaje.min' => 'El puntaje no puede ser negativo.',
+            'scores.*.puntaje.numeric' => 'El puntaje debe ser un número.',
         ]);
 
         // Get the IDs of items assigned to the current grader for this specific phase
@@ -80,14 +86,29 @@ class CalificacionOlimpiadaController extends Controller
             foreach ($validated['scores'] as $scoreData) {
                 $itemEvaluado = ItemEvaluado::find($scoreData['item_evaluado_id']);
 
+                if (!$itemEvaluado) {
+                    continue; // Skip if item doesn't exist
+                }
+
                 // Security Check: Ensure the item being updated is actually assigned to this grader
-                if ($itemEvaluado && $assignedItemIds->has($itemEvaluado->item_definido_id)) {
-                    $maxScore = $itemEvaluado->itemDefinido->puntaje_maximo;
-                    if ($scoreData['puntaje'] > $maxScore) {
-                        // Optionally handle this error, for now, we can cap it or throw validation error
-                        $scoreData['puntaje'] = $maxScore;
+                if ($assignedItemIds->has($itemEvaluado->item_definido_id)) {
+                    // Convert to float and ensure it's a valid number
+                    $puntaje = is_numeric($scoreData['puntaje']) ? floatval($scoreData['puntaje']) : 0;
+                    
+                    // Ensure puntaje is not NaN or Inf
+                    if (!is_finite($puntaje)) {
+                        $puntaje = 0;
                     }
-                    $itemEvaluado->update(['puntaje' => $scoreData['puntaje']]);
+                    
+                    $maxScore = min($itemEvaluado->itemDefinido->puntaje_maximo, 10);
+                    if ($puntaje > $maxScore) {
+                        $puntaje = $maxScore;
+                    }
+                    
+                    // Ensure puntaje is between 0 and maxScore
+                    $puntaje = max(0, min($puntaje, $maxScore));
+                    
+                    $itemEvaluado->update(['puntaje' => $puntaje]);
                 }
             }
 
@@ -96,7 +117,7 @@ class CalificacionOlimpiadaController extends Controller
             $evaluacion->save();
         });
 
-        return redirect()->route('dashboard.calificaciones.olimpiadas.index')->with('success', 'Calificaciones guardadas exitosamente.');
+        return redirect()->route('calificaciones.olimpiadas.index')->with('success', 'Calificaciones guardadas exitosamente.');
     }
 
     public function updateInline(Request $request)

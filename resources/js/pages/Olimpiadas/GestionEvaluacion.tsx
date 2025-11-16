@@ -4,7 +4,7 @@ import { Head, useForm, router } from '@inertiajs/react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -32,20 +32,32 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
     const [isConfirmEvaluationChangeModalOpen, setIsConfirmEvaluationChangeModalOpen] = useState(false);
 
     const selectedOlimpiada = useMemo(() => olimpiadas.find(o => o.id === Number(selectedOlimpiadaId)), [olimpiadas, selectedOlimpiadaId]);
-    const selectedFase = useMemo(() => selectedOlimpiada?.fases.find(f => f.id === Number(selectedFaseId)), [selectedOlimpiada, selectedFaseId]);
+    const selectedFase = useMemo(() => selectedOlimpiada?.fases?.find(f => f.id === Number(selectedFaseId)), [selectedOlimpiada, selectedFaseId]);
 
     const definicionParaFase = useMemo(() => {
+        // Prefer the definition object attached to the selectedFase (this one is populated
+        // within the $olimpiadas structure and has item-level 'calificadores' populated),
+        // otherwise fall back to the global list `definicionesEvaluacion`.
         if (!selectedFase || !selectedFase.definicion_evaluacion_id) {
             return null;
         }
-        return definicionesEvaluacion.find(d => d.id === selectedFase.definicion_evaluacion_id);
+
+        // If the phase already includes the definicion_evaluacion (eager loaded), use it
+        if ((selectedFase as any).definicion_evaluacion) {
+            return (selectedFase as any).definicion_evaluacion as DefinicionEvaluacion;
+        }
+
+        // Fallback: find in the provided definicionesEvaluacion array
+        return definicionesEvaluacion.find(d => d.id === selectedFase.definicion_evaluacion_id) ?? null;
     }, [selectedFase, definicionesEvaluacion]);
+
+
 
     useEffect(() => {
         if (selectedFase) {
-            setAssignEvaluationData('definicion_evaluacion_id', selectedFase.definicion_evaluacion_id ? String(selectedFase.definicion_evaluacion_id) : "null");
+            setAssignEvaluationData('definicion_evaluacion_id', selectedFase.definicion_evaluacion?.id ? String(selectedFase.definicion_evaluacion.id) : undefined);
         } else {
-            setAssignEvaluationData('definicion_evaluacion_id', "null");
+            setAssignEvaluationData('definicion_evaluacion_id', undefined);
         }
     }, [selectedFase]);
 
@@ -56,7 +68,7 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
     });
 
     const { data: assignEvaluationData, setData: setAssignEvaluationData, post: postAssignEvaluation, processing: processingAssignEvaluation, errors: errorsAssignEvaluation } = useForm({
-        definicion_evaluacion_id: '' as string | null,
+        definicion_evaluacion_id: undefined as string | undefined,
     });
 
     const openAssignModal = (item: ItemDefinido) => {
@@ -75,20 +87,23 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
             onSuccess: () => {
                 toast.success('Asignación guardada exitosamente.');
                 setAssignModalOpen(false);
+                // Recargar la página para obtener los datos actualizados
+                // Llamar a router.reload() sin 'only' para forzar la recarga completa de props
+                router.reload();
             },
             onError: (err) => {
                 toast.error('Error al guardar la asignación.');
                 console.error(err);
             },
             preserveScroll: true,
-            preserveState: true,
         });
     };
 
     const handleAssignEvaluationSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const dataToPost = { ...assignEvaluationData };
-        if (dataToPost.definicion_evaluacion_id === "null") {
+        const dataToPost: any = { ...assignEvaluationData };
+        // convert undefined/empty => null for backend
+        if (!dataToPost.definicion_evaluacion_id) {
             dataToPost.definicion_evaluacion_id = null;
         }
 
@@ -165,7 +180,7 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                         {selectedFase ? (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Gestión para: {selectedFase.nombre} ({selectedOlimpiada.tipo})</CardTitle>
+                                    <CardTitle>Gestión para: {selectedFase.nombre} ({selectedOlimpiada?.tipo})</CardTitle>
                                     <CardDescription>
                                         {selectedFase.fecha_inicio && selectedFase.fecha_fin ? (
                                             `Fechas: ${format(parseISO(selectedFase.fecha_inicio), 'dd/MM/yyyy')} - ${format(parseISO(selectedFase.fecha_fin), 'dd/MM/yyyy')}. `
@@ -214,21 +229,24 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                                             </div>
                                             <div className="space-y-3">
                                                 {definicionParaFase.items_definidos?.length > 0 ? (
-                                                    definicionParaFase.items_definidos.map(item => (
-                                                        <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg bg-secondary/20">
-                                                            <div>
-                                                                <p className="font-semibold">{item.nombre}</p>
-                                                                <div className="flex flex-wrap gap-1 mt-2">
-                                                                    {item.calificadores?.length > 0 ? (
-                                                                        item.calificadores.map(c => <Badge key={c.id} variant="secondary">{c.name}</Badge>)
-                                                                    ) : (
-                                                                        <Badge variant="outline">Sin asignar</Badge>
-                                                                    )}
+                                                    definicionParaFase.items_definidos.map(item => {
+                                                        const assignedCount = allAssignments.filter(a => a.fase_olimpiada_id === selectedFase?.id && a.item_definido_id === item.id).length;
+                                                        return (
+                                                            <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg bg-secondary/20">
+                                                                <div className="flex-1">
+                                                                    <p className="font-semibold">{item.nombre}</p>
+                                                                    <div className="flex flex-wrap gap-1 mt-2">
+                                                                        {assignedCount > 0 ? (
+                                                                            <Badge variant="secondary">Asignado ({assignedCount})</Badge>
+                                                                        ) : (
+                                                                            <Badge variant="outline">Sin asignar</Badge>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
+                                                                <Button variant="outline" onClick={() => openAssignModal(item)}><Users className="mr-2 h-4 w-4" />Asignar</Button>
                                                             </div>
-                                                            <Button variant="outline" onClick={() => openAssignModal(item)}><Users className="mr-2 h-4 w-4" />Asignar</Button>
-                                                        </div>
-                                                    ))
+                                                        );
+                                                    })
                                                 ) : (
                                                     <p className="text-muted-foreground">Esta rúbrica no tiene ítems definidos.</p>
                                                 )}
@@ -260,6 +278,9 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center"><FileCheck className="mr-2 h-5 w-5" />Confirmar Acción</DialogTitle>
+                        <DialogDescription>
+                            Confirma los cambios en la asignación de rúbrica de evaluación.
+                        </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleAssignEvaluationSubmit} className="p-4">
                         <p>¿Estás seguro de que deseas actualizar la rúbrica para la fase <strong>{selectedFase?.nombre}</strong>?</p>
@@ -276,8 +297,11 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center"><Users className="mr-2 h-5 w-5" />Asignar Calificadores a: {currentItem?.nombre}</DialogTitle>
+                        <DialogDescription>
+                            Selecciona los calificadores que evaluarán este ítem.
+                        </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleGraderAssignmentSubmit}>
+                    <form onSubmit={handleGraderAssignmentSubmit} className="p-4">
                         <div className="p-4">
                             <Command>
                                 <CommandInput placeholder="Buscar calificador..." />

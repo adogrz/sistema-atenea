@@ -1,33 +1,34 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm, usePage, Link } from '@inertiajs/react';
-import { PageProps } from '@/types';
+import { PageProps, BreadcrumbItem } from '@/types';
 import { DataTable } from '@/components/ui/data-table';
-import { InscripcionOlimpiada, Estudiante, Olimpiada, FaseOlimpiada, EstadoInscripcion } from '@/types';
+import { InscripcionOlimpiada, Estudiante, Olimpiada } from '@/types';
 import { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { DataTableToolbar } from '@/components/ui/data-table-toolbar';
 
+interface EstadoInscripcion {
+    id: number;
+    nombre: string;
+}
+
 interface InscripcionOlimpiadaWithRelations extends InscripcionOlimpiada {
+    id: number;
     estudiante: Estudiante;
     olimpiada: Olimpiada;
-    fase_olimpiada: FaseOlimpiada;
-    estado_inscripcion: EstadoInscripcion;
+    estado: EstadoInscripcion;
+    created_at: string;
 }
 
 interface InscripcionesGestionProps extends PageProps {
     inscripciones: InscripcionOlimpiadaWithRelations[];
 }
 
-import { BreadcrumbItem } from '@/types';
-
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inicio', href: route('dashboard') },
-    { title: 'Inscripciones', href: route('inscripciones.index') },
-    { title: 'Gestión de Inscripciones' },
 ];
 
 const Gestion: React.FC<InscripcionesGestionProps> = ({ inscripciones: initialInscripciones }) => {
@@ -64,15 +65,10 @@ const Gestion: React.FC<InscripcionesGestionProps> = ({ inscripciones: initialIn
             cell: ({ row }) => row.original.olimpiada.nombre,
         },
         {
-            accessorKey: 'fase_olimpiada.nombre',
-            header: 'Fase',
-            cell: ({ row }) => row.original.fase_olimpiada.nombre,
-        },
-        {
-            accessorKey: 'estado_inscripcion.nombre',
+            accessorKey: 'estado.nombre',
             header: 'Estado',
             cell: ({ row }) => (
-                <Badge variant="secondary">{row.original.estado_inscripcion.nombre}</Badge>
+                <Badge variant="secondary">{row.original.estado.nombre}</Badge>
             ),
         },
         {
@@ -85,11 +81,6 @@ const Gestion: React.FC<InscripcionesGestionProps> = ({ inscripciones: initialIn
             header: 'Acciones',
             cell: ({ row }) => (
                 <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" asChild>
-                        <Link href={route('inscripciones.show', row.original.id)}>
-                            Ver Detalles
-                        </Link>
-                    </Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDelete(row.original)}>
                         Eliminar
                     </Button>
@@ -118,9 +109,7 @@ const Gestion: React.FC<InscripcionesGestionProps> = ({ inscripciones: initialIn
                         columnFilters={columnFilters}
                         setColumnFilters={setColumnFilters}
                         toolbarOptions={{
-                            // You might want to add filters for olimpiada, fase, estado_inscripcion here
-                            areas: [], // Placeholder, as areas are not directly part of InscripcionOlimpiada
-                            niveles: [], // Placeholder
+                            searchableColumnId: 'estudiante',
                         }}
                     />
                 </div>

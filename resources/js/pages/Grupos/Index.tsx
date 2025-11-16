@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, Grupo } from '@/types';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -23,6 +23,7 @@ interface GruposIndexProps extends PageProps {
 }
 
 const Index: React.FC<GruposIndexProps> = ({ grupos }) => {
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const handleDelete = (id: number) => {
         router.delete(route('grupos.destroy', id), {
@@ -77,7 +78,7 @@ const Index: React.FC<GruposIndexProps> = ({ grupos }) => {
     ];
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Grupos' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Grupos', href: '#' }]}>
             <Head title="Gestión de Grupos" />
             <div className="p-4 md:p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -89,7 +90,15 @@ const Index: React.FC<GruposIndexProps> = ({ grupos }) => {
                         </Button>
                     </Link>
                 </div>
-                <DataTable columns={columns} data={grupos} />
+                <DataTable 
+                    columns={columns} 
+                    data={grupos}
+                    columnFilters={columnFilters}
+                    setColumnFilters={setColumnFilters}
+                    toolbarOptions={{
+                        searchableColumnId: 'nombre',
+                    }}
+                />
             </div>
         </AppLayout>
     );

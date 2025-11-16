@@ -57,7 +57,9 @@ const OlimpiadaForm: React.FC<OlimpiadaFormProps> = ({ olimpiada, areas, niveles
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const options = {
-            onSuccess: () => toast.success(olimpiada ? 'Olimpiada actualizada con éxito.' : 'Olimpiada creada con éxito.'),
+            onSuccess: () => {
+                toast.success(olimpiada ? 'Olimpiada actualizada con éxito.' : 'Olimpiada creada con éxito.');
+            },
             onError: (e: any) => {
                 console.error(e);
                 toast.error('Error al guardar la olimpiada. Revisa los campos.');
@@ -74,7 +76,7 @@ const OlimpiadaForm: React.FC<OlimpiadaFormProps> = ({ olimpiada, areas, niveles
     const breadcrumbs: Breadcrumb[] = [
         { title: 'Inicio', href: route('dashboard') },
         { title: 'Olimpiadas', href: route('olimpiadas.index') },
-        { title: olimpiada ? 'Editar Olimpiada' : 'Crear Olimpiada' },
+        { title: olimpiada ? 'Editar Olimpiada' : 'Crear Olimpiada', href: '#' },
     ];
 
     return (
@@ -189,11 +191,7 @@ const OlimpiadaForm: React.FC<OlimpiadaFormProps> = ({ olimpiada, areas, niveles
                                 fases={data.fases}
                                 setFases={(newFases) => setData('fases', newFases)}
                                 processing={processing}
-                                canCreateFase={canCreateFase}
-                                canEditFase={canEditFase}
-                                canDeleteFase={canDeleteFase}
-                                canReorderFase={canReorderFase}
-                                canAssignNotaMinimaFase={canAssignNotaMinimaFase}
+                                olimpiadaId={olimpiada?.id}
                             />
                         </CardContent>
                     </Card>

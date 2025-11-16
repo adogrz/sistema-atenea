@@ -59,27 +59,9 @@ class FaseOlimpiada extends Model
         'activa' => 'boolean',
         'cupos' => 'integer',
         'nota_minima_aprobacion' => 'float',
-        'fecha_inicio' => 'datetime',
-        'fecha_fin' => 'datetime',
+        'fecha_inicio' => 'date',
+        'fecha_fin' => 'date',
         'resultados_publicados' => 'boolean',
-    ];
-
-    protected $visible = [
-        'id', // Explicitly include ID
-        'olimpiada_id',
-        'nombre',
-        'descripcion',
-        'definicion_evaluacion_id',
-        'cupos',
-        'nota_minima_aprobacion',
-        'fecha_inicio',
-        'fecha_fin',
-        'resultados_publicados',
-        'orden',
-        'activa',
-        'observaciones',
-        'created_at',
-        'updated_at',
     ];
 
     /**

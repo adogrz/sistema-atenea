@@ -22,6 +22,7 @@ class FaseOlimpiadaController extends Controller
             'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
             'activa' => ['required', 'boolean'],
             'observaciones' => ['nullable', 'string'],
+            'cupos' => ['required', 'integer', 'min:1'],
             'definicion_evaluacion_id' => ['nullable', 'integer', 'exists:definiciones_evaluacion,id'],
         ]);
 
@@ -47,6 +48,7 @@ class FaseOlimpiadaController extends Controller
             'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
             'activa' => ['required', 'boolean'],
             'observaciones' => ['nullable', 'string'],
+            'cupos' => ['required', 'integer', 'min:1'],
             'definicion_evaluacion_id' => ['nullable', 'integer', 'exists:definiciones_evaluacion,id'],
         ]);
 
@@ -129,6 +131,11 @@ class FaseOlimpiadaController extends Controller
         $fase->update($validated);
         activity()->performedOn($fase)->log('Evaluación asignada a Fase de Olimpiada');
 
+        // Generate evaluations for all inscriptions when an evaluation definition is assigned
+        if ($validated['definicion_evaluacion_id']) {
+            $this->generateEvaluationsForPhase($fase);
+        }
+
         return redirect()->back()->with('success', 'Evaluación asignada exitosamente.');
     }
 
@@ -171,5 +178,45 @@ class FaseOlimpiadaController extends Controller
         }
 
         return response()->json($faseDetails);
+    }
+
+    /**
+     * Genera las evaluaciones para todas las inscripciones de una fase
+     */
+    private function generateEvaluationsForPhase(FaseOlimpiada $fase): void
+    {
+        // Load the phase with its evaluation definition and items
+        $fase->load('definicionEvaluacion.itemsDefinidos');
+
+        // Get all inscriptions for this olympiad
+        $inscripciones = \App\Models\InscripcionOlimpiada::where('olimpiada_id', $fase->olimpiada_id)->get();
+
+        foreach ($inscripciones as $inscripcion) {
+            // Create or get the evaluation for this inscription and phase
+            $evaluacion = \App\Models\Evaluacion::firstOrCreate(
+                [
+                    'inscripcion_id' => $inscripcion->id,
+                    'fase_olimpiada_id' => $fase->id,
+                ],
+                [
+                    'total_puntaje' => 0,
+                ]
+            );
+
+            // If there's an evaluation definition, create ItemEvaluado records
+            if ($fase->definicionEvaluacion && $fase->definicionEvaluacion->itemsDefinidos->isNotEmpty()) {
+                foreach ($fase->definicionEvaluacion->itemsDefinidos as $item) {
+                    \App\Models\ItemEvaluado::firstOrCreate(
+                        [
+                            'evaluacion_id' => $evaluacion->id,
+                            'item_definido_id' => $item->id,
+                        ],
+                        [
+                            'puntaje' => 0,
+                        ]
+                    );
+                }
+            }
+        }
     }
 }

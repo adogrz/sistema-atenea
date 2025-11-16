@@ -12,6 +12,14 @@ class EvaluacionController extends Controller
     {
         $evaluacion->load(['inscripcion.estudiante.user', 'faseOlimpiada.olimpiada', 'itemsEvaluados.itemDefinido', 'itemsEvaluados.calificador']);
 
+        // Para peticiones AJAX, retornar JSON
+        if (request()->expectsJson()) {
+            return response()->json([
+                'evaluacion' => $evaluacion,
+            ]);
+        }
+
+        // Para peticiones normales, retornar vista Inertia
         return Inertia::render('Evaluaciones/Show', [
             'evaluacion' => $evaluacion,
         ]);

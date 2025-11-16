@@ -29,9 +29,13 @@ interface DataTableProps<TData, TValue> {
     getRowId?: (row: TData) => string | number;
     columnFilters: ColumnFiltersState;
     setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
-    toolbarOptions: {
-        areas: { label: string; value: string }[]
-        niveles: { label: string; value: string }[]
+    toolbarOptions?: {
+        searchableColumnId?: string;
+        filters?: {
+            columnId: string;
+            title: string;
+            options: { label: string; value: string }[];
+        }[];
     };
     renderRowSubComponent?: (props: { row: Row<TData> }) => React.ReactElement;
     getRowCanExpand?: (row: Row<TData>) => boolean;
