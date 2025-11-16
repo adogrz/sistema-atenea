@@ -24,6 +24,24 @@ class HandleInertiaRequests extends Middleware
      */
     public function version(Request $request): ?string
     {
+        // Leer versión desde el archivo generado en build
+        $versionFile = public_path('build-version.txt');
+        if (file_exists($versionFile)) {
+            return trim(file_get_contents($versionFile));
+        }
+
+        // Fallback: usar hash del manifest de Vite
+        $manifestPath = public_path('build/manifest.json');
+        if (file_exists($manifestPath)) {
+            return md5_file($manifestPath);
+        }
+
+        // Último fallback: timestamp del directorio build
+        $buildPath = public_path('build');
+        if (is_dir($buildPath)) {
+            return (string) filemtime($buildPath);
+        }
+
         return parent::version($request);
     }
 

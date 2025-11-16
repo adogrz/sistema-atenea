@@ -35,7 +35,25 @@ RUN composer install --no-interaction --no-plugins --no-scripts --no-dev --prefe
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+
+# Generar hash de versión basado en timestamp y git commit (si existe)
+ARG BUILD_VERSION
+RUN if [ -z "$BUILD_VERSION" ]; then \
+        if [ -d .git ]; then \
+            BUILD_VERSION=$(git rev-parse --short HEAD 2>/dev/null || echo $(date +%s)); \
+        else \
+            BUILD_VERSION=$(date +%s); \
+        fi; \
+    fi && \
+    echo $BUILD_VERSION > /var/www/html/public/build-version.txt
+
 RUN npm run build
+
+# Limpiar cachés de Laravel antes de generar nuevos
+RUN php artisan config:clear \
+    && php artisan route:clear \
+    && php artisan view:clear \
+    && php artisan cache:clear
 
 # Optimize Laravel for production
 RUN composer install --optimize-autoloader --no-dev --prefer-dist \
@@ -51,7 +69,6 @@ FROM unit:1.34.1-php8.3
 # Install only necessary runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libpq-dev \
-    # Removed supervisor as Dokploy can manage processes
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure pgsql --with-pgsql=/usr/local/pgsql \
     && docker-php-ext-install -j$(nproc) pdo pdo_pgsql pgsql intl zip gd exif ftp bcmath \
@@ -66,7 +83,10 @@ RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/custom.ini \
     && echo "opcache.jit_buffer_size=256M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "memory_limit=512M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "upload_max_filesize=64M" >> /usr/local/etc/php/conf.d/custom.ini \
-    && echo "post_max_size=64M" >> /usr/local/etc/php/conf.d/custom.ini
+    && echo "post_max_size=64M" >> /usr/local/etc/php/conf.d/custom.ini \
+    # Configuración crítica para revalidar opcache en cada request (despliegues)
+    && echo "opcache.validate_timestamps=1" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "opcache.revalidate_freq=0" >> /usr/local/etc/php/conf.d/custom.ini
 
 WORKDIR /var/www/html
 
@@ -77,9 +97,8 @@ COPY --from=builder /var/www/html/bootstrap/cache ./bootstrap/cache
 COPY --from=builder /var/www/html .
 
 # Create necessary directories and set permissions
-# No need to create bootstrap/cache as it's copied from the builder
 RUN mkdir -p storage/logs storage/framework/{cache,sessions,views} \
-    && chown -R unit:unit storage bootstrap/cache \
+    && chown -R unit:unit storage bootstrap/cache public \
     && chmod -R 775 storage bootstrap/cache
 
 COPY unit.json /docker-entrypoint.d/
