@@ -85,15 +85,15 @@ export default function AttendancesManagement(props: PageProps) {
 
   // helper para obtener el nivel educativo del participante
   const getNivel = (p: InternadoParticipante) => {
-  const anyP = p as any;
-  const raw =
-    anyP.nivel_educativo ??
-    anyP.estudiante?.nivel_educativo ??
-    anyP.estudiante?.nivelEducativo?.nombre ??
-    anyP.estudiante?.nivelEducativo?.nivel ??
-    '';
-  return toText(raw).trim();
-};
+    const anyP = p as any;
+    const raw =
+      anyP.nivel_educativo ??
+      anyP.estudiante?.nivel_educativo ??
+      anyP.estudiante?.nivelEducativo?.nombre ??
+      anyP.estudiante?.nivelEducativo?.nivel ??
+      '';
+    return toText(raw).trim();
+  };
 
   // Selección
   const toggleSeleccion = (id: number, checked: boolean) => {
@@ -216,13 +216,27 @@ export default function AttendancesManagement(props: PageProps) {
       return toast.error('Selecciona periodo y fecha antes de guardar.');
     }
 
-    const payload = listaParticipantes.map((p) => ({
+    // CAMBIO PRINCIPAL: Guardar solo los participantes del nivel filtrado actual
+    // Si hay nivel seleccionado, usar participantesPorNivel
+    // Si no hay nivel, guardar todos
+    const participantesAGuardar = nivel ? participantesPorNivel : listaParticipantes;
+
+    if (!participantesAGuardar.length) {
+      return toast.error('No hay participantes para guardar con los filtros actuales.');
+    }
+
+    const payload = participantesAGuardar.map((p) => ({
       participante_id: p.id,
       estado: (estadoById[p.id] ?? 'ausente') as EstadoAsistencia,
       observaciones: observaciones[p.id]?.trim() || null,
     }));
 
-    console.log('POST asistencias payload:', { periodo_id: Number(periodoId), fecha, asistencias: payload });
+    console.log('POST asistencias payload:', { 
+      periodo_id: Number(periodoId), 
+      fecha, 
+      asistencias: payload,
+      nivel_filtrado: nivel || 'todos'
+    });
 
     setSaving(true);
     const t = toast.loading('Guardando asistencias...');
@@ -231,7 +245,12 @@ export default function AttendancesManagement(props: PageProps) {
       { periodo_id: Number(periodoId), fecha, asistencias: payload },
       {
         preserveScroll: true,
-        onSuccess: () => toast.success('Asistencias guardadas'),
+        onSuccess: () => {
+          const mensaje = nivel 
+            ? `Asistencias guardadas para el nivel: ${nivel} (${payload.length} estudiante(s))`
+            : `Asistencias guardadas para todos los niveles (${payload.length} estudiante(s))`;
+          toast.success(mensaje);
+        },
         onError: (errors: Record<string, any>) => {
           console.error('Guardar errores:', errors);
           const first = errors && (Array.isArray(errors) ? errors[0] : Object.values(errors).flat?.()[0]);
@@ -255,7 +274,12 @@ export default function AttendancesManagement(props: PageProps) {
         <Card className="mb-4">
           <CardHeader>
             <CardTitle>Seleccionar Periodo y Fecha</CardTitle>
-            <CardDescription>Pulsa Buscar para cargar datos del backend</CardDescription>
+            <CardDescription>
+              {nivel 
+                ? `Filtrando por nivel: ${nivel}. Al guardar solo se actualizarán las asistencias de este nivel.`
+                : 'Mostrando todos los niveles. Al guardar se actualizarán todos los participantes.'
+              }
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 grid-cols-1 md:grid-cols-[1fr_1fr_160px]">
@@ -285,7 +309,7 @@ export default function AttendancesManagement(props: PageProps) {
                 <Input
                   id="fecha"
                   type="date"
-                  value={fecha} // por defecto: hoy (ya inicializado en el estado)
+                  value={fecha}
                   onChange={(e) => setFecha(e.target.value)}
                   min={periodoActual?.fecha_inicio}
                   max={periodoActual?.fecha_fin}
@@ -317,7 +341,7 @@ export default function AttendancesManagement(props: PageProps) {
                     />
                   
                     <div className="flex items-center gap-2">
-                      <label htmlFor="nivel" className="text-sm">Nivel</label>
+                      <label htmlFor="nivel" className="text-sm font-medium">Nivel</label>
                       <select
                         id="nivel"
                         className="h-10 rounded-md border bg-background px-2 text-sm"
@@ -387,6 +411,7 @@ export default function AttendancesManagement(props: PageProps) {
 
                 <div className="text-xs text-muted-foreground">
                   Mostrando {participantesFiltrados.length} de {participantesPorNivel.length}
+                  {nivel && <span className="font-medium"> · Nivel: {nivel}</span>}
                   {selectedInFiltered.length ? ` · Seleccionados (filtrados): ${selectedInFiltered.length}` : ''}
                 </div>
               </div>
@@ -446,9 +471,15 @@ export default function AttendancesManagement(props: PageProps) {
 
         {/* Acciones */}
         {periodoId && listaParticipantes.length ? (
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {nivel 
+                ? `Se guardarán ${participantesPorNivel.length} estudiante(s) del nivel: ${nivel}`
+                : `Se guardarán ${listaParticipantes.length} estudiante(s) de todos los niveles`
+              }
+            </div>
             <Button type="button" onClick={handleGuardar} disabled={saving}>
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando...' : 'Guardar Asistencias'}
             </Button>
           </div>
         ) : null}
