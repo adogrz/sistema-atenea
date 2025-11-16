@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use PHPUnit\Metadata\Test;
 
 class DatabaseSeeder extends Seeder
 {
@@ -26,13 +27,16 @@ class DatabaseSeeder extends Seeder
             OlimpiadaSeeder::class,
             // Definiciones de evaluación deben crearse antes de las fases
             DefinicionEvaluacionSeeder::class,
+            
             FaseOlimpiadaSeeder::class,
             EstadoInscripcionSeeder::class,
-            InscripcionOlimpiadaSeeder::class,
-            ItemDefinidoSeeder::class,
-
+            
             // Estudiantes de prueba
             TestStudentsSeeder::class,
+            InscripcionOlimpiadaSeeder::class,
+            ItemDefinidoSeeder::class,
+            GrupoSeeder::class,
+
 
             //Materias
             MateriaSeeder::class,
