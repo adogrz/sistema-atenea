@@ -8,17 +8,17 @@ class ItemDefinido extends Model
 {
     protected $table = 'items_definidos';
     protected $fillable = [
-        'definicion_id', 'fase_olimpiada_id', 'nombre', 'descripcion',
-        'orden', 'obligatorio', 'ponderacion', 'max_puntos'
+        'definicion_evaluacion_id', 'nombre', 'descripcion',
+        'orden', 'puntos_maximos'
     ];
 
     public function definicion()
     {
-        return $this->belongsTo(DefinicionEvaluacion::class, 'definicion_id');
+        return $this->belongsTo(DefinicionEvaluacion::class, 'definicion_evaluacion_id');
     }
 
-    public function fase()
+    public function calificadores()
     {
-        return $this->belongsTo(FaseOlimpiada::class, 'fase_olimpiada_id');
+        return $this->belongsToMany(User::class, 'calificador_item_asignado', 'item_definido_id', 'calificador_id');
     }
 }

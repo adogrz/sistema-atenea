@@ -11,7 +11,7 @@ import {
     CalendarDays,
     ClipboardCheck,
     ClipboardListIcon,
-    Clock,
+    Trophy,
     FileBarChart,
     FileCheck,
     FileHeart,
@@ -30,7 +30,7 @@ import {
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
-    const { hasPermission } = usePermissions();
+    const { hasPermission, hasRole } = usePermissions();
     const { url } = usePage();
 
     const isItemActive = (href: string | undefined) => {
@@ -45,6 +45,7 @@ export function AppSidebar() {
         ...buildClinicalRecordsNav(),
         ...buildAdministrationNav(),
         ...buildAcademicNav(),
+        ...buildOlimpiadasNav(),
         ...buildInternshipNav(),
         ...buildStudentNav(),
     ].filter((item) => !item.items || item.items.length > 0);
@@ -113,6 +114,61 @@ export function AppSidebar() {
             },
         ];
     }
+
+    function buildOlimpiadasNav(): NavItem[] {
+    // Si no tiene ningún permiso relevante, no mostramos nada
+    const canView = 
+        hasPermission('olimpiadas:list') ||
+        hasPermission('resultados:view') ||
+        hasPermission('academic:view') ||
+        hasRole('calificador') ||
+        hasPermission('calificadores:assign') ||
+        hasPermission('definiciones-evaluacion:list') ||
+        hasPermission('grupos:list');
+
+    if (!canView) return [];
+
+    const items = [];
+
+    if (hasPermission('olimpiadas:list')) {
+        items.push(
+            { title: 'Olimpiadas y Fases', href: route('olimpiadas.index'), icon: GraduationCap },
+            { title: 'Inscripciones', href: route('inscripciones.gestion'), icon: LayoutDashboard }
+        );
+    }
+
+    if (hasPermission('resultados:view')) {
+        items.push({ title: 'Resultados', href: route('resultados.index'), icon: Trophy });
+    }
+
+    if (hasPermission('academic:view')) {
+        items.push({ title: 'Centro de Control', href: route('area.dashboard'), icon: LayoutDashboard });
+    }
+
+    if (hasRole('calificador')) {
+        items.push({ title: 'Dashboard de Calificador', href: route('calificaciones.olimpiadas.index'), icon: ClipboardListIcon });
+    }
+
+    if (hasPermission('calificadores:assign')) {
+        items.push({ title: 'Asignación de Evaluadores', href: route('gestion-evaluacion.index'), icon: ShieldCheck });
+    }
+
+    if (hasPermission('definiciones-evaluacion:list')) {
+        items.push({ title: 'Definiciones de Evaluación', href: route('definiciones-evaluacion.index'), icon: ClipboardListIcon });
+    }
+
+    if (hasPermission('grupos:list')) {
+        items.push({ title: 'Gestión de Grupos', href: route('grupos.index'), icon: Users });
+    }
+
+    return [
+        {
+            title: 'Olimpiadas',
+            icon: Trophy,
+            items,
+        },
+    ];
+}
 
     function buildInternshipNav(): NavItem[] {
         const canViewModule =

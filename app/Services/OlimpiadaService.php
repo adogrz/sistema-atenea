@@ -28,6 +28,7 @@ class OlimpiadaService
      * @return Collection<int, Collection<FaseOlimpiada>> [olimpiada_id => fases]
      */
     public function fasesVigentesAgrupadas(
+        ?int $nivelEducativoId = null,
         bool $aplicarVentanaFechas = true,
         ?Carbon $fechaReferencia = null,
         bool $usarCache = false,
@@ -36,11 +37,11 @@ class OlimpiadaService
         $fecha = $fechaReferencia?->copy()->startOfDay() ?? Carbon::today();
 
         if ($usarCache) {
-            $key = sprintf('fases_vigentes_%s_%d', $fecha->toDateString(), $aplicarVentanaFechas ? 1 : 0);
-            return Cache::remember($key, $ttlSegundos, fn() => $this->buildFasesAgrupadas($aplicarVentanaFechas, $fecha));
+            $key = sprintf('fases_vigentes_%s_%d_%d', $fecha->toDateString(), $aplicarVentanaFechas ? 1 : 0, $nivelEducativoId ?? 0);
+            return Cache::remember($key, $ttlSegundos, fn() => $this->buildFasesAgrupadas($aplicarVentanaFechas, $fecha, $nivelEducativoId));
         }
 
-        return $this->buildFasesAgrupadas($aplicarVentanaFechas, $fecha);
+        return $this->buildFasesAgrupadas($aplicarVentanaFechas, $fecha, $nivelEducativoId);
     }
 
     /**
@@ -53,7 +54,8 @@ class OlimpiadaService
     {
         return InscripcionOlimpiada::with([
             'estado:id,nombre,slug,es_final',
-            'olimpiada:id,nombre,area_academica',
+            'olimpiada:id,nombre,area_id',
+            'olimpiada.area:id,name,description',
         ])
             ->deEstudiante($codigoEstudiante)
             ->get()
@@ -91,17 +93,27 @@ class OlimpiadaService
      *
      * @return Collection<int, Collection<FaseOlimpiada>>
      */
-    private function buildFasesAgrupadas(bool $aplicarVentanaFechas, Carbon $fecha): Collection
+    private function buildFasesAgrupadas(bool $aplicarVentanaFechas, Carbon $fecha, ?int $nivelEducativoId): Collection
     {
         $q = FaseOlimpiada::query()
-            ->with('olimpiada:id,nombre,area_academica')
+            ->with([
+                'olimpiada:id,nombre,area_id,nivel_educativo_id',
+                'olimpiada.area:id,name,description',
+                'olimpiada.nivelEducativo:codigo,descripcion',
+            ])
             ->orderBy('olimpiada_id')
-            ->orderBy('numero_fase');
+            ->orderBy('orden');
 
         if ($aplicarVentanaFechas) {
             $q->where('activa', true)
                 ->whereDate('fecha_inicio', '<=', $fecha)
                 ->whereDate('fecha_fin', '>=', $fecha);
+        }
+
+        if ($nivelEducativoId) {
+            $q->whereHas('olimpiada', function ($query) use ($nivelEducativoId) {
+                $query->where('nivel_educativo_id', $nivelEducativoId);
+            });
         }
 
         return $q->get()->groupBy('olimpiada_id');

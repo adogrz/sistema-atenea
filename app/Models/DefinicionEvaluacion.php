@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class DefinicionEvaluacion extends Model
 {
     protected $table = 'definiciones_evaluacion';
-    protected $fillable = ['nombre', 'descripcion', 'creada_por', 'estado', 'bloqueada'];
+    protected $fillable = ['nombre', 'descripcion', 'version', 'creada_por', 'estado', 'bloqueada'];
 
     public function itemsDefinidos()
-    {
-        return $this->hasMany(ItemDefinido::class, 'definicion_id');
-    }
+        {
+            return $this->hasMany(ItemDefinido::class, 'definicion_evaluacion_id');
+        }
 }

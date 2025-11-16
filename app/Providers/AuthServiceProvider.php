@@ -15,7 +15,11 @@ use App\Policies\ClinicalRecord\MedicalConsultationPolicy;
 use App\Policies\ClinicalRecord\MedicalRecordPolicy;
 use App\Policies\ClinicalRecord\PsychologicalRecordPolicy;
 use App\Policies\ClinicalRecord\PsychologicalSessionPolicy;
+use App\Models\Olimpiada;
+use App\Models\FaseOlimpiada;
 use App\Policies\UserPolicy;
+use App\Policies\OlimpiadaPolicy;
+use App\Policies\FaseOlimpiadaPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -34,6 +38,8 @@ class AuthServiceProvider extends ServiceProvider
         PsychologicalRecord::class => PsychologicalRecordPolicy::class,
         PsychologicalSession::class => PsychologicalSessionPolicy::class,
         ConsentForm::class => ConsentFormPolicy::class,
+        Olimpiada::class => OlimpiadaPolicy::class,
+        FaseOlimpiada::class => FaseOlimpiadaPolicy::class,
     ];
 
     /**

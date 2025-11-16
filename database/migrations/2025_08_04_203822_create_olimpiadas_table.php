@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');               // Ej: Olimpiada Matemática 2025
             $table->text('descripcion')->nullable();  // Detalles generales
-            $table->date('fecha_inicio');
-            $table->date('fecha_fin');
-            $table->string('area_academica');
+            $table->foreignId('area_id')->constrained('areas');
             $table->boolean('activa')->default(true); // Control de visibilidad
+            $table->foreignId('nivel_educativo_id')->constrained('niveles_educativos', 'codigo')->onDelete('cascade');
+            $table->enum('tipo', ['nivel', 'olimpico'])->default('nivel');
+            $table->integer('anio')->default(date('Y'));
             $table->timestamps();
         });
     }

@@ -15,6 +15,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -158,9 +159,19 @@ class User extends Authenticatable
     public function area()
     {
         return $this->belongsTo(Area::class, 'area_id');
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+    
+       /*********************************
+        * Relaciones entres modelos
+        ********************************/
+   
+       public function calificacionesItems(): HasMany
+       {
+           return $this->hasMany(ItemEvaluado::class, 'calificador_id');
     }
 
-    public function olimpiada()
+    public function calificadorItemAsignados()
     {
         return $this->belongsTo(Olimpiada::class, 'olimpiada_id');
     }
@@ -278,4 +289,6 @@ class User extends Authenticatable
         return $this->can('assignments:manage-medical')
             && $this->can('assignments:manage-psychological');
     }
+    
 }
+

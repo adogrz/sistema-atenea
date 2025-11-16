@@ -31,6 +31,8 @@ class Estudiante extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    protected $appends = ['nombre_completo'];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -114,7 +116,7 @@ class Estudiante extends Model
     }
 
     /**
-     * Relación con la dirección normalizada
+     * Relación con el modelo Dirección
      */
     public function direccion(): BelongsTo
     {
@@ -192,5 +194,30 @@ class Estudiante extends Model
         return $this->internadoParticipante()
             ->where('estado', 'activo')
             ->exists();
+    }
+
+    public function getNombreCompletoAttribute(): string
+    {
+        return trim("{$this->primer_nombre} {$this->segundo_nombre} {$this->primer_apellido} {$this->segundo_apellido}");
+    }
+
+    /**
+     * Genera y asigna un código permanente único al estudiante.
+     */
+    public function generateAndAssignPermanentCode(): void
+    {
+        // Generar un código único (ej. UUID, o un formato específico)
+        // Por simplicidad, usaremos un UUID v4. Asegúrate de que el paquete 'ramsey/uuid' esté instalado.
+        // composer require ramsey/uuid
+        $newCode = (string) \Illuminate\Support\Str::uuid();
+
+        // Asegurarse de que el código sea único en la tabla
+        while (Estudiante::where('codigo', $newCode)->exists()) {
+            $newCode = (string) \Illuminate\Support\Str::uuid();
+        }
+
+        $this->codigo = $newCode;
+        $this->aprobado = true; // Marcar como aprobado al asignar código permanente
+        $this->save();
     }
 }

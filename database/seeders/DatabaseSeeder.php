@@ -10,7 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         // Generar datos de prueba
         $this->call([
-            // No modificar orden de carga
+            // --- ESTRUCTURA BASE ---
             PermissionSeeder::class,
             SedeSeeder::class,
             AreaSeeder::class,
@@ -24,13 +24,12 @@ class DatabaseSeeder extends Seeder
             CentroEducativoSeeder::class,
 
             OlimpiadaSeeder::class,
+            // Definiciones de evaluación deben crearse antes de las fases
+            DefinicionEvaluacionSeeder::class,
             FaseOlimpiadaSeeder::class,
             EstadoInscripcionSeeder::class,
-            DefinicionEvaluacionSeeder::class,
             InscripcionOlimpiadaSeeder::class,
             ItemDefinidoSeeder::class,
-            EvaluacionFaseSeeder::class,
-            ItemEvaluadoSeeder::class,
 
             // Estudiantes de prueba
             TestStudentsSeeder::class,

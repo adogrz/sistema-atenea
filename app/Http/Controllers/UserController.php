@@ -569,4 +569,10 @@ class UserController extends Controller
 
         return response()->json($infoDepuracion, 200, [], JSON_PRETTY_PRINT);
     }
+
+    public function getCalificadores(): JsonResponse
+    {
+        $calificadores = User::role('calificador')->orderBy('name')->get(['id', 'name', 'email']);
+        return response()->json($calificadores);
+    }
 }
