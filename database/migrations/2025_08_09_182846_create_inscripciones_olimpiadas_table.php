@@ -5,42 +5,30 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
+
     public function up(): void
     {
         Schema::create('inscripciones_olimpiadas', function (Blueprint $table) {
             $table->id();
 
-            // Relaciones principales
+            // Relación con olimpiada
             $table->foreignId('olimpiada_id')
                 ->constrained('olimpiadas')
-                ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
-            $table->foreignId('fase_id')
-                ->constrained('fases_olimpiadas')
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
-
-            // Ajustado: usamos codigo string del estudiante
+            // Relación con estudiante (por código)
             $table->string('estudiante_codigo');
             $table->foreign('estudiante_codigo')
                 ->references('codigo')
                 ->on('estudiantes')
-                ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
-            // Estado (obligatorio)
+            // Estado de inscripción
             $table->foreignId('estado_inscripcion_id')
                 ->constrained('estados_inscripciones')
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
+                ->cascadeOnDelete();
 
-            // Datos de inscripción
-            $table->string('codigo', 30)->unique();              // Ej: OLI2025-000045
-            $table->dateTime('fecha_inscripcion')->useCurrent();
-            $table->boolean('activo')->default(true);
-            $table->text('observaciones')->nullable();
-
+            // Control de timestamps
             $table->timestamps();
 
             // Restricción para evitar duplicidad

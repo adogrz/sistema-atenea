@@ -6,54 +6,56 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use \App\Services\CentroEducativoImportService;
 use Illuminate\Http\JsonResponse;
+use App\Transformers\CentroEducativoTransformer; // Added import for Transformer
 
 class CentroEducativoController extends Controller
 {
     /**
-     * Muestra el formulario de importación
+     * Muestra el formulario de importación y maneja la previsualización del archivo.
      */
-    public function create()
+    public function create(Request $request)
     {
-        return Inertia::render('import-form', ['resultados' => 'NO DATA']);
-    }
+        $preview = null;
+        $headers = null;
+        $errors = [];
 
-    /*
-     * Carga la previsualización del archivo
-     */
-    public function preview(Request $request)
-    {
-        $request->validate([
-            'archivo_excel' => 'required|file|mimes:xls,xlsx|max:2048',
-        ]);
-
-        $path = $request->file('archivo_excel')->getPathname();
-
-        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
-        $rows = $spreadsheet->getActiveSheet()->toArray();
-
-        $transformer = new \App\Transformers\CentroEducativoTransformer();
-        $headers = $rows[0];
-        $columnIndexes = $transformer->mapHeaders($headers);
-
-        // Validar encabezados requeridos
-        $requeridos = ['codigo', 'nombre', 'departamento', 'distrito', 'sector', 'zona', 'direccion', 'internacional'];
-        $faltantes = array_diff($requeridos, array_keys($columnIndexes));
-
-        if ($faltantes) {
-            return back()->with([
-                'errores' => ['Faltan columnas requeridas: ' . implode(', ', $faltantes)],
+        if ($request->hasFile('archivo_excel')) {
+            $request->validate([
+                'archivo_excel' => 'required|file|mimes:xls,xlsx|max:2048',
             ]);
+
+            $path = $request->file('archivo_excel')->getPathname();
+
+            try {
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+                $rows = $spreadsheet->getActiveSheet()->toArray();
+
+                $transformer = new CentroEducativoTransformer();
+                $headers = $rows[0];
+                $columnIndexes = $transformer->mapHeaders($headers);
+
+                // Validar encabezados requeridos
+                $requeridos = ['codigo', 'nombre', 'departamento', 'distrito', 'sector', 'zona', 'direccion', 'internacional'];
+                $faltantes = array_diff($requeridos, array_keys($columnIndexes));
+
+                if ($faltantes) {
+                    $errors[] = 'Faltan columnas requeridas: ' . implode(', ', $faltantes);
+                } else {
+                    // Transformar las primeras 10 filas para previsualización
+                    $preview = [];
+                    foreach (array_slice($rows, 1, 10) as $row) {
+                        $preview[] = $transformer->transformRow($row, $columnIndexes);
+                    }
+                }
+            } catch (\Exception $e) {
+                $errors[] = 'Error al procesar el archivo: ' . $e->getMessage();
+            }
         }
 
-        // Transformar las primeras 10 filas
-        $preview = [];
-        foreach (array_slice($rows, 1, 10) as $row) {
-            $preview[] = $transformer->transformRow($row, $columnIndexes);
-        }
-
-        return Inertia::render('CentroEducativo/PreviewImport', [
+        return Inertia::render('CentroEducativo/Import', [
             'preview' => $preview,
             'headers' => $headers,
+            'errors' => $errors,
         ]);
     }
 

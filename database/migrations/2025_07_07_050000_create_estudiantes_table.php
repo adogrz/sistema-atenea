@@ -27,8 +27,10 @@ return new class extends Migration
             $table->string('direccion');
             $table->unsignedSmallInteger('distrito');
             $table->unsignedSmallInteger('nivel_educativo');
-            $table->string('nivel')->default('-1');
             $table->boolean('aprobado')->default(false);
+            $table->string('nivel')->default('-1');
+            $table->boolean('nuevo_ingreso')->default(true);
+            $table->boolean('prueba_psicologica_aprobada')->default(false);
             $table->timestamps();
             // Llaves foraneas
             $table->foreign('user_id')->references('id')->on('users');

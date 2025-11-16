@@ -7,9 +7,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class FaseOlimpiada extends Model
 {
+    use LogsActivity;
+
+
+
     /**
      * The table associated with the model.
      *
@@ -24,13 +30,25 @@ class FaseOlimpiada extends Model
      */
     protected $fillable = [
         'olimpiada_id',
-        'numero_fase',
         'nombre',
+        'descripcion',
+        'definicion_evaluacion_id',
+        'cupos',
+        'nota_minima_aprobacion',
         'fecha_inicio',
         'fecha_fin',
-        'activa',
-        'descripcion',
+        'resultados_publicados',
+        'orden',
+        'observaciones',
     ];
+
+    /**
+     * Relación: pertenece a una definicion de evaluacion
+     */
+    public function definicionEvaluacion(): BelongsTo
+    {
+        return $this->belongsTo(DefinicionEvaluacion::class, 'definicion_evaluacion_id');
+    }
 
     /**
      * The attributes that should be cast to native types.
@@ -39,8 +57,11 @@ class FaseOlimpiada extends Model
      */
     protected $casts = [
         'activa' => 'boolean',
+        'cupos' => 'integer',
+        'nota_minima_aprobacion' => 'float',
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
+        'resultados_publicados' => 'boolean',
     ];
 
     /**
@@ -52,22 +73,38 @@ class FaseOlimpiada extends Model
     }
 
     /**
-     * Relación: tiene muchas inscripciones
+     * Relación: tiene muchas evaluaciones, que representan los participantes en esta fase.
      */
-    public function inscripciones(): HasMany
+    public function evaluaciones(): HasMany
     {
-        return $this->hasMany(InscripcionOlimpiada::class, 'fase_id');
+        return $this->hasMany(Evaluacion::class, 'fase_olimpiada_id');
     }
 
     /**
-     * Scope: fases vigentes (activas y dentro del rango de fechas)
+     * Verifica si la inscripción está abierta.
      */
-    public function scopeVigentes(Builder $query): Builder
+    public function isInscripcionAbierta(): bool
     {
-        $hoy = Carbon::today();
+        $now = Carbon::now();
+        return $this->fecha_inicio_inscripcion <= $now && $now <= $this->fecha_fin_inscripcion;
+    }
 
-        return $query->where('activa', true)
-            ->whereDate('fecha_inicio', '<=', $hoy)
-            ->whereDate('fecha_fin', '>=', $hoy);
+    /**
+     * Scope para fases activas.
+     */
+    public function scopeActivas(Builder $query): Builder
+    {
+        return $query->where('activa', true);
+    }
+
+    /**
+     * Get the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

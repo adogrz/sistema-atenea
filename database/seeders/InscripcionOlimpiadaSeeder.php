@@ -27,13 +27,8 @@ class InscripcionOlimpiadaSeeder extends Seeder
 
         InscripcionOlimpiada::create([
             'olimpiada_id'          => 1, // Asegúrate que exista una olimpiada con ID 1
-            'fase_id'               => 1, // Asegúrate que exista una fase con ID 1
             'estudiante_codigo'     => $estudiante->codigo,
             'estado_inscripcion_id' => 1, // Asegúrate que exista un estado válido (ej. pendiente)
-            'codigo'                => 'OLI2025-0001',
-            'fecha_inscripcion'     => now(),
-            'activo'                => true,
-            'observaciones'         => null,
         ]);
 
         echo "✅ Inscripción creada para estudiante: {$estudiante->primer_nombre} {$estudiante->primer_apellido} (Código: {$estudiante->codigo})\n";

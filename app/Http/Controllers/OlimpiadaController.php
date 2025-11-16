@@ -2,72 +2,153 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Area;
 use App\Models\Olimpiada;
+use App\Models\DefinicionEvaluacion;
+use App\Models\FaseOlimpiada;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\ValidationException;
+use App\Models\User;
+use App\Models\NivelEducativo;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class OlimpiadaController extends Controller
 {
-    protected array $guard = ['id','created_at','updated_at'];
-
-    protected function fillableFromRequest(Request $request): array
+    public function index(Request $request): Response
     {
-        $columns = Schema::getColumnListing('olimpiadas');
-        $allowed = array_values(array_diff($columns, $this->guard));
-        return $request->only($allowed);
-    }
+        $query = Olimpiada::with(['area', 'nivelEducativo', 'fases' => function ($query) {
+                $query->orderBy('orden');
+            }]);
 
-    public function index(Request $request)
-    {
-        $perPage = (int) ($request->integer('per_page') ?: 15);
-        $columns = Schema::getColumnListing('olimpiadas');
-
-        $q = Olimpiada::query();
-
-        // Simple "q" search across string columns
-        if ($search = $request->string('q')->toString()) {
-            $q->where(function ($qq) use ($columns, $search) {
-                foreach ($columns as $col) {
-                    $qq->orWhere($col, 'LIKE', '%'.$search.'%');
-                }
-            });
+        if ($request->has('anio')) {
+            $query->where('anio', $request->input('anio'));
         }
 
-        // Column-based filters
-        foreach ($request->all() as $key => $val) {
-            if (in_array($key, $columns, true) && $val !== null && $key !== 'q' && $key !== 'per_page') {
-                $q->where($key, $val);
-            }
-        }
+        $olimpiadas = $query->orderBy('created_at', 'desc')->get();
 
-        $q->orderBy($request->get('order_by', 'id'), $request->get('order_dir', 'desc'));
-
-        return response()->json($q->paginate($perPage));
+        return Inertia::render('Olimpiadas/index', [
+            'olimpiadas' => $olimpiadas,
+            'areas' => Area::all(),
+            'nivelesEducativos' => NivelEducativo::all(),
+            'definiciones_evaluacion' => DefinicionEvaluacion::all(),
+            'filters' => $request->only('anio'),
+        ]);
     }
 
-    public function show(Olimpiada $olimpiada)
+
+
+    public function create()
     {
-        return response()->json($olimpiada);
+        return Inertia::render('Olimpiadas/OlimpiadaForm', [
+            'areas' => Area::all(),
+            'nivelesEducativos' => NivelEducativo::all(),
+        ]);
+    }
+
+    public function edit(Olimpiada $olimpiada)
+    {
+        $olimpiada->load(['fases' => function ($query) {
+            $query->orderBy('orden');
+        }]);
+        return Inertia::render('Olimpiadas/OlimpiadaForm', [
+            'olimpiada' => $olimpiada,
+            'areas' => Area::all(),
+            'nivelesEducativos' => NivelEducativo::all(),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $data = $this->fillableFromRequest($request);
-        $olimpiada = Olimpiada::create($data);
-        return response()->json($olimpiada, 201);
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'descripcion' => ['nullable', 'string'],
+            'area_id' => ['required', 'integer', 'exists:areas,id'],
+            'anio' => ['required', 'integer', 'digits:4'],
+            'activa' => ['required', 'boolean'],
+            'nivel_educativo_id' => ['required', 'integer', 'exists:niveles_educativos,codigo'],
+            'tipo' => ['required', 'in:nivel,olimpico'],
+            'fases' => ['nullable', 'array'],
+            'fases.*.nombre' => ['required', 'string', 'max:255'],
+            'fases.*.orden' => ['required', 'integer', 'min:1'],
+            'fases.*.fecha_inicio' => ['required', 'date'],
+            'fases.*.fecha_fin' => ['required', 'date', 'after_or_equal:fases.*.fecha_inicio'],
+            'fases.*.activa' => ['required', 'boolean'],
+            'fases.*.observaciones' => ['nullable', 'string'],
+        ]);
+
+        $olimpiada = Olimpiada::create($validated);
+        activity()->performedOn($olimpiada)->log('Olimpiada creada');
+
+        if (isset($validated['fases'])) {
+            foreach ($validated['fases'] as $faseData) {
+                // Set default values if not provided by frontend (which they won't be from FasesPanel)
+                $faseData['cupos'] = $faseData['cupos'] ?? 0;
+                $olimpiada->fases()->create($faseData);
+            }
+        }
+
+        return redirect()->route('olimpiadas.index')->with('success', 'Olimpiada creada exitosamente.');
     }
 
     public function update(Request $request, Olimpiada $olimpiada)
     {
-        $data = $this->fillableFromRequest($request);
-        $olimpiada->fill($data)->save();
-        return response()->json($olimpiada);
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'descripcion' => ['nullable', 'string'],
+            'area_id' => ['required', 'integer', 'exists:areas,id'],
+            'anio' => ['required', 'integer', 'digits:4'],
+            'activa' => ['required', 'boolean'],
+            'nivel_educativo_id' => ['required', 'integer', 'exists:niveles_educativos,codigo'],
+            'tipo' => ['required', 'in:nivel,olimpico'],
+            'fases' => ['nullable', 'array'],
+            'fases.*.id' => ['nullable', 'integer', 'exists:fases_olimpiadas,id'], // Existing phases will have an ID
+            'fases.*.nombre' => ['required', 'string', 'max:255'],
+            'fases.*.orden' => ['required', 'integer', 'min:1'],
+            'fases.*.fecha_inicio' => ['required', 'date'],
+            'fases.*.fecha_fin' => ['required', 'date', 'after_or_equal:fases.*.fecha_inicio'],
+            'fases.*.activa' => ['required', 'boolean'],
+            'fases.*.observaciones' => ['nullable', 'string'],
+        ]);
+
+        $olimpiada->update($validated);
+        activity()->performedOn($olimpiada)->log('Olimpiada actualizada');
+
+        if (isset($validated['fases'])) {
+            $incomingPhaseIds = collect($validated['fases'])->pluck('id')->filter()->all();
+            $existingPhaseIds = $olimpiada->fases->pluck('id')->all();
+
+            // Delete phases that are no longer present in the incoming data
+            $phasesToDelete = array_diff($existingPhaseIds, $incomingPhaseIds);
+            FaseOlimpiada::destroy($phasesToDelete);
+
+            foreach ($validated['fases'] as $faseData) {
+                // Set default values if not provided by frontend
+                $faseData['cupos'] = $faseData['cupos'] ?? 0;
+
+                if (isset($faseData['id'])) {
+                    // Update existing phase
+                    $fase = $olimpiada->fases()->where('id', $faseData['id'])->first();
+                    if ($fase) {
+                        $fase->update($faseData);
+                    }
+                } else {
+                    // Create new phase
+                    $olimpiada->fases()->create($faseData);
+                }
+            }
+        }
+
+        return redirect()->route('olimpiadas.index')->with('success', 'Olimpiada actualizada exitosamente.');
     }
 
     public function destroy(Olimpiada $olimpiada)
     {
-        $olimpiada->delete();
-        return response()->json(['deleted' => true]);
+        try {
+            activity()->performedOn($olimpiada)->log('Olimpiada eliminada');
+            $olimpiada->delete();
+            return redirect()->back()->with('success', 'Olimpiada eliminada exitosamente.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->back()->with('error', 'No se puede eliminar la olimpiada porque tiene fases u otros registros asociados.');
+        }
     }
 }

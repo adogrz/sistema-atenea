@@ -59,5 +59,7 @@ class EssentialUserSeeder extends Seeder
         $jefeMedicina->syncRolesWithExpiration([
             ['name' => 'jefe-medicina', 'is_primary' => true, 'expires_at' => null],
         ]);
+
+
     }
 }

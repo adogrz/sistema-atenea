@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreign('codigo_estudiante')->references('codigo')->on('estudiantes')->onDelete('cascade');
             $table->string('nombres_responsable');
             $table->string('apellidos_responsable');
-            $table->string('email_responsable')->nullable();
+            $table->string('email_responsable');
             $table->string('telefono_responsable');
             $table->enum('tipo_parentesco', ['Madre', 'Padre' , 'Abuelo', 'Tio', 'Tutor legal'])->default('Madre');
             $table->timestamps();
