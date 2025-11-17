@@ -31,7 +31,6 @@ class InternadoPeriodo extends Model
     ];
 
     protected $appends = [
-        'es_vigente',
     ];
 
     /**
@@ -55,6 +54,10 @@ class InternadoPeriodo extends Model
      */
     public function getEsVigenteAttribute(): bool
     {
+        if (is_null($this->fecha_inicio) || is_null($this->fecha_fin)) {
+            return false;
+        }
+        
         $hoy = now()->startOfDay();
         return $hoy->between($this->fecha_inicio, $this->fecha_fin);
     }
