@@ -25,14 +25,14 @@ export default function EducationCenterFinder({ centros_educativos }: EducationC
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Observar valores del formulario
-    const codigo = form.watch('codigo');
-    const centro_educativo = form.watch('centro_educativo');
+    const centro_educativo = form.watch('centro_educativo'); // Código del centro
+    const centro_nombre = form.watch('centro_nombre'); // Nombre del centro para mostrar
     const sector = form.watch('sector');
     const zona = form.watch('zona');
     const internacional = form.watch('internacional');
 
     // Determinar si hay un centro seleccionado
-    const hasCentroSelected = codigo && centro_educativo;
+    const hasCentroSelected = centro_educativo && centro_nombre;
 
     // Filtrar resultados de búsqueda con optimización de performance
     const resultados = useMemo(() => {
@@ -53,8 +53,10 @@ export default function EducationCenterFinder({ centros_educativos }: EducationC
     // Manejar selección de centro educativo
     const handleSeleccionCentro = useCallback(
         (centro: CentroEducativo) => {
-            form.setValue('codigo', centro.codigo);
-            form.setValue('centro_educativo', centro.nombre);
+            // IMPORTANTE: centro_educativo ahora guarda el código, no el nombre
+            // El nombre se guarda en un campo separado solo para mostrar en UI
+            form.setValue('centro_educativo', centro.codigo); // ← Código del centro
+            form.setValue('centro_nombre', centro.nombre); // ← Nombre para mostrar en UI
             form.setValue('sector', centro.sector);
             form.setValue('zona', centro.zona);
             form.setValue('internacional', centro.internacional);
@@ -64,7 +66,7 @@ export default function EducationCenterFinder({ centros_educativos }: EducationC
             setSelectedIndex(-1);
 
             setTimeout(() => {
-                form.trigger(['codigo', 'centro_educativo', 'sector', 'zona', 'internacional']);
+                form.trigger(['centro_educativo', 'sector', 'zona', 'internacional']);
             }, 100);
         },
         [form],
@@ -72,8 +74,8 @@ export default function EducationCenterFinder({ centros_educativos }: EducationC
 
     // Limpiar selección y permitir nueva búsqueda
     const handleCambiarCentro = useCallback(() => {
-        form.setValue('codigo', '');
         form.setValue('centro_educativo', '');
+        form.setValue('centro_nombre', '');
         form.setValue('sector', '');
         form.setValue('zona', '');
         form.setValue('internacional', '');
@@ -192,11 +194,11 @@ export default function EducationCenterFinder({ centros_educativos }: EducationC
                             </div>
                             <div className="min-w-0 flex-1 space-y-3">
                                 <div className="space-y-1">
-                                    <h4 className="pr-2 leading-tight font-semibold text-foreground">{centro_educativo}</h4>
-                                    {codigo && (
+                                    <h4 className="pr-2 leading-tight font-semibold text-foreground">{centro_nombre}</h4>
+                                    {centro_educativo && (
                                         <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                             <Hash className="h-3.5 w-3.5" />
-                                            {codigo}
+                                            {centro_educativo}
                                         </p>
                                     )}
                                 </div>

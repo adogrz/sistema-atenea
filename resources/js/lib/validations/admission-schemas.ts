@@ -317,15 +317,11 @@ export const addressSchema = z.object({
 export const educationSchema = z.object({
     centro_educativo: z
         .string()
-        .min(5, { message: 'El nombre debe tener al menos 5 caracteres' })
-        .max(100, 'Máximo 100 caracteres')
-        .regex(/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9"'°\s\-.()]+$/, {
-            message: 'Formato de nombre inválido',
-        }),
-    codigo: z
+        .min(1, { message: 'Debes seleccionar un centro educativo' })
+        .max(100, 'Máximo 100 caracteres'),
+    centro_nombre: z
         .string()
-        .optional()
-        .or(z.literal('')), // Opcional porque puede no haber código para centros ingresados manualmente
+        .optional(), // Solo para mostrar en UI, no se envía al backend
     sector: z
         .string()
         .optional()
@@ -395,7 +391,7 @@ export function getErrorsBySection(errors: Record<string, unknown>) {
         'otro_parentesco_2',
     ];
     const addressFields = ['telefono_casa', 'colonia', 'calle', 'numero_casa', 'punto_referencia', 'direccion', 'distrito', 'departamento', 'municipio'];
-    const educationFields = ['centro_educativo', 'codigo', 'nivel_educativo', 'sector', 'zona', 'internacional'];
+    const educationFields = ['centro_educativo', 'nivel_educativo', 'sector', 'zona', 'internacional'];
 
     return {
         'datos-personales': Object.keys(errors).filter((key) => personalDataFields.includes(key)).length,

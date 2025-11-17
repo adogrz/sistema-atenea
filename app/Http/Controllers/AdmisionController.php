@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 use Inertia\Inertia;
 use Inertia\Response;
@@ -33,6 +34,9 @@ class AdmisionController extends Controller
         try {
             Log::info('=== INICIO PROCESO ADMISIÓN ===', ['request_data' => $request->all()]);
 
+            // IMPORTANTE: Envolver todo en una transacción para evitar datos parciales
+            return DB::transaction(function () use ($request) {
+
             $validated = $request->validate([
 
                 // Estudiante
@@ -42,8 +46,7 @@ class AdmisionController extends Controller
                 'segundo_apellido' => 'required|string|max:50',
                 'sexo' => 'required|in:H,M',
                 'fecha_nacimiento' => 'required|date',
-                'centro_educativo' => 'required|string|max:100',
-                'codigo' => 'required|exists:centros_educativos,codigo',
+                'centro_educativo' => 'required|string|max:100|exists:centros_educativos,codigo', // Validar que exista el código
                 'nie' => 'required|string|unique:estudiantes,nie',
                 'telefono_estudiante' => 'nullable|string|size:8',
                 'telefono_casa' => 'nullable|string|size:8',
@@ -122,9 +125,8 @@ class AdmisionController extends Controller
             Log::info('Creando/buscando usuario...');
             $usuario = User::firstOrCreate(
                 ['email' => $validated['email']],          // condiciones de búsqueda
-                [                                           // atributos para creación
+                [                                           // atributos para creación (solo si no existe)
                     'name' => trim($validated['primer_nombre'] . ' ' . $validated['segundo_nombre'] . ' ' . $validated['primer_apellido'] . ' ' . $validated['segundo_apellido']),
-                    'email' => $validated['email'],
                     'password' => bcrypt($passwordTemporal),
                     'sede_name' => 'central',  // Todos los estudiantes de admisión van a sede central
                     'status' => 'active',
@@ -189,7 +191,7 @@ class AdmisionController extends Controller
                 'segundo_apellido' => $validated['segundo_apellido'],
                 'sexo' => $validated['sexo'],
                 'fecha_nacimiento' => $validated['fecha_nacimiento'],
-                'centro_educativo' => $validated['codigo'], // Usar el código correcto
+                'centro_educativo' => $validated['centro_educativo'], // Usar centro_educativo que contiene el código
                 'nie' => $validated['nie'],
                 'telefono_estudiante' => $validated['telefono_estudiante'],
                 'telefono_casa' => $validated['telefono_casa'],
@@ -239,9 +241,20 @@ class AdmisionController extends Controller
                 Log::info('ℹ️ Sin responsable 2');
             }
 
-            Log::info('Enviando notificación por email...');
-            $usuario->notify(new UserCredentialsNotification($passwordTemporal));
-            Log::info('✅ Notificación enviada');
+            // Intentar enviar notificación por email (sin detener el proceso si falla)
+            try {
+                Log::info('Enviando notificación por email...');
+                $usuario->notify(new UserCredentialsNotification($passwordTemporal));
+                Log::info('✅ Notificación enviada');
+            } catch (\Exception $emailError) {
+                // Log del error pero no detener el proceso de admisión
+                Log::error('⚠️ Error al enviar notificación por email (no crítico)', [
+                    'error' => $emailError->getMessage(),
+                    'user_id' => $usuario->id,
+                    'email' => $usuario->email
+                ]);
+                // Nota: El estudiante fue registrado exitosamente aunque el email falló
+            }
 
             Log::info('=== PROCESO COMPLETADO EXITOSAMENTE ===');
             return response()->json([
@@ -258,7 +271,14 @@ class AdmisionController extends Controller
                     'apellidos_responsable' => $responsable->apellidos_responsable,
                 ],
             ], 201);
+
+            }); // Fin de la transacción DB
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('⚠️ Error de validación en admisión', [
+                'errors' => $e->errors(),
+                'request_data' => $request->except(['password'])
+            ]);
+
             // Personalizar mensajes de error para ser más amigables
             $friendlyErrors = [];
             foreach ($e->errors() as $field => $messages) {
