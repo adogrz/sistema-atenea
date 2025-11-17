@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('periodo_id')->constrained('internado_periodos')->onDelete('cascade');
             $table->unsignedBigInteger('nivel_codigo')->nullable();
             $table->foreign('nivel_codigo')->references('codigo')->on('niveles_educativos')->onDelete('set null');
-            $table->date('fecha');
+            $table->datetime('fecha');
             $table->enum('estado', ['presente', 'ausente', 'justificada'])->default('presente');
             $table->text('observaciones')->nullable();
             $table->timestamps();

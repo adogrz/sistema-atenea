@@ -23,7 +23,7 @@ class InternadoAsistencia extends Model
     ];
 
     protected $casts = [
-        'fecha' => 'date',
+        'fecha' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
