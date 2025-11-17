@@ -34,7 +34,7 @@ class InternadoConductaController extends Controller
             ->get()
             ->map(function ($participante) use ($periodoId) {
                 $estudiante = $participante->estudiante;
-                
+
                 $nombreCompleto = trim(
                     ($estudiante->primer_nombre ?? '') . ' ' .
                     ($estudiante->segundo_nombre ?? '') . ' ' .
@@ -133,10 +133,10 @@ class InternadoConductaController extends Controller
 
     public function reporte(Request $request)
     {
-        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id','nombre','fecha_inicio','fecha_fin','es_vigente']);
+        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id','nombre','fecha_inicio','fecha_fin']);
 
         $periodoId = $request->integer('periodo_id')
-            ?: (InternadoPeriodo::where('es_vigente', true)->value('id')
+            ?: (InternadoPeriodo::vigente()->value('id')
                 ?? InternadoPeriodo::orderByDesc('fecha_inicio')->value('id'));
 
         $nivel = trim((string) $request->get('nivel', ''));
