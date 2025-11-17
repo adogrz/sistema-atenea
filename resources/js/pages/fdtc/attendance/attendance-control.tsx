@@ -216,16 +216,21 @@ export default function AttendancesManagement(props: PageProps) {
       return toast.error('Selecciona periodo y fecha antes de guardar.');
     }
 
-    // CAMBIO PRINCIPAL: Guardar solo los participantes del nivel filtrado actual
-    // Si hay nivel seleccionado, usar participantesPorNivel
-    // Si no hay nivel, guardar todos
-    const participantesAGuardar = nivel ? participantesPorNivel : listaParticipantes;
+    // Obtener solo los IDs seleccionados
+    const idsSeleccionados = Object.entries(selectedIds)
+      .filter(([, checked]) => checked)
+      .map(([id]) => Number(id));
 
-    if (!participantesAGuardar.length) {
-      return toast.error('No hay participantes para guardar con los filtros actuales.');
+    if (idsSeleccionados.length === 0) {
+      return toast.error('Selecciona al menos un estudiante para guardar.');
     }
 
-    const payload = participantesAGuardar.map((p) => ({
+    // Obtener los participantes seleccionados
+    const participantesSeleccionados = listaParticipantes.filter((p) => 
+      idsSeleccionados.includes(p.id)
+    );
+
+    const payload = participantesSeleccionados.map((p) => ({
       participante_id: p.id,
       estado: (estadoById[p.id] ?? 'ausente') as EstadoAsistencia,
       observaciones: observaciones[p.id]?.trim() || null,
@@ -235,7 +240,7 @@ export default function AttendancesManagement(props: PageProps) {
       periodo_id: Number(periodoId), 
       fecha, 
       asistencias: payload,
-      nivel_filtrado: nivel || 'todos'
+      estudiantes_seleccionados: idsSeleccionados.length
     });
 
     setSaving(true);
@@ -246,10 +251,9 @@ export default function AttendancesManagement(props: PageProps) {
       {
         preserveScroll: true,
         onSuccess: () => {
-          const mensaje = nivel 
-            ? `Asistencias guardadas para el nivel: ${nivel} (${payload.length} estudiante(s))`
-            : `Asistencias guardadas para todos los niveles (${payload.length} estudiante(s))`;
-          toast.success(mensaje);
+          toast.success(`Asistencias guardadas para ${payload.length} estudiante(s) seleccionado(s)`);
+          // Opcional: limpiar selección después de guardar
+          setSelectedIds({});
         },
         onError: (errors: Record<string, any>) => {
           console.error('Guardar errores:', errors);
@@ -473,12 +477,16 @@ export default function AttendancesManagement(props: PageProps) {
         {periodoId && listaParticipantes.length ? (
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {nivel 
-                ? `Se guardarán ${participantesPorNivel.length} estudiante(s) del nivel: ${nivel}`
-                : `Se guardarán ${listaParticipantes.length} estudiante(s) de todos los niveles`
+              {selectedInFiltered.length > 0 
+                ? `Se guardarán ${selectedInFiltered.length} estudiante(s) seleccionado(s)`
+                : 'Selecciona estudiantes para guardar sus asistencias'
               }
             </div>
-            <Button type="button" onClick={handleGuardar} disabled={saving}>
+            <Button 
+              type="button" 
+              onClick={handleGuardar} 
+              disabled={saving || selectedInFiltered.length === 0}
+            >
               {saving ? 'Guardando...' : 'Guardar Asistencias'}
             </Button>
           </div>
