@@ -30,9 +30,6 @@ class InternadoPeriodo extends Model
         'deleted_at' => 'datetime',
     ];
 
-    protected $appends = [
-    ];
-
     /**
      * Relación con asistencias
      */
