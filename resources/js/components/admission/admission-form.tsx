@@ -88,6 +88,7 @@ export default function FormularioAdmision(props: {
             departamento: '',
             municipio: '',
             centro_educativo: '',
+            centro_nombre: '',
             sector: 'PÚBLICO',
             zona: 'Rural',
             internacional: 'NO',
@@ -235,9 +236,14 @@ export default function FormularioAdmision(props: {
         setIsSubmitting(true);
         try {
             console.log('=== INICIO DEL ENVÍO ===');
-            console.log('Datos del formulario a enviar:', data);
 
-            const response = await axios.post('/admision', data, {
+            // Excluir centro_nombre del envío (solo es para UI)
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { centro_nombre, ...dataToSend } = data;
+
+            console.log('Datos del formulario a enviar:', dataToSend);
+
+            const response = await axios.post('/admision', dataToSend, {
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/json',

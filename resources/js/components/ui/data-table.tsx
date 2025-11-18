@@ -33,6 +33,7 @@ interface DataTableProps<TData, TValue> {
     globalFilter?: string;
     onGlobalFilterChange?: (value: string) => void;
     searchPlaceholder?: string;
+    renderRowSubComponent?: (props: { row: Row<TData> }) => React.ReactElement;
 }
 
 export function DataTable<TData, TValue>({
@@ -46,6 +47,7 @@ export function DataTable<TData, TValue>({
     globalFilter: externalGlobalFilter,
     onGlobalFilterChange: externalOnGlobalFilterChange,
     searchPlaceholder = 'Buscar...',
+    renderRowSubComponent,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
@@ -130,7 +132,7 @@ export function DataTable<TData, TValue>({
                                             </TableCell>
                                         ))}
                                     </TableRow>
-                                    {row.getIsExpanded() && (
+                                    {row.getIsExpanded() && renderRowSubComponent && (
                                         <TableRow>
                                             <TableCell colSpan={columns.length}>
                                                 {renderRowSubComponent?.({ row })}

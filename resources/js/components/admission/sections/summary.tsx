@@ -52,11 +52,21 @@ export default function ResumenSolicitud(props: ResumenProps) {
     const nombreDistrito = props.distritos?.find?.((d) => d.id === distritoSeleccionado)?.nombre_distrito;
 
     // Utilidades para mostrar valores por id
-    const getCentroEducativo = (id?: string) => {
-        if (!props.centros_educativos || !Array.isArray(props.centros_educativos)) {
-            return values.centro_educativo || 'No especificado';
+    const getCentroEducativo = () => {
+        const centro_nombre = values.centro_nombre;
+        const centro_codigo = values.centro_educativo;
+
+        if (centro_nombre) {
+            return centro_nombre; // Si hay nombre guardado, usarlo
         }
-        return props.centros_educativos.find((c) => c.codigo === id)?.nombre || values.centro_educativo || 'No especificado';
+
+        // Fallback: buscar por código si no hay nombre
+        if (centro_codigo && props.centros_educativos && Array.isArray(props.centros_educativos)) {
+            const centro = props.centros_educativos.find((c) => c.codigo === centro_codigo);
+            return centro?.nombre || centro_codigo || 'No especificado';
+        }
+
+        return 'No especificado';
     };
 
     const getNivelEducativo = (id?: string) => {
@@ -107,7 +117,7 @@ export default function ResumenSolicitud(props: ResumenProps) {
             }
 
             case 'education': {
-                const educationFields = ['codigo', 'nivel_educativo']; // Solo campos críticos sin valores por defecto
+                const educationFields = ['centro_educativo', 'nivel_educativo']; // Usar centro_educativo en lugar de codigo
                 totalFields = educationFields.length;
                 filledFields = educationFields.filter((field) => {
                     const value = values[field];
@@ -443,11 +453,11 @@ export default function ResumenSolicitud(props: ResumenProps) {
                             <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2 xl:grid-cols-3">
                                 <div className="space-y-1">
                                     <span className="font-semibold text-muted-foreground">Código del centro</span>
-                                    <p className="text-foreground">{showValue(values.codigo)}</p>
+                                    <p className="text-foreground">{showValue(values.centro_educativo)}</p>
                                 </div>
                                 <div className="space-y-1 md:col-span-2">
                                     <span className="font-semibold text-muted-foreground">Centro educativo</span>
-                                    <p className="text-foreground">{getCentroEducativo(values.codigo)}</p>
+                                    <p className="text-foreground">{getCentroEducativo()}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <span className="font-semibold text-muted-foreground">Sector</span>

@@ -34,7 +34,7 @@ class InternadoEvaluacionController extends Controller
 
         $evaluaciones = $query->get()->map(function($e) {
             $nivelesAplicables = $e->niveles_aplicables ?? [];
-            
+
             // Filtrar calificaciones solo de estudiantes de los niveles aplicables
             $calificacionesFiltradas = $e->calificaciones->filter(function($calificacion) use ($nivelesAplicables) {
                 $nivelEstudiante = $calificacion->participante?->estudiante?->nivel_educativo;
@@ -68,7 +68,7 @@ class InternadoEvaluacionController extends Controller
             ];
         });
 
-        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id', 'nombre', 'es_vigente']);
+        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id', 'nombre']);
         $materias = InternadoMateria::orderBy('nombre')->get(['id', 'nombre', 'codigo']);
         $niveles = NivelEducativo::orderBy('nivel')->get(['codigo', 'descripcion', 'nivel']);
 
@@ -86,7 +86,7 @@ class InternadoEvaluacionController extends Controller
 
     public function create(): Response
     {
-        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id', 'nombre', 'es_vigente']);
+        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id', 'nombre']);
         $materias = InternadoMateria::orderBy('nombre')->get(['id', 'nombre', 'codigo']);
         $niveles = NivelEducativo::orderBy('nivel')->get(['codigo', 'descripcion', 'nivel']);
 
@@ -139,7 +139,7 @@ class InternadoEvaluacionController extends Controller
                         $nivelEstudiante = $participante->estudiante?->nivel_educativo;
                         return $nivelEstudiante && in_array($nivelEstudiante, $nivelesAplicables);
                     });
-                
+
                 foreach ($participantes as $p) {
                     InternadoCalificacion::create([
                         'evaluacion_id' => $eva->id,
@@ -156,7 +156,7 @@ class InternadoEvaluacionController extends Controller
 
     public function edit(InternadoEvaluacion $evaluacion): Response
     {
-        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id', 'nombre', 'es_vigente']);
+        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id', 'nombre']);
         $materias = InternadoMateria::orderBy('nombre')->get(['id', 'nombre', 'codigo']);
         $niveles = NivelEducativo::orderBy('nivel')->get(['codigo', 'descripcion', 'nivel']);
 
@@ -232,7 +232,7 @@ class InternadoEvaluacionController extends Controller
     {
         // Obtener los niveles aplicables de la evaluación
         $nivelesAplicables = $evaluacion->niveles_aplicables ?? [];
-        
+
         // Obtener participantes activos que pertenecen a los niveles de esta evaluación
         $activos = InternadoParticipante::where('estado', 'activo')
             ->with('estudiante')
@@ -246,7 +246,7 @@ class InternadoEvaluacionController extends Controller
         // Asegurar calificaciones para los participantes filtrados
         $existentes = InternadoCalificacion::where('evaluacion_id', $evaluacion->id)
             ->pluck('participante_id');
-        
+
         $faltantes = $activos->diff($existentes);
 
         foreach ($faltantes as $pid) {

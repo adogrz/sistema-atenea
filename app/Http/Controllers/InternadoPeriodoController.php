@@ -18,6 +18,12 @@ class InternadoPeriodoController extends Controller
             ->ordenado()
             ->get()
             ->map(function ($periodo) {
+
+                $hoy = now()->startOfDay();
+                $esVigente = $periodo->fecha_inicio && $periodo->fecha_fin 
+                    ? $hoy->between($periodo->fecha_inicio, $periodo->fecha_fin)
+                    : false;
+
                 return [
                     'id' => $periodo->id,
                     'nombre' => $periodo->nombre,
@@ -25,7 +31,7 @@ class InternadoPeriodoController extends Controller
                     'fecha_fin' => $periodo->fecha_fin->format('d/m/Y'),
                     'descripcion' => $periodo->descripcion,
                     'activo' => $periodo->activo,
-                    'es_vigente' => $periodo->es_vigente,
+                    'es_vigente' => $esVigente,
                     'total_asistencias' => $periodo->asistencias_count,
                     'total_conductas' => $periodo->conductas_count,
                 ];

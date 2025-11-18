@@ -21,10 +21,21 @@ class InternadoConductaController extends Controller
         $periodoId = $request->get('periodo_id', $periodoActual?->id);
 
         // Obtener todos los periodos
-        $periodos = InternadoPeriodo::ordenado()->get()->map(function ($periodo) {
+        $periodos = InternadoPeriodo::ordenado()
+        ->get()
+        ->map(function ($periodo) {
+            // Calcular es_vigente manualmente
+            $hoy = now()->startOfDay();
+            $esVigente = $periodo->fecha_inicio && $periodo->fecha_fin 
+                ? $hoy->between($periodo->fecha_inicio, $periodo->fecha_fin)
+                : false;
+
             return [
                 'id' => $periodo->id,
                 'nombre' => $periodo->nombre,
+                'fecha_inicio' => $periodo->fecha_inicio->format('Y-m-d'),
+                'fecha_fin' => $periodo->fecha_fin->format('Y-m-d'),
+                'es_vigente' => $esVigente, // ← Agregar
             ];
         });
 
@@ -34,7 +45,7 @@ class InternadoConductaController extends Controller
             ->get()
             ->map(function ($participante) use ($periodoId) {
                 $estudiante = $participante->estudiante;
-                
+
                 $nombreCompleto = trim(
                     ($estudiante->primer_nombre ?? '') . ' ' .
                     ($estudiante->segundo_nombre ?? '') . ' ' .
@@ -133,10 +144,26 @@ class InternadoConductaController extends Controller
 
     public function reporte(Request $request)
     {
-        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')->get(['id','nombre','fecha_inicio','fecha_fin','es_vigente']);
+        $periodos = InternadoPeriodo::orderByDesc('fecha_inicio')
+        ->get(['id','nombre','fecha_inicio','fecha_fin'])
+        ->map(function ($periodo) {
+            // Calcular es_vigente manualmente
+            $hoy = now()->startOfDay();
+            $esVigente = $periodo->fecha_inicio && $periodo->fecha_fin 
+                ? $hoy->between($periodo->fecha_inicio, $periodo->fecha_fin)
+                : false;
+
+            return [
+                'id' => $periodo->id,
+                'nombre' => $periodo->nombre,
+                'fecha_inicio' => $periodo->fecha_inicio->format('Y-m-d'),
+                'fecha_fin' => $periodo->fecha_fin->format('Y-m-d'),
+                'es_vigente' => $esVigente, // ← Agregar
+            ];
+        });
 
         $periodoId = $request->integer('periodo_id')
-            ?: (InternadoPeriodo::where('es_vigente', true)->value('id')
+            ?: (InternadoPeriodo::vigente()->value('id')
                 ?? InternadoPeriodo::orderByDesc('fecha_inicio')->value('id'));
 
         $nivel = trim((string) $request->get('nivel', ''));
