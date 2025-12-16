@@ -13,6 +13,7 @@ import {
     FileBarChart,
     FileCheck,
     FileHeart,
+    FileUp,
     GraduationCap,
     GraduationCapIcon,
     HouseIcon,
@@ -110,14 +111,20 @@ export function AppSidebar() {
     function buildAcademicNav(): NavItem[] {
         if (!hasPermission('academic:view')) return [];
 
+        const items: NavItem[] = [
+            { title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard },
+            { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
+        ];
+
+        if (hasPermission('centros-educativos:import')) {
+            items.push({ title: 'Importar Centros Educativos', href: '/centros/importar', icon: FileUp });
+        }
+
         return [
             {
                 title: 'Académico',
                 icon: School,
-                items: [
-                    { title: 'Panel Académico', href: '/dashboard/academico', icon: LayoutDashboard },
-                    { title: 'Calendario', href: '/dashboard/calendario', icon: CalendarDays },
-                ],
+                items,
             },
         ];
     }
@@ -223,7 +230,7 @@ export function AppSidebar() {
                 title: 'Estudiante',
                 icon: GraduationCapIcon,
                 items: [
-                    { title: 'Inscripciones', href: '/dashboard/inscripciones', icon: LayoutDashboard },
+                    { title: 'Inscripciones', href: '/mis-inscripciones', icon: LayoutDashboard },
                     { title: 'Calendario', href: '/dashboard/calendario', icon: Calendar },
                 ],
             },

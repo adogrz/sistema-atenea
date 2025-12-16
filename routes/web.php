@@ -41,6 +41,9 @@ Route::get('/', static function () {
 })->name('home');
 
 Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
+    // Ruta para el dashboard de inscripciones del estudiante
+    Route::get('/mis-inscripciones', [InscripcionOlimpiadaController::class, 'index'])->name('inscripciones.student.index');
+
     // Dashboard principal (contextual)
     Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/calificaciones', [CalificacionController::class, 'index'])->name('calificaciones.index'); //->middleware('role:Calificador')
@@ -70,7 +73,6 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         Route::post('users', [UserController::class, 'store'])->name('users.store')->middleware('permission:users:create');
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('permission:users:edit');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users:edit');
-        Route::patch('users/{user}', [UserController::class, 'update'])->middleware('permission:users:edit');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users:delete');
         Route::post('users/{id}/restore', [UserController::class, 'restore'])->name('users.restore')->middleware('permission:users:delete');
         // Olimpiadas
@@ -157,14 +159,7 @@ Route::middleware(['check.status', 'auth', 'verified'])->group(function () {
         ->middleware('permission:users:view-all');
 });
 
-// Rutas de carga de centros educativos (requiere autenticación y evento activo)
-Route::middleware(['web', 'auth', 'check.event.period:registro-aspirantes'])->group(function () {
-    // Página que contiene el formulario de carga
-    Route::get('/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create')->middleware('permission:centros-educativos:import');
-
-    // Ruta POST que procesa el archivo Excel
-    Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store')->middleware('permission:centros-educativos:import');
-});
+// Las rutas de carga de centros educativos se han movido a routes/academic.php
 
 // Rutas públicas de admisión de aspirantes (sin autenticación, solo verificar evento activo)
 Route::middleware(['web', 'check.event.period:registro-aspirantes'])->group(function () {

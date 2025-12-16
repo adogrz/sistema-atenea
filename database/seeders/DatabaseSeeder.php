@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             AreaSeeder::class,
             // Ususarios esenciales
             EssentialUserSeeder::class,
+            CalificadorSeeder::class,
             // Catalogos
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
@@ -33,7 +34,7 @@ class DatabaseSeeder extends Seeder
 
             // Estudiantes de prueba
             TestStudentsSeeder::class,
-
+            TestDataSeeder::class,
             //Materias
             MateriaSeeder::class,
         ]);

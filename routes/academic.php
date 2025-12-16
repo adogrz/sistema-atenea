@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Models\Evento;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\CentroEducativoController;
 
 // Rutas para gestión de eventos académicos
 Route::middleware(['auth', 'permission:academic:view'])->group(function () {
@@ -84,18 +85,20 @@ Route::middleware(['auth', 'permission:academic:view'])->group(function () {
     })->name('academic-forms.edit');
 
     // Rutas de gestión de eventos (POST, PUT, DELETE)
-    Route::middleware('permission:events:create')->group(function () {
-        Route::post('/dashboard/academic-forms', [EventController::class, 'store'])
-            ->name('academic-forms.store');
+    Route::prefix('/dashboard/academic-forms')->name('academic-forms.')->group(function () {
+        Route::post('/', [EventController::class, 'store'])
+            ->name('store')->middleware('permission:events:create');
+        Route::put('/{event}', [EventController::class, 'update'])
+            ->name('update')->middleware('permission:events:edit');
+        Route::delete('/{event}', [EventController::class, 'destroy'])
+            ->name('destroy')->middleware('permission:events:delete');
     });
+});
 
-    Route::middleware('permission:events:edit')->group(function () {
-        Route::put('/dashboard/academic-forms/{event}', [EventController::class, 'update'])
-            ->name('academic-forms.update');
-    });
-
-    Route::middleware('permission:events:delete')->group(function () {
-        Route::delete('/dashboard/academic-forms/{event}', [EventController::class, 'destroy'])
-            ->name('academic-forms.destroy');
-    });
+// Rutas de carga de centros educativos (requiere autenticación y evento activo)
+Route::middleware(['web', 'auth', 'role:admin-academico', 'permission:centros-educativos:import', 'check.event.period:registro-aspirantes'])->group(function () {
+    // Página que contiene el formulario de carga y maneja la previsualización
+    Route::match(['get', 'post'], '/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create');
+    // Ruta POST que procesa el archivo Excel para la importación final
+    Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store');
 });

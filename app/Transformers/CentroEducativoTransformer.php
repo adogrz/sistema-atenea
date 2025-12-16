@@ -144,6 +144,9 @@ class CentroEducativoTransformer
      */
     public function normalize($text): string
     {
+        if (!is_string($text)) {
+            return '';
+        }
         // Convertir a mayúsculas
         $text = mb_strtoupper($text, 'UTF-8');
 
