@@ -31,8 +31,25 @@ interface ComboboxProps<T> {
     disabled?: boolean;
 }
 
+/**
+ * A generic, reusable combobox component with search functionality.
+ *
+ * @template T - The type of the items in the combobox, must be an object.
+ *
+ * @param {T[]} [items=[]] - The array of items to display in the dropdown. Defaults to an empty array.
+ * @param {string} value - The currently selected value.
+ * @param {(value: string) => void} onValueChange - Callback function when the value changes.
+ * @param {keyof T} valueKey - The key in the item object to use as the value.
+ * @param {keyof T} labelKey - The key in the item object to use as the display label.
+ * @param {string} [placeholder="Select item..."] - Placeholder text for the button when no item is selected.
+ * @param {string} [searchPlaceholder="Search..."] - Placeholder text for the search input.
+ * @param {string} [emptyText="No item found."] - Text to display when the search yields no results.
+ * @param {string} [className] - Optional CSS class for the trigger button.
+ * @param {string} [contentClassName] - Optional CSS class for the popover content.
+ * @param {boolean} [disabled=false] - Whether the combobox is disabled.
+ */
 export function Combobox<T extends Record<string, unknown>>({
-    items,
+    items = [],
     value,
     onValueChange,
     valueKey,
@@ -54,19 +71,17 @@ export function Combobox<T extends Record<string, unknown>>({
         }
     }, [open, items]);
 
-    const sortedItems = React.useMemo(() => {
-        if (!items || items.length === 0) {
-            return [];
-        }
+    const safeItems = React.useMemo(() => Array.isArray(items) ? items : [], [items]);
 
-        return [...items].sort((a, b) => {
+    const sortedItems = React.useMemo(() => {
+        return [...safeItems].sort((a, b) => {
             const labelA = String(a[labelKey]).toLowerCase();
             const labelB = String(b[labelKey]).toLowerCase();
             return labelA.localeCompare(labelB);
         });
-    }, [items, labelKey]);
+    }, [safeItems, labelKey]);
 
-    const selectedLabel = items.find((item) => item[valueKey] === value)?.[labelKey] as string | undefined;
+    const selectedLabel = safeItems.find((item) => item[valueKey] === value)?.[labelKey] as string | undefined;
 
     return (
         <Popover open={open} onOpenChange={setOpen}>

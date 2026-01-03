@@ -14,52 +14,27 @@ use Illuminate\Support\Facades\Auth;
 
 class ResultadoController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $user = Auth::user();
-        $query = Olimpiada::query();
+        $olimpiadas = Olimpiada::with('area')->get();
+        $fases = FaseOlimpiada::with('olimpiada')->get();
+        
+        $resultados = null;
+        $initialOlimpiadaId = $request->query('olimpiada_id');
+        $initialFaseId = $request->query('fase_id');
 
-        if ($user->hasRole('coordinador-area')) {
-            $primaryArea = $user->primaryArea();
-            if ($primaryArea) {
-                $query->where('area_id', $primaryArea->id);
-            }
+        if ($initialFaseId) {
+            $fase = FaseOlimpiada::with('olimpiada')->findOrFail($initialFaseId);
+            $this->authorize('view', $fase->olimpiada);
+            $resultados = $this->getFaseResults($fase);
         }
 
-        $olimpiadas = $query->with(['area', 'nivelEducativo', 'fases' => function ($query) {
-            $query->with('definicionEvaluacion.itemsDefinidos')->orderBy('orden');
-        }])->get();
-
-        return Inertia::render('Resultados/Index', [
+        return Inertia::render('Olimpiadas/Resultados/Index', [
             'olimpiadas' => $olimpiadas,
-        ]);
-    }
-
-    public function getResultsForFase(FaseOlimpiada $fase)
-    {
-        $this->authorize('view', $fase->olimpiada);
-        $results = $this->getFaseResults($fase);
-        return response()->json($results);
-    }
-
-    public function managementIndex(): Response
-    {
-        $user = Auth::user();
-        $query = Olimpiada::query();
-
-        if ($user->hasRole('coordinador-area')) {
-            $primaryArea = $user->primaryArea();
-            if ($primaryArea) {
-                $query->where('area_id', $primaryArea->id);
-            }
-        }
-
-        $olimpiadas = $query->with(['area', 'nivelEducativo', 'fases' => function ($query) {
-            $query->with('definicionEvaluacion.itemsDefinidos')->orderBy('orden');
-        }])->get();
-
-        return Inertia::render('Resultados/Management', [
-            'olimpiadas' => $olimpiadas,
+            'fases' => $fases,
+            'resultados' => $resultados,
+            'initialOlimpiadaId' => $initialOlimpiadaId,
+            'initialFaseId' => $initialFaseId,
         ]);
     }
 
@@ -69,49 +44,40 @@ class ResultadoController extends Controller
         $fase->load([
             'evaluaciones.inscripcion.estudiante.user',
             'evaluaciones.itemsEvaluados.itemDefinido',
-            'evaluaciones.itemsEvaluados.calificador', // Load calificador for each item
         ]);
 
         $notaMinima = $fase->nota_minima_aprobacion ?? 0;
-        $cupos = $fase->cupos ?? 0;
-        $maxScore = $fase->definicionEvaluacion ? $fase->definicionEvaluacion->itemsDefinidos->sum('puntos_maximos') : 0;
 
-        $resultados = $fase->evaluaciones->map(function ($evaluacion) use ($fase, $maxScore, $notaMinima) {
-            if (!$evaluacion->inscripcion || !$evaluacion->inscripcion->estudiante) return null;
+        $resultados = $fase->evaluaciones->map(function ($evaluacion) use ($notaMinima) {
+            if (!$evaluacion->inscripcion || !$evaluacion->inscripcion->estudiante) {
+                return null;
+            }
 
-            $estudiante = $evaluacion->inscripcion->estudiante;
             $totalScore = $evaluacion->itemsEvaluados->sum('puntaje');
 
-            return [
-                'evaluacion_id' => $evaluacion->id,
-                'olimpiada_id' => $fase->olimpiada_id,
-                'fase_id' => $fase->id,
-                'fase_nombre' => $fase->nombre,
-                'olimpiada_nombre' => $fase->olimpiada->nombre,
-                'estudiante_codigo' => $estudiante->codigo,
-                'estudiante_nombre' => $estudiante->nombre_completo,
-                'estudiante_email' => $estudiante->user->email,
-                'total_score' => $totalScore,
-                'max_score' => $maxScore,
-                'percentage_score' => $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 2) : 0,
+            return (object) [
+                'estudiante' => (object) [
+                    'codigo' => $evaluacion->inscripcion->estudiante->codigo,
+                    'nombre_completo' => $evaluacion->inscripcion->estudiante->nombre_completo,
+                    'user_id' => $evaluacion->inscripcion->estudiante->user_id,
+                ],
+                'puntaje' => $totalScore,
                 'aprobado' => $totalScore >= $notaMinima,
-                'nota_minima' => $notaMinima,
-                'pasa_siguiente_fase' => false,
             ];
-        })->filter()->sortByDesc('total_score')->values();
+        })->filter()->sortByDesc('puntaje')->values()->all();
 
-        $passedCount = 0;
-        return $resultados->map(function ($resultado) use ($cupos, &$passedCount) {
-            if ($resultado['aprobado']) {
-                if ($cupos > 0 && $passedCount < $cupos) {
-                    $resultado['pasa_siguiente_fase'] = true;
-                    $passedCount++;
-                } elseif ($cupos === 0) {
-                    $resultado['pasa_siguiente_fase'] = true;
-                }
-            }
-            return $resultado;
-        });
+        return $resultados;
     }
+    
+    public function getResultsForFase(FaseOlimpiada $fase)
+    {
+        $this->authorize('view', $fase->olimpiada);
+        $results = $this->getFaseResults($fase);
+        return response()->json($results);
+    }
+
+
+
+
 }
 

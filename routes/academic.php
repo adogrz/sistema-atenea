@@ -94,11 +94,3 @@ Route::middleware(['auth', 'permission:academic:view'])->group(function () {
             ->name('destroy')->middleware('permission:events:delete');
     });
 });
-
-// Rutas de carga de centros educativos (requiere autenticación y evento activo)
-Route::middleware(['web', 'auth', 'role:admin-academico', 'permission:centros-educativos:import', 'check.event.period:registro-aspirantes'])->group(function () {
-    // Página que contiene el formulario de carga y maneja la previsualización
-    Route::match(['get', 'post'], '/centros/importar', [CentroEducativoController::class, 'create'])->name('centros.create');
-    // Ruta POST que procesa el archivo Excel para la importación final
-    Route::post('/centros', [CentroEducativoController::class, 'store'])->name('centros.store');
-});

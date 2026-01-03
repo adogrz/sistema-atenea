@@ -18,7 +18,7 @@ class OlimpiadaPolicy
      */
     public function viewAny(User $user)
     {
-        return $user->hasPermissionTo('olimpiadas:list');
+        return $user->hasRole('admin-academico');
     }
 
     /**
@@ -30,15 +30,7 @@ class OlimpiadaPolicy
      */
     public function view(User $user, Olimpiada $olimpiada)
     {
-        if ($user->hasPermissionTo('olimpiadas:list')) {
-            if ($user->hasRole('admin-academico') || $user->hasRole('admin-ti')) {
-                return true; // Admins can view any olimpiada
-            }
-            if ($user->hasRole('coordinador-area')) {
-                return $user->primaryArea()->id === $olimpiada->area_id; // Coordinators can only view their area's olimpiadas
-            }
-        }
-        return false;
+        return $user->hasRole('admin-academico');
     }
 
     /**

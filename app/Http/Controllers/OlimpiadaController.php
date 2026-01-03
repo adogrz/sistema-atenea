@@ -17,7 +17,7 @@ class OlimpiadaController extends Controller
     public function index(Request $request): Response
     {
         $query = Olimpiada::with(['area', 'nivelEducativo', 'fases' => function ($query) {
-                $query->orderBy('orden');
+                $query->with('definicionEvaluacion')->orderBy('orden');
             }]);
 
         if ($request->has('anio')) {

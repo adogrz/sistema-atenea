@@ -18,7 +18,7 @@ class FaseOlimpiadaPolicy
      */
     public function viewAny(User $user)
     {
-        return $user->hasPermissionTo('fases:list');
+        return $user->hasRole('admin-academico');
     }
 
     /**
@@ -30,16 +30,7 @@ class FaseOlimpiadaPolicy
      */
     public function view(User $user, FaseOlimpiada $faseOlimpiada)
     {
-        if ($user->hasPermissionTo('fases:list')) {
-            if ($user->hasRole('admin-academico') || $user->hasRole('admin-ti')) {
-                return true; // Admins can view any fase
-            }
-            if ($user->hasRole('coordinador-area')) {
-                // Coordinators can only view phases of olimpiadas in their area
-                return $user->primaryArea()->id === $faseOlimpiada->olimpiada->area_id;
-            }
-        }
-        return false;
+        return $user->hasRole('admin-academico');
     }
 
     /**
@@ -97,15 +88,6 @@ class FaseOlimpiadaPolicy
      */
     public function assignNotaMinima(User $user, FaseOlimpiada $faseOlimpiada)
     {
-        if ($user->hasPermissionTo('fases:assign-nota-minima')) {
-            if ($user->hasRole('admin-academico')) {
-                return true; // Admin-academico can assign nota minima to any fase
-            }
-            if ($user->hasRole('coordinador-area')) {
-                // Coordinators can assign nota minima only to phases of olimpiadas in their area
-                return $user->primaryArea()->id === $faseOlimpiada->olimpiada->area_id;
-            }
-        }
-        return false;
+        return $user->hasRole('admin-academico');
     }
 }

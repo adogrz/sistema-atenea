@@ -8,11 +8,12 @@ import { Olimpiada, Area, NivelEducativo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { PlusCircle, PencilIcon, Trash2Icon, ChevronDown, ChevronRight } from 'lucide-react';
+import { PlusCircle, PencilIcon, Trash2Icon, ChevronDown, ChevronRight, Eye } from 'lucide-react';
 import { ColumnDef, ColumnFiltersState } from '@tanstack/react-react-table';
 import { FasesList } from './FasesList';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { router } from '@inertiajs/react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface OlimpiadasIndexProps extends PageProps {
     olimpiadas: Olimpiada[];
@@ -30,8 +31,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Olimpiadas' },
 ];
 
-import { DataTableToolbar } from '@/components/ui/data-table-toolbar';
-
 const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEducativos, filters }) => {
     const { flash, auth } = usePage().props as PageProps;
     const userPermissions = auth.user?.permissions || [];
@@ -41,16 +40,19 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
     const canDeleteOlimpiada = userPermissions.includes('olimpiadas:delete');
     const { delete: destroy, processing: deleting } = useForm();
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-    const [selectedYear, setSelectedYear] = React.useState<string>(filters.anio || 'all');
+    const [selectedYear, setSelectedYear] = React.useState<string>(filters.anio || new Date().getFullYear().toString());
 
     const availableYears = useMemo(() => {
         const currentYear = new Date().getFullYear();
-        const years = [];
-        for (let i = currentYear - 5; i <= currentYear + 5; i++) {
-            years.push(i);
+        const years = new Set<number>();
+        // Añadir años de las olimpiadas existentes
+        olimpiadas.forEach(o => years.add(o.anio));
+        // Añadir rango de años alrededor del actual
+        for (let i = currentYear - 5; i <= currentYear + 1; i++) {
+            years.add(i);
         }
-        return years.sort((a, b) => b - a);
-    }, []);
+        return Array.from(years).sort((a, b) => b - a);
+    }, [olimpiadas]);
 
     useEffect(() => {
         if (flash.success) {
@@ -66,6 +68,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
         router.get(route('olimpiadas.index', { anio: year === 'all' ? undefined : year }), {}, {
             preserveState: true,
             preserveScroll: true,
+            replace: true,
         });
     };
 
@@ -84,8 +87,11 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
             cell: ({ row }) => (
                 <Button
                     variant="ghost"
-                    size="icon"
-                    onClick={() => row.toggleExpanded()}
+                    size="sm"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        row.toggleExpanded();
+                    }}
                     disabled={!row.original.fases || row.original.fases.length === 0}
                 >
                     {row.getIsExpanded() ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -104,13 +110,13 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
         {
             accessorKey: 'descripcion',
             header: 'Descripción',
-            cell: ({ row }) => <p className="text-sm text-muted-foreground truncate max-w-xs">{row.original.descripcion}</p>
+            cell: ({ row }) => <p className="text-sm text-muted-foreground truncate max-w-md">{row.original.descripcion}</p>
         },
         {
-            id: 'year',
+            accessorKey: 'anio',
             header: 'Año',
             cell: ({ row }) => (
-                <Badge variant="outline" className="w-fit bg-gray-100 text-gray-800">
+                <Badge variant="outline">
                     {row.original.anio}
                 </Badge>
             ),
@@ -131,9 +137,6 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
             cell: ({ row }) => {
                 return <Badge>{row.original.nivel_educativo?.nivel || 'N/A'}</Badge>;
             },
-            meta: {
-                title: 'Nivel',
-            },
         },
         {
             accessorKey: 'tipo',
@@ -141,8 +144,8 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
             cell: ({ row }) => {
                 const tipo = row.original.tipo;
                 return (
-                    <Badge
-                        className={tipo === 'nivel' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}>
+                    <Badge variant="outline"
+                        className={tipo === 'nivel' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-purple-600 bg-purple-50 text-purple-700'}>
                         {tipo === 'nivel' ? 'Por Nivel' : 'Olímpico'}
                     </Badge>
                 );
@@ -153,7 +156,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
             header: 'Estado',
             cell: ({ row }) => (
                 <Badge
-                    className={row.original.activa ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                    className={row.original.activa ? 'border-green-600 bg-green-50 text-green-700' : 'border-red-600 bg-red-50 text-red-700'}>
                     {row.original.activa ? 'Activa' : 'Inactiva'}
                 </Badge>
             ),
@@ -163,11 +166,17 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
             cell: ({ row }) => {
                 const olimpiada = row.original;
                 return (
-                    <div className="flex items-center space-x-2">
-                        {canEditOlimpiada && (
+                    <div className="flex items-center space-x-1">
+                        {canEditOlimpiada ? (
                             <Button asChild variant="outline" size="icon">
                                 <Link href={route('olimpiadas.edit', olimpiada.id)}>
                                     <PencilIcon className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Button asChild variant="outline" size="icon">
+                                <Link href={route('olimpiadas.edit', olimpiada.id)}>
+                                    <Eye className="h-4 w-4" />
                                 </Link>
                             </Button>
                         )}
@@ -175,7 +184,10 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
                             <Button
                                 variant="destructive"
                                 size="icon"
-                                onClick={() => handleDelete(olimpiada)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(olimpiada);
+                                }}
                                 disabled={deleting}
                             >
                                 <Trash2Icon className="h-4 w-4" />
@@ -185,10 +197,10 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
                 );
             },
         },
-    ], [deleting]);
+    ], [deleting, canEditOlimpiada, canDeleteOlimpiada]);
 
     const renderRowSubComponent = ({ row }: { row: any }) => (
-        <div className="p-4 bg-muted/50">
+        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 border-l-4 border-primary">
             <FasesList fases={row.original.fases} olimpiadaId={row.original.id} />
         </div>
     );
@@ -198,16 +210,16 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
             <Head title="Gestión de Olimpiadas" />
 
             <div className="p-4 md:p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Gestión de Olimpiadas</h1>
                         <p className="text-muted-foreground">
                             Aquí puedes ver, crear y gestionar todas las olimpiadas.
                         </p>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex w-full sm:w-auto items-center space-x-2">
                         <Select value={selectedYear} onValueChange={handleYearChange}>
-                            <SelectTrigger className="w-40">
+                            <SelectTrigger className="w-full sm:w-40">
                                 <SelectValue placeholder="Filtrar por año..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -218,7 +230,7 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
                             </SelectContent>
                         </Select>
                         {canCreateOlimpiada && (
-                            <Button asChild>
+                            <Button asChild className="w-full sm:w-auto">
                                 <Link href={route('olimpiadas.create')}>
                                     <PlusCircle className="mr-2 h-4 w-4" />
                                     Crear Olimpiada
@@ -228,31 +240,33 @@ const Index: React.FC<OlimpiadasIndexProps> = ({ olimpiadas, areas, nivelesEduca
                     </div>
                 </div>
 
-                <div className="mt-4">
-                    <DataTable
-                        columns={columns}
-                        data={olimpiadas}
-                        renderRowSubComponent={renderRowSubComponent}
-                        getRowCanExpand={(row) => row.original.fases && row.original.fases.length > 0}
-                        columnFilters={columnFilters}
-                        setColumnFilters={setColumnFilters}
-                        toolbarOptions={{
-                            searchableColumnId: 'nombre',
-                            filters: [
-                                {
-                                    columnId: 'area',
-                                    title: 'Área',
-                                    options: areas.map(area => ({ label: area.name, value: area.name })),
-                                },
-                                {
-                                    columnId: 'nivel',
-                                    title: 'Nivel',
-                                    options: nivelesEducativos.map(nivel => ({ label: nivel.nivel, value: nivel.nivel })),
-                                },
-                            ],
-                        }}
-                    />
-                </div>
+                <Card>
+                    <CardContent className="p-0">
+                        <DataTable
+                            columns={columns}
+                            data={olimpiadas}
+                            renderRowSubComponent={renderRowSubComponent}
+                            getRowCanExpand={(row) => row.original.fases && row.original.fases.length > 0}
+                            columnFilters={columnFilters}
+                            setColumnFilters={setColumnFilters}
+                            toolbarOptions={{
+                                searchableColumnId: 'nombre',
+                                filters: [
+                                    {
+                                        columnId: 'area',
+                                        title: 'Área',
+                                        options: areas.map(area => ({ label: area.name, value: area.name })),
+                                    },
+                                    {
+                                        columnId: 'nivel',
+                                        title: 'Nivel',
+                                        options: nivelesEducativos.map(nivel => ({ label: nivel.nivel, value: nivel.nivel })),
+                                    },
+                                ],
+                            }}
+                        />
+                    </CardContent>
+                </Card>
             </div>
         </AppLayout>
     );

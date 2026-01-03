@@ -21,9 +21,10 @@ const RESULTS_PER_PAGE = 100;
 
 interface ResultadosIndexProps extends PageProps {
     olimpiadas: Olimpiada[];
+    fases: FaseOlimpiada[];
 }
 
-const Index: React.FC<ResultadosIndexProps> = ({ olimpiadas }) => {
+const Index: React.FC<ResultadosIndexProps> = ({ olimpiadas, fases }) => {
     const [activeTab, setActiveTab] = useState('all');
     const [selectedOlimpiadaId, setSelectedOlimpiadaId] = useState<string>('all');
     const [selectedFaseId, setSelectedFaseId] = useState<string>('all');
@@ -45,17 +46,6 @@ const Index: React.FC<ResultadosIndexProps> = ({ olimpiadas }) => {
                     <div className="space-y-2">
                         <h4 className="leading-none font-medium">{student.estudiante_nombre}</h4>
                         <p className="text-sm text-muted-foreground">{student.estudiante_email}</p>
-                    </div>
-                    <div className="text-sm">
-                        <p>
-                            <span className="font-semibold">Código:</span> {student.estudiante_codigo}
-                        </p>
-                        <p>
-                            <span className="font-semibold">Olimpiada:</span> {student.olimpiada_nombre}
-                        </p>
-                        <p>
-                            <span className="font-semibold">Fase:</span> {student.fase_nombre}
-                        </p>
                     </div>
                 </div>
             </PopoverContent>
@@ -126,9 +116,8 @@ const Index: React.FC<ResultadosIndexProps> = ({ olimpiadas }) => {
 
     const fasesForDropdown = useMemo(() => {
         if (selectedOlimpiadaId === 'all') return [];
-        const selectedOlimpiada = olimpiadas.find((o) => o.id === Number(selectedOlimpiadaId));
-        return selectedOlimpiada?.fases || [];
-    }, [selectedOlimpiadaId, olimpiadas]);
+        return fases.filter((f) => f.olimpiada_id === Number(selectedOlimpiadaId));
+    }, [selectedOlimpiadaId, fases]);
 
     const fetchResults = async (faseId: string) => {
         if (faseId === 'all') {

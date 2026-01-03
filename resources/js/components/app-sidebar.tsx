@@ -117,7 +117,7 @@ export function AppSidebar() {
         ];
 
         if (hasPermission('centros-educativos:import')) {
-            items.push({ title: 'Importar Centros Educativos', href: '/centros/importar', icon: FileUp });
+            items.push({ title: 'Gestión de Centros Educativos', href: route('centros-educativos.index'), icon: School });
         }
 
         return [
@@ -132,7 +132,7 @@ export function AppSidebar() {
     function buildOlimpiadasNav(): NavItem[] {
         // Si no tiene ningún permiso relevante, no mostramos nada
         const canView =
-            hasPermission('olimpiadas:list') ||
+            hasRole('admin-academico') ||
             hasPermission('resultados:view') ||
             hasPermission('academic:view') ||
             hasRole('calificador') ||
@@ -144,7 +144,7 @@ export function AppSidebar() {
 
         const items = [];
 
-        if (hasPermission('olimpiadas:list')) {
+        if (hasRole('admin-academico')) {
             items.push(
                 { title: 'Olimpiadas y Fases', href: '/dashboard/olimpiadas', icon: GraduationCap },
                 { title: 'Inscripciones', href: '/dashboard/inscripciones', icon: LayoutDashboard },

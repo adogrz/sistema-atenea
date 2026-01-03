@@ -1,75 +1,97 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ClipboardCheck, Users, FileCheck, Loader2 } from 'lucide-react';
-import { BreadcrumbItem, CalificadorItemAsignado, ChartData, Olimpiada, DefinicionEvaluacion, User, FaseOlimpiada, ItemDefinido } from '@/types';
+import { ClipboardCheck, Users, FileCheck, Loader2, AlertCircle } from 'lucide-react';
+import { BreadcrumbItem, CalificadorItemAsignado, ChartData, Olimpiada, DefinicionEvaluacion, User, FaseOlimpiada, ItemDefinido, PageProps } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AllAssignmentsTab from './AllAssignmentsTab';
 import { format, parseISO } from 'date-fns';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-interface GestionEvaluacionProps {
+interface GestionEvaluacionProps extends PageProps {
     olimpiadas: Olimpiada[];
     calificadores: User[];
     definicionesEvaluacion: DefinicionEvaluacion[];
     allAssignments: CalificadorItemAsignado[];
     chartsData: ChartData;
+    query: {
+        olimpiada?: string;
+        fase?: string;
+    }
 }
 
-const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, allAssignments, chartsData }: GestionEvaluacionProps) => {
+const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, allAssignments, chartsData, query }: GestionEvaluacionProps) => {
 
-    const [selectedOlimpiadaId, setSelectedOlimpiadaId] = useState<string | undefined>();
-    const [selectedFaseId, setSelectedFaseId] = useState<string | undefined>();
     const [isAssignModalOpen, setAssignModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<ItemDefinido | null>(null);
     const [isConfirmEvaluationChangeModalOpen, setIsConfirmEvaluationChangeModalOpen] = useState(false);
+
+    const selectedOlimpiadaId = useMemo(() => query.olimpiada, [query.olimpiada]);
+    const selectedFaseId = useMemo(() => query.fase, [query.fase]);
+
+    const handleOlimpiadaChange = (id: string) => {
+        router.get(route('gestion-evaluacion.index', { olimpiada: id }), {}, { preserveState: true, replace: true });
+    };
+
+    const handleFaseChange = (id: string) => {
+        router.get(route('gestion-evaluacion.index', { olimpiada: selectedOlimpiadaId, fase: id }), {}, { preserveState: true, replace: true });
+    };
+
 
     const selectedOlimpiada = useMemo(() => olimpiadas.find(o => o.id === Number(selectedOlimpiadaId)), [olimpiadas, selectedOlimpiadaId]);
     const selectedFase = useMemo(() => selectedOlimpiada?.fases?.find(f => f.id === Number(selectedFaseId)), [selectedOlimpiada, selectedFaseId]);
 
     const definicionParaFase = useMemo(() => {
-        // Prefer the definition object attached to the selectedFase (this one is populated
-        // within the $olimpiadas structure and has item-level 'calificadores' populated),
-        // otherwise fall back to the global list `definicionesEvaluacion`.
         if (!selectedFase || !selectedFase.definicion_evaluacion_id) {
             return null;
         }
-
-        // If the phase already includes the definicion_evaluacion (eager loaded), use it
         if ((selectedFase as any).definicion_evaluacion) {
             return (selectedFase as any).definicion_evaluacion as DefinicionEvaluacion;
         }
-
-        // Fallback: find in the provided definicionesEvaluacion array
         return definicionesEvaluacion.find(d => d.id === selectedFase.definicion_evaluacion_id) ?? null;
     }, [selectedFase, definicionesEvaluacion]);
 
-
-
-    useEffect(() => {
-        if (selectedFase) {
-            setAssignEvaluationData('definicion_evaluacion_id', selectedFase.definicion_evaluacion?.id ? String(selectedFase.definicion_evaluacion.id) : undefined);
-        } else {
-            setAssignEvaluationData('definicion_evaluacion_id', undefined);
-        }
-    }, [selectedFase]);
-
-    const { data: assignGraderData, setData: setAssignGraderData, post: postAssignGrader, processing: processingAssignGrader } = useForm({
-        fase_olimpiada_id: '',
+    const { data: assignGraderData, setData: setAssignGraderData, post: postAssignGrader, processing: processingAssignGrader, errors: errorsAssignGrader } = useForm({
+        fase_olimpiada_id: selectedFaseId || '',
         item_definido_id: '',
         calificador_ids: [] as number[],
     });
 
     const { data: assignEvaluationData, setData: setAssignEvaluationData, post: postAssignEvaluation, processing: processingAssignEvaluation, errors: errorsAssignEvaluation } = useForm({
-        definicion_evaluacion_id: undefined as string | undefined,
+        definicion_evaluacion_id: selectedFase?.definicion_evaluacion?.id ? String(selectedFase.definicion_evaluacion.id) : undefined as string | undefined,
     });
+    
+    const evaluationToAssign = useMemo(() => {
+        if (!assignEvaluationData.definicion_evaluacion_id || assignEvaluationData.definicion_evaluacion_id === 'null') {
+            return null;
+        }
+        return definicionesEvaluacion.find(d => d.id === Number(assignEvaluationData.definicion_evaluacion_id));
+    }, [assignEvaluationData.definicion_evaluacion_id, definicionesEvaluacion]);
+
+    const evaluationSummary = useMemo(() => {
+        if (!evaluationToAssign) return null;
+        const totalItems = evaluationToAssign.items_definidos?.length || 0;
+        const maxScore = evaluationToAssign.items_definidos?.reduce((sum, item) => sum + item.puntaje_maximo, 0) || 0;
+        return { totalItems, maxScore };
+    }, [evaluationToAssign]);
+
+
+    useEffect(() => {
+        setAssignGraderData('fase_olimpiada_id', selectedFaseId || '');
+    }, [selectedFaseId]);
+    
+    useEffect(() => {
+        setAssignEvaluationData('definicion_evaluacion_id', selectedFase?.definicion_evaluacion?.id ? String(selectedFase.definicion_evaluacion.id) : undefined);
+    }, [selectedFase]);
+
 
     const openAssignModal = (item: ItemDefinido) => {
         setCurrentItem(item);
@@ -87,13 +109,12 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
             onSuccess: () => {
                 toast.success('Asignación guardada exitosamente.');
                 setAssignModalOpen(false);
-                // Recargar la página para obtener los datos actualizados
-                // Llamar a router.reload() sin 'only' para forzar la recarga completa de props
-                router.reload();
+                router.reload({ only: ['olimpiadas', 'allAssignments', 'chartsData'] });
             },
             onError: (err) => {
-                toast.error('Error al guardar la asignación.');
-                console.error(err);
+                toast.error('Error al guardar la asignación.', {
+                    description: Object.values(err).join('\n'),
+                });
             },
             preserveScroll: true,
         });
@@ -102,8 +123,7 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
     const handleAssignEvaluationSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const dataToPost: any = { ...assignEvaluationData };
-        // convert undefined/empty => null for backend
-        if (!dataToPost.definicion_evaluacion_id) {
+        if (!dataToPost.definicion_evaluacion_id || dataToPost.definicion_evaluacion_id === 'null') {
             dataToPost.definicion_evaluacion_id = null;
         }
 
@@ -113,13 +133,14 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
             onSuccess: () => {
                 toast.success('Evaluación asignada exitosamente.');
                 setIsConfirmEvaluationChangeModalOpen(false);
+                router.reload({ only: ['olimpiadas'] });
             },
             onError: (err) => {
-                toast.error('Error al asignar la evaluación.');
-                console.error(err);
+                toast.error('Error al asignar la evaluación.', {
+                    description: Object.values(err).join('\n'),
+                });
             },
             preserveScroll: true,
-            preserveState: true, // <-- Add this line
         });
     };
 
@@ -145,12 +166,11 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                         <TabsTrigger value="listado">Listado de Asignaciones</TabsTrigger>
                     </TabsList>
 
-                    {/* Tab de Asignación */}
                     <TabsContent value="asignacion" className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div className="space-y-2">
                                 <Label htmlFor="olimpiada-select">Olimpiada</Label>
-                                <Select onValueChange={setSelectedOlimpiadaId} value={selectedOlimpiadaId}>
+                                <Select onValueChange={handleOlimpiadaChange} value={selectedOlimpiadaId}>
                                     <SelectTrigger id="olimpiada-select">
                                         <SelectValue placeholder="Selecciona una Olimpiada" />
                                     </SelectTrigger>
@@ -162,7 +182,7 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
 
                             <div className="space-y-2">
                                 <Label htmlFor="fase-select">Fase</Label>
-                                <Select onValueChange={setSelectedFaseId} value={selectedFaseId} disabled={!selectedOlimpiada}>
+                                <Select onValueChange={handleFaseChange} value={selectedFaseId} disabled={!selectedOlimpiada}>
                                     <SelectTrigger id="fase-select">
                                         <SelectValue placeholder="Selecciona una Fase" />
                                     </SelectTrigger>
@@ -189,7 +209,6 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
-                                    {/* Asignar Evaluación */}
                                     <div className="p-4 border rounded-lg">
                                         <h3 className="font-medium mb-2">Asignar Rúbrica de Evaluación</h3>
                                         <div className="flex items-center space-x-4">
@@ -197,7 +216,7 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                                                 <Label htmlFor="rubrica-select">Rúbrica</Label>
                                                 <Select
                                                     onValueChange={(value) => setAssignEvaluationData('definicion_evaluacion_id', value)}
-                                                    value={assignEvaluationData.definicion_evaluacion_id}
+                                                    value={assignEvaluationData.definicion_evaluacion_id || 'null'}
                                                 >
                                                     <SelectTrigger id="rubrica-select" className="w-[350px]">
                                                         <SelectValue placeholder="Selecciona una rúbrica" />
@@ -210,15 +229,14 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                                             </div>
                                             <Button
                                                 onClick={() => setIsConfirmEvaluationChangeModalOpen(true)}
-                                                disabled={processingAssignEvaluation}
+                                                disabled={processingAssignEvaluation || !assignEvaluationData.definicion_evaluacion_id}
                                             >
-                                                {definicionParaFase ? 'Actualizar' : 'Asignar'}
+                                                {processingAssignEvaluation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (definicionParaFase ? 'Actualizar' : 'Asignar')}
                                             </Button>
                                         </div>
                                         {errorsAssignEvaluation.definicion_evaluacion_id && <p className='text-sm text-red-500 mt-2'>{errorsAssignEvaluation.definicion_evaluacion_id}</p>}
                                     </div>
 
-                                    {/* Asignar Calificadores */}
                                     {definicionParaFase ? (
                                         <div className="p-4 border rounded-lg">
                                             <h3 className="font-medium">Asignar Calificadores a Ítems</h3>
@@ -226,6 +244,7 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                                                 <p>Rúbrica: <strong>{definicionParaFase.nombre}</strong></p>
                                                 <p>Descripción: {definicionParaFase.descripcion}</p>
                                                 <p>Total de Ítems: {definicionParaFase.items_definidos?.length || 0}</p>
+                                                <p>Puntaje Máximo: {definicionParaFase.items_definidos?.reduce((acc, item) => acc + item.puntaje_maximo, 0)}</p>
                                             </div>
                                             <div className="space-y-3">
                                                 {definicionParaFase.items_definidos?.length > 0 ? (
@@ -236,8 +255,8 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                                                                 <div className="flex-1">
                                                                     <p className="font-semibold">{item.nombre}</p>
                                                                     <div className="flex flex-wrap gap-1 mt-2">
-                                                                        {assignedCount > 0 ? (
-                                                                            <Badge variant="secondary">Asignado ({assignedCount})</Badge>
+                                                                        {item.calificadores && item.calificadores.length > 0 ? (
+                                                                             <Badge variant="success">Asignado ({item.calificadores.length})</Badge>
                                                                         ) : (
                                                                             <Badge variant="outline">Sin asignar</Badge>
                                                                         )}
@@ -253,9 +272,13 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-center py-12 text-muted-foreground">
-                                            <p>Asigna una rúbrica a esta fase para poder asignar calificadores.</p>
-                                        </div>
+                                         <Alert>
+                                            <AlertCircle className="h-4 w-4" />
+                                            <AlertTitle>No hay Rúbrica Asignada</AlertTitle>
+                                            <AlertDescription>
+                                                Por favor, asigna una rúbrica de evaluación a esta fase para poder asignar calificadores a los ítems.
+                                            </AlertDescription>
+                                        </Alert>
                                     )}
                                 </CardContent>
                             </Card>
@@ -266,33 +289,49 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                         )}
                     </TabsContent>
 
-                    {/* Tab de Visualización */}
                     <TabsContent value="listado">
                         <AllAssignmentsTab allAssignments={allAssignments} chartsData={chartsData} />
                     </TabsContent>
                 </Tabs>
             </div>
 
-            {/* Modal de Confirmación para Asignación/Cambio de Evaluación */}
             <Dialog open={isConfirmEvaluationChangeModalOpen} onOpenChange={setIsConfirmEvaluationChangeModalOpen}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center"><FileCheck className="mr-2 h-5 w-5" />Confirmar Acción</DialogTitle>
                         <DialogDescription>
-                            Confirma los cambios en la asignación de rúbrica de evaluación.
+                           {!evaluationToAssign ? 'Vas a quitar la rúbrica de evaluación.' : `Vas a asignar la rúbrica "${evaluationToAssign.nombre}".`}
                         </DialogDescription>
                     </DialogHeader>
+                     {!evaluationToAssign ? (
+                        <Alert variant="destructive" className='my-4'>
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>¡Atención!</AlertTitle>
+                            <AlertDescription>
+                                Estás a punto de quitar la rúbrica de esta fase. Esto eliminará todas las asignaciones de calificadores existentes para esta fase. Esta acción no se puede deshacer.
+                            </AlertDescription>
+                        </Alert>
+                    ) : (
+                        <div className="p-4 border rounded-lg my-4">
+                            <h4 className="font-medium mb-2">Resumen de la Rúbrica</h4>
+                            <p><strong>Nombre:</strong> {evaluationToAssign.nombre} (v{evaluationToAssign.version})</p>
+                            <p><strong>Descripción:</strong> {evaluationToAssign.descripcion}</p>
+                            <p><strong>Total de Ítems:</strong> {evaluationSummary?.totalItems}</p>
+                            <p><strong>Puntaje Máximo Total:</strong> {evaluationSummary?.maxScore}</p>
+                            <p className='text-sm text-muted-foreground mt-2'>La nota mínima de aprobación se calculará como la suma de los puntajes de los ítems ({evaluationSummary?.maxScore} puntos).</p>
+                        </div>
+                    )}
                     <form onSubmit={handleAssignEvaluationSubmit} className="p-4">
-                        <p>¿Estás seguro de que deseas actualizar la rúbrica para la fase <strong>{selectedFase?.nombre}</strong>?</p>
                         <DialogFooter className="mt-6">
                             <Button type="button" variant="outline" onClick={() => setIsConfirmEvaluationChangeModalOpen(false)}>Cancelar</Button>
-                            <Button type="submit" disabled={processingAssignEvaluation}>Confirmar</Button>
+                            <Button type="submit" disabled={processingAssignEvaluation} variant={!evaluationToAssign ? 'destructive' : 'default'}>
+                                {processingAssignEvaluation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Confirmar'}
+                            </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
 
-            {/* Modal de Asignación de Calificadores */}
             <Dialog open={isAssignModalOpen} onOpenChange={setAssignModalOpen}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
@@ -330,9 +369,12 @@ const GestionEvaluacion = ({ olimpiadas, calificadores, definicionesEvaluacion, 
                                 </CommandList>
                             </Command>
                         </div>
+                         {errorsAssignGrader.calificador_ids && <p className='text-sm text-red-500 mt-2'>{errorsAssignGrader.calificador_ids}</p>}
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setAssignModalOpen(false)}>Cancelar</Button>
-                            <Button type="submit" disabled={processingAssignGrader}>Guardar Asignación</Button>
+                            <Button type="submit" disabled={processingAssignGrader}>
+                                {processingAssignGrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Guardar Asignación'}
+                            </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>

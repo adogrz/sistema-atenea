@@ -180,3 +180,25 @@
     *   Sin embargo, la herramienta `replace` falló repetidamente al intentar modificar `routes/web.php`, incluso cuando el `old_string` se copiaba directamente de la salida de `read_file`. Esto sugiere un problema persistente con la capacidad de la herramienta `replace` para hacer coincidir el contenido en este archivo, posiblemente debido a diferencias sutiles e invisibles en el formato o a que el archivo en disco no coincidía con la salida de `read_file`.
     *   Como solución temporal para permitir al usuario continuar con sus cambios, se comentó la línea que hacía referencia a `resultados.index` y `resultados.management` en `resources/js/components/app-sidebar.tsx`.
     *   La modificación automatizada de `routes/web.php` para las rutas `resultados` no pudo completarse debido a la falla de la herramienta `replace`.
+
+# Resumen de Conversación - 3 de enero de 2026
+
+*   **Mejora de UX en la Página de Resultados:**
+    *   Refactorizada la página `resources/js/pages/Olimpiadas/Resultados.tsx` en un componente contenedor (`Index.tsx`) y un componente de visualización (`ResultadosView.tsx`).
+    *   Implementados combobox de búsqueda para la selección de Olimpiadas y Fases utilizando `resources/js/pages/Olimpiadas/Resultados/ResultadosToolbar.tsx`.
+    *   Añadido un panel informativo para mostrar detalles de la Olimpiada seleccionada.
+    *   Actualizado `app/Http/Controllers/ResultadoController.php` para proporcionar todas las Olimpiadas y Fases, y para obtener dinámicamente los resultados basándose en los filtros seleccionados.
+
+*   **Reestructuración de Componentes de Resultados:**
+    *   Movido `ResultadosToolbar.tsx` a `resources/js/pages/Olimpiadas/Resultados/ResultadosToolbar.tsx`.
+    *   Movido `Management.tsx`, `ScoreDistributionChart.tsx` y `StatsCards.tsx` a `resources/js/pages/Olimpiadas/Resultados/`.
+    *   Actualizadas todas las rutas de importación internas para reflejar la nueva estructura (incluyendo `Index.tsx`, `Management.tsx`).
+
+*   **Limpieza de Código Residual:**
+    *   Eliminada lógica obsoleta de `resources/js/pages/Olimpiadas/Resultados/Management.tsx` y reemplazada con un placeholder para futuras implementaciones.
+    *   Eliminadas rutas no utilizadas (`resultados.management`, `resultados.generatePermanentCodes`, y `resultados.emails`) de `routes/web.php`.
+    *   Eliminados los métodos `managementIndex`, `getEmailsForPassedStudents`, y cualquier método `generatePermanentCodes` de `app/Http/Controllers/ResultadoController.php`.
+
+*   **Eliminación de Componente `CentroEducativo/import.tsx` no utilizado:**
+    *   Identificado y eliminado el archivo `resources/js/pages/CentroEducativo/import.tsx`.
+    *   Eliminado el directorio `resources/js/pages/CentroEducativo` al quedar vacío.
